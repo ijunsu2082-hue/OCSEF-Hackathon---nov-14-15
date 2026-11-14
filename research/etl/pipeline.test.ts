@@ -15,6 +15,7 @@ test("location ETL captures, throttles, replays and falls back with cited values
   const start = new Date("2026-11-14T19:00:00Z");
   let calls = 0;
   let fail = false;
+  let observationTimestamp = start.toISOString();
   const originalKey = process.env.EIA_API_KEY;
   process.env.EIA_API_KEY = "fixture-secret";
   t.after(() => {
@@ -48,7 +49,7 @@ test("location ETL captures, throttles, replays and falls back with cited values
           features: [{ id: "https://api.weather.gov/stations/KLAX" }],
         });
         return Response.json({ properties: {
-          timestamp: start.toISOString(), temperature: { unitCode: "wmoUnit:degC", value: 20 },
+          timestamp: observationTimestamp, temperature: { unitCode: "wmoUnit:degC", value: 20 },
           windGust: { unitCode: "wmoUnit:km_h-1", value: null },
         } });
       default:
@@ -59,7 +60,10 @@ test("location ETL captures, throttles, replays and falls back with cited values
   await verifyLocation(captured);
   assert.equal(captured.evidence.verification.ok, true);
   assert.equal(captured.evidence.stats.observed, 12);
-  assert.equal(captured.evidence.unresolved.length, 0);
+  assert.equal(captured.evidence.unresolved.length, 2);
+  assert.equal(captured.feeds["eia-hourly-demand"].status, "unknown");
+  assert.equal(captured.feeds["eia-hourly-demand"].observation_at, "2026-11-14T18");
+  assert.equal(captured.feeds["eia-hourly-demand"].source_age_seconds, null);
   assert.equal(JSON.stringify(captured).includes("fixture-secret"), false);
   assert.equal(calls, 9);
   const replay = await runLocation(query, false, start);
@@ -92,6 +96,13 @@ test("location ETL captures, throttles, replays and falls back with cited values
   const restored = await restoreReport(backup);
   assert.equal(restored.evidence.bundle_id, captured.evidence.bundle_id);
   assert.deepEqual(restored.evidence.claims.map(({ id }) => id), captured.evidence.claims.map(({ id }) => id));
+  fail = false;
+  observationTimestamp = "2026-11-13T18:00:00Z";
+  const stale = await runLocation(query, true, new Date(start.getTime() + 20 * 60000));
+  assert.equal(stale.feeds["nws-observation"].status, "stale");
+  assert.equal(stale.feeds["nws-observation"].observation_at, observationTimestamp);
+  assert.ok((stale.feeds["nws-observation"].source_age_seconds ?? 0) > 86400);
+  assert.ok(stale.evidence.unresolved.some((item) => item.predicate === "nws-observation"));
 });
 
 test("provider disagreement requires compatible scope and explicit authority", () => {

@@ -17,11 +17,13 @@ import {
   saveBasemap,
   type BasemapId,
 } from "@/lib/basemaps";
+import { loadSurfaceMode, saveSurfaceMode, type SurfaceMode } from "@/lib/basemaps";
 import { scanArea, type ScanInput, type ScanResult } from "@/lib/scan/areaScan";
-import { RATING_CSV_URL, summarizeWire } from "@/lib/scan/wire";
+import { RATING_CSV_URL, RATING_FALLBACK_CSV_URL, summarizeWire } from "@/lib/scan/wire";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
 import AreaScanPanel from "@/components/scan/AreaScanPanel";
 import LayerPicker from "./LayerPicker";
+import CorridorWeatherCallout from "@/components/scan/CorridorWeatherCallout";
 
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
@@ -75,10 +77,17 @@ export default function MapCanvas({
   const onMapReady = useCallback((instance: MapController) => setMap(instance), []);
 
   const [basemap, setBasemap] = useState<BasemapId>("dark");
+  const [surface, setSurface] = useState<SurfaceMode>("flat");
+  const [terrainStatus, setTerrainStatus] = useState<"loading" | "ready" | "unavailable">("ready");
   useEffect(() => setBasemap(loadBasemap()), []);
+  useEffect(() => setSurface(loadSurfaceMode()), []);
   const chooseBasemap = useCallback((id: BasemapId) => {
     setBasemap(id);
     saveBasemap(id);
+  }, []);
+  const chooseSurface = useCallback((mode: SurfaceMode) => {
+    setSurface(mode);
+    saveSurfaceMode(mode);
   }, []);
 
   const [scanMode, setScanMode] = useState(false);
@@ -104,8 +113,8 @@ export default function MapCanvas({
       loadTransmission(),
       // Optional: without the archive the scan reports the gap, it does not guess.
       fetch(RATING_CSV_URL)
-        .then((response) => response.ok ? response.text() : fetch(RATING_CSV_URL.replace("2025", "2024")).then((fallback) => fallback.ok ? fallback.text() : ""))
-        .catch(() => fetch(RATING_CSV_URL.replace("2025", "2024")).then((fallback) => fallback.ok ? fallback.text() : "").catch(() => "")),
+        .then((response) => response.ok ? response.text() : fetch(RATING_FALLBACK_CSV_URL).then((fallback) => fallback.ok ? fallback.text() : ""))
+        .catch(() => fetch(RATING_FALLBACK_CSV_URL).then((fallback) => fallback.ok ? fallback.text() : "").catch(() => "")),
     ]).then(([plants, substations, transmission, rating]) => {
       if (!alive) return;
       setScanData({
@@ -236,10 +245,13 @@ export default function MapCanvas({
           selectedId={selectedId}
           heatwave={heatwave}
           view3d={view3d}
+          surface={surface}
+          onTerrainStatus={setTerrainStatus}
           layers={layers}
           nicheCases={nicheCases}
           selectedNicheId={selectedNicheId}
           selectedCorridorId={selectedCorridor?.id ?? null}
+          selectedCorridor={selectedCorridor}
           onSelect={onSelect}
           onSelectNiche={onSelectNiche}
           onSelectCorridor={setSelectedCorridor}
@@ -255,7 +267,7 @@ export default function MapCanvas({
       <div className="map-horizon" aria-hidden />
 
       <div className="map-topline">
-        <span className="map-mode">{view3d ? `Elevation · ${cameraPreset} · pitch ${cameraPreset === "regional" ? 45 : cameraPreset === "facility" ? 55 : 50}°` : `Flat · ${cameraPreset} · top-down`}</span>
+        <span className="map-mode">{surface === "elevation" ? `Elevation 1× · DEM ${terrainStatus}` : "Flat surface"} · {view3d ? `${cameraPreset} camera · pitch ${cameraPreset === "regional" ? 45 : cameraPreset === "facility" ? 55 : 50}°` : "top-down camera"}</span>
         {heatwave ? <span className="map-mode">Heatwave · 105 °F</span> : null}
         {scanMode ? (
           <span className="map-mode is-scan">Scan mode · click to query</span>
@@ -326,9 +338,17 @@ export default function MapCanvas({
         onBasemap={chooseBasemap}
         layers={layers}
         onLayers={setLayers}
-        view3d={view3d}
-        onView3d={onView3d}
+        surface={surface}
+        onSurface={chooseSurface}
       />
+
+      {selectedCorridor && !scanMode ? (
+        <CorridorWeatherCallout
+          coordinates={selectedCorridor.coordinates}
+          voltage={selectedCorridor.voltage}
+          heatwave={heatwave}
+        />
+      ) : null}
 
       {scanMode ? (
         <AreaScanPanel

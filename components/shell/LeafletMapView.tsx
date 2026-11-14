@@ -1,5 +1,7 @@
 "use client";
 
+import { substationSourceCard } from "@/lib/substationSource";
+
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
@@ -31,6 +33,7 @@ interface MapViewProps {
   selectedId: string | null;
   heatwave: boolean;
   view3d: boolean;
+  surface: "flat" | "elevation";
   bounds: [[number, number], [number, number]];
   center: [number, number];
   radiusMiles: number;
@@ -402,7 +405,8 @@ export default function MapView({
         color: "#8fa0b8",
         fillColor: "#8fa0b8",
         fillOpacity: 0.35,
-        interactive: Boolean(props.name),
+        interactive: true,
+        bubblingMouseEvents: false,
       });
       if (props.name) {
         const voltage = props.voltage_kv === null ? "voltage untagged" : `${props.voltage_kv} kV`;
@@ -411,6 +415,14 @@ export default function MapView({
           { direction: "top", className: "grid-tooltip" },
         );
       }
+      marker.on("click", () => {
+        if (scanModeRef.current) {
+          onScanPointRef.current(lat, lon);
+          return;
+        }
+        const map = mapRef.current;
+        if (map) L.popup().setLatLng([lat, lon]).setContent(substationSourceCard(props)).openOn(map);
+      });
       marker.addTo(group);
     }
   }, [layers.substations, substations]);

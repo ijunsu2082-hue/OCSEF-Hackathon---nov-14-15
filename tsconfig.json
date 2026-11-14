@@ -32,8 +32,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
+    "build-out/types/**/*.ts",
     "next-env.d.ts",
-    "build-out-gs-3d-verify/types/**/*.ts"
+    "build-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

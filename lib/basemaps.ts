@@ -12,6 +12,7 @@ const tile = (service: string) => `${ESRI}/${service}/MapServer/tile/{z}/{y}/{x}
 const thumb = (service: string) => `${ESRI}/${service}/MapServer/tile/9/204/88`;
 
 export type BasemapId = "dark" | "satellite" | "streets" | "terrain";
+export type SurfaceMode = "flat" | "elevation";
 
 export interface Basemap {
   id: BasemapId;
@@ -45,7 +46,7 @@ export const BASEMAPS: Basemap[] = [
   },
   {
     id: "terrain",
-    label: "Terrain",
+    label: "Topographic",
     url: tile("World_Topo_Map"),
     maxNativeZoom: 19,
     thumb: thumb("World_Topo_Map"),
@@ -54,6 +55,19 @@ export const BASEMAPS: Basemap[] = [
 
 export const DEFAULT_BASEMAP: BasemapId = "dark";
 const STORAGE_KEY = "gs-basemap";
+const SURFACE_STORAGE_KEY = "gs-surface";
+
+export function loadSurfaceMode(): SurfaceMode {
+  try {
+    return window.localStorage.getItem(SURFACE_STORAGE_KEY) === "elevation" ? "elevation" : "flat";
+  } catch {
+    return "flat";
+  }
+}
+
+export function saveSurfaceMode(mode: SurfaceMode) {
+  try { window.localStorage.setItem(SURFACE_STORAGE_KEY, mode); } catch { /* Storage is optional. */ }
+}
 
 export function basemapById(id: BasemapId): Basemap {
   return BASEMAPS.find((basemap) => basemap.id === id) ?? BASEMAPS[0];

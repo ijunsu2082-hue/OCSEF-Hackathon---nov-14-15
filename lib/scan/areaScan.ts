@@ -503,7 +503,7 @@ function scanReport(result: Omit<ScanResult, "report">): string {
     );
     if (wire.now) {
       lines.push(
-        `- This hour (${hourLabel(wire.now.time)}): still air ${wire.now.still_a} A, with this wind ${wire.now.breeze_a} A → ${wire.now.ratio.toFixed(2)}× static`,
+        `- Latest bundled hour (${hourLabel(wire.now.time)}): still air ${wire.now.still_a} A, with this wind ${wire.now.breeze_a} A → ${wire.now.ratio.toFixed(2)}× static`,
       );
     }
     lines.push(

@@ -143,7 +143,11 @@ export default function AreaScanPanel({
     () => corridor ? pointOnCorridor(corridor.coordinates) : null,
     [corridor],
   );
-  const weatherTarget = corridorPoint ?? (result ? { lat: result.point.lat, lon: result.point.lon } : null);
+  const weatherTarget = corridor
+    ? corridorPoint
+    : result
+      ? { lat: result.point.lat, lon: result.point.lon }
+      : null;
   const { weather, pending: weatherPending, error: weatherError } = useWeatherSample(weatherTarget);
 
   useEffect(() => {
@@ -220,7 +224,7 @@ export default function AreaScanPanel({
     (!corridor?.voltage || corridor.voltage === wire.voltage_kv)
     ? wire
     : null;
-  const archiveYear = archiveWire?.now?.time.slice(0, 4) ?? archiveWire?.hottest?.time.slice(0, 4) ?? "2025";
+  const archiveYear = wire?.now?.time.slice(0, 4) ?? wire?.hottest?.time.slice(0, 4) ?? "2025";
   const weatherWire: WireHour | null =
     ratingVoltage !== null && weather?.current
       ? rateWeatherSample(ratingVoltage, weather.current)
@@ -371,7 +375,7 @@ export default function AreaScanPanel({
                     key={fuel.key}
                     sub
                     label={fuelLabel(fuel.key)}
-                    value={`${fmtNumber(fuel.mw, 0)} MW · ${fmtNumber(fuel.pct, 0)}%`}
+                    value={`${fmtNumber(fuel.mw, fuel.mw >= 100 ? 0 : 1)} MW · ${fmtNumber(fuel.pct, 0)}%`}
                   />
                 ))}
                 {result.plants.length === 0 ? (
@@ -459,8 +463,8 @@ export default function AreaScanPanel({
                     ? "No plants in this circle, so there is nothing to retire."
                     : result.planned_retirement_plants > 0
                       ? `${result.planned_retirement_plants} plant${
-                          result.planned_retirement_plants === 1 ? "" : "s"
-                        } carry a retirement date in the EIA-860 2025 extract.`
+                          result.planned_retirement_plants === 1 ? " carries" : "s carry"
+                        } a retirement date in the EIA-860 2025 extract.`
                       : "The EIA-860 2025 extract lists no planned retirement date for the plants in this circle."}
                 </p>
               </Group>
@@ -514,7 +518,7 @@ export default function AreaScanPanel({
                     </small>
                     <small>
                       {heatwave
-                        ? "Simulated heatwave"
+                        ? `Simulated heatwave · ${weatherProvenance}`
                         : weatherPending
                           ? "Checking live weather…"
                           : weather?.current
@@ -539,7 +543,7 @@ export default function AreaScanPanel({
                     />
                     <div className="scan-wire-axis">
                       <span>00:00</span>
-                      <span>{dayLabel(archiveWire?.now?.time ?? null)}</span>
+                      <span>{dayLabel(archiveWire?.today[0]?.time ?? null)}</span>
                       <span>23:00</span>
                     </div>
                   </>

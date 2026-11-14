@@ -20,6 +20,7 @@ export interface Feed {
   interval: number;
   url: URL;
   extract(data: unknown): Metric[];
+  observationTime?(data: unknown): { timestamp: string; basis: "utc" | "local-unknown" } | null;
   follow?: (data: unknown) => URL;
 }
 
@@ -36,6 +37,12 @@ function metric(data: unknown, locator: string, predicate: string): Metric[] {
   if (typeof value === "string" && value.trim()) return [{ predicate, locator, value }];
   if (typeof value === "number" && Number.isFinite(value)) return [{ predicate, locator, value }];
   return [];
+}
+function validEiaPeriod(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}$/.test(value)) return false;
+  const hour = Number(value.slice(-2));
+  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  return hour >= 0 && hour <= 23 && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value.slice(0, 10);
 }
 
 function nwsLink(data: unknown, pointer: string, path: RegExp): URL {
@@ -101,7 +108,7 @@ function eiaFeed(respondent: string, fuel: boolean): Feed {
       const rows = at(data, "/response/data");
       if (!Array.isArray(rows) || !rows.length) return [];
       const period = at(data, "/response/data/0/period");
-      if (typeof period !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}$/.test(period)) return [];
+      if (!validEiaPeriod(period)) return [];
       const results = metric(data, "/response/data/0/period", "telemetry.period");
       const fuels = new Set<string>();
       rows.forEach((_, index) => {
@@ -118,6 +125,12 @@ function eiaFeed(respondent: string, fuel: boolean): Feed {
         results.push(...metric(data, `${path}/value`, fuel ? `telemetry.fuel_${code}` : "telemetry.demand"));
       });
       return results.length > 1 ? results : [];
+    },
+    observationTime(data) {
+      const period = at(data, "/response/data/0/period");
+      // EIA publishes hour-ending data in balancing-authority local reporting zones.
+      // Retain the period string; no defensible UTC age can be calculated here.
+      return validEiaPeriod(period) ? { timestamp: period, basis: "local-unknown" } : null;
     },
   };
 }
@@ -177,6 +190,12 @@ export function feedsFor(query: LocationQuery): Feed[] {
         result.push(...metric(data, `${path}/value`, predicate));
       }
       return result.length > 1 ? result : [];
+    },
+    observationTime(data) {
+      const timestamp = at(data, "/properties/timestamp");
+      if (typeof timestamp !== "string" || !/(?:Z|[+-]\d{2}:\d{2})$/.test(timestamp) ||
+          !Number.isFinite(Date.parse(timestamp))) return null;
+      return { timestamp: new Date(timestamp).toISOString(), basis: "utc" };
     },
   };
   return [

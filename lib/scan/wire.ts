@@ -19,7 +19,7 @@ import type { ConductorSpec } from "../physics/network";
 import { conductorAmpacity } from "../physics/thermal";
 
 export const RATING_CSV_URL = "/layers/line_rating_2025_westminster_hs.csv";
-export const RATING_CALLBACK_CSV_URL = "/layers/line_rating_2024_westminster_hs.csv";
+export const RATING_FALLBACK_CSV_URL = "/layers/line_rating_2024_westminster_hs.csv";
 export const RATING_SITE_LABEL = "Westminster HS";
 
 /** IEEE 738 light-wind assumption the fixed rating is based on, m/s. */
@@ -69,7 +69,7 @@ export interface WireSummary {
   conductor: string;
   /** Hours in the archive. */
   hours: number;
-  /** This clock hour, live when available and otherwise the bundled archive. */
+  /** Latest bundled archive hour; the panel replaces it with live weather when available. */
   now: WireHour | null;
   hottest: WireHour | null;
   /** The 24 hours of that day. */
@@ -170,6 +170,18 @@ export function rateWeatherSample(voltageKv: number, sample: WeatherForRating): 
   return rateHour(row, conductorForKv(voltageKv));
 }
 
+/** Latest valid row from the bundled CSV without rating the full history. */
+export function latestArchiveWeather(csv: string): WeatherForRating | null {
+  const rows = rowsFor(csv);
+  const latest = rows[rows.length - 1];
+  return latest ? {
+    time: latest.time,
+    temp_c: latest.temp_c,
+    wind_mps: latest.wind_mps,
+    shortwave_wm2: latest.sun_wm2,
+  } : null;
+}
+
 export function conductorForVoltage(voltageKv: number): string {
   return conductorForKv(voltageKv).label;
 }
@@ -234,13 +246,8 @@ export function summarizeWire(
 
   const archiveYear = rows[0]?.time.slice(0, 4) ?? "2025";
   const key = csvHourKey(new Date(), archiveYear);
-  const archiveClock = key.slice(5);
-  const applicable = hours.filter((hour) => hour.time.slice(5) <= archiveClock);
-  const now =
-    hours.find((hour) => hour.time === key) ??
-    applicable[applicable.length - 1] ??
-    hours[0] ??
-    null;
+  // `now` is the newest bundled observation, never a same-day proxy for live weather.
+  const now = hours[hours.length - 1] ?? null;
   const today = hours.filter((hour) => hour.time.startsWith(key.slice(0, 10)));
 
   let hottest = hours[0];

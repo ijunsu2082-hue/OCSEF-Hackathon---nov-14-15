@@ -10,10 +10,10 @@ Each procedure has a stable ID (`DEV-*`) for cross-document references. A case m
 
 | Catalog row in `INFRASTRUCTURE-WORKFLOWS.md` | Procedure sections |
 | --- | --- |
-| 1. Intake and emergency intake | DEV-01, DEV-02, DEV-03 |
-| 2. Feasibility and alternatives | DEV-04, DEV-05, DEV-06 |
-| 3. Land engagement and site control | DEV-07, DEV-08, DEV-09 |
-| 6. Engineering continuity | DEV-10, DEV-11, DEV-12, DEV-13 |
+| 1. Intake and emergency intake | DEV-01, DEV-02, DEV-03, DEV-14, DEV-15 |
+| 2. Feasibility and alternatives | DEV-04, DEV-05, DEV-06, DEV-16 |
+| 3. Land engagement and site control | DEV-07, DEV-08, DEV-09, DEV-17 |
+| 6. Engineering continuity | DEV-10, DEV-11, DEV-12, DEV-13, DEV-18, DEV-19 |
 
 ## Shared records and controls
 
@@ -186,6 +186,72 @@ At weekly or configured review, case manager checks critical-path changes, overd
 **Exceptions.** Unplanned outage: invoke owner incident process and link incident case; do not improvise sequence in tracker. External operator unavailable: block affected step or use documented approved contingency. Temporary system fails: stop/rollback under authorized plan and record service impact. Changed sequence or condition: re-review affected hazards, dependencies, notices and approvals. Partial service return: record scope, limitations, monitoring owner, expected full restoration, and next update.
 
 **Acceptance.** Cutover closes with actual work evidence, deviations dispositioned, service state confirmed by operations, temporary arrangements removed or assigned with expiry/review, defects and monitoring owned, asset/configuration records updated, and stakeholders notified as planned. Commissioning or physical completion alone is not service acceptance.
+
+## DEV-14 — Discover and reconcile asset configuration
+
+**Trigger and owner.** Use when intake references an asset that cannot be matched, asset records conflict, or service boundary crosses several systems. Asset information manager owns discovery; asset owner and operator validate operational identity; GIS/data custodian maintains source lineage; engineering confirms technical configuration.
+
+**Discovery record.** Search terms/IDs; candidate asset IDs; source systems and extraction dates; spatial match method and coordinate reference; parent/child relationships; owner/operator/maintainer claims; installation/configuration dates and status; drawings and inspection records found; discrepancies; confidence; access restrictions; reviewer; unresolved question and owner. Mark each candidate as confirmed, possible, rejected, retired, or unknown. Keep the source record and query/extract reference so later reviewers can reproduce the match.
+
+**Procedure and handoff.** Search approved asset, GIS, maintenance, incident, drawing, and operator records. Compare identifiers, location, function, connectivity, and effective dates; do not resolve conflict solely by nearest map point. Ask the claimed owner/operator to confirm service boundary and current configuration. When no reliable record exists, create provisional asset references with explicit uncertainty and field verification task. Hand the reconciled asset map and discrepancy list to baseline owner (DEV-03) and appraisal team (DEV-04). Update authoritative asset register only through its owning change process; this case stores a linked proposal and accepted evidence.
+
+**Failure branches.** Conflicting IDs: preserve all candidates, assign reconciliation authority, and use temporary case ID. Missing drawings: commission survey/inspection with access, safety and method review. Asset is outside owner's control: route to interface owner and capture dependency. Sensitive map: restrict geometry and provide generalized version for broad reporting. Unknown configuration does not stop urgent response, but blocks design claims that rely on the unknown.
+
+**Acceptance.** Asset owner or delegated custodian accepts identity/configuration or explicitly accepts provisional status; service boundary, lineage, confidence and outstanding verification task are linked to case. Handoff recipient acknowledges the exact map/register version.
+
+## DEV-15 — Rank and route intake across portfolio
+
+**Purpose.** Provide consistent triage across cases without pretending a numeric score determines investment or safety priority. Portfolio coordinator prepares a comparable view; service/asset owners validate consequences; configured authority sets priority and capacity allocation.
+
+**Portfolio triage schema.** Case/need ID; service/asset and owner; urgency class and source; consequence of delay; affected population/service; statutory/contract/owner deadline if verified and cited; safety/environmental concern; resilience/critical dependency; strategic alignment; readiness and confidence; time sensitivity; estimated effort/cost range and basis; dependencies; duplicate/related program; capacity constraint; priority rationale; decision authority; review date/trigger; status and next action.
+
+**Procedure.** First separate immediate response from capital prioritization. Confirm common definitions, source dates and missingness before comparing cases. Group linked needs into program candidates without merging their evidence. Show multi-criteria rationale and uncertainty; allow authorized override with reason. Record defer, study, combine, advance, or decline disposition and explicit review trigger. Maintain a visible queue for unranked or incomplete cases so missing data does not silently become low priority. Feed accepted priority and resource assumptions to case sponsor and dependency planner (DEV-06).
+
+**Friction controls.** Use one concise evidence packet per review: need, baseline confidence, consequence of delay, options maturity, dependencies, decision requested. Prepopulate source-linked information and highlight conflicts instead of asking submitters to re-enter data. Batch similar clarifications and publish who owns each answer. Do not create duplicate submissions to fit a funding/program category; link separate classifications to same need.
+
+**Failure branches and acceptance.** If criteria conflict, refer to authority and preserve both views; if capacity is unavailable, record queue position basis and revisit date; if urgency changes, re-triage with timestamp and notify affected owners. Acceptance requires disposition, rationale, authority, next review, and acknowledged receiving sponsor. Portfolio rank is not approval to spend or proceed.
+
+## DEV-16 — Commission independent assurance and challenge
+
+**Trigger.** Use at owner-configured risk, novelty, consequence, uncertainty, or decision gate. Sponsor appoints reviewer independent of authorship and approval where practicable; assurance lead agrees scope; design authority and project lead provide evidence and response.
+
+**Assurance plan schema.** Decision/gate under review; purpose and scope; independence/conflict declaration; reviewer competence and authority; criteria/source versions; sampled evidence and rationale; assumptions and exclusions; review dates; deliverables; response owner; escalation path; limits of assurance; approval.
+
+**Procedure.** Define questions before review (for example, whether evidence supports a decision, interfaces are closed, or operation is feasible). Give reviewer controlled versions and access to source evidence. Log finding ID, severity under configured vocabulary, reference, evidence, required response, owner and due date. Author responds with correction, accepted risk, or reason for disagreement; reviewer evaluates disposition. Decision authority accepts residual findings with explicit conditions or blocks gate per local policy. Keep assurance report separate from project self-assessment; never label review as certification unless authorized source supports it.
+
+**Handoff and failure branches.** Late/unavailable reviewer: escalate schedule/capacity decision; do not silently waive review. Reviewer conflict: replace or document authorized mitigation. Evidence insufficient: issue bounded finding and task rather than broad untestable request. Disagreement: preserve both positions and refer to delegated authority. Acceptance requires scope, independence check, findings, dispositions, residual actions, authority decision, and evidence version archived with gate packet.
+
+## DEV-17 — Coordinate utility conflicts and relocation interfaces
+
+**Trigger and roles.** Use when proposed works may encounter or affect existing utility, network, drainage, access or third-party assets. Project utility coordinator maintains register; each asset owner/operator confirms records and requirements; survey/engineering defines conflict; land lead secures access; construction planner sequences resolution.
+
+**Conflict register schema.** Conflict ID; proposed work geometry and revision; utility/asset ID and owner; record source/date/reliability; survey method/date and confidence; depth/elevation/reference where available; uncertainty/tolerance; affected design element; owner contact and response; protection/avoidance/relocation option; outage/interface requirement; permit/access/easement dependency; design and cost/schedule range; responsible party; agreement/approval status; required-by date; field verification/hold point; evidence and closeout status.
+
+**Procedure.** Request records from identified operators and capture response or no-response; treat records as indicative until field verification specified by owner. Compare utilities against current design revision and survey basis. Convene affected operators to confirm ownership, access, protection/relocation concept, service window, cost responsibility, and approval path. Model alternatives (avoid, protect, relocate, sequence) with service continuity and land implications. Assign each conflict a disposition and design reference; unresolved high consequence conflicts become explicit gate blockers or authorized conditional releases with limits. Before work near conflict, verify current field evidence and operator's required notification/attendance; record hold-point release. After relocation/protection, capture as-found/as-built evidence and operator acceptance, then update interface and asset records.
+
+**Failure branches and friction reduction.** Unknown owner: coordinate records search through asset information lead and do not infer ownership from markings. Inaccurate records: stop affected design/work, log verified location and rework assessment. Operator nonresponse: escalate through owner-configured interface channel and show schedule exposure. Multiple operators: maintain one coordination meeting/action log with separate technical approvals. Changed alignment: rerun conflict query against new revision and notify previous reviewers. Acceptance requires each conflict avoided, resolved, protected, or explicitly risk-accepted by authority, with evidence and downstream owner acknowledgement.
+
+## DEV-18 — Seasonal, staged, and fallback delivery planning
+
+**Purpose.** Plan delivery around seasonal loads, environmental/access windows, service peaks, supply uncertainty, and partial-capacity commissioning. Sponsor and planner own phasing; operations authority validates service effects; engineering confirms technical interfaces; land/community leads confirm access/commitment effects.
+
+**Scenario register.** Scenario ID; trigger (season/date, demand, weather/access condition, vendor delay, permit/land condition); evidence/source and confidence; affected scope/phase; service demand/capacity; temporary arrangement and limits; dependencies; cost/schedule effect range; environmental/community impact; safety/operational constraints; fallback option; decision authority; activation and exit criteria; owner; review date.
+
+**Procedure.** Develop baseline and adverse scenarios, not only preferred calendar. Identify irreversible steps and last responsible decision dates. Define phase boundaries, interfaces, test/acceptance evidence, and minimum viable service for each phase. For fallback, verify funding authority, land/access rights, compatibility, operating resources, vendor availability and rollback feasibility before claiming it is executable. Link temporary works to inspection/expiry owner and removal/restoration task. Revisit scenarios when forecast or condition crosses a configured trigger; record actual activation and lessons.
+
+**Acceptance and failure branches.** Operations accepts interim service limitations and monitoring before phase start. If fallback is unverified, label it contingency concept and keep gate at risk. If seasonal window missed, reforecast impact and obtain decision on defer, resequence or revised method; do not compress review steps by schedule assertion. Each phase has authorized start/stop criteria, owner, dependencies and evidence, plus a documented path to final integrated service acceptance.
+
+## DEV-19 — Release construction work package from design baseline
+
+**Purpose.** Provide a controlled handoff from design/procurement readiness to field execution. This gate does not replace a notice to proceed, safety permit, statutory approval, or contractor method review; configured authorities remain responsible.
+
+**Release packet schema.** Work package ID/scope and location; design baseline and exact released drawing/spec revisions; linked requirements and acceptance criteria; field constraints and utility conflicts; land/access/permit conditions and evidence; procurement and vendor submittal status; long-lead interface status; quality inspection/test points; hold/witness points and releasing role; construction sequence; service/outage/cutover links; temporary works and restoration; risk/hazard controls references; environmental/community commitments; materials/substitutions; approved deviations; cost/schedule authorization; contractor/owner roles; emergency contacts; transmittal and acknowledgement.
+
+**Readiness review.** Discipline leads confirm constructible design and closed/dispositioned comments. Survey and field condition basis is current enough for released scope. Utility conflict dispositions and required operator coordination are in package. Land lead confirms documented access scope and restrictions. Permit/condition owners confirm applicable prerequisites and obligations. Procurement confirms approved-for-use vendor data and substitutions. Operations confirms outage, isolation, temporary service and acceptance interfaces. Quality confirms inspection/test evidence path. Project authority confirms funding, contract and release delegation.
+
+**Decision and friction controls.** Run one cross-functional release review against a prefilled checklist with linked source evidence; assign only exceptions, not re-keyed facts. Record each blocker with owner, due date, affected work area, and resolution evidence. Release by bounded area/package where prerequisites differ; do not imply whole-project readiness from one released segment. Decision records exact revision, scope, conditions, stop-work triggers, authority, and recipient acknowledgement. Field RFI or changed condition routes to DEV-11 change control; superseded package is visibly withdrawn from active use.
+
+**Failure branches and acceptance.** Missing access, unresolved conflict, stale survey, pending condition, unapproved substitution, or unaccepted outage plan blocks affected scope; unaffected packages can proceed only if interfaces and separation are documented. Emergency work follows owner's separate authorized path and is retrospectively linked to design/as-built records. Package is accepted for release when every required role signs or has documented disposition, current controlled set is transmitted, receiver acknowledges version, open items have bounded scope/owners, and authorization evidence is stored.
 
 ## Cross-procedure gate checklist
 

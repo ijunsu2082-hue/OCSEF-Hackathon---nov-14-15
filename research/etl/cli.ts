@@ -4,10 +4,35 @@ import { backupReport, restoreReport } from "./backup";
 import { reconcile } from "./reconcile";
 import { coverageInventory } from "./coverage";
 import { backfillWeather } from "./weather-history";
+import { collectAssets, replayAssets } from "./assets";
+import { auditSubstations } from "./substation-audit";
+import { loadLocationAssets } from "./load-assets";
 
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";
+  if (command === "load-assets") {
+    console.log(JSON.stringify(await loadLocationAssets(args)));
+    return;
+  }
+  if (command === "audit-substations") {
+    if (args.length !== 3) throw new Error("Expected OSM GeoJSON, HIFLD manifest, and reviewed crosswalk paths");
+    console.log(JSON.stringify(await auditSubstations(args[0], args[1], args[2])));
+    return;
+  }
+  if (command === "assets") {
+    const [source, lat, lon, radius] = args;
+    if (args.length !== 4 || [lat, lon, radius].some((value) => !value.trim())) {
+      throw new Error("Expected assets <source> <lat> <lon> <radius-miles>");
+    }
+    console.log(JSON.stringify(await collectAssets(locationQuery(Number(lat), Number(lon), Number(radius)), source)));
+    return;
+  }
+  if (command === "replay-assets") {
+    if (args.length !== 1) throw new Error("Expected asset manifest path");
+    console.log(JSON.stringify(await replayAssets(JSON.parse(await readFile(args[0], "utf8")))));
+    return;
+  }
   if (command === "backfill") {
     const [source, lat, lon, start, end] = args;
     if (source !== "weather" || args.length !== 5 || !lat.trim() || !lon.trim()) {

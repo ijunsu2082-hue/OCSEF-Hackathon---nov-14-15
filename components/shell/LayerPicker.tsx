@@ -10,6 +10,7 @@ import {
   LAYER_OPTIONS,
   type LayerVisibility,
 } from "@/lib/gridLayers";
+import type { SurfaceMode } from "@/lib/basemaps";
 import { RISK_COLORS, type RiskBucket } from "@/lib/risk";
 
 interface Props {
@@ -17,8 +18,8 @@ interface Props {
   onBasemap: (id: BasemapId) => void;
   layers: LayerVisibility;
   onLayers: (next: LayerVisibility) => void;
-  view3d: boolean;
-  onView3d: (value: boolean) => void;
+  surface: SurfaceMode;
+  onSurface: (value: SurfaceMode) => void;
 }
 
 const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
@@ -28,7 +29,7 @@ const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
  * map details. Replaces the flat row of layer chips so the map keeps its
  * corners clear. Dark-token styling to match the shell.
  */
-export default function LayerPicker({ basemap, onBasemap, layers, onLayers, view3d, onView3d }: Props) {
+export default function LayerPicker({ basemap, onBasemap, layers, onLayers, surface, onSurface }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const preview = basemapById(basemap === "dark" ? "satellite" : basemap);
@@ -88,10 +89,10 @@ export default function LayerPicker({ basemap, onBasemap, layers, onLayers, view
             ))}
           </div>
 
-          <p className="layer-pop-title layer-pop-divider">Camera</p>
+          <p className="layer-pop-title layer-pop-divider">Surface</p>
           <div className="layer-camera-choice" role="group" aria-label="Map camera mode">
-            <button type="button" data-active={!view3d} aria-pressed={!view3d} onClick={() => onView3d(false)}>Flat</button>
-            <button type="button" data-active={view3d} aria-pressed={view3d} onClick={() => onView3d(true)}>Elevation</button>
+            <button type="button" data-active={surface === "flat"} aria-pressed={surface === "flat"} onClick={() => onSurface("flat")}>Flat</button>
+            <button type="button" data-active={surface === "elevation"} aria-pressed={surface === "elevation"} onClick={() => onSurface("elevation")}>Elevation</button>
           </div>
 
           <p className="layer-pop-title layer-pop-divider">Risk score</p>

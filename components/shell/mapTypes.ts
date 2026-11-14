@@ -12,4 +12,5 @@ export interface CorridorSelection {
   id: string;
   coordinates: [number, number][];
   voltage: number | null;
+  nearestSubstation?: { name: string; coordinates: [number, number] };
 }

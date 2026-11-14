@@ -4,7 +4,7 @@
 
 Related: [Infrastructure lifecycle](./INFRASTRUCTURE-LIFECYCLE.md) · [Infrastructure cases](./INFRASTRUCTURE-CASES.md).
 
-Workflow friction guide: [experienced-staff journeys, reuse, bulk work, handoffs, safeguards, and acceptance](./INFRASTRUCTURE-FRICTION.md) · [preview](./infrastructure-workflow-preview.html).
+Workflow friction guide: [experienced-staff journeys, reuse, bulk work, handoffs, safeguards, and acceptance](./INFRASTRUCTURE-FRICTION.md) · [Area Scan UI preview](./infrastructure-workflow-preview.html).
 
 Procedure manuals: [Development (intake, feasibility, land, engineering)](./INFRASTRUCTURE-PROCEDURES-DEVELOPMENT.md) · [Authorizations](./INFRASTRUCTURE-PROCEDURES-AUTHORIZATIONS.md) · [Delivery](./INFRASTRUCTURE-PROCEDURES-DELIVERY.md).
 
