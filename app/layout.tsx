@@ -1,19 +1,15 @@
-import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GridSentinel",
+  title: "GridSentinel — Infrastructure energy intelligence",
   description:
-    "Click anywhere within 100 miles of Westminster High School to scan the power plants, transmission lines, substations and live line rating in that circle.",
+    "Map every facility, score its energy risk, stress-test it, and turn the result into a funded upgrade plan.",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#ffffff",
-  colorScheme: "light",
-};
-
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>

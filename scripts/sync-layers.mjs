@@ -1,6 +1,6 @@
 // Copies research layers into public/layers and builds public/layers/gen_events.json.
 // Plain Node ESM, no dependencies. Run: node scripts/sync-layers.mjs
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,7 +15,8 @@ mkdirSync(OUT_RATINGS, { recursive: true });
 for (const f of ["plants.geojson", "transmission.geojson", "substations.geojson", "niche_cases.json",
   // niche_cases.json chart.data_url points at /layers/line_rating_2024_westminster_hs.csv
   "line_rating_2024_westminster_hs.csv"]) {
-  copyFileSync(join(RESEARCH, "layers", f), join(OUT, f));
+  // public/layers is committed on main; never overwrite the team's copies, only fill gaps.
+  if (!existsSync(join(OUT, f))) copyFileSync(join(RESEARCH, "layers", f), join(OUT, f));
 }
 
 // 2. Line ratings

@@ -35,6 +35,16 @@
   --flow: #38d6c4;
   --flow-speed: 1.2s;
 
+  /* Real-grid source colours (README §4.6). Deliberately outside the
+     teal → amber → vermilion → crimson risk ramp so a fuel colour can never
+     read as a risk level. */
+  --src-gas: #b98cff;
+  --src-solar: #ffd24d;
+  --src-battery: #f472b6;
+  --src-wind: #7dd3fc;
+  --src-hydro: #818cf8;
+  --src-other: #94a3b8;
+
   /* Shape + depth */
   --radius-sm: 6px;
   --radius-md: 10px;
