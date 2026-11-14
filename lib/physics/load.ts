@@ -84,6 +84,9 @@ export interface WeatherScenario {
   wind_amplitude_mps: number;
   /** Fraction of clear-sky irradiance that actually arrives, 0–1. */
   clearness: number;
+  /** Optional design-day extremes; derived from the annual terms if absent. */
+  design_high_c?: number;
+  design_low_c?: number;
   /** Optional explicit 8760-hour series; wins over the synthetic model. */
   hourly?: WeatherPoint[];
 }
@@ -354,10 +357,11 @@ export function loadAt(spec: LoadSpec, hour: number, ambientC: number): LoadPoin
 export function annualLoadMwh(
   spec: LoadSpec,
   weather: readonly WeatherPoint[],
+  hoursOfDay?: readonly number[],
 ): number {
   let mwh = 0;
   for (let i = 0; i < weather.length; i += 1) {
-    const hour = i % 24;
+    const hour = hoursOfDay ? hoursOfDay[i] ?? i % 24 : i % 24;
     mwh += loadAt(spec, hour, weather[i].ambient_c).p_mw;
   }
   return roundTo(mwh, 1);

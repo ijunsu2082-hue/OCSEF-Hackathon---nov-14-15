@@ -364,6 +364,7 @@ export interface PeakSnapshot {
   transformer_loading_pct: number;
   feeder_voltages: Record<string, { min_pu: number; max_pu: number }>;
   bus_voltages: Record<string, number>;
+  bus_load_mw: Record<string, number>;
 }
 
 export interface MunicipalityResult {
@@ -380,6 +381,7 @@ export interface MunicipalityBuildResult {
 
 export interface BuiltFeeder {
   scenario: FeederScenario;
+  s_base_mva: number;
   network: {
     id: string;
     slack_bus_id: string;

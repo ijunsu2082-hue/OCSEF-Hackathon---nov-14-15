@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "verify:physics": "tsx scripts/verify-physics.ts"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",
