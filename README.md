@@ -84,11 +84,12 @@ app/
 components/
   shell/       ControlBar · MapCanvas · MapView · AnalyzerDrawer · Tabs · StatusBadge   Dev 1
   energy/      TelemetryTab · UpgradeSimulatorTab · charts/EnergyMixChart · charts/PaybackChart   Dev 2
+  grid/        GridChainTab (six-phase exposure, diagnostics, pathways)                         Dev 2
   outreach/    ProviderActionTab · MemoPreview · DispatchForm   Dev 3
   primitives/  Panel · Stat · RiskPill · Sparkline · cx         Dev 4  (done)
 lib/
   types.ts     frozen contract                                  G0    (done)
-  simulation.ts risk.ts region.ts format.ts                     Dev 2
+  simulation.ts risk.ts region.ts format.ts grid.ts             Dev 2
   ai/brief.ts  email/dispatch.ts                                Dev 3
 data/
   nodes.json   GeoJSON FeatureCollection + `flows`              Dev 2
@@ -311,10 +312,15 @@ Anyone still on the old field names is unblocked by §4.2: `loadRatio` replaces 
 ### 4.1 Region + seed assets — `westminster-100mi`
 
 ```jsonc
-// data/regions.json
-{ "id": "westminster-100mi", "name": "Westminster 100-Mile Radius", "state": "CA",
-  "center": [33.7538, -118.0111], "radius_miles": 100,
-  "bounds": [[33.10, -118.60], [34.50, -117.28]], "grid_zone": "US-CAL-CAMX" }
+// data/regions.json — an ARRAY, so adding a second region is additive
+[{ "id": "westminster-100mi", "name": "Westminster 100-Mile Radius", "state": "CA",
+   "center": [33.7538, -118.0111], "radius_miles": 100,
+   "bounds": [[33.10, -118.60], [34.50, -117.28]], "grid_zone": "US-CAL-CAMX" }]
+
+// data/nodes.json — FeatureCollection + the region it belongs to + grid ties
+{ "region_id": "westminster-100mi", "type": "FeatureCollection",
+  "features": [ /* 11 features, §4.1 */ ],
+  "flows": [ /* 9 PowerFlow segments */ ] }
 ```
 
 Eleven real sites, every one inside 100 miles of Westminster High School (**farthest** is Carlsbad at ~58 mi). Coordinates and in-service years were verified against operator/agency records.
@@ -421,18 +427,22 @@ risk = 40 * fossilShare                                        // (100 - solar -
 
 ### 4.4 Expected values (use as G1 assertions)
 
-Every figure below is computed from the `Live MW` column in §4.1, which sums to **147.09 → 147.1 MW**. Do not recompute from nameplate and re-round; derive from the same live values and the table, panel and assertions stay in agreement.
+Every figure below is computed from the **unrounded** `nameplate_draw_mw × utilization_pct` in `data/nodes.json` — not from the 2-dp `Live MW` column. Rounding that column first drifts annual energy by ~20 MWh/yr, which is exactly enough for a judge's calculator to disagree with the screen. `npx tsc --noEmit` is clean and these were re-derived from the file after the §3.1 migration:
+
+```bash
+node -e "const f=require('./data/nodes.json');let L=0,D=0,C=0;for(const x of f.features){const i=x.properties.infrastructure,e=x.properties.energy_profile;const l=i.nameplate_draw_mw*i.utilization_pct/100;L+=l;D+=l*24;C+=l*24*1000*e.carbon_intensity_gco2_kwh*365/1e6}console.log(L.toFixed(4),Math.round(D*365),Math.round(C))"
+```
 
 | Assertion | Expected |
 | --- | --- |
 | Nameplate | **206.4 MW** |
-| Live regional draw | **147.1 MW** (147.09 exact) |
-| Daily energy | **3,530.16 MWh** |
-| Annual energy | **1,288,508 MWh** |
-| Annual CO₂ | **427,338 t** |
+| Live regional draw | **147.1 MW** (147.0877 exact) |
+| Daily energy | **3,530.10 MWh** |
+| Annual energy | **1,288,488 MWh** |
+| Annual CO₂ | **427,329 t** |
 | Load-weighted grid CI | **331.7 gCO₂/kWh** |
-| Homes equivalent | **122,715** |
-| Heatwave draw | **283.1 MW** (×1.92) |
+| Homes equivalent | **122,713** |
+| Heatwave draw | **283.2 MW** (×1.93) |
 | Heatwave annual CO₂ | **1,024,592 t** (+139.8 %) |
 | Overloads during heatwave | **3** — `node-oc-01`, `node-la-06`, `node-sd-01` (utilization × 1.35 > 100) |
 
@@ -442,6 +452,29 @@ Risk scores: `oc-01 31.3 · oc-02 67.8 · la-01 49.4 · la-02 46.4 · la-03 67.2
 
 - **Telemetry:** site name/type/operator, in-service year, utilization bar (live MW vs nameplate), live MW, `homesEquivalent`, stacked `EnergyMixChart` (Recharts `BarChart`, `stackId`, five sources), `RiskPill`, CO₂/yr.
 - **Upgrade Simulator:** two controls — *Solar array* `0…2×rec` step 0.25 MW, *Drive retrofit (VFD)* toggle. Live readouts: post-upgrade draw, grid offset, CO₂ avoided, capex, annual savings, **payback years**. `PaybackChart` = Recharts `AreaChart` of cumulative net position over 15 years: it starts at `−capex` and crosses zero at payback — that crossing is the story. Sliders compute locally from `lib/simulation.ts`; **do not** round-trip `/api/simulate` on drag.
+
+### 4.7 Six-phase grid chain — `lib/grid.ts`
+
+The spec models the grid end to end; the load centers are only phase 5 of that chain. `lib/grid.ts` (pure, no I/O) derives all six phases for any load center from data the app already has — the simulated operating point, the modelled ties in `nodes.json`, and the inspected age. Nothing is fetched, nothing is stored, and `lib/types.ts` is untouched.
+
+| Phase | Derived telemetry | Diagnostics (band thresholds) | Priced pathways |
+| --- | --- | --- | --- |
+| **1 · Generation** | fossil / renewable MW from `source_mix` × live draw, curtailed MWh | curtailment risk `(solar+wind−25)×0.25 %`, baseload cliff by gas share, inertia shortfall by renewable share | co-located BESS 25 % of draw × 4 h, grid-forming inverter retrofit |
+| **2 · Transmission** | serving tie MVA, voltage class parsed from the label, loading %, I²R loss | thermal loading / sag, resistive loss, wildfire ignition (heatwave-weighted) | dynamic line rating (+15 %), composite reconductoring (+30 %) |
+| **3 · Substation** | bank count and MVA, rating used, years past design life, DGA score, top-oil °C | 35-yr design life, DGA health, top-oil temperature, 130-week LPT lead time | continuous DGA fibre-optic monitoring, modular substation retrofit |
+| **4 · Distribution** | feeder count (`ceil(draw/8)`), feeder loading, SAIDI/SAIFI, phase imbalance | feeder overload, reliability, radial single point of failure, imbalance | smart-switching reclosers, right-sized distribution transformers |
+| **5 · Behind the meter** | 24-h profile peak/trough, evening ramp MW, DER share, homes equivalent | duck-curve ramp, multi-MW load shock, DER without dispatch | VPP aggregation, managed smart charging |
+| **6 · Market** | LMP, congestion premium, reserve headroom, zone | congestion price spike, peaker reserve depletion, price exposure | automated demand response, BESS price arbitrage |
+
+**Corridor loading** (also drawn on the map): throughput is the larger of the two connected draws, capacity is `mva × (heatwave ? 0.88 : 1)` — the 105 °F thermal derate — and loss is `0.7 + 1.6 × (loading/100)² %` of throughput. Bands: `<55 ok · 55 watch · 70 high · 85 critical`. The map adds `.flow-line.is-watch` / `.is-congested` (tokens, no inline colour) and a `Corridors ≥ 80%` counter in the map topline.
+
+**Phase severity** is the worst diagnostic in that phase, rendered through `SEVERITY_COLOR` (same green→crimson ramp as `RiskPill`, always paired with its text label). `phaseExposure()` rolls every load center up: alerts, exposed MW, and the primary pathway's capex/savings/payback per phase — that is the answer to "which phase is the binding constraint in this region?".
+
+Screening unit economics live in one `UNIT` table in `lib/grid.ts` (BESS $1.35M/MW and $260k/MW-yr, DLR $45k/MVA, reconductoring $210k/MVA, substation retrofit $165k/MVA, feeder transformers $380k each, VPP $28k/MW, demand response $120k/MW). Every pathway lands in a 1–6 year simple payback so it sits in the same band as the solar + VFD bundles in §4.1.
+
+Wiring: `components/grid/GridChainTab.tsx` is the **Grid chain** drawer tab (telemetry chips → diagnostics → pathways, plus the regional rollup); `lib/ai/brief.ts` sends `grid_chain` to Gemini and names the binding phase in the fallback memo's FINDINGS line.
+
+**Deliberately not added:** PostGIS / TimescaleDB / Neo4j / FastAPI. The spec's storage stack exists to hold the same shapes this repo holds in JSON and evaluates in-process; adding a second runtime would break the single-deploy, zero-API-key property in §1 without changing a single number on screen.
 
 ---
 
