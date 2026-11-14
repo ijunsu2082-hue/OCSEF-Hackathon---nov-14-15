@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   CENTER,
   fetchWeatherNow,
@@ -18,11 +18,22 @@ import { cx } from "@/components/primitives";
 
 const DEFAULT_AREA: ScanArea = { lat: CENTER.lat, lon: CENTER.lon, radius_mi: 5 };
 const LIVE_DEBOUNCE_MS = 300;
+/** How long a radius drag must settle before the region is re-scanned. */
+const RADIUS_SETTLE_MS = 160;
 
 export default function Page() {
   const [data, setData] = useState<GridData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [area, setArea] = useState<ScanArea>(DEFAULT_AREA);
+  // Committed radius: the slider moves `area` on every step, this only on settle.
+  const [scanRadius, setScanRadius] = useState(DEFAULT_AREA.radius_mi);
+  const radiusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (radiusTimer.current) clearTimeout(radiusTimer.current);
+    },
+    [],
+  );
   const [heatwave, setHeatwave] = useState(false);
   const [live, setLive] = useState<LineRatingNow | null>(null);
   const [liveLoading, setLiveLoading] = useState(true);
@@ -47,7 +58,20 @@ export default function Page() {
     };
   }, []);
 
-  const result = useMemo(() => (data ? scanArea(data, area, { heatwave }) : null), [data, area, heatwave]);
+  // A radius change re-scans every layer. Three things keep that off the
+  // interaction path: the circle tracks the drag immediately, the committed
+  // radius only moves once the drag settles, and the scan runs at low priority
+  // so the panel keeps its last result until the new one is ready.
+  const deferredArea = useDeferredValue(area);
+  const scanTarget = useMemo(
+    () => ({ ...deferredArea, radius_mi: scanRadius }),
+    [deferredArea, scanRadius],
+  );
+  const scanning = deferredArea !== area || scanRadius !== area.radius_mi;
+  const result = useMemo(
+    () => (data ? scanArea(data, scanTarget, { heatwave }) : null),
+    [data, scanTarget, heatwave],
+  );
 
   // ---- live line rating (debounced, stale-safe) ------------------------------
   const liveReq = useRef(0);
@@ -114,6 +138,8 @@ export default function Page() {
 
   const onRadius = useCallback((radius_mi: number) => {
     setArea((a) => ({ ...a, radius_mi }));
+    if (radiusTimer.current) clearTimeout(radiusTimer.current);
+    radiusTimer.current = setTimeout(() => setScanRadius(radius_mi), RADIUS_SETTLE_MS);
   }, []);
 
   const onSelectCase = useCallback(
@@ -172,6 +198,7 @@ export default function Page() {
         >
           <ScanPanel
             result={result}
+            pending={scanning}
             live={live}
             liveLoading={liveLoading}
             heatwave={heatwave}

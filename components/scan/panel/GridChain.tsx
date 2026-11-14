@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import nodesJson from "@/data/nodes.json";
 import { gridChain, type PhaseState, type Severity } from "@/lib/grid";
 import {
@@ -155,21 +155,28 @@ export function GridChain({
     };
   }, []);
 
+  // Reading every plant and circuit in the circle is the expensive part of a
+  // scan. Deferring the point keeps the panel interactive: the previous chain
+  // stays on screen while the new one is computed at low priority.
+  const deferredLat = useDeferredValue(lat);
+  const deferredLon = useDeferredValue(lon);
+  const recomputing = deferredLat !== lat || deferredLon !== lon;
+
   const chain = useMemo(() => {
-    const nearest = nearestNode(lat, lon);
+    const nearest = nearestNode(deferredLat, deferredLon);
     if (!nearest) return null;
     const sim = simulate(nearest.node.properties, {
       heatwave_active: heatwave,
       added_solar_mw: 0,
       vfd_retrofit: false,
     });
-    const assets = index ? summarizeAssets(index, [lon, lat]) : null;
+    const assets = index ? summarizeAssets(index, [deferredLon, deferredLat]) : null;
     return {
       name: nearest.node.properties.name,
       distance_mi: nearest.distance_mi,
       states: gridChain(nearest.node.properties, sim, { assets }),
     };
-  }, [lat, lon, heatwave, index]);
+  }, [deferredLat, deferredLon, heatwave, index]);
 
   if (!chain) return null;
 
@@ -184,7 +191,11 @@ export function GridChain({
           number.
         </Caption>
       )}
-      <div className="flex flex-col gap-5">
+      <div
+        className="flex flex-col gap-5 transition-opacity duration-150"
+        style={{ opacity: recomputing ? 0.55 : 1 }}
+        aria-busy={recomputing}
+      >
         {chain.states.map((state) => (
           <Phase key={state.id} state={state} />
         ))}

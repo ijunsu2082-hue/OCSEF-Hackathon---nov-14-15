@@ -13,6 +13,7 @@ import { fmtCoord, fmtNum, isNum } from "./format";
 
 export interface ScanPanelProps {
   result: ScanResult | null; // null = data still loading
+  pending?: boolean; // a new area is being scanned; result is the previous one
   live: LineRatingNow | null; // null while fetching
   liveLoading: boolean;
   heatwave: boolean;
@@ -24,7 +25,7 @@ export interface ScanPanelProps {
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
 
-function Header({ result }: { result: ScanResult }) {
+function Header({ result, pending }: { result: ScanResult; pending?: boolean }) {
   const { area, risk } = result;
   const r = area.radius_mi;
   return (
@@ -43,6 +44,11 @@ function Header({ result }: { result: ScanResult }) {
       <p className="mt-1 text-[13px] tabular-nums text-[#556070]">
         {fmtCoord(area.lat, area.lon)} · {fmtNum(r, isNum(r) && r % 1 !== 0 ? 1 : 0)} mi radius
       </p>
+      {pending && (
+        <p className="mt-1 text-[12px] leading-snug text-[#6b7583]" aria-live="polite">
+          Recomputing for the new size — showing the previous result.
+        </p>
+      )}
       {!result.inside_coverage && (
         <p className="mt-2 text-[13px] leading-snug text-[#556070]">
           This spot is outside the 100-mile study area around Westminster High School, so coverage is thinner here.
@@ -83,7 +89,8 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 }
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
-  const { result, live, liveLoading, daily, selectedCaseId, onSelectCase, onFocus, heatwave } = p;
+  const { result, pending, live, liveLoading, daily, selectedCaseId, onSelectCase, onFocus, heatwave } =
+    p;
 
   if (!result) {
     return (
@@ -97,7 +104,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
 
   return (
     <div className="h-full overflow-y-auto bg-white text-[#1d2733]">
-      <Header result={result} />
+      <Header result={result} pending={pending} />
       <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
       <WhatsHere result={result} live={live} />
       <RiskBreakdown factors={result.risk.factors} />
