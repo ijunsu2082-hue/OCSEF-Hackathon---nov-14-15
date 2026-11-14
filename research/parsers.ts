@@ -26,6 +26,23 @@ function asArray(value: unknown): unknown[] | null {
 }
 
 export const PARSERS: Record<string, ParserDefinition> = {
+  "json.eia-hourly": {
+    id: "json.eia-hourly",
+    version: "1",
+    parse: (bytes) => {
+      const data = JSON.parse(decode(bytes));
+      const rows: unknown[] | null = asArray(data?.response?.data);
+      if (!rows) throw new Error("EIA response has no data array");
+      for (const entry of rows) {
+        if (!entry || typeof entry !== "object") continue;
+        const row = entry as Record<string, unknown>;
+        if (typeof row.value === "string" && /^-?\d+(\.\d+)?$/.test(row.value)) {
+          row.value = Number(row.value);
+        }
+      }
+      return { data, recordCount: rows.length };
+    },
+  },
   "geojson.features": {
     id: "geojson.features",
     version: "1",

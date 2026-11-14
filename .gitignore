@@ -8,6 +8,7 @@ next-env.d.ts
 *.tsbuildinfo
 .DS_Store
 *.log
+.data/weather.sqlite*
 
 # Next build output (distDir: build-out for builds, build-dev for dev)
 build-out
@@ -21,5 +22,10 @@ prcheck-out
 build-ui
 # Agent scratch: parallel-session worktrees and handoff notes
 .worktrees
+graphify-out
+final-check
+research/etl-state/
+research/etl/.venv/
+__pycache__/
 handoff
 *.log

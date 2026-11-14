@@ -648,8 +648,28 @@ const REGION_UNITS: PredicateDefinition[] = [
   }),
 ];
 
+export const EIA_FUEL_CODES = ["BAT", "COL", "GEO", "HYD", "NG", "NUC", "OIL", "OTH", "PS", "SNB", "SUN", "UNK", "WND", "WNB"] as const;
+
+const TELEMETRY: PredicateDefinition[] = [
+  def({
+    id: "telemetry.period", label: "Source observation time", unit: null,
+    value_type: "string", allowed_methods: ["observed"], subject_prefix: "region",
+    description: "Observation timestamp or hour as published by the feed.",
+  }),
+  ...([
+    ["weather.temperature_c", "Station air temperature", "°C"],
+    ["weather.wind_kmh", "Station wind speed", "km/h"],
+    ["weather.gust_kmh", "Station wind gust", "km/h"],
+    ["telemetry.demand", "Balancing-authority hourly demand", "MWh"],
+    ...EIA_FUEL_CODES.map((code) => [`telemetry.fuel_${code}`, `Hourly generation (${code})`, "MWh"]),
+  ]).map(([id, label, unit]) => def({
+    id, label, unit, value_type: "number", allowed_methods: ["observed"],
+    subject_prefix: "region", description: "Published observation within the source's reporting scope.",
+  })),
+];
+
 export const PREDICATES: Record<string, PredicateDefinition> = Object.fromEntries(
-  [...FACILITY_UNITS, ...REGION_UNITS].map((predicate) => [predicate.id, predicate]),
+  [...FACILITY_UNITS, ...REGION_UNITS, ...TELEMETRY].map((predicate) => [predicate.id, predicate]),
 );
 
 export function getPredicate(id: string): PredicateDefinition | null {

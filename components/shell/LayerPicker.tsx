@@ -17,6 +17,8 @@ interface Props {
   onBasemap: (id: BasemapId) => void;
   layers: LayerVisibility;
   onLayers: (next: LayerVisibility) => void;
+  view3d: boolean;
+  onView3d: (value: boolean) => void;
 }
 
 const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
@@ -26,7 +28,7 @@ const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
  * map details. Replaces the flat row of layer chips so the map keeps its
  * corners clear. Dark-token styling to match the shell.
  */
-export default function LayerPicker({ basemap, onBasemap, layers, onLayers }: Props) {
+export default function LayerPicker({ basemap, onBasemap, layers, onLayers, view3d, onView3d }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const preview = basemapById(basemap === "dark" ? "satellite" : basemap);
@@ -86,6 +88,12 @@ export default function LayerPicker({ basemap, onBasemap, layers, onLayers }: Pr
             ))}
           </div>
 
+          <p className="layer-pop-title layer-pop-divider">Camera</p>
+          <div className="layer-camera-choice" role="group" aria-label="Map camera mode">
+            <button type="button" data-active={!view3d} aria-pressed={!view3d} onClick={() => onView3d(false)}>Flat</button>
+            <button type="button" data-active={view3d} aria-pressed={view3d} onClick={() => onView3d(true)}>Elevation</button>
+          </div>
+
           <p className="layer-pop-title layer-pop-divider">Risk score</p>
           <div className="layer-ramp">
             {RAMP.map((bucket) => (
@@ -94,6 +102,15 @@ export default function LayerPicker({ basemap, onBasemap, layers, onLayers }: Pr
                 {bucket}
               </span>
             ))}
+          </div>
+
+          <p className="layer-pop-title layer-pop-divider">Transmission voltage</p>
+          <div className="layer-voltage-legend" aria-label="Transmission line widths by voltage">
+            <span><i data-band="500" aria-hidden />500 kV and up</span>
+            <span><i data-band="230" aria-hidden />200–499 kV</span>
+            <span><i data-band="115" aria-hidden />100–199 kV</span>
+            <span><i data-band="69" aria-hidden />Under 100 kV</span>
+            <span><i data-band="unknown" aria-hidden />Voltage unknown</span>
           </div>
 
           <p className="layer-note">

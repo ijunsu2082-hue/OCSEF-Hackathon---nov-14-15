@@ -414,6 +414,12 @@ ol {
   transform: rotateX(50deg);
 }
 
+/* MapLibre owns pitch and terrain. Avoid applying the legacy CSS camera to its canvas. */
+.map-plane.is-3d:has(.maplibre-host) {
+  inset: 0;
+  transform: none;
+}
+
 .map-horizon {
   position: absolute;
   top: 0;
@@ -460,6 +466,55 @@ ol {
   position: absolute;
   inset: 0;
   background: #05070c;
+}
+
+.maplibre-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #05070c;
+}
+
+.maplibre-host .maplibregl-canvas {
+  outline: none;
+}
+
+.maplibre-host .maplibregl-ctrl-attrib {
+  color: #9ba6b4;
+  background: rgba(8, 12, 18, 0.72);
+  font-size: 9px;
+}
+
+.map-camera-presets {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(8, 12, 18, 0.78);
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+}
+
+.map-camera-presets button {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 9px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.map-camera-presets button[data-active="true"] {
+  color: var(--text);
+  background: rgba(56, 214, 196, 0.15);
 }
 
 .leaflet-container {
@@ -2980,6 +3035,62 @@ input[type="range"]::-moz-range-thumb {
   gap: 4px 10px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.layer-voltage-legend {
+  display: grid;
+  gap: 6px;
+  padding: 0 2px 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.layer-voltage-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layer-voltage-legend i {
+  width: 22px;
+  display: inline-block;
+  border-top: 1px solid #9aa8bb;
+  opacity: 0.7;
+}
+
+.layer-voltage-legend i[data-band="500"] { border-top-width: 3px; }
+.layer-voltage-legend i[data-band="230"] { border-top-width: 2px; }
+.layer-voltage-legend i[data-band="115"] { border-top-width: 1.25px; }
+.layer-voltage-legend i[data-band="69"] { border-top-width: 1px; }
+.layer-voltage-legend i[data-band="unknown"] { border-top-style: dashed; }
+
+.layer-camera-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 0 2px 4px;
+}
+
+.layer-camera-choice button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.layer-camera-choice button[data-active="true"] {
+  border-color: rgba(56, 214, 196, 0.4);
+  color: var(--text);
+  background: rgba(56, 214, 196, 0.12);
+}
+
+.map-camera-presets button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .layer-ramp span {

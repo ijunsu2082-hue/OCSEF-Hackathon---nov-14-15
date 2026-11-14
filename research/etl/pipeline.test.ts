@@ -1,0 +1,107 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
+import { test } from "node:test";
+import { verifyEvidenceFiles } from "../verify-files";
+import { locationQuery, runLocation, verifyLocation } from "./pipeline";
+import { backupReport, restoreReport } from "./backup";
+import { reconcile, type Observation } from "./reconcile";
+
+test("location ETL captures, throttles, replays and falls back with cited values", async (t) => {
+  process.env.ETL_STATE_NAMESPACE = `test-${randomUUID()}`;
+  t.after(() => { delete process.env.ETL_STATE_NAMESPACE; });
+  const query = locationQuery(34.0522, -118.2437, 100, "CISO");
+  const start = new Date("2026-11-14T19:00:00Z");
+  let calls = 0;
+  let fail = false;
+  const originalKey = process.env.EIA_API_KEY;
+  process.env.EIA_API_KEY = "fixture-secret";
+  t.after(() => {
+    if (originalKey === undefined) delete process.env.EIA_API_KEY;
+    else process.env.EIA_API_KEY = originalKey;
+  });
+  t.mock.method(globalThis, "fetch", async (url: URL) => {
+    calls += 1;
+    if (fail) return new Response(null, { status: 503 });
+    switch (url.hostname) {
+      case "geocoding.geo.census.gov":
+        return Response.json({ result: { geographies: {
+          States: [{ GEOID: "06" }], Counties: [{ GEOID: "06037", NAME: "Los Angeles County" }],
+        } } });
+      case "services.arcgis.com":
+      case "services1.arcgis.com":
+        return Response.json({ count: 42 });
+      case "api.eia.gov": {
+        assert.equal(url.searchParams.get("api_key"), "fixture-secret");
+        const fuel = url.pathname.includes("fuel-type");
+        return Response.json({ response: { data: [{
+          period: "2026-11-14T18", respondent: "CISO", value: "502",
+          "value-units": "megawatthours", ...(fuel ? { fueltype: "SUN" } : { type: "D" }),
+        }] } });
+      }
+      case "api.weather.gov":
+        if (url.pathname.startsWith("/points/")) return Response.json({
+          properties: { observationStations: "https://api.weather.gov/gridpoints/LOX/1,2/stations" },
+        });
+        if (url.pathname.endsWith("/stations")) return Response.json({
+          features: [{ id: "https://api.weather.gov/stations/KLAX" }],
+        });
+        return Response.json({ properties: {
+          timestamp: start.toISOString(), temperature: { unitCode: "wmoUnit:degC", value: 20 },
+          windGust: { unitCode: "wmoUnit:km_h-1", value: null },
+        } });
+      default:
+        throw new Error(`Unexpected source ${url}`);
+    }
+  });
+  const captured = await runLocation(query, true, start);
+  await verifyLocation(captured);
+  assert.equal(captured.evidence.verification.ok, true);
+  assert.equal(captured.evidence.stats.observed, 12);
+  assert.equal(captured.evidence.unresolved.length, 0);
+  assert.equal(JSON.stringify(captured).includes("fixture-secret"), false);
+  assert.equal(calls, 9);
+  const replay = await runLocation(query, false, start);
+  assert.deepEqual(replay, captured);
+  await runLocation(query, true, new Date(start.getTime() + 60000));
+  assert.equal(calls, 9);
+  fail = true;
+  const fallback = await runLocation(query, true, new Date(start.getTime() + 600000));
+  assert.equal(fallback.feeds["nws-observation"].status, "fallback");
+  assert.equal(fallback.evidence.claims.find((claim) => claim.predicate === "weather.temperature_c")?.value, 20);
+  assert.notEqual(fallback.state_hash, captured.state_hash);
+  const snapshot = captured.evidence.snapshots[0];
+  const original = await readFile(snapshot.cache_path);
+  try {
+    await writeFile(snapshot.cache_path, "{}");
+    assert.equal((await verifyEvidenceFiles(captured.evidence)).issues[0]?.code, "SNAPSHOT_REPLAY");
+  } finally {
+    await writeFile(snapshot.cache_path, original);
+  }
+  const namespace = process.env.ETL_STATE_NAMESPACE!;
+  const backup = `research/etl-state/${namespace}/backup.json`;
+  const originalBackupKey = process.env.ETL_BACKUP_KEY;
+  process.env.ETL_BACKUP_KEY = "ab".repeat(32);
+  t.after(() => {
+    if (originalBackupKey === undefined) delete process.env.ETL_BACKUP_KEY;
+    else process.env.ETL_BACKUP_KEY = originalBackupKey;
+  });
+  await backupReport(captured, backup);
+  process.env.ETL_STATE_NAMESPACE = `${namespace}-restored`;
+  const restored = await restoreReport(backup);
+  assert.equal(restored.evidence.bundle_id, captured.evidence.bundle_id);
+  assert.deepEqual(restored.evidence.claims.map(({ id }) => id), captured.evidence.claims.map(({ id }) => id));
+});
+
+test("provider disagreement requires compatible scope and explicit authority", () => {
+  const left: Observation = {
+    scope: { metric: "demand", entity: "CISO", unit: "MWh", start: "2026-11-14T18:00:00Z",
+      end: "2026-11-14T19:00:00Z", statistic: "hourly_energy", basis: "actual" },
+    source: "a", publisher: "A", release: "1", snapshot: "one", locator: "/value", value: 200,
+  };
+  const right = { ...left, source: "b", publisher: "B", value: 300 };
+  assert.equal(reconcile(left, right).selected, null);
+  assert.equal(reconcile(left, right, { scope: left.scope, authority: "a" }).selected, left);
+  assert.equal(reconcile(left, { ...right, scope: { ...right.scope, entity: "LDWP" } }).status, "incomparable");
+  assert.equal(reconcile(left, { ...right, publisher: "A" }).independent, false);
+});

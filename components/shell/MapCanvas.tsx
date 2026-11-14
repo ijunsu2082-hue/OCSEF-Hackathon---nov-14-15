@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { LatLngBoundsExpression, Map as LeafletMap } from "leaflet";
+import type { CorridorSelection, MapController } from "./mapTypes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_LAYERS,
@@ -44,6 +44,7 @@ interface Props {
   selectedId: string;
   heatwave: boolean;
   view3d: boolean;
+  onView3d: (value: boolean) => void;
   nicheCases: NicheCase[];
   selectedNicheId: string | null;
   onSelect: (id: string) => void;
@@ -61,14 +62,17 @@ export default function MapCanvas({
   selectedId,
   heatwave,
   view3d,
+  onView3d,
   nicheCases,
   selectedNicheId,
   onSelect,
   onSelectNiche,
 }: Props) {
-  const [map, setMap] = useState<LeafletMap | null>(null);
+  const [map, setMap] = useState<MapController | null>(null);
+  const [cameraPreset, setCameraPreset] = useState<"regional" | "facility" | "corridor">("regional");
+  const [selectedCorridor, setSelectedCorridor] = useState<CorridorSelection | null>(null);
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
-  const onMapReady = useCallback((instance: LeafletMap) => setMap(instance), []);
+  const onMapReady = useCallback((instance: MapController) => setMap(instance), []);
 
   const [basemap, setBasemap] = useState<BasemapId>("dark");
   useEffect(() => setBasemap(loadBasemap()), []);
@@ -100,8 +104,8 @@ export default function MapCanvas({
       loadTransmission(),
       // Optional: without the archive the scan reports the gap, it does not guess.
       fetch(RATING_CSV_URL)
-        .then((response) => (response.ok ? response.text() : ""))
-        .catch(() => ""),
+        .then((response) => response.ok ? response.text() : fetch(RATING_CSV_URL.replace("2025", "2024")).then((fallback) => fallback.ok ? fallback.text() : ""))
+        .catch(() => fetch(RATING_CSV_URL.replace("2025", "2024")).then((fallback) => fallback.ok ? fallback.text() : "").catch(() => "")),
     ]).then(([plants, substations, transmission, rating]) => {
       if (!alive) return;
       setScanData({
@@ -159,6 +163,27 @@ export default function MapCanvas({
     ? { lat: scanPoint.lat, lon: scanPoint.lon, radius_mi: scanRadius }
     : null;
 
+  const chooseCamera = useCallback((preset: "regional" | "facility" | "corridor") => {
+    setCameraPreset(preset);
+    if (preset === "regional") {
+      map?.fitBounds(bounds, { padding: [46, 46], animate: true });
+      return;
+    }
+    const selected = nodes.find((node) => node.properties.id === selectedId);
+    const target = selected?.geometry.coordinates;
+    if (preset === "facility" && target) {
+      map?.flyTo([target[1], target[0]], 13, { duration: 0.8 });
+      return;
+    }
+    if (!selectedCorridor) return;
+    const latitudes = selectedCorridor.coordinates.map((point) => point[1]);
+    const longitudes = selectedCorridor.coordinates.map((point) => point[0]);
+    map?.fitBounds(
+      [[Math.min(...latitudes), Math.min(...longitudes)], [Math.max(...latitudes), Math.max(...longitudes)]],
+      { padding: [72, 72], animate: true },
+    );
+  }, [bounds, center, map, nodes, selectedId, selectedCorridor]);
+
   const handleScanPoint = useCallback((lat: number, lon: number) => {
     setScanPoint({ lat, lon });
   }, []);
@@ -186,8 +211,10 @@ export default function MapCanvas({
           layers={layers}
           nicheCases={nicheCases}
           selectedNicheId={selectedNicheId}
+          selectedCorridorId={selectedCorridor?.id ?? null}
           onSelect={onSelect}
           onSelectNiche={onSelectNiche}
+          onSelectCorridor={setSelectedCorridor}
           onMapReady={onMapReady}
           basemap={basemap}
           scanMode={scanMode}
@@ -200,7 +227,7 @@ export default function MapCanvas({
       <div className="map-horizon" aria-hidden />
 
       <div className="map-topline">
-        <span className="map-mode">{view3d ? "3D terrain · tilt 56°" : "2D top-down"}</span>
+        <span className="map-mode">{view3d ? "Elevation · terrain tilt 50°" : "Flat · top-down"}</span>
         {heatwave ? <span className="map-mode">Heatwave · 105 °F</span> : null}
         {scanMode ? (
           <span className="map-mode is-scan">Scan mode · click to query</span>
@@ -241,9 +268,7 @@ export default function MapCanvas({
         <button
           type="button"
           onClick={() =>
-            map?.fitBounds(bounds as unknown as LatLngBoundsExpression, {
-              padding: [46, 46],
-            })
+            map?.fitBounds(bounds, { padding: [46, 46], animate: true })
           }
           aria-label="Recenter on region"
         >
@@ -254,11 +279,24 @@ export default function MapCanvas({
         </button>
       </div>
 
+      <div className="map-camera-presets" role="group" aria-label="Map camera preset">
+        {(["regional", "facility", "corridor"] as const).map((preset) => (
+          <button key={preset} type="button" data-active={cameraPreset === preset}
+            disabled={preset === "corridor" && !selectedCorridor}
+            aria-pressed={cameraPreset === preset} onClick={() => chooseCamera(preset)}>
+            {preset}
+          </button>
+        ))}
+        {selectedCorridor ? <button type="button" onClick={() => { setSelectedCorridor(null); setCameraPreset("regional"); }}>Clear line</button> : null}
+      </div>
+
       <LayerPicker
         basemap={basemap}
         onBasemap={chooseBasemap}
         layers={layers}
         onLayers={setLayers}
+        view3d={view3d}
+        onView3d={onView3d}
       />
 
       {scanMode ? (
@@ -269,6 +307,11 @@ export default function MapCanvas({
           error={scanError}
           heatwave={heatwave}
           nicheCases={nicheCases}
+          corridor={selectedCorridor}
+          onTopPlant={(lat, lon) => {
+            setCameraPreset("facility");
+            map?.flyTo([lat, lon], 13, { duration: 0.8 });
+          }}
           onRadius={setScanRadius}
           onClose={closeScan}
         />

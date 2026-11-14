@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ScanResult } from "@/lib/scan/areaScan";
 import { haversineMi } from "@/lib/scan/areaScan";
 import type { NicheCase } from "@/lib/niche";
 import { sourceLabel } from "@/lib/gridLayers";
 import { fmtNumber } from "@/lib/format";
 import { Sparkline } from "@/components/primitives/Sparkline";
-import { dayLabel, hourLabel } from "@/lib/scan/wire";
+import { dayLabel, hourLabel, rateWeatherSample, type WireHour } from "@/lib/scan/wire";
 
 interface Props {
   result: ScanResult | null;
@@ -18,7 +18,40 @@ interface Props {
   nicheCases: NicheCase[];
   onRadius: (radius: number) => void;
   onClose: () => void;
+  onTopPlant?: (lat: number, lon: number) => void;
 }
+
+type WeatherSource = "live" | "persisted" | "historical" | "none";
+interface WeatherSample {
+  time: string;
+  temp_c: number;
+  wind_mps: number;
+  wind_direction_deg: number;
+  shortwave_wm2: number;
+  provider: "open-meteo";
+}
+interface WeatherStatus {
+  current: WeatherSample | null;
+  source: WeatherSource;
+  fetched_at: string | null;
+}
+
+function ageLabel(time: string | null): string {
+  if (!time) return "age unavailable";
+  const stamp = new Date(/(?:Z|[+-]\d{2}:?\d{2})$/.test(time) ? time : `${time}:00Z`).getTime();
+  if (!Number.isFinite(stamp)) return "age unavailable";
+  const minutes = Math.max(0, Math.floor((Date.now() - stamp) / 60_000));
+  if (minutes < 60) return `${minutes} min old`;
+  if (minutes < 60 * 48) return `${Math.floor(minutes / 60)} hr old`;
+  return `${Math.floor(minutes / (60 * 24))} d old`;
+}
+
+const WEATHER_SOURCE_LABEL: Record<WeatherSource, string> = {
+  live: "Live weather",
+  persisted: "Last saved weather",
+  historical: "Historical weather",
+  none: "Bundled weather archive",
+};
 
 const RISK_COLOR: Record<ScanResult["risk"]["level"], string> = {
   LOW: "var(--risk-low, #2dd4a7)",
@@ -118,17 +151,54 @@ export default function AreaScanPanel({
   nicheCases,
   onRadius,
   onClose,
+  onTopPlant,
 }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "failure">("idle");
+  const [weather, setWeather] = useState<WeatherStatus | null>(null);
+  const [weatherError, setWeatherError] = useState(false);
+  const [weatherPending, setWeatherPending] = useState(false);
+
+  useEffect(() => {
+    if (!result) {
+      setWeather(null);
+      setWeatherError(false);
+      setWeatherPending(false);
+      return;
+    }
+    const controller = new AbortController();
+    setWeather(null);
+    setWeatherError(false);
+    setWeatherPending(true);
+    const params = new URLSearchParams({ lat: String(result.point.lat), lon: String(result.point.lon) });
+    fetch(`/api/weather?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Weather request failed (${response.status})`);
+        return (await response.json()) as WeatherStatus;
+      })
+      .then((payload) => {
+        if (!controller.signal.aborted) {
+          setWeather(payload);
+          setWeatherPending(false);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setWeatherError(true);
+          setWeatherPending(false);
+        }
+      });
+    return () => controller.abort();
+  }, [result?.point.lat, result?.point.lon]);
 
   async function copyReport() {
     if (!result) return;
     try {
       await navigator.clipboard.writeText(result.report);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      setCopyStatus("success");
+      window.setTimeout(() => setCopyStatus("idle"), 1800);
     } catch {
-      setCopied(false);
+      setCopyStatus("failure");
+      window.setTimeout(() => setCopyStatus("idle"), 2400);
     }
   }
 
@@ -184,8 +254,22 @@ export default function AreaScanPanel({
   }, [casesHere]);
 
   const wire = result?.wire ?? null;
+  const archiveYear = wire?.now?.time.slice(0, 4) ?? wire?.hottest?.time.slice(0, 4) ?? "2025";
   const archiveRatio = wire?.now?.ratio ?? null;
-  const activeRatio = wire ? (heatwave ? wire.heatwave.ratio : archiveRatio) : null;
+  const weatherWire: WireHour | null =
+    wire && weather?.current
+      ? rateWeatherSample(wire.voltage_kv, weather.current)
+      : null;
+  const displayWeather = weatherWire ?? wire?.now ?? null;
+  const weatherSource = weather?.source ?? "none";
+  const weatherProvenance = weather?.current
+    ? WEATHER_SOURCE_LABEL[weatherSource]
+    : `Bundled ${displayWeather?.time.slice(0, 4) ?? archiveYear} archive`;
+  const activeRatio = wire
+    ? heatwave
+      ? wire.heatwave.ratio
+      : displayWeather?.ratio ?? archiveRatio
+    : null;
   const headroomPct =
     activeRatio === null ? null : Math.round(Math.abs(activeRatio - 1) * 100);
   const dayRatios = wire ? wire.today.map((hour) => hour.ratio) : [];
@@ -313,11 +397,6 @@ export default function AreaScanPanel({
                     ? "No solar here, so there is no sunset handoff."
                     : `For every 100 MW of solar lost at sunset there are ${fmtNumber(result.evening_cover_pct, 0)} MW of batteries.`}
                 </p>
-                <Row label="Battery storage" value={`${fmtNumber(result.storage_mw, 0)} MW`} />
-                <Row
-                  label="Solar"
-                  value={`${fmtNumber(result.mw_by_source.solar ?? 0, 0)} MW`}
-                />
               </Group>
 
               <Group title="Age">
@@ -380,7 +459,7 @@ export default function AreaScanPanel({
               </Group>
             </div>
             <p className="scan-caption scan-source">
-              Source: EIA-860 2025 · OpenStreetMap (ODbL) · 2024 weather archive. Line ratings are
+              Source: EIA-860 2025 · OpenStreetMap (ODbL) · {archiveYear} weather archive. Line ratings are
               MODELED (IEEE 738 screening), not operating ratings.
             </p>
           </section>
@@ -411,6 +490,18 @@ export default function AreaScanPanel({
                     <small>
                       {wire.conductor} · {wire.voltage_kv} kV · {wire.site}
                     </small>
+                    <small>
+                      {heatwave
+                        ? "Simulated heatwave"
+                        : weatherPending
+                          ? "Checking live weather…"
+                          : weather?.current
+                          ? weatherProvenance
+                          : weatherProvenance}
+                      {displayWeather
+                        ? ` · ${ageLabel(displayWeather.time)}${weather?.current ? ` · ${hourLabel(displayWeather.time)} UTC` : ` · ${hourLabel(displayWeather.time)} Pacific`}`
+                        : ""}
+                    </small>
                   </div>
                 </div>
 
@@ -432,9 +523,27 @@ export default function AreaScanPanel({
                   </>
                 ) : null}
 
-                <Row label="Still-air rating" value={`${fmtNumber(wire.still_air_a, 0)} A`} />
-                <Row label="With this wind" value={`${fmtNumber(wire.breeze_a, 0)} A`} />
-                <Row label="2024 median gain" value={`${wire.median_ratio.toFixed(2)}×`} />
+                <Row
+                  label="Still-air rating"
+                  value={`${fmtNumber(displayWeather?.still_a ?? wire.still_air_a, 0)} A`}
+                />
+                <Row
+                  label="Weather-based rating"
+                  value={`${fmtNumber(displayWeather?.breeze_a ?? wire.breeze_a, 0)} A`}
+                />
+                <Row
+                  label="Ambient / wind speed"
+                  value={displayWeather
+                    ? `${fmtNumber(displayWeather.temp_c, 1)} °C · ${fmtNumber(displayWeather.wind_mps, 1)} m/s`
+                    : "n/a"}
+                />
+                {weather?.current ? (
+                  <Row
+                    label="Wind direction (from)"
+                    value={`${Math.round(weather.current.wind_direction_deg)}°`}
+                  />
+                ) : null}
+                <Row label={`${archiveYear} median gain`} value={`${wire.median_ratio.toFixed(2)}×`} />
                 <Row
                   label="Hours above still air"
                   value={`${fmtNumber(wire.pct_hours_above_still_air, 0)}%`}
@@ -446,10 +555,18 @@ export default function AreaScanPanel({
                   />
                 ) : null}
                 <p className="scan-caption">
-                  {wire.now ? `${hourLabel(wire.now.time)} in the 2024 archive. ` : ""}
+                  {weather?.current
+                    ? `${hourLabel(weather.current.time)} weather sample. `
+                    : wire.now
+                      ? `${hourLabel(wire.now.time)} in the bundled ${archiveYear} archive. `
+                      : ""}
                   Still air is 0.61 m/s; temperature and sun are held at the hour&apos;s own
-                  values, so the difference is the wind alone.
+                  values, so the difference is wind speed alone. Direction is a meteorological
+                  bearing from north; this screening model does not adjust for line heading.
                 </p>
+                {weatherError ? (
+                  <p className="scan-caption">Live weather unavailable; showing the bundled archive.</p>
+                ) : null}
                 <p className="scan-caption">
                   105 °F: fixed rating {fmtNumber(wire.heatwave.derate_pct, 1)}% lower, a 3 m/s
                   breeze returns {wire.heatwave.ratio.toFixed(2)}×.
@@ -546,6 +663,15 @@ export default function AreaScanPanel({
                       {fmtNumber(plant.mw, 1)} MW · {fuelLabel(plant.source)} ·{" "}
                       {fmtNumber(plant.distance_mi, 1)} mi
                     </span>
+                    {onTopPlant ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => onTopPlant(plant.lat, plant.lon)}
+                      >
+                        Locate plant
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -554,7 +680,11 @@ export default function AreaScanPanel({
 
           <div className="scan-actions">
             <button type="button" className="btn btn-ghost" onClick={copyReport} aria-live="polite">
-              {copied ? "Copied" : "Copy scan report"}
+              {copyStatus === "success"
+                ? "Copied"
+                : copyStatus === "failure"
+                  ? "Copy failed"
+                  : "Copy scan report"}
             </button>
           </div>
         </div>

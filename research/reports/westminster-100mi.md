@@ -1,8 +1,8 @@
 # Evidence report — Westminster 100-Mile Radius
 
-- Bundle: `bnd_a25b91fa15ffa1d3`
+- Bundle: `bnd_9810bdfeb86cdf6d`
 - Schema: `gridsentinel.evidence/1`
-- Generated: 2026-11-14T20:06:35.610Z
+- Generated: 2026-11-14T20:42:05.933Z
 - Verification: **PASS**
 - Claims: 378 (3 observed, 108 derived, 267 modeled, 0 inferred)
 - Snapshots: 5
@@ -27,10 +27,10 @@
 | id | source | retrieved | bytes | sha256 | path |
 | --- | --- | --- | ---: | --- | --- |
 | `snp_15d8e679f3e73655` | `gs-layer-substations` | 2026-11-14T19:30:20.804Z | 289175 | `4665ca2638bba408…` | `public/layers/substations.geojson` |
-| `snp_45695c9371df821b` | `gs-seed-nodes` | 2026-11-14T19:30:20.804Z | 17877 | `64fb92bae3098d12…` | `data/nodes.json` |
 | `snp_87a511a4b9a35769` | `gs-layer-plants` | 2026-11-14T19:30:20.804Z | 451190 | `c3359701a2c638bc…` | `public/layers/plants.geojson` |
 | `snp_c73d46c411bb1ef3` | `gs-layer-transmission` | 2026-11-14T19:30:20.804Z | 2760667 | `d76220b9d62723c3…` | `public/layers/transmission.geojson` |
 | `snp_d1a03c227bb18d0c` | `census-geocoder` | 2026-11-14T19:30:20.804Z | 4757 | `ebdf6b7bb14c7c3a…` | `research/fixtures/census/westminster-hs.geographies.json` |
+| `snp_faf6287f25065888` | `gs-seed-nodes` | 2026-11-14T19:30:20.804Z | 18055 | `f33b3ccd42f25b99…` | `data/nodes.json` |
 
 ## Disclosures
 
@@ -50,5 +50,5 @@
 - ✓ confidence — capped
 - ✓ conflicts — 378 active claims
 - ✓ unresolved — 0 open
-- ✓ bundle id — bnd_a25b91fa15ffa1d3
+- ✓ bundle id — bnd_9810bdfeb86cdf6d
 

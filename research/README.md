@@ -53,7 +53,7 @@ not a parallel literal, so the screen and the audit cannot drift.
 | Evidence contract | `lib/evidence/schema.ts` — claim/source/snapshot/bundle types, `gridsentinel.evidence/1` |
 | Canonical IDs | `lib/evidence/canonical.ts` — SHA-256 over canonical JSON; claim/snapshot/bundle/registry digests |
 | Predicate registry | `lib/evidence/predicates.ts` — closed list, per-predicate unit, type, range, allowed methods, inference gate |
-| Formula registry | `lib/evidence/formulas.ts` — 15 formulas, domain math reuses `lib/risk.ts` / `lib/simulation.ts` semantics |
+| Formula registry | `lib/evidence/formulas.ts` — 14 formulas, domain math reuses `lib/risk.ts` / `lib/simulation.ts` semantics |
 | Verifier | `lib/evidence/verify.ts` — pure, fail-closed; re-hashes IDs, re-evaluates derivations, re-applies conflicts |
 | File verifier | `research/verify-files.ts` — re-hashes snapshots, re-runs parsers, re-resolves JSON Pointers |
 | Research pipeline | `research/` — profile → snapshots → claims → conflict resolution → verification → bundle |
@@ -162,7 +162,7 @@ A derivation names a formula and binds claim ids to input names:
 
 ```ts
 interface Derivation {
-  formula_id: string;   // one of the 15 registered formulas
+  formula_id: string;   // one of the 14 registered formulas
   inputs: { claim_id: string; as: string }[];
   params: Record<string, string | number | boolean | null>;
   expression: string;   // display-only; must match the registry template

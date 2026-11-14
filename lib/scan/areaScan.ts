@@ -40,6 +40,8 @@ export interface ScanPlantRow {
   source: string;
   age_years: number | null;
   distance_mi: number;
+  lat: number;
+  lon: number;
 }
 
 export interface ScanFactor {
@@ -212,6 +214,8 @@ export function scanArea(
       source,
       age_years: props.capacity_weighted_age_years,
       distance_mi: round(distance, 1),
+      lat: pLat,
+      lon: pLon,
     });
   }
   plants.sort((a, b) => b.mw - a.mw);
@@ -296,8 +300,9 @@ export function scanArea(
   const capAge = ageBasis > 0 ? ageWeighted / ageBasis : null;
 
   // The highest-voltage tie in the circle is the one that sets deliverability,
-  // so it is the one the 2024 archive is asked about.
+  // so it is the one the 2025 archive is asked about.
   const wire = maxKv !== null && options.rateVoltage ? options.rateVoltage(maxKv) : null;
+  const wireYear = wire?.now?.time.slice(0, 4) ?? wire?.hottest?.time.slice(0, 4) ?? "archive";
 
   const fossilScore = nameplate > 0 ? (fossilMw / nameplate) * 100 : 0;
   const ageScore = capAge === null ? 40 : Math.min(100, Math.max(0, ((capAge - 20) / 40) * 100));
@@ -356,11 +361,11 @@ export function scanArea(
       score: round(heatScore, 0),
       weight: 0.15,
       detail: !wire
-        ? "The 2024 conductor archive is not loaded, so heat stress is neutral."
+        ? "The bundled conductor archive is not loaded, so heat stress is neutral."
         : options.heatwave
           ? `At 105 °F the fixed rating falls ${wire.heatwave.derate_pct}% and a 3 m/s breeze returns ${wire.heatwave.ratio.toFixed(2)}× it.`
           : wire.hottest
-            ? `Hottest 2024 hour (${hourLabel(wire.hottest.time)}, ${round(wire.hottest.temp_c, 1)} °C): the breeze was worth ${wire.hottest.ratio.toFixed(2)}× the still-air rating.`
+          ? `Hottest ${wireYear} hour (${hourLabel(wire.hottest.time)}, ${round(wire.hottest.temp_c, 1)} °C): the breeze was worth ${wire.hottest.ratio.toFixed(2)}× the still-air rating.`
             : "No hourly weather in the archive.",
     },
   ];
@@ -491,9 +496,10 @@ function scanReport(result: Omit<ScanResult, "report">): string {
   lines.push("");
   if (result.wire) {
     const wire = result.wire;
+    const wireYear = wire.now?.time.slice(0, 4) ?? wire.hottest?.time.slice(0, 4) ?? "archive";
     lines.push("## The wire that breathes (MODELED, IEEE 738 screening)");
     lines.push(
-      `- ${wire.conductor} at ${wire.voltage_kv} kV · still air vs the 2024 wind at ${wire.site}`,
+      `- ${wire.conductor} at ${wire.voltage_kv} kV · still air vs the ${wireYear} wind at ${wire.site}`,
     );
     if (wire.now) {
       lines.push(
@@ -501,7 +507,7 @@ function scanReport(result: Omit<ScanResult, "report">): string {
       );
     }
     lines.push(
-      `- 2024: above the still-air rating in ${wire.pct_hours_above_still_air}% of ${wire.hours} hours, median ${wire.median_ratio.toFixed(2)}×`,
+      `- ${wireYear} archive: above the still-air rating in ${wire.pct_hours_above_still_air}% of ${wire.hours} hours, median ${wire.median_ratio.toFixed(2)}×`,
     );
     if (wire.hottest) {
       lines.push(

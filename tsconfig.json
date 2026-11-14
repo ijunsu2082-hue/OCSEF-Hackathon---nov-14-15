@@ -32,7 +32,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    "build-out-gs-3d-verify/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -40,6 +41,7 @@
     "build-out",
     "build-dev",
     "verify-out",
-    "prcheck-out"
+    "prcheck-out",
+    "final-check"
   ]
 }

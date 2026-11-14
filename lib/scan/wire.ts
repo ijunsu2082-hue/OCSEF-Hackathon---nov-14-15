@@ -1,6 +1,6 @@
 /**
- * "The wire that breathes" — the hourly conductor rating from the 2024 weather
- * archive already shipped at `public/layers/line_rating_2024_westminster_hs.csv`
+ * "The wire that breathes" — the hourly conductor rating from the 2025 weather
+ * archive at `public/layers/line_rating_2025_westminster_hs.csv`
  * (one row per hour: temperature, wind, sun for the nearest weather site).
  *
  * Ratings are recomputed here with this app's own IEEE 738 screening model
@@ -10,15 +10,15 @@
  * the same ambient temperature and the same sun. That isolates what the breeze
  * is worth, which is the whole point of a dynamic line rating.
  *
- * No network call: the archive is a file, and the "current hour" is this clock
- * hour on the same calendar day in 2024, labelled as such.
+ * The archive is a fallback. A weather API sample can replace its current-hour
+ * calculation while the full-year archive remains the historical comparison.
  */
 
 import { conductorForKv, thermalScreen } from "../gridAssets";
 import type { ConductorSpec } from "../physics/network";
 import { conductorAmpacity } from "../physics/thermal";
 
-export const RATING_CSV_URL = "/layers/line_rating_2024_westminster_hs.csv";
+export const RATING_CSV_URL = "/layers/line_rating_2025_westminster_hs.csv";
 export const RATING_SITE_LABEL = "Westminster HS";
 
 /** IEEE 738 light-wind assumption the fixed rating is based on, m/s. */
@@ -42,7 +42,7 @@ const MONTHS = [
 ];
 
 export interface WireHour {
-  /** Archive timestamp, `2024-09-06T13:00`. */
+  /** Archive timestamp, `2025-09-06T13:00`. */
   time: string;
   temp_c: number;
   wind_mps: number;
@@ -55,13 +55,20 @@ export interface WireHour {
   ratio: number;
 }
 
+export interface WeatherForRating {
+  time: string;
+  temp_c: number;
+  wind_mps: number;
+  shortwave_wm2: number;
+}
+
 export interface WireSummary {
   site: string;
   voltage_kv: number;
   conductor: string;
   /** Hours in the archive. */
   hours: number;
-  /** This clock hour on the same calendar day in 2024. */
+  /** This clock hour, live when available and otherwise the bundled archive. */
   now: WireHour | null;
   hottest: WireHour | null;
   /** The 24 hours of that day. */
@@ -151,6 +158,17 @@ function rateHour(row: WeatherRow, conductor: ConductorSpec): WireHour {
   };
 }
 
+/** Re-rate the screened conductor with one live, persisted, or historical sample. */
+export function rateWeatherSample(voltageKv: number, sample: WeatherForRating): WireHour {
+  const row: WeatherRow = {
+    time: sample.time,
+    temp_c: sample.temp_c,
+    wind_mps: sample.wind_mps,
+    sun_wm2: sample.shortwave_wm2,
+  };
+  return rateHour(row, conductorForKv(voltageKv));
+}
+
 // Rating every hour is ~17k heat-balance solves; cache by conductor and archive
 // so a radius drag reuses the series instead of recomputing the year.
 let seriesKey: string | null = null;
@@ -164,16 +182,16 @@ function seriesFor(csv: string, conductor: ConductorSpec): WireHour[] {
   return series;
 }
 
-/** The archive key for this clock hour, e.g. `2024-09-06T13:00`. */
+/** The archive key for this clock hour, e.g. `2025-09-06T13:00`. */
 function csvHourKey(now = new Date()): string {
   const shifted = new Date(now.getTime() - CSV_UTC_OFFSET_H * 3_600_000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `2024-${p(shifted.getUTCMonth() + 1)}-${p(shifted.getUTCDate())}T${p(
+  return `2025-${p(shifted.getUTCMonth() + 1)}-${p(shifted.getUTCDate())}T${p(
     shifted.getUTCHours(),
   )}:00`;
 }
 
-/** `2024-09-06T13:00` -> `Sep 6, 1 pm`. No Date parsing, so no timezone drift. */
+/** `2025-09-06T13:00` -> `Sep 6, 1 pm`. No Date parsing, so no timezone drift. */
 export function hourLabel(iso: string | null): string {
   const match = iso ? /^\d{4}-(\d{2})-(\d{2})(?:T(\d{2}))?/.exec(iso) : null;
   if (!match) return "—";
@@ -183,7 +201,7 @@ export function hourLabel(iso: string | null): string {
   return `${date}, ${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? "am" : "pm"}`;
 }
 
-/** `2024-09-06T13:00` -> `Sep 6`. */
+/** `2025-09-06T13:00` -> `Sep 6`. */
 export function dayLabel(iso: string | null): string {
   return hourLabel(iso ? iso.slice(0, 10) : null);
 }
@@ -204,7 +222,13 @@ export function summarizeWire(
   if (hours.length === 0) return null;
 
   const key = csvHourKey();
-  const now = hours.find((hour) => hour.time === key) ?? null;
+  const archiveClock = key.slice(5);
+  const applicable = hours.filter((hour) => hour.time.slice(5) <= archiveClock);
+  const now =
+    hours.find((hour) => hour.time === key) ??
+    applicable[applicable.length - 1] ??
+    hours[0] ??
+    null;
   const today = hours.filter((hour) => hour.time.startsWith(key.slice(0, 10)));
 
   let hottest = hours[0];
