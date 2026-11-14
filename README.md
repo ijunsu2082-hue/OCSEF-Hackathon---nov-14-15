@@ -436,7 +436,7 @@ node -e "const f=require('./data/nodes.json');let L=0,D=0,C=0;for(const x of f.f
 | Assertion | Expected |
 | --- | --- |
 | Nameplate | **206.4 MW** |
-| Live regional draw | **147.1 MW** (147.0877 exact) |
+| Live regional draw | **147.09 MW** (147.0877 exact; the API returns 147.09) |
 | Daily energy | **3,530.10 MWh** |
 | Annual energy | **1,288,488 MWh** |
 | Annual CO₂ | **427,329 t** |
