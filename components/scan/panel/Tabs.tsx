@@ -4,7 +4,7 @@ import { useRef } from "react";
 import type { KeyboardEvent } from "react";
 import type { PanelTab } from "@/lib/scan/target";
 
-const ORDER: PanelTab[] = ["area", "news", "report"];
+const ORDER: PanelTab[] = ["area", "optimization", "upgrade", "news", "report"];
 
 export const tabId = (t: PanelTab) => `gs-tab-${t}`;
 export const tabPanelId = (t: PanelTab) => `gs-tabpanel-${t}`;
@@ -19,9 +19,11 @@ export function Tabs({
   onTab: (t: PanelTab) => void;
   newsCount: number;
 }) {
-  const refs = useRef<Record<PanelTab, HTMLButtonElement | null>>({ area: null, news: null, report: null });
+  const refs = useRef<Record<PanelTab, HTMLButtonElement | null>>({ area: null, optimization: null, upgrade: null, news: null, report: null });
   const labels: Record<PanelTab, string> = {
     area: "Area",
+    optimization: "Optimization",
+    upgrade: "Upgrade plan",
     news: `Local news (${newsCount})`,
     report: "Report a problem",
   };
@@ -40,7 +42,7 @@ export function Tabs({
   };
 
   return (
-    <div role="tablist" aria-label="Scan panel" onKeyDown={onKey} className="flex gap-6 border-b border-[#e6e9ee] px-6">
+    <div role="tablist" aria-label="Scan panel" onKeyDown={onKey} className="flex gap-6 overflow-x-auto border-b border-[#e6e9ee] px-6">
       {ORDER.map((t) => {
         const active = t === tab;
         return (
@@ -56,7 +58,7 @@ export function Tabs({
             aria-controls={tabPanelId(t)}
             tabIndex={active ? 0 : -1}
             onClick={() => onTab(t)}
-            className={`-mb-px border-b-2 py-3 text-[14px] tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9] ${
+            className={`-mb-px shrink-0 border-b-2 py-3 text-[14px] tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9] ${
               active
                 ? "border-[#0ea5e9] font-semibold text-[#1d2733]"
                 : "border-transparent font-medium text-[#556070] hover:text-[#1d2733]"

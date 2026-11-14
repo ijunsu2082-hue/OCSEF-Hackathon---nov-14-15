@@ -11,6 +11,7 @@ import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LocalNews, groupLocalNews } from "./LocalNews";
 import ReportTab from "./ReportTab";
+import { OptimizationTab, UpgradePlanTab } from "./OptimizationTab";
 import { Tabs, tabId, tabPanelId } from "./Tabs";
 import { WhatsHere } from "./WhatsHere";
 import { fmtCoord, fmtNum, isNum } from "./format";
@@ -94,6 +95,13 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
   const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
   const { reportTarget, onClearTarget, onShowOnMap, onReportArea } = p;
+  const areaKey = result ? `${result.area.lat}:${result.area.lon}:${result.area.radius_mi}` : "loading";
+  const previousArea = useRef(areaKey);
+  useEffect(() => {
+    if (previousArea.current === areaKey) return;
+    previousArea.current = areaKey;
+    onTab("area");
+  }, [areaKey, onTab]);
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
 
   if (!result || !news) {
@@ -140,6 +148,10 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
         )}
 
         {tab === "news" && <LocalNews result={result} groups={news} onShowOnMap={onShowOnMap} />}
+
+        {tab === "optimization" && <OptimizationTab key={areaKey} result={result} live={live} daily={daily} />}
+
+        {tab === "upgrade" && <UpgradePlanTab key={areaKey} result={result} />}
 
         {tab === "report" && (
           <ReportTab
