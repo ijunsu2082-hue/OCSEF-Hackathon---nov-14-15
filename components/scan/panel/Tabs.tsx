@@ -23,7 +23,7 @@ export function Tabs({
   const labels: Record<PanelTab, string> = {
     area: "Area",
     news: `Local news (${newsCount})`,
-    report: "Report a problem",
+    report: "For owners",
   };
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {

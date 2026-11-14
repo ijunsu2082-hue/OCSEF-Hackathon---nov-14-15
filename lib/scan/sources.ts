@@ -44,6 +44,15 @@ export const SOURCES = {
     method: "Where a line or substation has no voltage tag, we fill it in from connected lines (touching ends) or a substation within about 300 m. Substations and lines without a name are labeled by the nearest power-plant city within 15 mi.",
     note: "22% of lines have no voltage tag before filling (about 12% after) and many substations have no operator.",
   },
+  state_substations: {
+    name: "California Electrical Substations",
+    publisher: "California Energy Commission (CEC), via a public ArcGIS Online copy",
+    url: "https://services.arcgis.com/OCBQIMs6mxgHZEQ0/arcgis/rest/services/California_Electrical_Substations/FeatureServer/0",
+    asOf: "Fetched Nov 2026",
+    what: "Names, owners and voltage class of California substations.",
+    method: "An OpenStreetMap substation with no name takes the name of the closest operational CEC substation within 200 m, one CEC substation per map point.",
+    note: "The CEC's own copy of this layer now requires sign-in, so we use a public copy. Spellings can differ from OpenStreetMap.",
+  },
   openmeteo_live: {
     name: "Open-Meteo forecast API",
     publisher: "Open-Meteo",
@@ -173,6 +182,15 @@ export const SOURCES = {
     asOf: "Nov 14, 2026",
     what: "Each utility's own emergency number, claims page and claim decision times, and SCE's advice to stay at least 100 feet from a downed line.",
     note: "Numbers for smaller utilities we could not verify are not shown; the report points to the electric bill instead.",
+  },
+  owner_filing_rules: {
+    name: "Owner filing rules (EIA, EPA, CARB, South Coast AQMD, CEC, CPUC, FERC, NERC, Energy Safety)",
+    publisher: "Each agency's own forms, instructions and regulations; every rule links its source",
+    url: "https://www.eia.gov/survey/",
+    asOf: "Checked Nov 14, 2026",
+    what: "Which reports a plant, substation or line owner files, when they are due, and the fields we can fill in from EIA-860 and OpenStreetMap.",
+    method: "A rule is marked verified only when its size or ownership test is met by our data; anything that depends on emissions, permits, NERC registration, market-based rate authority or utility size is marked check. Dates move off weekends or holidays only where the rule says so (EIA-860, FERC filings, South Coast AQMD).",
+    note: "EPA moved the 2025 greenhouse gas report to March 10, 2027 and has proposed ending most reporting. FERC's four-month EQR window starts only with its new filing system. Energy Safety has not yet set the exact 2027 wildfire plan dates for investor-owned utilities.",
   },
 } satisfies Record<string, SourceInfo>;
 

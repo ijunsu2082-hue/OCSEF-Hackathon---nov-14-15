@@ -3,7 +3,7 @@ import type {
 } from "./types";
 import { haversineMi } from "./geo";
 import { lineIndex } from "./lineIndex";
-import { enrichGrid } from "./enrich";
+import { enrichGrid, type SubstationNames } from "./enrich";
 
 export const LAYERS_BASE = "/layers";
 
@@ -112,13 +112,15 @@ let gridPromise: Promise<GridData> | null = null;
 export function loadGridData(): Promise<GridData> {
   if (!gridPromise) {
     gridPromise = (async () => {
-      const [plants, lines, subs, cases, events, summary] = await Promise.all([
+      const [plants, lines, subs, cases, events, summary, subNames] = await Promise.all([
         getJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
         getJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
         getJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
         getJson<NicheCase[]>("niche_cases.json"),
         getJson<GenEvent[]>("gen_events.json"),
         getJson<SummaryJson>("line_ratings/summary.json"),
+        // Optional: a missing or broken names file just leaves OSM names as they are.
+        getJson<SubstationNames>("substation_names.json").catch(() => null),
       ]);
       const data: GridData = {
         plants: plants.features.filter((f) => f.geometry?.type === "Point").map(toPlant),
@@ -128,7 +130,7 @@ export function loadGridData(): Promise<GridData> {
         events,
         ratingSites: toSites(summary),
       };
-      enrichGrid(data); // fill missing voltages / names from connected data, once per load
+      enrichGrid(data, subNames); // fill missing voltages / names from connected data, once per load
       lineIndex(data); // precompute segment lengths so the first scanArea() stays fast
       return data;
     })();

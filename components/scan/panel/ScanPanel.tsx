@@ -13,7 +13,7 @@ import { GridImpact } from "./GridImpact";
 import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LocalNews, groupLocalNews } from "./LocalNews";
-import ReportTab from "./ReportTab";
+import OwnerTab from "./OwnerTab";
 import { SelectedAsset } from "./SelectedAsset";
 import { Tabs, tabId, tabPanelId } from "./Tabs";
 import { WhatsHere } from "./WhatsHere";
@@ -35,7 +35,7 @@ export interface ScanPanelProps {
   onReportArea: () => void; // target = this area, switch to the report tab
   selected: ReportTarget | null; // asset clicked on the map / picked in Top plants
   onSelectAsset: (t: ReportTarget | null) => void;
-  onReport: (t: ReportTarget) => void; // "Report a problem" on the selected asset
+  onReport: (t: ReportTarget) => void; // "Owner filings" on the selected asset
 }
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
@@ -118,8 +118,8 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 }
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
-  const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
-  const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
+  const { result, live, liveLoading, daily, onFocus, tab, onTab, cases } = p;
+  const { reportTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
   const [briefOpen, setBriefOpen] = useState(false);
 
@@ -185,14 +185,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
         {tab === "news" && <LocalNews result={result} groups={news} onShowOnMap={onShowOnMap} />}
 
         {tab === "report" && (
-          <ReportTab
-            result={result}
-            live={live}
-            heatwave={heatwave}
-            target={reportTarget}
-            onClearTarget={onClearTarget}
-            onFocus={onFocus}
-          />
+          <OwnerTab target={reportTarget.kind !== "area" ? reportTarget : selected} />
         )}
       </div>
     </div>

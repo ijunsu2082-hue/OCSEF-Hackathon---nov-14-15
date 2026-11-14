@@ -8,7 +8,9 @@ import type { Line, Plant, Substation } from "./types";
  *      with an endpoint within ~300 m;
  *  (c) a line still without voltage takes the voltage of a substation (tagged or
  *      filled) within ~300 m of an endpoint;
- *  (d) unnamed substations and lines get `near` = nearest plant city within 15 mi.
+ *  (d) unnamed substations take a name from the CEC substation list when one was
+ *      matched (research/scripts/match_substation_names.py), marked name_source "state_list";
+ *  (e) unnamed substations and lines get `near` = nearest plant city within 15 mi.
  * Anything filled is marked kv_inferred. Values we cannot fill stay null.
  * Uses lat/lon grid buckets so this stays well under 150 ms for the full layers.
  */
@@ -47,7 +49,15 @@ class Grid<T> {
 const hasKv = (kv: number | null) => kv != null && Number.isFinite(kv);
 const ends = (l: Line): [number, number][] => [l.coords[0], l.coords[l.coords.length - 1]];
 
-export function enrichGrid(d: { plants: Plant[]; lines: Line[]; substations: Substation[] }): void {
+/** public/layers/substation_names.json: OSM id -> matched CEC substation (within 200 m, one-to-one). */
+export type SubstationNames = Record<string, {
+  name: string; owner: string | null; kv_class: string | null; cec_id: string | null; distance_m: number;
+}>;
+
+export function enrichGrid(
+  d: { plants: Plant[]; lines: Line[]; substations: Substation[] },
+  names?: SubstationNames | null,
+): void {
   const { plants, lines, substations } = d;
 
   // (a) line-to-line through touching endpoints, a few passes so voltage can chain along a run.
@@ -102,7 +112,15 @@ export function enrichGrid(d: { plants: Plant[]; lines: Line[]; substations: Sub
     if (best !== null) { l.voltage_kv = best; l.kv_inferred = true; }
   }
 
-  // (d) nearest plant city for unnamed assets.
+  // (d) names from the CEC substation list (OSM names always win).
+  if (names) {
+    for (const s of substations) {
+      const n = s.name ? null : names[s.osm_id]?.name?.trim();
+      if (n) { s.name = n; s.name_source = "state_list"; }
+    }
+  }
+
+  // (e) nearest plant city for unnamed assets.
   const cityGrid = new Grid<string>(0.4); // ~44 km lat / ~37 km lon, > 15 mi (24 km)
   for (const p of plants) if (p.city.trim()) cityGrid.add(p.lat, p.lon, p.city.trim());
   const maxD2 = (NEAR_CITY_MI * 1609.344) ** 2;

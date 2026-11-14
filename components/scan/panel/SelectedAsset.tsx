@@ -115,13 +115,17 @@ export function SelectedAsset({
           ))}
         </ul>
         <Caption className="mt-2">{d.source}</Caption>
+        {target.kind === "substation" &&
+          (target.substation as { name_source?: string | null })?.name_source === "state_list" && (
+            <Caption className="mt-1">Name matched by location from California&apos;s state substation list.</Caption>
+          )}
         <div className="mt-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => onReport(target)}
             className={`h-8 rounded-[6px] bg-[#0ea5e9] px-3 text-[14px] font-semibold text-[#1d2733] transition-colors hover:bg-[#38bdf8] ${FOCUS}`}
           >
-            Report a problem
+            Owner filings
           </button>
           <button
             type="button"

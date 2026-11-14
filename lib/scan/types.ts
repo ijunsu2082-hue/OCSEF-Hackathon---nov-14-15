@@ -26,6 +26,7 @@ export interface Substation {
   substation: string | null; lat: number; lon: number;
   kv_inferred?: boolean;      // voltage_kv filled in from connected lines (enrich.ts)
   near?: string | null;       // nearest plant city within 15 mi, set only when name is missing
+  name_source?: "state_list"; // name taken from the CEC substation list (enrich.ts), not OSM
 }
 
 export interface NicheStat { label: string; value: string; kind: "measured" | "modeled"; source: string }
