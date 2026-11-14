@@ -3,6 +3,7 @@ import type {
 } from "./types";
 import { haversineMi } from "./geo";
 import { lineIndex } from "./lineIndex";
+import { enrichGrid } from "./enrich";
 
 export const LAYERS_BASE = "/layers";
 
@@ -125,6 +126,7 @@ export function loadGridData(): Promise<GridData> {
         events,
         ratingSites: toSites(summary),
       };
+      enrichGrid(data); // fill missing voltages / names from connected data, once per load
       lineIndex(data); // precompute segment lengths so the first scanArea() stays fast
       return data;
     })();

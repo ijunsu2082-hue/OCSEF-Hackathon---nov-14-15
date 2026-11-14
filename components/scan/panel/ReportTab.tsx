@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { LineRatingNow, ScanResult } from "@/lib/scan";
 import type { ReportTarget } from "@/lib/scan/target";
 import {
@@ -18,11 +18,14 @@ import {
   type HazardId,
   type Severity,
 } from "@/lib/scan/compliance";
+import { buildFacts, streamAiReport } from "@/lib/scan/aiReport";
 
 /*
  * "Report a problem" tab. Written for a 10-year-old: three numbered steps, big text,
- * short sentences. Filing only saves on this device (localStorage); Email / Official site
- * are how a report actually reaches the utility.
+ * short sentences. Step 3 asks Claude (via /api/ai-report) to write the report from the scan
+ * numbers; if that is unavailable it shows the standard rule-based report instead.
+ * Saving only stores it on this device (localStorage); Email / Official site are how a report
+ * actually reaches the utility.
  */
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]";
@@ -49,6 +52,55 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
       <div className="mt-4">{children}</div>
     </section>
   );
+}
+
+const AI_HEADINGS = new Set([
+  "Summary",
+  "The bottleneck",
+  "What this area is missing out on",
+  "Proposed fix",
+  "Who to contact",
+]);
+
+/** Plain-text report → headings (bold), "- " bullets, and paragraphs. */
+function ReportPreview({ text }: { text: string }) {
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+  const flush = () => {
+    if (bullets.length) {
+      blocks.push(
+        <ul key={`u${blocks.length}`} className="mt-1 flex list-disc flex-col gap-1 pl-5">
+          {bullets.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>,
+      );
+      bullets = [];
+    }
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (line.startsWith("- ")) {
+      bullets.push(line.slice(2));
+      continue;
+    }
+    flush();
+    if (!line) continue;
+    const heading = AI_HEADINGS.has(line.replace(/:$/, "")) || /^[A-Z][^.]{0,40}:$/.test(line);
+    blocks.push(
+      heading ? (
+        <p key={`h${blocks.length}`} className="mt-3 font-semibold text-[#1d2733] first:mt-0">
+          {line.replace(/:$/, "")}
+        </p>
+      ) : (
+        <p key={`p${blocks.length}`} className="mt-1 first:mt-0">
+          {line}
+        </p>
+      ),
+    );
+  }
+  flush();
+  return <div className="text-[15px] leading-relaxed text-[#1d2733]">{blocks}</div>;
 }
 
 function fmtWhen(iso: string): string {
@@ -112,6 +164,13 @@ export default function ReportTab({
   const [status, setStatus] = useState<"idle" | "saved" | "memory">("idle");
   const [reports, setReports] = useState<FiledReport[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Step 3: "idle" -> "writing" (streaming) -> "done" (preview ready to save).
+  const [phase, setPhase] = useState<"idle" | "writing" | "done">("idle");
+  const [preview, setPreview] = useState("");
+  const [source, setSource] = useState<"ai" | "standard">("ai");
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   // Load saved reports after mount (never during render) to avoid hydration mismatches.
   useEffect(() => {
@@ -120,21 +179,61 @@ export default function ReportTab({
 
   // A new target starts a fresh report.
   useEffect(() => {
+    abortRef.current?.abort();
     setHazards([]);
     setNote("");
     setStatus("idle");
+    setPhase("idle");
+    setPreview("");
   }, [target]);
 
   const toggle = (id: HazardId) =>
     setHazards((h) => (h.includes(id) ? h.filter((x) => x !== id) : [...h, id]));
 
+  const write = async () => {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setStatus("idle");
+    setPhase("writing");
+    setPreview("");
+    setSource("ai");
+    const facts = buildFacts(target, result, live, heatwave, draft, hazards, note);
+    const res = await streamAiReport(
+      facts,
+      (t) => {
+        if (abortRef.current === ctrl) setPreview(t);
+      },
+      ctrl.signal,
+    );
+    if (abortRef.current !== ctrl) return; // a newer request or a target change took over
+    abortRef.current = null;
+    if (res.ok) {
+      setPreview(res.text);
+      setPhase("done");
+    } else if (res.reason === "aborted") {
+      setPreview("");
+      setPhase("idle");
+    } else {
+      setSource("standard");
+      setPreview(reportText(fileReport(draft, hazards, note)));
+      setPhase("done");
+    }
+  };
+
+  const stop = () => {
+    abortRef.current?.abort();
+  };
+
   const file = () => {
-    const r = fileReport(draft, hazards, note);
+    const r = fileReport(draft, hazards, note, new Date(), source === "ai" ? preview : undefined);
     const next = [r, ...reports];
     setReports(next);
     setStatus(saveReports(next) ? "saved" : "memory");
     setHazards([]);
     setNote("");
+    setPhase("idle");
+    setPreview("");
   };
 
   const remove = (id: string) => {
@@ -210,7 +309,7 @@ export default function ReportTab({
       </Step>
 
       <Step n={2} title="We checked it for you">
-        <p className="mb-3 text-[15px] text-[#556070]">We looked at public data about this spot. Here is what we found.</p>
+        <p className="mb-3 text-[15px] text-[#556070]">From public data about this spot:</p>
         <ul className="flex flex-col gap-3">
           {draft.issues.map((i, k) => (
             <li key={k} className="flex gap-3">
@@ -241,30 +340,81 @@ export default function ReportTab({
         />
       </Step>
 
-      <Step n={3} title="File it">
-        <button
-          type="button"
-          onClick={file}
-          className={`h-11 w-full rounded-[6px] bg-[#0ea5e9] text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`}
-        >
-          File report
-        </button>
+      <Step n={3} title="Write it up">
+        {phase === "idle" && (
+          <>
+            <button
+              type="button"
+              onClick={write}
+              className={`h-12 w-full rounded-[6px] bg-[#0ea5e9] text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`}
+            >
+              Write my report
+            </button>
+            <p className="mt-3 text-[14px] text-[#6b7583]">
+              We turn the numbers above into a short report: what is wrong, what the area is missing out on, and a fix.
+            </p>
+          </>
+        )}
+
+        {phase !== "idle" && (
+          <div>
+            {source === "standard" && (
+              <p className="mb-2 text-[14px] text-[#556070]">AI writer is offline, so this is the standard report.</p>
+            )}
+            <div
+              aria-busy={phase === "writing"}
+              className="rounded-[6px] border border-[#e6e9ee] bg-white px-4 py-4 [overflow-wrap:anywhere]"
+            >
+              {preview ? (
+                <ReportPreview text={preview} />
+              ) : (
+                <p className="text-[15px] text-[#556070]">Writing…</p>
+              )}
+            </div>
+            {source === "ai" && (
+              <p className="mt-2 text-[13px] text-[#6b7583]">
+                Written by Claude from the numbers above. Check before sending.
+              </p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {phase === "writing" ? (
+                <button type="button" onClick={stop} className={SMALL_BTN}>
+                  Stop
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={file}
+                    className={`inline-flex h-11 items-center rounded-[6px] bg-[#0ea5e9] px-5 text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`}
+                  >
+                    Save to My reports
+                  </button>
+                  <button type="button" onClick={write} className={`${SMALL_BTN} h-11`}>
+                    Write it again
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div aria-live="polite">
           {status === "saved" && (
             <p className="mt-3 text-[15px] font-medium text-[#1d2733]">
-              Report filed. Saved on this device. Send it with Email or the official site to reach the utility.
+              Saved on this device. Send it with Email or the official site to reach the utility.
             </p>
           )}
           {status === "memory" && (
             <p className="mt-3 text-[15px] font-medium text-[#1d2733]">
-              Report filed, but this browser would not let us save it. It will be gone after a reload, so send it with
+              Saved for now, but this browser would not let us keep it. It will be gone after a reload, so send it with
               Email, Download or the official site now.
             </p>
           )}
         </div>
-        {status === "idle" && (
+        {status === "idle" && phase === "done" && (
           <p className="mt-3 text-[14px] text-[#6b7583]">
-            Filing saves the report on this device only. To reach the utility, send it with Email or the official site.
+            Saving keeps the report on this device only. To reach the utility, send it with Email or the official site.
           </p>
         )}
       </Step>
@@ -272,7 +422,7 @@ export default function ReportTab({
       <section className="border-t border-[#e6e9ee] px-6 py-6">
         <h3 className="text-[17px] font-semibold leading-snug text-[#1d2733]">My reports</h3>
         {reports.length === 0 ? (
-          <p className="mt-2 text-[15px] text-[#556070]">No reports yet. Reports you file show up here.</p>
+          <p className="mt-2 text-[15px] text-[#556070]">No reports yet. Reports you save show up here.</p>
         ) : (
           <ul className="mt-3 flex flex-col">
             {reports.map((r) => (

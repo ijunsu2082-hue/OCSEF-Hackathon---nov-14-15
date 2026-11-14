@@ -15,20 +15,19 @@ import type { SourceId } from "@/lib/scan/sources";
 
 const GRID = UI.border; // #e6e9ee
 
-const KV_ORDER: KvBand[] = ["500+", "200-499", "100-199", "<100", "unknown"];
-const KV_LABEL: Record<KvBand, string> = {
+// "unknown" is an internal bucket only: it is never drawn as a row (see LinesByVoltage caption).
+const KV_ORDER: Exclude<KvBand, "unknown">[] = ["500+", "200-499", "100-199", "<100"];
+const KV_LABEL: Record<Exclude<KvBand, "unknown">, string> = {
   "500+": "500 kV +",
   "200-499": "200–499 kV",
   "100-199": "100–199 kV",
   "<100": "Under 100 kV",
-  unknown: "Unknown",
 };
-const KV_COLOR: Record<KvBand, string> = {
+const KV_COLOR: Record<Exclude<KvBand, "unknown">, string> = {
   "500+": UI.accentStrong, // #0284c7
   "200-499": UI.accent, // #0ea5e9
   "100-199": "#7dd3fc",
   "<100": "#94a3b8",
-  unknown: "#cbd5e1",
 };
 
 const fuelLabel = (k: FuelKey) => FUEL_LABELS[k] ?? String(k).replace(/_/g, " ");
@@ -272,14 +271,18 @@ function LinesByVoltage({ r }: { r: ScanResult }) {
   const t = r.totals;
   const byKv = t.line_miles_by_kv ?? ({} as Record<KvBand, number>);
   const bands = KV_ORDER.filter((k) => isNum(byKv[k]) && byKv[k] >= 0.05);
+  const miles = (m: number) => `${fmtNum(m, m > 0 && m < 10 ? 1 : 0)} mi`;
   if (bands.length === 0 || num(t.line_miles) <= 0) {
     return (
       <Block title="Power lines by voltage" sources={["osm"]} caption="Miles of transmission line inside the circle.">
-        <Empty>No transmission lines in this area.</Empty>
+        <Empty>
+          {num(t.line_miles) > 0
+            ? `${miles(t.line_miles)} of line here, with no voltage listed in OpenStreetMap.`
+            : "No transmission lines in this area."}
+        </Empty>
       </Block>
     );
   }
-  const miles = (m: number) => `${fmtNum(m, m > 0 && m < 10 ? 1 : 0)} mi`;
   const max = Math.max(...bands.map((k) => byKv[k]));
   const items: BarItem[] = bands.map((k) => ({
     key: k,
@@ -288,11 +291,19 @@ function LinesByVoltage({ r }: { r: ScanResult }) {
     color: KV_COLOR[k],
     text: miles(byKv[k]),
   }));
+  const untagged = num(byKv.unknown);
+  const anyInferred = r.lines.some((l) => l.kv_inferred);
+  const caption = [
+    // "Plus N mi" below is in addition to this figure, so leave the untagged miles out of it.
+    `${miles(Math.max(0, num(t.line_miles) - untagged))} of transmission line here, by voltage.`,
+    untagged >= 0.05 ? `Plus ${miles(untagged)} of line with no voltage listed in OpenStreetMap.` : "",
+    anyInferred ? "Some voltages are filled in from connected lines." : "",
+  ].filter(Boolean).join(" ");
   return (
     <Block
       title="Power lines by voltage"
       sources={["osm"]}
-      caption={`${miles(t.line_miles)} of transmission line here, by voltage.`}
+      caption={caption}
     >
       <HBars items={items} max={max} />
     </Block>

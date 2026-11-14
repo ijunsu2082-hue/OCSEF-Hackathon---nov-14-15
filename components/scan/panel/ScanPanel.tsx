@@ -11,6 +11,7 @@ import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LocalNews, groupLocalNews } from "./LocalNews";
 import ReportTab from "./ReportTab";
+import { SelectedAsset } from "./SelectedAsset";
 import { Tabs, tabId, tabPanelId } from "./Tabs";
 import { WhatsHere } from "./WhatsHere";
 import { fmtCoord, fmtNum, isNum } from "./format";
@@ -29,6 +30,9 @@ export interface ScanPanelProps {
   onClearTarget: () => void;
   onShowOnMap: (c: NicheCase) => void; // drop a plain pin on the map and fly there
   onReportArea: () => void; // target = this area, switch to the report tab
+  selected: ReportTarget | null; // asset clicked on the map / picked in Top plants
+  onSelectAsset: (t: ReportTarget | null) => void;
+  onReport: (t: ReportTarget) => void; // "Report a problem" on the selected asset
 }
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
@@ -40,7 +44,7 @@ function Header({ result }: { result: ScanResult }) {
     <header className="px-6 py-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="min-w-0 text-[18px] font-semibold leading-snug text-[#1d2733]">
-          {result.area_label || "Unnamed area"}
+          {result.area_label || "This area"}
         </h2>
         <p className="shrink-0 text-[14px] tabular-nums text-[#1d2733]">
           Risk <span className="font-semibold">{isNum(risk.score) ? fmtNum(risk.score, 0) : "—"}</span> ·{" "}
@@ -93,7 +97,7 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
   const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
-  const { reportTarget, onClearTarget, onShowOnMap, onReportArea } = p;
+  const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
 
   if (!result || !news) {
@@ -114,11 +118,23 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
       <div role="tabpanel" id={tabPanelId(tab)} aria-labelledby={tabId(tab)}>
         {tab === "area" && (
           <>
+            {selected && (
+              <SelectedAsset
+                target={selected}
+                result={result}
+                onReport={onReport}
+                onClear={() => onSelectAsset(null)}
+              />
+            )}
             <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
             <AreaCharts result={result} />
             <WhatsHere result={result} live={live} />
             <RiskBreakdown factors={result.risk.factors} />
-            <TopPlants result={result} onFocus={onFocus} />
+            <TopPlants
+              result={result}
+              onFocus={onFocus}
+              onSelect={(plant) => onSelectAsset({ kind: "plant", plant })}
+            />
             <GenEvents result={result} />
 
             <footer className="border-t border-[#e6e9ee] px-6 py-6">

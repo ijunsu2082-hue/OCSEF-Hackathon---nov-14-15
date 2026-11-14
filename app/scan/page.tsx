@@ -33,6 +33,7 @@ export default function Page() {
   const [daily, setDaily] = useState<DailyRating[] | null>(null);
   const [tab, setTab] = useState<PanelTab>("area");
   const [reportTarget, setReportTarget] = useState<ReportTarget>({ kind: "area" });
+  const [selected, setSelected] = useState<ReportTarget | null>(null);
   const [newsPin, setNewsPin] = useState<NewsPin | null>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false); // only matters below lg
@@ -128,6 +129,13 @@ export default function Page() {
     setDrawerOpen(true);
   }, []);
 
+  // Asset clicked on the map (or a top-plants row): show its card on the Area tab.
+  // Drawer state is left alone, same as a plain map click.
+  const onSelectAsset = useCallback((t: ReportTarget | null) => {
+    setSelected(t);
+    if (t) setTab("area");
+  }, []);
+
   const onReportArea = useCallback(() => onReport({ kind: "area" }), [onReport]);
 
   const onClearTarget = useCallback(() => setReportTarget({ kind: "area" }), []);
@@ -164,7 +172,8 @@ export default function Page() {
               newsPin={newsPin}
               onScan={onScan}
               onFocus={onFocus}
-              onReport={onReport}
+              onSelectAsset={onSelectAsset}
+              selected={selected}
             />
           ) : (
             <BootScreen error={loadError} />
@@ -198,6 +207,9 @@ export default function Page() {
             onClearTarget={onClearTarget}
             onShowOnMap={onShowOnMap}
             onReportArea={onReportArea}
+            selected={selected}
+            onSelectAsset={onSelectAsset}
+            onReport={onReport}
           />
         </aside>
 

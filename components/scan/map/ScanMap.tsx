@@ -7,12 +7,12 @@ import L from "leaflet";
 import { Circle, MapContainer, Marker, Pane, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { CENTER, COVERAGE_MI, haversineMi } from "@/lib/scan";
 import type { ScanArea } from "@/lib/scan";
-import type { NewsPin } from "@/lib/scan/target";
+import type { NewsPin, ReportTarget } from "@/lib/scan/target";
 import {
   EventLayer,
   MAP_COLORS,
   PlantLayer,
-  ReportPopups,
+  SelectionHighlight,
   SubstationLayer,
   TransmissionLayer,
   esc,
@@ -142,7 +142,16 @@ function NewsPinFly({ pin }: { pin: NewsPin | null }) {
 
 /* ---- main ----------------------------------------------------------------- */
 
-export default function ScanMap({ data, area, result, focus, newsPin, onScan, onReport }: ScanMapProps) {
+export default function ScanMap({
+  data,
+  area,
+  result,
+  focus,
+  newsPin,
+  onScan,
+  onSelectAsset,
+  selected,
+}: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   // The news pin hides on the next map click; a new pin (new nonce) shows again.
   const [clearedPinNonce, setClearedPinNonce] = useState<number | null>(null);
@@ -170,6 +179,21 @@ export default function ScanMap({ data, area, result, focus, newsPin, onScan, on
       setToast(null);
     }
     onScan(lat, lon);
+  };
+
+  // Empty map: scan there and clear the selection.
+  const handleMapClick = (lat: number, lon: number) => {
+    handleClick(lat, lon);
+    onSelectAsset(null);
+  };
+
+  /*
+   * A dot or line: scan at that point and select it. The asset layers set
+   * bubblingMouseEvents: false, so Leaflet never also fires the map click.
+   */
+  const handleAssetClick = (target: ReportTarget, lat: number, lon: number) => {
+    handleClick(lat, lon);
+    onSelectAsset(target);
   };
 
   const scanArea = result?.area ?? area;
@@ -200,10 +224,9 @@ export default function ScanMap({ data, area, result, focus, newsPin, onScan, on
           maxZoom={19}
         />
         <AutoResize />
-        <ClickToScan onClick={handleClick} />
+        <ClickToScan onClick={handleMapClick} />
         <FlyTo focus={focus} />
         <NewsPinFly pin={newsPin} />
-        <ReportPopups onReport={onReport} />
 
         {/* Coverage ring — 100 mi around Westminster HS */}
         <Circle
@@ -243,10 +266,17 @@ export default function ScanMap({ data, area, result, focus, newsPin, onScan, on
           result={result}
           visible={layers.transmission}
           onImagery={basemap.id === "satellite"}
+          onAssetClick={handleAssetClick}
         />
-        <SubstationLayer substations={data.substations} result={result} visible={layers.substations} />
-        <PlantLayer plants={data.plants} result={result} visible={layers.plants} />
+        <SubstationLayer
+          substations={data.substations}
+          result={result}
+          visible={layers.substations}
+          onAssetClick={handleAssetClick}
+        />
+        <PlantLayer plants={data.plants} result={result} visible={layers.plants} onAssetClick={handleAssetClick} />
         <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
+        <SelectionHighlight selected={selected} />
 
         <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
           <Tooltip direction="top" offset={[0, -8]}>

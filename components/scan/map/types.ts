@@ -19,6 +19,8 @@ export interface ScanMapProps {
   /** Click anywhere on the map → scan at that point (page keeps the radius). */
   onScan: (lat: number, lon: number) => void;
   onFocus: (lat: number, lon: number) => void;
-  /** "Report a problem" in an asset popup. */
-  onReport: (t: ReportTarget) => void;
+  /** Asset clicked (after it scans there) → select it; empty map clicked → null. */
+  onSelectAsset: (t: ReportTarget | null) => void;
+  /** The selected asset, highlighted on the map. */
+  selected: ReportTarget | null;
 }

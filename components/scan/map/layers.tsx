@@ -9,8 +9,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import { useMap } from "react-leaflet";
-import { FUEL_COLORS, FUEL_LABELS, haversineMi, lineWeight } from "@/lib/scan";
+import { FUEL_COLORS, FUEL_LABELS, lineWeight } from "@/lib/scan";
 import type { GenEvent, Line, Plant, ScanResult, Substation } from "@/lib/scan";
+import { kvLabel, lineName, substationName } from "@/lib/scan/labels";
 import type { ReportTarget } from "@/lib/scan/target";
 
 /** Canvas layers can't read CSS vars, so the map colors live here. */
@@ -24,6 +25,8 @@ export const MAP_COLORS = {
 export const PANES = {
   casing: { name: "gs-line-casing", z: 405 },
   points: { name: "gs-points", z: 430 },
+  /** Selected-asset highlight: above the points, below the label tiles; never takes clicks. */
+  highlight: { name: "gs-highlight", z: 440 },
 } as const;
 
 function ensurePane(map: L.Map, name: string, z: number) {
@@ -82,6 +85,8 @@ export function esc(s: string | number | null | undefined): string {
 const fmtMw = (mw: number) =>
   mw >= 100 ? Math.round(mw).toLocaleString("en-US") : mw >= 10 ? mw.toFixed(0) : mw.toFixed(1);
 
+const SUBSTATION_RADIUS = 2;
+
 export function plantRadius(mw: number) {
   return Math.min(16, 3 + Math.sqrt(Math.max(0, mw)) / 2.2);
 }
@@ -126,12 +131,22 @@ function plantTooltip(p: Plant): string {
 <div class="gs-tip-src">${p.city ? `${esc(p.city)}. ` : ""}Source: EIA-860 2025</div>`;
 }
 
+/** "230 kV · Operator" (either part omitted when missing); null when both are missing. */
+function kvOperatorRow(kv: string | null, operator: string | null): string | null {
+  const parts = [kv, operator].filter((x): x is string => !!x).map(esc);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 function substationTooltip(s: Substation): string {
-  return `<div class="gs-tip-title">${esc(s.name ?? "Unnamed substation")}</div>
-<div class="gs-tip-row">${s.voltage_kv != null ? `${Math.round(s.voltage_kv)} kV` : "kV unknown"}${
-    s.operator ? ` · ${esc(s.operator)}` : ""
-  }</div>
-<div class="gs-tip-src">Substation. Source: OpenStreetMap</div>`;
+  const row = kvOperatorRow(kvLabel(s.voltage_kv, s.kv_inferred), s.operator);
+  return `<div class="gs-tip-title">${esc(substationName(s))}</div>
+${row ? `<div class="gs-tip-row">${row}</div>\n` : ""}<div class="gs-tip-src">Substation. Source: OpenStreetMap</div>`;
+}
+
+function lineTooltip(l: Line): string {
+  const row = kvOperatorRow(kvLabel(l.voltage_kv, l.kv_inferred), l.operator);
+  return `<div class="gs-tip-title">${esc(lineName(l))}</div>
+${row ? `<div class="gs-tip-row">${row}</div>\n` : ""}<div class="gs-tip-src">Power line. Source: OpenStreetMap</div>`;
 }
 
 function eventTooltip(e: GenEvent): string {
@@ -152,102 +167,8 @@ function useLatest<T>(v: T) {
   return r;
 }
 
-/* ---- click popups ------------------------------------------------------------ */
-
-const REPORT_BUTTON = '<button type="button" class="gs-pop-btn" data-gs-report>Report a problem</button>';
-
-function popupHtml(title: string, rows: string[], src: string): string {
-  return `<div class="gs-pop"><div class="gs-pop-title">${title}</div>${rows
-    .map((r) => `<div class="gs-pop-row">${r}</div>`)
-    .join("")}<div class="gs-pop-src">${src}</div>${REPORT_BUTTON}</div>`;
-}
-
-function plantPopup(p: Plant): string {
-  const place = [p.city, p.utility_name].filter(Boolean).map(esc).join(" · ");
-  return popupHtml(
-    esc(p.plant_name),
-    [`${fmtMw(p.nameplate_mw || 0)} MW${plantFuels(p)}`, plantAge(p), ...(place ? [place] : [])],
-    "Power plant. Source: EIA-860 2025",
-  );
-}
-
-function kvText(kv: number | null): string {
-  return kv != null ? `${Math.round(kv)} kV` : "kV unknown";
-}
-
-function substationPopup(s: Substation): string {
-  return popupHtml(
-    esc(s.name ?? "Unnamed substation"),
-    [kvText(s.voltage_kv), s.operator ? `Operator: ${esc(s.operator)}` : "Operator not listed"],
-    "Substation. Source: OpenStreetMap",
-  );
-}
-
-function lineMiles(line: Line): number {
-  let mi = 0;
-  for (let i = 1; i < line.coords.length; i++) {
-    const [aLat, aLon] = line.coords[i - 1];
-    const [bLat, bLon] = line.coords[i];
-    mi += haversineMi(aLat, aLon, bLat, bLon);
-  }
-  return mi;
-}
-
-function linePopup(line: Line, inside: boolean): string {
-  const mi = lineMiles(line);
-  return popupHtml(
-    esc(line.name ?? "Transmission line"),
-    [
-      kvText(line.voltage_kv),
-      line.operator ? `Operator: ${esc(line.operator)}` : "Operator not listed",
-      `${mi >= 10 ? Math.round(mi).toLocaleString("en-US") : mi.toFixed(1)} mi long`,
-      inside ? "Inside your scan area" : "Outside your scan area",
-    ],
-    "Power line. Source: OpenStreetMap",
-  );
-}
-
-const POPUP_OPTIONS: L.PopupOptions = {
-  className: "gs-pop-wrap",
-  minWidth: 220,
-  maxWidth: 280,
-  autoPanPadding: [16, 16],
-};
-
-/** Which asset each popup belongs to; read by <ReportPopups> when a popup opens. */
-const popupTargets = new WeakMap<L.Popup, { target: ReportTarget; layer: L.Layer }>();
-
-function bindReportPopup(layer: L.Layer, html: () => string, target: ReportTarget) {
-  layer.bindPopup(() => html(), POPUP_OPTIONS);
-  const popup = layer.getPopup();
-  if (popup) popupTargets.set(popup, { target, layer });
-}
-
-/** Wires the "Report a problem" button inside every asset popup to `onReport`. */
-export function ReportPopups({ onReport }: { onReport: (t: ReportTarget) => void }) {
-  const map = useMap();
-  const onReportRef = useLatest(onReport);
-
-  useEffect(() => {
-    const onOpen = (e: L.PopupEvent) => {
-      const entry = popupTargets.get(e.popup);
-      if (!entry) return;
-      // The popup repeats the hover tooltip, so hide the tooltip under it.
-      entry.layer.closeTooltip();
-      const btn = e.popup.getElement()?.querySelector<HTMLButtonElement>("[data-gs-report]");
-      btn?.addEventListener("click", () => {
-        onReportRef.current(entry.target);
-        map.closePopup();
-      });
-    };
-    map.on("popupopen", onOpen);
-    return () => {
-      map.off("popupopen", onOpen);
-    };
-  }, [map, onReportRef]);
-
-  return null;
-}
+/** An asset was clicked: scan at (lat, lon) and select `target`. */
+export type AssetClick = (target: ReportTarget, lat: number, lon: number) => void;
 
 /* ---------------------------------------------------------------------------- */
 
@@ -272,14 +193,17 @@ export function TransmissionLayer({
   result,
   visible,
   onImagery,
+  onAssetClick,
 }: {
   lines: Line[];
   result: ScanResult | null;
   visible: boolean;
   /** True on the satellite basemap: lighter outside lines and a white casing under in-scan lines. */
   onImagery: boolean;
+  onAssetClick: AssetClick;
 }) {
   const map = useMap();
+  const onClickRef = useLatest(onAssetClick);
   const groupRef = useRef<L.LayerGroup | null>(null);
   const entriesRef = useRef<{ line: Line; layer: L.Polyline; inside: boolean }[]>([]);
   const imageryRef = useRef(false);
@@ -302,7 +226,11 @@ export function TransmissionLayer({
         smoothFactor: 1.2,
       });
       const entry = { line, layer, inside: false };
-      bindReportPopup(layer, () => linePopup(line, entry.inside), { kind: "line", line });
+      layer.bindTooltip(() => lineTooltip(line), { direction: "top", offset: [0, -6], sticky: true });
+      // Scan where the line was clicked (not its midpoint).
+      layer.on("click", (ev: L.LeafletMouseEvent) =>
+        onClickRef.current({ kind: "line", line }, ev.latlng.lat, ev.latlng.lng),
+      );
       group.addLayer(layer);
       return entry;
     });
@@ -314,7 +242,7 @@ export function TransmissionLayer({
       groupRef.current = null;
       entriesRef.current = [];
     };
-  }, [map, lines]);
+  }, [map, lines, onClickRef]);
 
   // Re-style only what changed (or every line when the basemap kind flips).
   useEffect(() => {
@@ -384,12 +312,15 @@ export function SubstationLayer({
   substations,
   result,
   visible,
+  onAssetClick,
 }: {
   substations: Substation[];
   result: ScanResult | null;
   visible: boolean;
+  onAssetClick: AssetClick;
 }) {
   const map = useMap();
+  const onClickRef = useLatest(onAssetClick);
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ s: Substation; layer: L.CircleMarker; inside: boolean }[]>([]);
   const insideIds = useMemo(() => new Set((result?.substations ?? []).map((s) => s.osm_id)), [result]);
@@ -401,14 +332,14 @@ export function SubstationLayer({
       const layer = L.circleMarker([s.lat, s.lon], {
         renderer,
         pane: PANES.points.name,
-        radius: 2,
+        radius: SUBSTATION_RADIUS,
         stroke: false,
         fillColor: MAP_COLORS.gray,
         fillOpacity: 0.6,
         bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => substationTooltip(s), { direction: "top", offset: [0, -4] });
-      bindReportPopup(layer, () => substationPopup(s), { kind: "substation", substation: s });
+      layer.on("click", () => onClickRef.current({ kind: "substation", substation: s }, s.lat, s.lon));
       group.addLayer(layer);
       return { s, layer, inside: false };
     });
@@ -420,7 +351,7 @@ export function SubstationLayer({
       groupRef.current = null;
       entriesRef.current = [];
     };
-  }, [map, substations]);
+  }, [map, substations, onClickRef]);
 
   useEffect(() => {
     for (const e of entriesRef.current) {
@@ -454,12 +385,15 @@ export function PlantLayer({
   plants,
   result,
   visible,
+  onAssetClick,
 }: {
   plants: Plant[];
   result: ScanResult | null;
   visible: boolean;
+  onAssetClick: AssetClick;
 }) {
   const map = useMap();
+  const onClickRef = useLatest(onAssetClick);
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ p: Plant; layer: L.CircleMarker; inside: boolean }[]>([]);
   const insideIds = useMemo(() => new Set((result?.plants ?? []).map((p) => p.plant_code)), [result]);
@@ -482,7 +416,7 @@ export function PlantLayer({
         bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => plantTooltip(p), { direction: "top", offset: [0, -6] });
-      bindReportPopup(layer, () => plantPopup(p), { kind: "plant", plant: p });
+      layer.on("click", () => onClickRef.current({ kind: "plant", plant: p }, p.lat, p.lon));
       group.addLayer(layer);
       return { p, layer, inside: false };
     });
@@ -494,7 +428,7 @@ export function PlantLayer({
       groupRef.current = null;
       entriesRef.current = [];
     };
-  }, [map, plants]);
+  }, [map, plants, onClickRef]);
 
   useEffect(() => {
     for (const e of entriesRef.current) {
@@ -514,6 +448,51 @@ export function PlantLayer({
     }
     if (!visible && map.hasLayer(g)) g.remove();
   }, [visible, map, plants]);
+
+  return null;
+}
+
+/* ---------------------------------------------------------------------------- */
+
+/** Ring (plant / substation) or overlay (line) for the selected asset. Non-interactive. */
+export function SelectionHighlight({ selected }: { selected: ReportTarget | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selected || selected.kind === "area") return;
+    // Own canvas on a pointer-events:none pane, so clicks fall through to the shared points canvas.
+    ensurePane(map, PANES.highlight.name, PANES.highlight.z).style.pointerEvents = "none";
+    const renderer = L.canvas({ pane: PANES.highlight.name, padding: 0.4 });
+    const base = { renderer, pane: PANES.highlight.name, interactive: false, color: MAP_COLORS.accentStrong, opacity: 1 };
+    const layer =
+      selected.kind === "line"
+        ? L.polyline(selected.line.coords, {
+            ...base,
+            // In-scan line weight (lineWeight + 1) plus 2.
+            weight: lineWeight(selected.line.voltage_kv) + 3,
+            lineCap: "round",
+            lineJoin: "round",
+            smoothFactor: 1.2,
+          })
+        : selected.kind === "plant"
+          ? L.circleMarker([selected.plant.lat, selected.plant.lon], {
+              ...base,
+              radius: plantRadius(selected.plant.nameplate_mw) + 2,
+              weight: 2,
+              fill: false,
+            })
+          : L.circleMarker([selected.substation.lat, selected.substation.lon], {
+              ...base,
+              radius: SUBSTATION_RADIUS + 2,
+              weight: 2,
+              fill: false,
+            });
+    layer.addTo(map);
+    return () => {
+      layer.remove();
+      renderer.remove();
+    };
+  }, [selected, map]);
 
   return null;
 }

@@ -41,7 +41,8 @@ export const SOURCES = {
     url: "https://www.openstreetmap.org/copyright",
     asOf: "Fetched Nov 2026",
     what: "Power lines of 69 kV and up, and substations.",
-    note: "22% of lines have no voltage tag and many substations have no operator.",
+    method: "Where a line or substation has no voltage tag, we fill it in from connected lines (touching ends) or a substation within about 300 m. Substations and lines without a name are labeled by the nearest power-plant city within 15 mi.",
+    note: "22% of lines have no voltage tag before filling (about 12% after) and many substations have no operator.",
   },
   openmeteo_live: {
     name: "Open-Meteo forecast API",

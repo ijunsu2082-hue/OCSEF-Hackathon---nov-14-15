@@ -89,7 +89,7 @@ export function MapKey() {
         </Row>
       </ul>
 
-      <p className="mt-2 border-t border-[#e6e9ee] pt-2 text-[#6b7583]">Click any dot or line for details.</p>
+      <p className="mt-2 border-t border-[#e6e9ee] pt-2 text-[#6b7583]">Hover a dot or line for details. Click to scan there.</p>
     </section>
   );
 }

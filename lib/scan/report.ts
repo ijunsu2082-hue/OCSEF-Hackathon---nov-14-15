@@ -25,7 +25,7 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   if (r.plants.length) {
     for (const p of r.plants.slice(0, 5)) L.push(`- ${p.plant_name} (${p.city || p.county}): ${n1(p.nameplate_mw)} MW, ${FUEL_LABELS[p.primary_source] ?? p.primary_source}`);
   } else L.push("- No EIA-860 plants in this circle");
-  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, unknown ${n1(t.line_miles_by_kv.unknown)}) (OSM)`);
+  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, no voltage listed ${n1(t.line_miles_by_kv.unknown)}) (OSM${r.lines.some((l) => l.kv_inferred) ? "; some voltages filled in from connected lines" : ""})`);
   L.push(`- Substations: ${t.substation_count} (${t.hv_substation_count} at >=200 kV) (OSM)`);
   L.push("");
   L.push("## Energy cycle");

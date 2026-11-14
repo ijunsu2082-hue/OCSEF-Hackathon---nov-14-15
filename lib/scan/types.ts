@@ -17,11 +17,15 @@ export interface Line {
   osm_id: number; voltage_kv: number | null; operator: string | null; name: string | null;
   circuits: string | null;
   coords: [number, number][]; // [lat, lon] (Leaflet order)
+  kv_inferred?: boolean;      // voltage_kv filled in from connected lines / substations (enrich.ts)
+  near?: string | null;       // nearest plant city within 15 mi, set only when name is missing
 }
 
 export interface Substation {
   osm_id: string; name: string | null; operator: string | null; voltage_kv: number | null;
   substation: string | null; lat: number; lon: number;
+  kv_inferred?: boolean;      // voltage_kv filled in from connected lines (enrich.ts)
+  near?: string | null;       // nearest plant city within 15 mi, set only when name is missing
 }
 
 export interface NicheStat { label: string; value: string; kind: "measured" | "modeled"; source: string }

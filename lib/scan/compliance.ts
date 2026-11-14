@@ -5,6 +5,7 @@ import type { ReportTarget } from "./target";
 import { FUEL_CATEGORY, FUEL_LABELS } from "./colors";
 import { haversineMi } from "./geo";
 import { heatwaveWeather, rateLine } from "./rating";
+import { kvLabel, lineName, substationName } from "./labels";
 import { cToF, fmtCoord, fmtNum, fmtPowerText, isNum } from "@/components/scan/panel/format";
 
 export type Severity = "info" | "warn" | "danger";
@@ -39,6 +40,8 @@ export interface FiledReport extends ReportDraft {
   createdAt: string; // ISO
   hazards: HazardId[];
   note: string;
+  /** Report body written by Claude (POST /api/ai-report). Absent on rule-based and older reports. */
+  aiText?: string;
 }
 
 export const REPORTS_KEY = "gs-reports-v1";
@@ -140,8 +143,8 @@ export function buildDraft(
 ): ReportDraft {
   if (target.kind === "plant") {
     const p = target.plant;
-    const name = p.plant_name.trim() || "Unnamed power plant";
     const fuel = FUEL_LABELS[p.primary_source] ?? "Other";
+    const name = p.plant_name.trim() || `${fuel} power plant${p.city ? ` in ${p.city}` : ""}`;
     const age = p.capacity_weighted_age_years;
     const issues: (ReportIssue | null)[] = [];
     if (isNum(age) && age >= 40) {
@@ -163,7 +166,7 @@ export function buildDraft(
     const place = [p.city, p.county ? `${p.county} County` : ""].filter(Boolean).join(", ");
     return {
       title: `Problem report: ${name}`,
-      assetLabel: `${name} (${fmtPowerText(p.nameplate_mw)} ${fuel.toLowerCase()} power plant, owner: ${p.utility_name || "unknown"})`,
+      assetLabel: `${name} (${fmtPowerText(p.nameplate_mw)} ${fuel.toLowerCase()} power plant${p.utility_name ? `, owner: ${p.utility_name}` : ""})`,
       location: { lat: p.lat, lon: p.lon, text: place ? `${place} (${fmtCoord(p.lat, p.lon)})` : fmtCoord(p.lat, p.lon) },
       issues: finish(issues),
       contact: contactFor(p.utility_name),
@@ -172,14 +175,15 @@ export function buildDraft(
 
   if (target.kind === "substation") {
     const s = target.substation;
-    const name = s.name ?? "Unnamed substation";
+    const name = substationName(s);
     const missing: string[] = [];
     if (!s.name) missing.push("name");
     if (s.voltage_kv === null) missing.push("voltage");
-    const kv = isNum(s.voltage_kv) ? `${fmtNum(s.voltage_kv, 0)} kV ` : "";
+    const details = [kvLabel(s.voltage_kv, s.kv_inferred), s.operator ? `run by ${s.operator}` : null].filter(Boolean);
+    const label = /substation/i.test(name) ? name : `${name} substation`;
     return {
       title: `Problem report: ${name}`,
-      assetLabel: `${name} (${kv}substation, operator: ${s.operator ?? "unknown"})`,
+      assetLabel: details.length ? `${label}, ${details.join(", ")}` : label,
       location: { lat: s.lat, lon: s.lon, text: fmtCoord(s.lat, s.lon) },
       issues: finish([missingIssue("substation", missing)]),
       contact: contactFor(s.operator),
@@ -188,16 +192,21 @@ export function buildDraft(
 
   if (target.kind === "line") {
     const l = target.line;
-    const name = l.name ?? "Transmission line";
+    const name = lineName(l);
     const mid = l.coords[Math.floor(l.coords.length / 2)] ?? [result.area.lat, result.area.lon];
     const missing: string[] = [];
     if (!l.name) missing.push("name");
     if (l.voltage_kv === null) missing.push("voltage");
-    const kv = isNum(l.voltage_kv) ? `${fmtNum(l.voltage_kv, 0)} kV ` : "";
     const len = lineLengthMi(l.coords);
+    const label = /line/i.test(name) ? name : `${name} power line`;
+    const details = [
+      /\bkV\b/.test(name) ? null : kvLabel(l.voltage_kv, l.kv_inferred),
+      `${fmtNum(len, 1)} mi long`,
+      l.operator ? `run by ${l.operator}` : null,
+    ].filter(Boolean);
     return {
       title: `Problem report: ${name}`,
-      assetLabel: `${name} (${kv}power line, ${fmtNum(len, 1)} mi long, operator: ${l.operator ?? "unknown"})`,
+      assetLabel: `${label}, ${details.join(", ")}`,
       location: { lat: mid[0], lon: mid[1], text: `Middle of the line: ${fmtCoord(mid[0], mid[1])}` },
       issues: finish([
         heatwaveIssue(heatwave, "This power line"),
@@ -252,6 +261,26 @@ function fmtWhen(iso: string): string {
 }
 
 export function reportText(r: FiledReport): string {
+  const mapUrl = `https://www.openstreetmap.org/?mlat=${r.location.lat.toFixed(5)}&mlon=${r.location.lon.toFixed(5)}#map=16/${r.location.lat.toFixed(5)}/${r.location.lon.toFixed(5)}`;
+  if (r.aiText && r.aiText.trim()) {
+    const head: string[] = [
+      r.title,
+      `Filed: ${fmtWhen(r.createdAt)}`,
+      `What: ${r.assetLabel}`,
+      `Where: ${r.location.text}`,
+      `Map: ${mapUrl}`,
+      `Who to contact: ${r.contact.name} - ${r.contact.url}`,
+    ];
+    if (r.note.trim()) head.push(`Reporter's note: ${r.note.trim()}`);
+    return [
+      ...head,
+      "",
+      r.aiText.trim(),
+      "",
+      SAFETY_LINE,
+      "Made with GridSentinel. Report written by Claude from public data.",
+    ].join("\n");
+  }
   const hazards = r.hazards
     .map((id) => HAZARDS.find((h) => h.id === id)?.label)
     .filter((x): x is string => !!x);
@@ -261,7 +290,7 @@ export function reportText(r: FiledReport): string {
     "",
     `What: ${r.assetLabel}`,
     `Where: ${r.location.text}`,
-    `Map: https://www.openstreetmap.org/?mlat=${r.location.lat.toFixed(5)}&mlon=${r.location.lon.toFixed(5)}#map=16/${r.location.lat.toFixed(5)}/${r.location.lon.toFixed(5)}`,
+    `Map: ${mapUrl}`,
     "",
     "What's wrong:",
     ...(hazards.length ? hazards.map((h) => `- ${h}`) : ["- (nothing picked)"]),
@@ -286,7 +315,7 @@ export const MAIL_BODY_MAX = 1800;
 export function mailtoHref(r: FiledReport): string {
   let body = reportText(r);
   if (body.length > MAIL_BODY_MAX) {
-    const tail = "\n...(shortened, download the full report)";
+    const tail = "\n... (full report in the download)";
     body = body.slice(0, MAIL_BODY_MAX - tail.length) + tail;
   }
   return `mailto:?subject=${encodeURIComponent(r.title)}&body=${encodeURIComponent(body)}`;
@@ -319,7 +348,14 @@ export function loadReports(): FiledReport[] {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter(isFiled)
-      .map((r) => ({ ...r, note: typeof r.note === "string" ? r.note : "" }))
+      .map((r) => {
+        const { aiText, ...rest } = r;
+        return {
+          ...rest,
+          note: typeof r.note === "string" ? r.note : "",
+          ...(typeof aiText === "string" && aiText.trim() ? { aiText } : {}),
+        };
+      })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch {
     return [];
@@ -336,7 +372,13 @@ export function saveReports(reports: FiledReport[]): boolean {
   }
 }
 
-export function fileReport(draft: ReportDraft, hazards: HazardId[], note: string, now = new Date()): FiledReport {
+export function fileReport(
+  draft: ReportDraft,
+  hazards: HazardId[],
+  note: string,
+  now = new Date(),
+  aiText?: string,
+): FiledReport {
   const createdAt = now.toISOString();
   return {
     ...draft,
@@ -344,5 +386,6 @@ export function fileReport(draft: ReportDraft, hazards: HazardId[], note: string
     createdAt,
     hazards: [...hazards],
     note: note.trim(),
+    ...(aiText && aiText.trim() ? { aiText: aiText.trim() } : {}),
   };
 }

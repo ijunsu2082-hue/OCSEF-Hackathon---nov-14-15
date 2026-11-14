@@ -1,7 +1,7 @@
 "use client";
 
 import { CATEGORY_COLORS, FUEL_CATEGORY, FUEL_LABELS, UI } from "@/lib/scan/colors";
-import type { FuelKey, GenEvent, RiskFactor, ScanResult } from "@/lib/scan";
+import type { FuelKey, GenEvent, Plant, RiskFactor, ScanResult } from "@/lib/scan";
 import { DASH, fmtNum, fmtPowerText, isNum } from "./format";
 import { Caption, Section } from "./ui";
 
@@ -59,7 +59,16 @@ export function RiskBreakdown({ factors }: { factors: RiskFactor[] }) {
 
 const PLANT_COLS = "grid grid-cols-[minmax(0,1fr)_96px_56px_44px] items-baseline gap-x-3";
 
-export function TopPlants({ result, onFocus }: { result: ScanResult; onFocus: (lat: number, lon: number) => void }) {
+export function TopPlants({
+  result,
+  onFocus,
+  onSelect,
+}: {
+  result: ScanResult;
+  onFocus: (lat: number, lon: number) => void;
+  /** Row click also selects the plant (shows its card), without rescanning. */
+  onSelect?: (p: Plant) => void;
+}) {
   const top = result.plants.slice(0, 8);
   return (
     <Section title="Top plants" sources={["eia860"]}>
@@ -77,7 +86,10 @@ export function TopPlants({ result, onFocus }: { result: ScanResult; onFocus: (l
             <button
               key={p.plant_code}
               type="button"
-              onClick={() => onFocus(p.lat, p.lon)}
+              onClick={() => {
+                onFocus(p.lat, p.lon);
+                onSelect?.(p);
+              }}
               className={`${PLANT_COLS} -mx-2 w-[calc(100%+16px)] rounded-[6px] px-2 py-2 text-left transition-colors hover:bg-[#f6f8fa] focus-visible:bg-[#f6f8fa] focus-visible:outline-none`}
               title={`Show ${p.plant_name} on the map`}
             >
