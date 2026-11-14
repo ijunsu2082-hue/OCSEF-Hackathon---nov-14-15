@@ -67,7 +67,7 @@ export function computeRisk(
     score: round(clamp(((1.5 - ratio) / 0.6) * 100), 0),
     detail: heatwave
       ? `In a 105 °F heatwave the safe rating drops to ${ratio.toFixed(2)}× the fixed rating.`
-      : `On the hottest 2024 hour at ${site.name} (${fmt(site.hottest_temp_c, 1)} °C) the safe rating was ${ratio.toFixed(2)}× the fixed rating.`,
+      : `On the hottest 2025 hour at ${site.name} (${fmt(site.hottest_temp_c, 1)} °C) the safe rating was ${ratio.toFixed(2)}× the fixed rating.`,
   });
 
   // 5. Hazard history

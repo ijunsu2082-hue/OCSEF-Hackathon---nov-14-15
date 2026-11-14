@@ -58,11 +58,13 @@ export function heatwaveWeather(): WeatherNow {
   return { temp_c: 40.6, wind_ms: 0.3, sun_wm2: 1000, time: new Date().toISOString(), source: "heatwave-scenario" };
 }
 
-/** Month-day-hour key in the 2024 CSVs, which use a fixed UTC-8 offset (no DST). */
+/** Month-day-hour key in the 2025 CSVs, which use a fixed UTC-8 offset (no DST). 2025 has no Feb 29, so it maps to Feb 28. */
 function csvKeyFor(now: Date): string {
   const t = new Date(now.getTime() - 8 * 3600 * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `2024-${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())}T${p(t.getUTCHours())}:00`;
+  const m = t.getUTCMonth() + 1;
+  const d = m === 2 && t.getUTCDate() === 29 ? 28 : t.getUTCDate();
+  return `2025-${p(m)}-${p(d)}T${p(t.getUTCHours())}:00`;
 }
 
 async function fallbackWeather(lat: number, lon: number, data: GridData): Promise<WeatherNow> {
@@ -70,7 +72,7 @@ async function fallbackWeather(lat: number, lon: number, data: GridData): Promis
   const rows = await loadRatingCsv(site.key);
   const key = csvKeyFor(new Date());
   const row = rows.find((r) => r.time === key) ?? rows.find((r) => r.time.slice(5) === key.slice(5)) ?? rows[0];
-  return { temp_c: row.temp_c, wind_ms: row.wind_ms, sun_wm2: row.sun_wm2, time: row.time, source: "fallback-2024" };
+  return { temp_c: row.temp_c, wind_ms: row.wind_ms, sun_wm2: row.sun_wm2, time: row.time, source: "fallback-2025" };
 }
 
 export async function fetchWeatherNow(lat: number, lon: number, data: GridData): Promise<WeatherNow> {

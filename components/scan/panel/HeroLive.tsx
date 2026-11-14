@@ -15,7 +15,7 @@ function weatherLine(w: WeatherNow): string {
   const wind = `wind ${isNum(w.wind_ms) ? w.wind_ms.toFixed(1) : DASH} m/s`;
   const sun = `sun ${isNum(w.sun_wm2) ? fmtNum(w.sun_wm2, 0) : DASH} W/m²`;
   if (w.source === "heatwave-scenario") return `105 °F heatwave scenario, ${wind}, ${sun}`;
-  if (w.source === "fallback-2024") return `2024 weather (live data unavailable): ${temp}, ${wind}, ${sun}`;
+  if (w.source === "fallback-2025") return `2025 weather (live data unavailable): ${temp}, ${wind}, ${sun}`;
   return `Live weather ${temp}, ${wind}, ${sun}`;
 }
 
@@ -150,13 +150,13 @@ export function HeroLive({
     <Section
       title="Line capacity right now"
       subtitle="The Wire That Breathes"
-      sources={["openmeteo_live", "era5_2024", "ieee738"]}
+      sources={["openmeteo_live", "era5_2025", "ieee738"]}
     >
       <LiveBlock live={live} liveLoading={liveLoading} />
 
       <div className="mt-6">
         <p className="mb-2 text-[13px] leading-snug text-[#556070]">
-          Each day&apos;s worst-hour safe rating in 2024, against the fixed rating of{" "}
+          Each day&apos;s worst-hour safe rating in 2025, against the fixed rating of{" "}
           <span className="tabular-nums">{fmtNum(staticA, 0)} A</span> (dashed).
         </p>
         {daily && daily.length > 0 ? (
@@ -165,12 +165,12 @@ export function HeroLive({
           <p className="text-[14px] text-[#556070]">Loading…</p>
         )}
         <Caption className="mt-3 tabular-nums">
-          2024 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): safe rating beat the fixed rating in{" "}
+          2025 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): safe rating beat the fixed rating in{" "}
           {fmtPct(beat, beatDigits)} of hours. Modeled with IEEE 738.
         </Caption>
         {hottest && (
           <p className="mt-1 text-[13px] leading-snug tabular-nums text-[#556070]">
-            On the hottest 2024 hour ({hottest}, {fmtNum(site.hottest_temp_c, 0)} °C) the safe rating was{" "}
+            On the hottest 2025 hour ({hottest}, {fmtNum(site.hottest_temp_c, 0)} °C) the safe rating was{" "}
             <span style={hotRatio < 1 ? { color: "#dc2626" } : undefined}>{fmtRatio(hotRatio)}</span> the fixed rating.
           </p>
         )}

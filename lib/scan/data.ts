@@ -155,7 +155,7 @@ const csvCache = new Map<string, Promise<RatingRow[]>>();
 export function loadRatingCsv(siteKey: string): Promise<RatingRow[]> {
   let p = csvCache.get(siteKey);
   if (!p) {
-    p = getText(`line_ratings/line_rating_2024_${siteKey}.csv`).then((text) => {
+    p = getText(`line_ratings/line_rating_2025_${siteKey}.csv`).then((text) => {
       const out: RatingRow[] = [];
       const lines = text.split(/\r?\n/);
       for (let i = 1; i < lines.length; i++) {

@@ -50,18 +50,18 @@ export const SOURCES = {
     asOf: "Live",
     what: "Current temperature, wind and sun at the scanned point.",
   },
-  era5_2024: {
+  era5_2025: {
     name: "Open-Meteo historical archive (ERA5 reanalysis)",
     publisher: "Open-Meteo",
     url: "https://open-meteo.com/en/docs/historical-weather-api",
-    asOf: "2024",
-    what: "Hourly 2024 weather for 7 sites.",
+    asOf: "2025",
+    what: "Hourly 2025 weather for 7 sites.",
   },
   ieee738: {
     name: "Line rating model (IEEE Std 738)",
     publisher: "GridSentinel, based on IEEE Std 738",
     url: "https://standards.ieee.org/ieee/738/5765/",
-    asOf: "Computed at scan time from live and 2024 weather",
+    asOf: "Computed at scan time from live and 2025 weather",
     what: "Our port of the IEEE Std 738 heat balance for an ACSR 795 kcmil \"Drake\" conductor at 75 °C.",
     method: "Static rating is 723 A (40 °C, 0.61 m/s wind, full sun). The safe rating uses real weather with the wind halved.",
     note: "A screening estimate for one typical wire, not a utility rating.",

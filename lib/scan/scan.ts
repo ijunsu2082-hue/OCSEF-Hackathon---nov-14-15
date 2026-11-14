@@ -205,10 +205,10 @@ function upgradeIdeas(a: {
     ideas.push(`No power plants within ${a.radius} mi. Rooftop solar plus home batteries are the main local supply option.`);
   }
   if (ideas.length < 2) {
-    ideas.push(`Pilot dynamic line rating using ${s.name} weather (${s.distance_mi} mi away). The conservative rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2024 hours.`);
+    ideas.push(`Pilot dynamic line rating using ${s.name} weather (${s.distance_mi} mi away). The conservative rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2025 hours.`);
   }
   if (ideas.length < 2) {
-    ideas.push(`Add sensors at the hottest-hour bottleneck. On ${s.hottest_hour.slice(0, 10) || "the hottest 2024 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}× the fixed rating.`);
+    ideas.push(`Add sensors at the hottest-hour bottleneck. On ${s.hottest_hour.slice(0, 10) || "the hottest 2025 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}× the fixed rating.`);
   }
   return ideas.slice(0, 5);
 }

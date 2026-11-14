@@ -1,6 +1,6 @@
 """Hourly line-rating model for "The Wire That Breathes" (simplified IEEE Std 738 steady-state heat balance).
 
-For each hour of real 2024 weather it computes how many amps a standard conductor could carry:
+For each hour of real weather (2025 in the app; 2024 kept) it computes how many amps a standard conductor could carry:
   static_A        worst-case fixed rating: 40 C air, 0.61 m/s (2 ft/s) wind, 1000 W/m2 sun, all year
   aar_A           ambient-adjusted rating (what FERC Order 881 requires): real temp + real sun, but wind fixed at 0.61 m/s
   dlr_A           dynamic line rating: real temp + real sun + real wind (wind at 45 deg to the line)

@@ -87,7 +87,7 @@ export interface ScanResult {
 
 export interface WeatherNow {
   temp_c: number; wind_ms: number; sun_wm2: number; time: string;
-  source: "open-meteo-live" | "fallback-2024" | "heatwave-scenario";
+  source: "open-meteo-live" | "fallback-2025" | "heatwave-scenario";
 }
 
 export interface LineRatingNow {

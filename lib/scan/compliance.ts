@@ -104,7 +104,7 @@ function heatwaveIssue(heatwave: boolean, subject: string, plural = false): Repo
   };
 }
 
-/** Live weather check, only when the weather really is live (not the 2024 fallback or the heat-wave scenario). */
+/** Live weather check, only when the weather really is live (not the 2025 fallback or the heat-wave scenario). */
 function liveIssue(live: LineRatingNow | null, heatwave: boolean, subject: string): ReportIssue | null {
   if (heatwave || !live || live.weather.source !== "open-meteo-live") return null;
   if (!isNum(live.ratio) || live.ratio >= 1) return null;

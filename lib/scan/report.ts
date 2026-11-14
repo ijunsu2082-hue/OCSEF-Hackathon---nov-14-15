@@ -43,7 +43,7 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
     L.push(`- Weather (${w.source}, ${w.time}): ${n1(w.temp_c)} C, wind ${n1(w.wind_ms)} m/s, sun ${n0(w.sun_wm2)} W/m2`);
     L.push(`- Static ${n0(live.static_A)} A · AAR ${n0(live.aar_A)} A · DLR ${n0(live.dlr_A)} A · conservative DLR ${n0(live.dlr_conservative_A)} A → ${live.ratio.toFixed(2)}x static (${live.extra_pct >= 0 ? "+" : ""}${n1(live.extra_pct)}%) (MODELED)`);
   }
-  L.push(`- 2024: conservative DLR beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours, median ${s.median_conservative_dlr_vs_static}x; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x (MODELED)`);
+  L.push(`- 2025: conservative DLR beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours, median ${s.median_conservative_dlr_vs_static}x; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x (MODELED)`);
   L.push("");
   if (r.cases.length) {
     L.push("## Cases in this area");
@@ -55,6 +55,6 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   L.push("");
   L.push("---");
   L.push("Sources: EIA-860 2025 (plants, retired & proposed generators); OpenStreetMap contributors, ODbL (lines, substations); Open-Meteo (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings.");
-  L.push("Plants: EIA-860 final 2025 (released Sep 2026). Lines/substations: OpenStreetMap. Weather: Open-Meteo live + 2024 reanalysis. Line ratings modeled with IEEE 738 for one typical conductor.");
+  L.push("Plants: EIA-860 final 2025 (released Sep 2026). Lines/substations: OpenStreetMap. Weather: Open-Meteo live + 2025 reanalysis. Line ratings modeled with IEEE 738 for one typical conductor.");
   return L.join("\n");
 }

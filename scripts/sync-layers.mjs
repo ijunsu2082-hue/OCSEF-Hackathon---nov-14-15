@@ -13,8 +13,8 @@ mkdirSync(OUT_RATINGS, { recursive: true });
 
 // 1. Static layers
 for (const f of ["plants.geojson", "transmission.geojson", "substations.geojson", "niche_cases.json",
-  // niche_cases.json chart.data_url points at /layers/line_rating_2024_westminster_hs.csv
-  "line_rating_2024_westminster_hs.csv"]) {
+  // niche_cases.json chart.data_url points at /layers/line_rating_2024_westminster_hs.csv; 2025 is the current year
+  "line_rating_2024_westminster_hs.csv", "line_rating_2025_westminster_hs.csv"]) {
   // public/layers is committed on main; never overwrite the team's copies, only fill gaps.
   if (!existsSync(join(OUT, f))) copyFileSync(join(RESEARCH, "layers", f), join(OUT, f));
 }
@@ -94,4 +94,4 @@ const gen = [
   ...events("proposed_generators_westminster100mi.csv", "proposed", "Current Year"),
 ];
 writeFileSync(join(OUT, "gen_events.json"), JSON.stringify(gen));
-console.log(`sync-layers: 5 layer files, ${ratingFiles} line-rating files, ${gen.length} gen events -> ${OUT}`);
+console.log(`sync-layers: 6 layer files, ${ratingFiles} line-rating files, ${gen.length} gen events -> ${OUT}`);
