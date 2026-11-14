@@ -276,3 +276,136 @@ body {
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* ---- MapLibre 3D (Google-Earth-style terrain view) --------------------------
+   Prefixed with :root for the same specificity reason as the Leaflet block. */
+
+.gs-3d-host {
+  background: #dbe3ea;
+}
+:root .gs-3d-host .maplibregl-map {
+  font-family: var(--font-ui);
+}
+:root .gs-3d-host .maplibregl-canvas {
+  cursor: crosshair;
+}
+
+/* The 2D/3D switch sits in the top-right corner, so the nav control sits below it. */
+:root .gs-3d-host .maplibregl-ctrl-top-right {
+  padding-top: 44px;
+}
+
+:root .gs-3d-host .maplibregl-ctrl-group {
+  background: #ffffff;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-pop) !important;
+  overflow: hidden;
+}
+:root .gs-3d-host .maplibregl-ctrl-group button {
+  background: #ffffff;
+  width: 30px;
+  height: 30px;
+}
+:root .gs-3d-host .maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--border);
+}
+:root .gs-3d-host .maplibregl-ctrl-group button:hover {
+  background: #f6f8fa;
+}
+:root .gs-3d-host .maplibregl-ctrl-scale {
+  border: 1px solid var(--border);
+  border-top: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 0 4px;
+}
+:root .gs-3d-host .maplibregl-ctrl-attrib {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  font-size: 11px;
+}
+:root .gs-3d-host .maplibregl-ctrl-attrib a {
+  color: var(--text-dim);
+}
+
+/* Popups reuse the 2D tooltip type scale. */
+:root .gs-3d-popup .maplibregl-popup-content {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-pop);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 6px 8px;
+}
+:root .gs-3d-popup .maplibregl-popup-tip {
+  border-top-color: #ffffff;
+  border-bottom-color: #ffffff;
+  border-left-color: #ffffff;
+  border-right-color: #ffffff;
+}
+
+/* Pins: the 3D equivalents of the Leaflet divIcons. */
+.gs-3d-home {
+  position: relative;
+  display: block;
+}
+.gs-3d-home-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--accent-2);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.35);
+}
+.gs-3d-home-label {
+  position: absolute;
+  left: 14px;
+  top: -4px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.2);
+}
+.gs-3d-case {
+  width: 13px;
+  height: 13px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 2px solid var(--accent-2);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.35);
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.gs-3d-case:hover {
+  transform: scale(1.2);
+}
+.gs-3d-case.is-selected {
+  background: var(--accent-2);
+}
+.gs-3d-case:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.gs-3d-scan-label {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-pop);
+}

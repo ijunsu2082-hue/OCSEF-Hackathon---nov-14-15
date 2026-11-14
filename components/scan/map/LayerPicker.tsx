@@ -24,16 +24,20 @@ const SHADOW = "0 1px 3px rgba(16,24,40,.08)";
 
 /** Google-style layer picker: a thumbnail button that opens basemap choices and map details. */
 export function LayerPicker({
+  mode,
   basemap,
   onBasemap,
   layers,
   onLayers,
 }: {
+  /** 2D picks a basemap; 3D drapes the same tiles over the terrain. */
+  mode?: "2d" | "3d";
   basemap: BasemapId;
   onBasemap: (id: BasemapId) => void;
   layers: LayerVisibility;
   onLayers: (next: LayerVisibility) => void;
 }) {
+  const terrain = mode === "3d";
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const preview = basemapById(basemap === "satellite" ? "map" : "satellite");
@@ -63,7 +67,7 @@ export function LayerPicker({
           className="absolute bottom-[76px] left-0 w-[272px] rounded-[6px] border border-[#e6e9ee] bg-white p-3 text-[13px] text-[#1d2733]"
           style={{ boxShadow: SHADOW }}
         >
-          <p className="font-semibold">Map type</p>
+          <p className="font-semibold">{terrain ? "Drape" : "Map type"}</p>
           <div className="mt-2 grid grid-cols-4 gap-2">
             {BASEMAPS.map((b) => {
               const selected = b.id === basemap;
@@ -120,6 +124,18 @@ export function LayerPicker({
               <span className="box-border h-2.5 w-2.5 shrink-0 rounded-full border-2 border-[#0284c7] bg-white" />
               Niche case
             </span>
+            {terrain && (
+              <>
+                <span className="flex items-center gap-2">
+                  <span className="block h-3 w-2 shrink-0 rounded-[1px] bg-[#0ea5e9]" />
+                  Block height = MW
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="block h-2 w-2 shrink-0 rounded-[1px] bg-[#8b96a3]" />
+                  Substation = kV
+                </span>
+              </>
+            )}
           </div>
         </div>
       )}
