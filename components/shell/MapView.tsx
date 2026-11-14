@@ -9,18 +9,28 @@ import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
 import type { RiskEntry } from "@/lib/risk";
 import type { NicheCase } from "@/lib/niche";
 import { basemapById, type BasemapId } from "@/lib/basemaps";
+import type { SurfaceMode } from "@/lib/basemaps";
 import { loadPlants, loadSubstations, loadTransmission, type LayerVisibility, type PlantFeature, type SubstationFeature, type TransmissionFeature } from "@/lib/gridLayers";
+import { substationSourceCard } from "@/lib/substationSource";
 import type { CorridorSelection, MapController } from "./mapTypes";
 import LeafletMapView from "./LeafletMapView";
 
-setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).toString());
+// MapLibre's tiles/style work runs in a worker. Bundlers rewrite the
+// `new URL("maplibre-gl/dist/...", import.meta.url)` form to a chunk path that
+// is not emitted in the production build, so the map stayed blank with
+// "Worker failed to load". Serve the same file from /public instead; if the
+// maplibre-gl version changes, re-copy
+// node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs over it.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 interface Props {
   nodes: FacilityFeature[]; flows: PowerFlow[]; risks: Record<string, RiskEntry>; sims: Record<string, SimResult>;
   selectedId: string | null; heatwave: boolean; view3d: boolean; bounds: [[number, number], [number, number]];
+  surface: SurfaceMode;
   center: [number, number]; radiusMiles: number; layers: LayerVisibility; nicheCases: NicheCase[];
   selectedNicheId: string | null; onSelect: (id: string) => void; onSelectNiche: (id: string) => void;
-  selectedCorridorId: string | null; onSelectCorridor: (corridor: CorridorSelection) => void;
+  selectedCorridorId: string | null; onSelectCorridor: (corridor: CorridorSelection) => void; selectedCorridor: CorridorSelection | null;
+  onTerrainStatus?: (state: "loading" | "ready" | "unavailable") => void;
   onMapReady?: (map: MapController) => void; basemap: BasemapId; scanMode: boolean;
   scan: { lat: number; lon: number; radius_mi: number } | null; onScanPoint: (lat: number, lon: number) => void;
 }
@@ -30,7 +40,7 @@ type PropsRecord = Record<string, string | number | boolean>;
 type FC = FeatureCollection<Geometry, PropsRecord>;
 
 const EMPTY: FC = { type: "FeatureCollection", features: [] };
-const SOURCE_IDS = ["gs-context", "gs-transmission", "gs-substations", "gs-plants", "gs-flows", "gs-facilities", "gs-extrusions", "gs-niches", "gs-scan"] as const;
+const SOURCE_IDS = ["gs-context", "gs-transmission", "gs-substations", "gs-plants", "gs-flows", "gs-facilities", "gs-extrusions", "gs-corridor-detail", "gs-niches", "gs-scan"] as const;
 
 function circle(lon: number, lat: number, miles: number): Feature {
   const coords: [number, number][] = [];
@@ -68,15 +78,19 @@ function NativeMap(props: PropsWithFallback) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GLMap | null>(null);
   const readyRef = useRef(props.onMapReady);
+  const propsRef = useRef(props);
   const scanModeRef = useRef(props.scanMode);
   const scanPointRef = useRef(props.onScanPoint);
-  const sourcesRef = useRef<{ context: FC; scan: FC; facilities: FC; extrusions: FC; flows: FC; plants: FC; substations: FC; transmission: FC; niches: FC } | null>(null);
+  const sourcesRef = useRef<{ context: FC; scan: FC; facilities: FC; extrusions: FC; flows: FC; plants: FC; substations: FC; transmission: FC; corridor: FC; niches: FC } | null>(null);
   const [plants, setPlants] = useState<PlantFeature[]>([]);
   const [lines, setLines] = useState<TransmissionFeature[]>([]);
   const [substations, setSubstations] = useState<SubstationFeature[]>([]);
+  const substationsRef = useRef(substations);
   readyRef.current = props.onMapReady;
+  propsRef.current = props;
   scanModeRef.current = props.scanMode;
   scanPointRef.current = props.onScanPoint;
+  substationsRef.current = substations;
 
   const sources = useMemo(() => {
     const features = props.nodes.map((f) => {
@@ -99,19 +113,28 @@ function NativeMap(props: PropsWithFallback) {
     });
     const context = circle(props.center[1], props.center[0], props.radiusMiles);
     const scanFeature = props.scan ? circle(props.scan.lon, props.scan.lat, props.scan.radius_mi) : null;
+    const scanFeatures: Feature[] = scanFeature && props.scan ? [scanFeature, point(props.scan.lon, props.scan.lat, { label: "Scan center" })] : [];
     const plantFeatures = plants.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], { color: sourceColor(f.properties.primary_source), radius: Math.max(2.5, Math.min(14, Math.sqrt(f.properties.nameplate_mw) * 0.42)), name: f.properties.plant_name, mw: f.properties.nameplate_mw }));
-    const subFeatures = substations.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], { name: f.properties.name ?? "", voltage: f.properties.voltage_kv ?? 0 }));
+    const subFeatures = substations.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], {
+      name: f.properties.name ?? "", osm_id: f.properties.osm_id ?? "",
+      operator: f.properties.operator ?? "", voltage_kv: f.properties.voltage_kv ?? 0,
+    }));
     const lineFeatures: Feature[] = lines.map((f, index) => ({ type: "Feature", properties: { voltage: f.properties.voltage_kv ?? 0, corridorId: String(f.properties.osm_id ?? `${index}-${f.geometry.coordinates[0]?.join(",")}`) }, geometry: f.geometry }));
+    const corridorPoints = props.selectedCorridor ? [
+      point(props.selectedCorridor.coordinates[0]?.[0] ?? 0, props.selectedCorridor.coordinates[0]?.[1] ?? 0, { role: "endpoint", label: "A · line endpoint" }),
+      point(props.selectedCorridor.coordinates.at(-1)?.[0] ?? 0, props.selectedCorridor.coordinates.at(-1)?.[1] ?? 0, { role: "endpoint", label: "B · line endpoint" }),
+      ...(props.selectedCorridor.nearestSubstation ? [point(props.selectedCorridor.nearestSubstation.coordinates[0], props.selectedCorridor.nearestSubstation.coordinates[1], { role: "substation", label: `Nearest · ${props.selectedCorridor.nearestSubstation.name}` })] : []),
+    ] : [];
     const niches = props.nicheCases.map((f) => point(f.location.lon, f.location.lat, { id: f.id, title: f.title, category: f.category }));
-    return { context: fc([context]), scan: fc(scanFeature ? [scanFeature] : []), facilities: fc(features), extrusions: fc(extrusionFeatures), flows: fc(flowFeatures), plants: fc(plantFeatures), substations: fc(subFeatures), transmission: fc(lineFeatures), niches: fc(niches) };
-  }, [props.nodes, props.flows, props.risks, props.sims, props.center, props.radiusMiles, props.scan, props.nicheCases, plants, lines, substations]);
+    return { context: fc([context]), scan: fc(scanFeatures), facilities: fc(features), extrusions: fc(extrusionFeatures), flows: fc(flowFeatures), plants: fc(plantFeatures), substations: fc(subFeatures), transmission: fc(lineFeatures), corridor: fc(corridorPoints), niches: fc(niches) };
+  }, [props.nodes, props.flows, props.risks, props.sims, props.center, props.radiusMiles, props.scan, props.nicheCases, props.selectedCorridor, plants, lines, substations]);
   sourcesRef.current = sources;
 
   useEffect(() => {
     let alive = true;
     if (props.layers.plants) loadPlants().then((v) => alive && setPlants(v.features)).catch(() => alive && setPlants([]));
     if (props.layers.transmission) loadTransmission().then((v) => alive && setLines(v.features)).catch(() => alive && setLines([]));
-    if (props.layers.substations) loadSubstations().then((v) => alive && setSubstations(v.features)).catch(() => alive && setSubstations([]));
+    if (props.layers.substations || props.layers.transmission) loadSubstations().then((v) => alive && setSubstations(v.features)).catch(() => alive && setSubstations([]));
     return () => { alive = false; };
   }, [props.layers.plants, props.layers.transmission, props.layers.substations]);
 
@@ -126,6 +149,8 @@ function NativeMap(props: PropsWithFallback) {
       props.onFallback(); return;
     }
     mapRef.current = map;
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(container);
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     map.on("load", () => {
       if (!aliveRef.current) return;
@@ -135,6 +160,8 @@ function NativeMap(props: PropsWithFallback) {
       map.addLayer({ id: "gs-transmission-line", type: "line", source: "gs-transmission", layout: { visibility: props.layers.transmission ? "visible" : "none" }, paint: { "line-color": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], "#f5c66b", "#9aa8bb"], "line-opacity": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 1, 0.48], "line-width": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 5, ["interpolate", ["linear"], ["get", "voltage"], 0, 0.7, 138, 1.25, 230, 2, 500, 3]] } });
       map.on("mouseenter", "gs-transmission-line", () => { map.getCanvas().style.cursor = "pointer"; });
       map.on("mouseleave", "gs-transmission-line", () => { map.getCanvas().style.cursor = ""; });
+      map.addLayer({ id: "gs-corridor-points", type: "circle", source: "gs-corridor-detail", paint: { "circle-radius": ["case", ["==", ["get", "role"], "substation"], 6, 5], "circle-color": ["case", ["==", ["get", "role"], "substation"], "#53d8c9", "#f5c66b"], "circle-stroke-color": "#0b1015", "circle-stroke-width": 1.5 } });
+      map.addLayer({ id: "gs-corridor-labels", type: "symbol", source: "gs-corridor-detail", layout: { "text-field": ["get", "label"], "text-size": 10, "text-offset": [0, 1.3], "text-anchor": "top", "text-allow-overlap": true }, paint: { "text-color": "#f3f6fa", "text-halo-color": "#080c12", "text-halo-width": 1.5 } });
       map.addLayer({ id: "gs-flow-lines", type: "line", source: "gs-flows", paint: { "line-color": props.heatwave ? "#ffb020" : "#38d6c4", "line-width": 1.5, "line-opacity": 0.65, "line-dasharray": [2, 2] } });
       map.addLayer({ id: "gs-facilities", type: "circle", source: "gs-facilities", layout: { visibility: props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["get", "size"], "circle-color": ["get", "color"], "circle-stroke-color": "#eef8ff", "circle-stroke-width": 1, "circle-opacity": 0.92, "circle-pitch-alignment": "map" } });
       map.addLayer({ id: "gs-facility-extrusions", type: "circle", source: "gs-facilities", layout: { visibility: props.view3d && props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["+", ["get", "size"], 3], "circle-color": ["get", "color"], "circle-opacity": 0.32, "circle-translate": [0, -18], "circle-pitch-alignment": "map" } });
@@ -144,10 +171,11 @@ function NativeMap(props: PropsWithFallback) {
       map.addLayer({ id: "gs-niches", type: "circle", source: "gs-niches", layout: { visibility: props.layers.nicheCases ? "visible" : "none" }, paint: { "circle-radius": 6, "circle-color": "#f4b957", "circle-stroke-color": "#10151d", "circle-stroke-width": 1.5 } });
       map.addLayer({ id: "gs-scan-fill", type: "fill", source: "gs-scan", paint: { "fill-color": "#f5c66b", "fill-opacity": 0.08 } });
       map.addLayer({ id: "gs-scan-line", type: "line", source: "gs-scan", paint: { "line-color": "#f5c66b", "line-width": 1.5, "line-dasharray": [2, 2] } });
+      map.addLayer({ id: "gs-scan-center", type: "circle", source: "gs-scan", paint: { "circle-radius": 4, "circle-color": "#f5c66b", "circle-stroke-color": "#0b1015", "circle-stroke-width": 2 } });
       const current = sourcesRef.current;
-      if (current) for (const [id, data] of Object.entries({ "gs-context": current.context, "gs-transmission": current.transmission, "gs-substations": current.substations, "gs-plants": current.plants, "gs-flows": current.flows, "gs-facilities": current.facilities, "gs-extrusions": current.extrusions, "gs-niches": current.niches, "gs-scan": current.scan })) setData(map, id, data);
+      if (current) for (const [id, data] of Object.entries({ "gs-context": current.context, "gs-transmission": current.transmission, "gs-substations": current.substations, "gs-plants": current.plants, "gs-flows": current.flows, "gs-facilities": current.facilities, "gs-extrusions": current.extrusions, "gs-corridor-detail": current.corridor, "gs-niches": current.niches, "gs-scan": current.scan })) setData(map, id, data);
       map.addSource("gs-terrain", { type: "raster-dem", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], tileSize: 256, encoding: "terrarium", maxzoom: 15 });
-      if (props.view3d) map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
+      if (propsRef.current.surface === "elevation") propsRef.current.onTerrainStatus?.("loading");
       map.fitBounds([[props.bounds[0][1], props.bounds[0][0]], [props.bounds[1][1], props.bounds[1][0]]], { padding: 46, duration: 0 });
       const controller: MapController = {
         zoomIn: () => map.zoomIn(), zoomOut: () => map.zoomOut(),
@@ -171,17 +199,43 @@ function NativeMap(props: PropsWithFallback) {
     });
     map.on("click", (event) => {
       if (scanModeRef.current) { scanPointRef.current(event.lngLat.lat, event.lngLat.lng); return; }
-      const features = map.queryRenderedFeatures(event.point, { layers: ["gs-niches", "gs-facilities", "gs-transmission-line"] });
+      if (!map.getLayer("gs-substations")) return;
+      const features = map.queryRenderedFeatures(event.point, { layers: ["gs-niches", "gs-facilities", "gs-substations", "gs-transmission-line"] });
       const hit = features[0];
       if (hit?.layer.id === "gs-niches" && typeof hit.properties?.id === "string") props.onSelectNiche(hit.properties.id);
       else if (hit?.layer.id === "gs-facilities" && typeof hit.properties?.id === "string") props.onSelect(hit.properties.id);
+      else if (hit?.layer.id === "gs-substations") {
+        new maplibregl.Popup().setLngLat(event.lngLat)
+          .setDOMContent(substationSourceCard(hit.properties ?? {})).addTo(map);
+      }
       else if (hit?.layer.id === "gs-transmission-line" && hit.geometry.type === "LineString") {
         const coordinates = hit.geometry.coordinates as [number, number][];
-        props.onSelectCorridor({ id: String(hit.properties?.corridorId ?? ""), coordinates, voltage: Number(hit.properties?.voltage) || null });
+        const middle = coordinates[Math.floor(coordinates.length / 2)] ?? coordinates[0];
+        const nearest = middle ? substationsRef.current.reduce<SubstationFeature | null>((best, feature) => {
+          if (!best) return feature;
+          const [lon, lat] = feature.geometry.coordinates;
+          const [bestLon, bestLat] = best.geometry.coordinates;
+          const cosine = Math.cos(middle[1] * Math.PI / 180);
+          return (lon - middle[0]) ** 2 * cosine ** 2 + (lat - middle[1]) ** 2 < (bestLon - middle[0]) ** 2 * cosine ** 2 + (bestLat - middle[1]) ** 2 ? feature : best;
+        }, null) : null;
+        props.onSelectCorridor({ id: String(hit.properties?.corridorId ?? ""), coordinates, voltage: Number(hit.properties?.voltage) || null, ...(nearest ? { nearestSubstation: { name: nearest.properties.name ?? "Unnamed substation", coordinates: nearest.geometry.coordinates } } : {}) });
       }
     });
-    map.on("error", (event) => { if (event.error?.message?.toLowerCase().includes("webgl")) props.onFallback(); });
-    return () => { map.remove(); mapRef.current = null; };
+    map.on("sourcedata", (event) => {
+      if (event.sourceId === "gs-terrain" && event.isSourceLoaded && propsRef.current.surface === "elevation") {
+        map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
+        propsRef.current.onTerrainStatus?.("ready");
+      }
+    });
+    map.on("error", (event) => {
+      if (event.error?.message?.toLowerCase().includes("webgl")) props.onFallback();
+      // MapLibre attaches sourceId to source errors at runtime, not in its types.
+      else if ((event as { sourceId?: string }).sourceId === "gs-terrain") {
+        map.setTerrain(null);
+        propsRef.current.onTerrainStatus?.("unavailable");
+      }
+    });
+    return () => { resizeObserver.disconnect(); map.remove(); mapRef.current = null; };
   // Initial map construction only. Runtime changes flow through the effects below.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -190,13 +244,20 @@ function NativeMap(props: PropsWithFallback) {
   useEffect(() => { aliveRef.current = true; return () => { aliveRef.current = false; }; }, []);
   useEffect(() => {
     const map = mapRef.current; if (!map?.isStyleLoaded()) return;
-    for (const [id, data] of Object.entries({ "gs-context": sources.context, "gs-transmission": sources.transmission, "gs-substations": sources.substations, "gs-plants": sources.plants, "gs-flows": sources.flows, "gs-facilities": sources.facilities, "gs-extrusions": sources.extrusions, "gs-niches": sources.niches, "gs-scan": sources.scan })) setData(map, id, data);
+    for (const [id, data] of Object.entries({ "gs-context": sources.context, "gs-transmission": sources.transmission, "gs-substations": sources.substations, "gs-plants": sources.plants, "gs-flows": sources.flows, "gs-facilities": sources.facilities, "gs-extrusions": sources.extrusions, "gs-corridor-detail": sources.corridor, "gs-niches": sources.niches, "gs-scan": sources.scan })) setData(map, id, data);
   }, [sources]);
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
-    if (map.getSource("gs-terrain")) map.setTerrain(props.view3d ? { source: "gs-terrain", exaggeration: 1 } : null);
+    if (map.getSource("gs-terrain")) {
+      if (props.surface === "elevation" && map.isSourceLoaded("gs-terrain")) {
+        map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
+        props.onTerrainStatus?.("ready");
+      }
+      else if (props.surface === "elevation") props.onTerrainStatus?.("loading");
+      else map.setTerrain(null);
+    }
     for (const id of ["gs-facility-extrusions", "gs-facility-columns"]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", props.view3d && props.layers.loadCenters ? "visible" : "none");
-  }, [props.view3d, props.layers.loadCenters]);
+  }, [props.surface, props.view3d, props.layers.loadCenters, props.onTerrainStatus]);
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
     for (const [id, visible] of [["gs-transmission-line", props.layers.transmission], ["gs-substations", props.layers.substations], ["gs-plants", props.layers.plants], ["gs-facilities", props.layers.loadCenters], ["gs-niches", props.layers.nicheCases]] as const) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
