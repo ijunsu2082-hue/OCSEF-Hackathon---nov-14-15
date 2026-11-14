@@ -9,7 +9,9 @@ next-env.d.ts
 .DS_Store
 *.log
 
-# Next build output (distDir: build-out, set in next.config.ts)
+# Next build output (distDir: build-out for builds, build-dev for dev)
 build-out
+build-out-*
+build-dev
 buildtest
 *.log
