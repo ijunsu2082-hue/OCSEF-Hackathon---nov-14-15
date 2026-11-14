@@ -1,0 +1,628 @@
+{
+  "region_id": "westminster-100mi",
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.9456,
+          33.6912
+        ]
+      },
+      "properties": {
+        "id": "node-oc-01",
+        "name": "Groundwater Replenishment System",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "Orange County Water District",
+          "contact_email": "energy-audit@ocwd.example"
+        },
+        "infrastructure": {
+          "year_built": 2008,
+          "age_years": 18,
+          "motor_efficiency_rating": 0.86,
+          "nameplate_draw_mw": 24,
+          "utilization_pct": 75
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 18,
+          "peak_draw_mw": 22.5,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 284,
+          "source_mix": {
+            "natural_gas": 22,
+            "solar": 30,
+            "hydro": 6,
+            "wind": 12,
+            "other": 30
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "6 MW solar plus VFD retrofit on the high-pressure process drives",
+          "solar_capacity_add_mw": 6,
+          "efficiency_gain_pct": 10,
+          "capex_estimate_usd": 9820000,
+          "annual_savings_usd": 1668000,
+          "solar_capex_per_mw_usd": 1320000,
+          "solar_savings_per_mw_usd": 208000,
+          "vfd_capex_usd": 1900000,
+          "vfd_savings_usd": 420000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.9377,
+          33.694
+        ]
+      },
+      "properties": {
+        "id": "node-oc-02",
+        "name": "Sanitation District Plant No. 1",
+        "type": "High-Duty Process",
+        "provider": {
+          "utility_name": "OC San",
+          "contact_email": "energy-audit@ocsan.example"
+        },
+        "infrastructure": {
+          "year_built": 1954,
+          "age_years": 72,
+          "motor_efficiency_rating": 0.64,
+          "nameplate_draw_mw": 25,
+          "utilization_pct": 66
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 16.5,
+          "peak_draw_mw": 20.63,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 312,
+          "source_mix": {
+            "natural_gas": 52,
+            "solar": 14,
+            "hydro": 8,
+            "wind": 6,
+            "other": 20
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "5.5 MW solar plus VFD retrofit on aeration and solids-handling drives",
+          "solar_capacity_add_mw": 5.5,
+          "efficiency_gain_pct": 20,
+          "capex_estimate_usd": 9670000,
+          "annual_savings_usd": 1702500,
+          "solar_capex_per_mw_usd": 1340000,
+          "solar_savings_per_mw_usd": 215000,
+          "vfd_capex_usd": 2300000,
+          "vfd_savings_usd": 520000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.4886,
+          34.3053
+        ]
+      },
+      "properties": {
+        "id": "node-la-01",
+        "name": "Los Angeles Aqueduct Filtration Plant",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "LADWP",
+          "contact_email": "energy-audit@ladwp.example"
+        },
+        "infrastructure": {
+          "year_built": 1987,
+          "age_years": 39,
+          "motor_efficiency_rating": 0.68,
+          "nameplate_draw_mw": 21,
+          "utilization_pct": 69
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 14.49,
+          "peak_draw_mw": 18.11,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 310,
+          "source_mix": {
+            "natural_gas": 48,
+            "solar": 22,
+            "hydro": 15,
+            "wind": 10,
+            "other": 5
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "4.5 MW solar plus VFD retrofit on the high-service pump drives",
+          "solar_capacity_add_mw": 4.5,
+          "efficiency_gain_pct": 18,
+          "capex_estimate_usd": 7930000,
+          "annual_savings_usd": 1387500,
+          "solar_capex_per_mw_usd": 1340000,
+          "solar_savings_per_mw_usd": 215000,
+          "vfd_capex_usd": 1900000,
+          "vfd_savings_usd": 420000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.496,
+          34.3118
+        ]
+      },
+      "properties": {
+        "id": "node-la-02",
+        "name": "Joseph Jensen Filtration Plant",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "MWD of Southern California",
+          "contact_email": "energy-audit@mwdh2o.example"
+        },
+        "infrastructure": {
+          "year_built": 1972,
+          "age_years": 54,
+          "motor_efficiency_rating": 0.76,
+          "nameplate_draw_mw": 24,
+          "utilization_pct": 67.5
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 16.2,
+          "peak_draw_mw": 20.25,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 305,
+          "source_mix": {
+            "natural_gas": 44,
+            "solar": 20,
+            "hydro": 18,
+            "wind": 13,
+            "other": 5
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "6 MW solar plus VFD retrofit across the five duty pump drives",
+          "solar_capacity_add_mw": 6,
+          "efficiency_gain_pct": 14,
+          "capex_estimate_usd": 9940000,
+          "annual_savings_usd": 1710000,
+          "solar_capex_per_mw_usd": 1340000,
+          "solar_savings_per_mw_usd": 215000,
+          "vfd_capex_usd": 1900000,
+          "vfd_savings_usd": 420000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.78,
+          34.1131
+        ]
+      },
+      "properties": {
+        "id": "node-la-03",
+        "name": "F.E. Weymouth Filtration Plant",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "MWD of Southern California",
+          "contact_email": "energy-audit@mwdh2o.example"
+        },
+        "infrastructure": {
+          "year_built": 1941,
+          "age_years": 85,
+          "motor_efficiency_rating": 0.61,
+          "nameplate_draw_mw": 15,
+          "utilization_pct": 62.6
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 9.39,
+          "peak_draw_mw": 11.74,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 322,
+          "source_mix": {
+            "natural_gas": 52,
+            "solar": 16,
+            "hydro": 14,
+            "wind": 12,
+            "other": 6
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "3 MW solar and VFD retrofit in the 1941 pump house",
+          "solar_capacity_add_mw": 3,
+          "efficiency_gain_pct": 22,
+          "capex_estimate_usd": 5540000,
+          "annual_savings_usd": 1136000,
+          "solar_capex_per_mw_usd": 1380000,
+          "solar_savings_per_mw_usd": 222000,
+          "vfd_capex_usd": 1400000,
+          "vfd_savings_usd": 470000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.8202,
+          33.9123
+        ]
+      },
+      "properties": {
+        "id": "node-la-04",
+        "name": "Robert B. Diemer Filtration Plant",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "MWD of Southern California",
+          "contact_email": "energy-audit@mwdh2o.example"
+        },
+        "infrastructure": {
+          "year_built": 1963,
+          "age_years": 63,
+          "motor_efficiency_rating": 0.72,
+          "nameplate_draw_mw": 16.5,
+          "utilization_pct": 65.5
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 10.8075,
+          "peak_draw_mw": 13.51,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 318,
+          "source_mix": {
+            "natural_gas": 46,
+            "solar": 21,
+            "hydro": 16,
+            "wind": 12,
+            "other": 5
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "3.5 MW solar plus VFD retrofit on the East Branch booster drives",
+          "solar_capacity_add_mw": 3.5,
+          "efficiency_gain_pct": 16,
+          "capex_estimate_usd": 6390000,
+          "annual_savings_usd": 1152500,
+          "solar_capex_per_mw_usd": 1340000,
+          "solar_savings_per_mw_usd": 215000,
+          "vfd_capex_usd": 1700000,
+          "vfd_savings_usd": 400000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.4307,
+          33.9255
+        ]
+      },
+      "properties": {
+        "id": "node-la-05",
+        "name": "Hyperion Water Reclamation Plant",
+        "type": "High-Duty Process",
+        "provider": {
+          "utility_name": "LA Sanitation & Environment",
+          "contact_email": "energy-audit@lacitysan.example"
+        },
+        "infrastructure": {
+          "year_built": 1950,
+          "age_years": 76,
+          "motor_efficiency_rating": 0.58,
+          "nameplate_draw_mw": 31.4,
+          "utilization_pct": 68.8
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 21.6032,
+          "peak_draw_mw": 27,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 341,
+          "source_mix": {
+            "natural_gas": 55,
+            "solar": 14,
+            "hydro": 12,
+            "wind": 11,
+            "other": 8
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "8 MW solar plus VFD retrofit on aeration blowers and effluent pump drives",
+          "solar_capacity_add_mw": 8,
+          "efficiency_gain_pct": 24,
+          "capex_estimate_usd": 13220000,
+          "annual_savings_usd": 2420000,
+          "solar_capex_per_mw_usd": 1340000,
+          "solar_savings_per_mw_usd": 215000,
+          "vfd_capex_usd": 2500000,
+          "vfd_savings_usd": 700000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.394,
+          33.9097
+        ]
+      },
+      "properties": {
+        "id": "node-la-06",
+        "name": "Edward C. Little Recycling Facility",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "West Basin MWD",
+          "contact_email": "energy-audit@westbasin.example"
+        },
+        "infrastructure": {
+          "year_built": 1995,
+          "age_years": 31,
+          "motor_efficiency_rating": 0.84,
+          "nameplate_draw_mw": 4,
+          "utilization_pct": 77.5
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 3.1,
+          "peak_draw_mw": 3.88,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 268,
+          "source_mix": {
+            "natural_gas": 22,
+            "solar": 41,
+            "hydro": 16,
+            "wind": 14,
+            "other": 7
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "1.2 MW solar plus VFD retrofit on the distribution pump drives",
+          "solar_capacity_add_mw": 1.2,
+          "efficiency_gain_pct": 9,
+          "capex_estimate_usd": 2124000,
+          "annual_savings_usd": 371000,
+          "solar_capex_per_mw_usd": 1420000,
+          "solar_savings_per_mw_usd": 230000,
+          "vfd_capex_usd": 420000,
+          "vfd_savings_usd": 95000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.2658,
+          33.7445
+        ]
+      },
+      "properties": {
+        "id": "node-la-07",
+        "name": "Terminal Island Reclamation Plant",
+        "type": "Continuous Process",
+        "provider": {
+          "utility_name": "LA Sanitation & Environment",
+          "contact_email": "energy-audit@lacitysan.example"
+        },
+        "infrastructure": {
+          "year_built": 1935,
+          "age_years": 91,
+          "motor_efficiency_rating": 0.66,
+          "nameplate_draw_mw": 4,
+          "utilization_pct": 65
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 2.6,
+          "peak_draw_mw": 3.25,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 330,
+          "source_mix": {
+            "natural_gas": 50,
+            "solar": 18,
+            "hydro": 13,
+            "wind": 13,
+            "other": 6
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "1 MW solar plus VFD retrofit on secondary effluent pump drives",
+          "solar_capacity_add_mw": 1,
+          "efficiency_gain_pct": 20,
+          "capex_estimate_usd": 1920000,
+          "annual_savings_usd": 380000,
+          "solar_capex_per_mw_usd": 1420000,
+          "solar_savings_per_mw_usd": 230000,
+          "vfd_capex_usd": 500000,
+          "vfd_savings_usd": 150000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.5181,
+          34.4371
+        ]
+      },
+      "properties": {
+        "id": "node-la-08",
+        "name": "Rio Vista (Gladbach) Treatment Plant",
+        "type": "Pumping Load",
+        "provider": {
+          "utility_name": "Santa Clarita Valley Water",
+          "contact_email": "energy-audit@scvwater.example"
+        },
+        "infrastructure": {
+          "year_built": 1995,
+          "age_years": 31,
+          "motor_efficiency_rating": 0.71,
+          "nameplate_draw_mw": 3.5,
+          "utilization_pct": 68.6
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 2.401,
+          "peak_draw_mw": 3,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 296,
+          "source_mix": {
+            "natural_gas": 40,
+            "solar": 24,
+            "hydro": 18,
+            "wind": 12,
+            "other": 6
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "1.5 MW solar plus VFD retrofit on the booster pump drives",
+          "solar_capacity_add_mw": 1.5,
+          "efficiency_gain_pct": 15,
+          "capex_estimate_usd": 2780000,
+          "annual_savings_usd": 494000,
+          "solar_capex_per_mw_usd": 1400000,
+          "solar_savings_per_mw_usd": 226000,
+          "vfd_capex_usd": 680000,
+          "vfd_savings_usd": 155000
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.3387,
+          33.1382
+        ]
+      },
+      "properties": {
+        "id": "node-sd-01",
+        "name": "Claude \"Bud\" Lewis Carlsbad Desalination Plant",
+        "type": "Desalination Load",
+        "provider": {
+          "utility_name": "Poseidon Resources / IDE",
+          "contact_email": "energy-audit@poseidon.example"
+        },
+        "infrastructure": {
+          "year_built": 2015,
+          "age_years": 11,
+          "motor_efficiency_rating": 0.79,
+          "nameplate_draw_mw": 38,
+          "utilization_pct": 84.2
+        },
+        "energy_profile": {
+          "baseline_draw_mw": 31.996,
+          "peak_draw_mw": 39.99,
+          "grid_zone": "US-CAL-CAMX",
+          "carbon_intensity_gco2_kwh": 402,
+          "source_mix": {
+            "natural_gas": 58,
+            "solar": 12,
+            "hydro": 2,
+            "wind": 6,
+            "other": 22
+          }
+        },
+        "upgrade_potential": {
+          "recommended_intervention": "9.5 MW solar plus VFD retrofit on the high-pressure reverse-osmosis trains",
+          "solar_capacity_add_mw": 9.5,
+          "efficiency_gain_pct": 12,
+          "capex_estimate_usd": 14750000,
+          "annual_savings_usd": 2515000,
+          "solar_capex_per_mw_usd": 1300000,
+          "solar_savings_per_mw_usd": 210000,
+          "vfd_capex_usd": 2400000,
+          "vfd_savings_usd": 520000
+        }
+      }
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow-oc-02-oc-01",
+      "from": "node-oc-02",
+      "to": "node-oc-01",
+      "label": "Fountain Valley 69 kV tie",
+      "mva": 30
+    },
+    {
+      "id": "flow-oc-02-la-07",
+      "from": "node-oc-02",
+      "to": "node-la-07",
+      "label": "Fountain Valley–Harbor 69 kV tie (modeled)",
+      "mva": 45
+    },
+    {
+      "id": "flow-la-08-la-02",
+      "from": "node-la-08",
+      "to": "node-la-02",
+      "label": "Castaic 230 kV",
+      "mva": 60
+    },
+    {
+      "id": "flow-la-02-la-01",
+      "from": "node-la-02",
+      "to": "node-la-01",
+      "label": "East Branch 230 kV trunk",
+      "mva": 180
+    },
+    {
+      "id": "flow-la-03-la-04",
+      "from": "node-la-03",
+      "to": "node-la-04",
+      "label": "Rampart 230 kV trunk",
+      "mva": 120
+    },
+    {
+      "id": "flow-la-03-la-01",
+      "from": "node-la-03",
+      "to": "node-la-01",
+      "label": "Upper feeder 230 kV",
+      "mva": 140
+    },
+    {
+      "id": "flow-la-01-la-05",
+      "from": "node-la-01",
+      "to": "node-la-05",
+      "label": "Sylmar–Playa del Rey 230 kV",
+      "mva": 150
+    },
+    {
+      "id": "flow-la-05-la-06",
+      "from": "node-la-05",
+      "to": "node-la-06",
+      "label": "West Basin 69 kV tie",
+      "mva": 40
+    },
+    {
+      "id": "flow-la-05-la-07",
+      "from": "node-la-05",
+      "to": "node-la-07",
+      "label": "Harbor 115 kV trunk",
+      "mva": 45
+    },
+    {
+      "id": "flow-la-04-sd-01",
+      "from": "node-la-04",
+      "to": "node-sd-01",
+      "label": "SDCWA emergency intertie 230 kV",
+      "mva": 90
+    }
+  ]
+}

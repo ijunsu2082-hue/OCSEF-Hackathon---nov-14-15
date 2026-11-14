@@ -5,6 +5,7 @@ import type { JSX } from "react";
 import { scanReportMarkdown } from "@/lib/scan";
 import { RISK_COLORS } from "@/lib/scan/colors";
 import type { DailyRating, LineRatingNow, NicheCase, RiskLevel, ScanResult } from "@/lib/scan";
+import { GridChain } from "./GridChain";
 import { HeroLive } from "./HeroLive";
 import { CasesList, GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { WhatsHere } from "./WhatsHere";
@@ -82,7 +83,7 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 }
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
-  const { result, live, liveLoading, daily, selectedCaseId, onSelectCase, onFocus } = p;
+  const { result, live, liveLoading, daily, selectedCaseId, onSelectCase, onFocus, heatwave } = p;
 
   if (!result) {
     return (
@@ -100,6 +101,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
       <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
       <WhatsHere result={result} live={live} />
       <RiskBreakdown factors={result.risk.factors} />
+      <GridChain lat={result.area.lat} lon={result.area.lon} heatwave={heatwave} />
       <CasesList result={result} selectedCaseId={selectedCaseId} onSelectCase={onSelectCase} />
       <TopPlants result={result} onFocus={onFocus} />
       <GenEvents result={result} />
