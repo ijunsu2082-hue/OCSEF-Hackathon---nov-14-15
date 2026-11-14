@@ -1,0 +1,23 @@
+[
+  {
+    "id": "westminster-100mi",
+    "name": "Westminster 100-Mile Radius",
+    "state": "CA",
+    "center": [
+      33.7538,
+      -118.0111
+    ],
+    "radius_miles": 100,
+    "bounds": [
+      [
+        33.1,
+        -118.6
+      ],
+      [
+        34.5,
+        -117.28
+      ]
+    ],
+    "grid_zone": "US-CAL-CAMX"
+  }
+]
