@@ -162,58 +162,80 @@ export function TransmissionLayer({
   onImagery: boolean;
 }) {
   const map = useMap();
-  const groupRef = useRef<L.LayerGroup | null>(null);
-  const entriesRef = useRef<{ line: Line; layer: L.Polyline; inside: boolean }[]>([]);
-  const imageryRef = useRef(false);
+  const baseRef = useRef<L.LayerGroup | null>(null);
+  const accentRef = useRef<{ group: L.LayerGroup; renderer: L.Canvas } | null>(null);
 
   const insideIds = useMemo(() => new Set((result?.lines ?? []).map((l) => l.osm_id)), [result]);
 
-  // Build once per dataset.
+  // The whole network is drawn once and never restyled by a scan. Rebuilt only
+  // when the dataset or the basemap kind changes, because the outside style is
+  // basemap-dependent.
   useEffect(() => {
     ensurePane(map, PANES.lines.name, PANES.lines.z);
     const renderer = L.canvas({ pane: PANES.lines.name, padding: 0.4 });
     const group = L.layerGroup();
-    const entries = lines.map((line) => {
-      const layer = L.polyline(line.coords, {
-        renderer,
-        pane: PANES.lines.name,
-        interactive: false,
-        color: MAP_COLORS.gray,
-        opacity: 0.5,
-        weight: lineWeight(line.voltage_kv),
-        lineCap: "round",
-        lineJoin: "round",
-        smoothFactor: 1.2,
-      });
-      group.addLayer(layer);
-      return { line, layer, inside: false };
-    });
-    entriesRef.current = entries;
-    groupRef.current = group;
-    imageryRef.current = false;
+    const style = outsideLineStyle(onImagery);
+    for (const line of lines) {
+      group.addLayer(
+        L.polyline(line.coords, {
+          renderer,
+          pane: PANES.lines.name,
+          interactive: false,
+          weight: lineWeight(line.voltage_kv),
+          lineCap: "round",
+          lineJoin: "round",
+          smoothFactor: 1.2,
+          ...style,
+        }),
+      );
+    }
+    baseRef.current = group;
     return () => {
       group.remove();
       renderer.remove();
-      groupRef.current = null;
-      entriesRef.current = [];
+      baseRef.current = null;
     };
-  }, [map, lines]);
+  }, [map, lines, onImagery]);
 
-  // Re-style only what changed (or every outside line when the basemap kind flips).
+  // In-scan circuits live on their own canvas, rebuilt from only the lines that
+  // are inside the circle. A radius change therefore costs O(inside) instead of
+  // restyling every feature and asking Leaflet to redraw 5k paths per frame.
   useEffect(() => {
-    const full = imageryRef.current !== onImagery;
-    imageryRef.current = onImagery;
-    const outside = outsideLineStyle(onImagery);
-    const newlyInside: L.Polyline[] = [];
-    for (const e of entriesRef.current) {
-      const inside = insideIds.has(e.line.osm_id);
-      if (inside === e.inside && !(full && !inside)) continue;
-      e.inside = inside;
-      e.layer.setStyle(inside ? { color: MAP_COLORS.accent, opacity: 0.9 } : outside);
-      if (inside) newlyInside.push(e.layer);
+    const previous = accentRef.current;
+    if (previous) {
+      previous.group.remove();
+      previous.renderer.remove();
+      accentRef.current = null;
     }
-    if (groupRef.current && map.hasLayer(groupRef.current)) newlyInside.forEach((l) => l.bringToFront());
-  }, [insideIds, onImagery, map, lines]);
+    if (!visible || insideIds.size === 0) return;
+
+    ensurePane(map, PANES.lines.name, PANES.lines.z);
+    const renderer = L.canvas({ pane: PANES.lines.name, padding: 0.4 });
+    const group = L.layerGroup();
+    for (const line of lines) {
+      if (!insideIds.has(line.osm_id)) continue;
+      group.addLayer(
+        L.polyline(line.coords, {
+          renderer,
+          pane: PANES.lines.name,
+          interactive: false,
+          color: MAP_COLORS.accent,
+          opacity: 0.9,
+          weight: lineWeight(line.voltage_kv) + 0.6,
+          lineCap: "round",
+          lineJoin: "round",
+          smoothFactor: 1.2,
+        }),
+      );
+    }
+    group.addTo(map);
+    accentRef.current = { group, renderer };
+    return () => {
+      group.remove();
+      renderer.remove();
+      if (accentRef.current?.group === group) accentRef.current = null;
+    };
+  }, [insideIds, visible, map, lines]);
 
   // White casing under in-scan lines, satellite only (drawn on a pane just below the lines).
   useEffect(() => {
@@ -245,12 +267,9 @@ export function TransmissionLayer({
   }, [onImagery, visible, insideIds, lines, map]);
 
   useEffect(() => {
-    const g = groupRef.current;
+    const g = baseRef.current;
     if (!g) return;
-    if (visible && !map.hasLayer(g)) {
-      g.addTo(map);
-      for (const e of entriesRef.current) if (e.inside) e.layer.bringToFront();
-    }
+    if (visible && !map.hasLayer(g)) g.addTo(map);
     if (!visible && map.hasLayer(g)) g.remove();
   }, [visible, map, lines]);
 
