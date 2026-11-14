@@ -265,7 +265,7 @@ const CONDUCTOR_FOR_KV: { min_kv: number; id: keyof typeof CONDUCTORS }[] = [
   { min_kv: 69, id: "acsr-336-linnet" },
 ];
 
-function conductorForKv(voltageKv: number): ConductorSpec {
+export function conductorForKv(voltageKv: number): ConductorSpec {
   const match = CONDUCTOR_FOR_KV.find((entry) => voltageKv >= entry.min_kv);
   return CONDUCTORS[match?.id ?? "acsr-4-0-penguin"];
 }

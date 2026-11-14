@@ -12,6 +12,7 @@ import type {
   TransmissionFeature,
 } from "../gridLayers";
 import { sourceLabel } from "../gridLayers";
+import { hourLabel, type WireSummary } from "./wire";
 
 export interface ScanPoint {
   lat: number;
@@ -52,6 +53,14 @@ export type ScanLevel = "LOW" | "WATCH" | "HIGH" | "CRITICAL";
 
 export interface ScanResult {
   point: ScanPoint;
+  /** Nearest plant's city and name, or the nearest load center. */
+  label: string;
+  /** False when the circle sits outside the regional data footprint. */
+  inside_coverage: boolean;
+  /** Highest mapped voltage inside the circle. */
+  max_voltage_kv: number | null;
+  /** Hourly conductor rating for that tie, when the archive is available. */
+  wire: WireSummary | null;
   plant_count: number;
   nameplate_mw: number;
   renewable_mw: number;
@@ -119,10 +128,22 @@ function levelFor(score: number): ScanLevel {
   return "LOW";
 }
 
+export interface ScanOptions {
+  heatwave?: boolean;
+  /** Regional data footprint; a scan outside it is flagged, not silently empty. */
+  regionCenter?: { lat: number; lon: number };
+  coverageMi?: number;
+  /**
+   * Rate the highest-voltage tie inside the circle. Supplied by the map so the
+   * scan itself stays pure and CPU only (no fetch inside the engine).
+   */
+  rateVoltage?: (voltageKv: number) => WireSummary | null;
+}
+
 export function scanArea(
   point: ScanPoint,
   input: ScanInput,
-  options: { heatwave?: boolean } = {},
+  options: ScanOptions = {},
 ): ScanResult {
   const { lat, lon } = point;
   const radius = Number.isFinite(point.radius_mi) && point.radius_mi > 0 ? point.radius_mi : 1;
@@ -144,6 +165,7 @@ export function scanArea(
   let ageWeighted = 0;
   let ageBasis = 0;
   let oldest: ScanResult["oldest_plant"] = null;
+  let nearestPlant: { name: string; city: string | null; distance_mi: number; mw: number } | null = null;
   let plannedRetirementMw = 0;
   let plannedRetirementPlants = 0;
 
@@ -151,7 +173,21 @@ export function scanArea(
     const [pLon, pLat] = feature.geometry.coordinates;
     if (!within(pLat, pLon)) continue;
     const props = feature.properties;
+    const distance = haversineMi(lat, lon, pLat, pLon);
     const mw = Number.isFinite(props.nameplate_mw) ? props.nameplate_mw : 0;
+    // Anchor the label on the biggest generator inside the circle: the city
+    // names the place, the plant names what actually supplies it.
+    if (
+      mw >= 50 &&
+      (!nearestPlant || mw > nearestPlant.mw || (mw === nearestPlant.mw && distance < nearestPlant.distance_mi))
+    ) {
+      nearestPlant = {
+        name: props.plant_name,
+        city: props.city ?? null,
+        distance_mi: distance,
+        mw,
+      };
+    }
     nameplate += mw;
     const source = props.primary_source ?? "other";
     mwBySource[source] = (mwBySource[source] ?? 0) + mw;
@@ -167,7 +203,7 @@ export function scanArea(
       oldest = {
         name: props.plant_name,
         year: props.oldest_year,
-        distance_mi: round(haversineMi(lat, lon, pLat, pLon), 1),
+        distance_mi: round(distance, 1),
       };
     }
     plants.push({
@@ -175,7 +211,7 @@ export function scanArea(
       mw: round(mw, 1),
       source,
       age_years: props.capacity_weighted_age_years,
-      distance_mi: round(haversineMi(lat, lon, pLat, pLon), 1),
+      distance_mi: round(distance, 1),
     });
   }
   plants.sort((a, b) => b.mw - a.mw);
@@ -201,11 +237,13 @@ export function scanArea(
   };
   let lineMiles = 0;
   let hvLineMiles = 0;
+  let maxKv: number | null = null;
 
   for (const feature of input.transmission) {
     const coords = feature.geometry.coordinates;
     if (!Array.isArray(coords) || coords.length < 2) continue;
-    const band = kvBand(feature.properties.voltage_kv);
+    const kv = feature.properties.voltage_kv;
+    const band = kvBand(kv);
 
     for (let i = 1; i < coords.length; i += 1) {
       const [aLon, aLat] = coords[i - 1];
@@ -226,7 +264,10 @@ export function scanArea(
         if (within(aLat + (bLat - aLat) * f, aLon + (bLon - aLon) * f)) {
           lineMiles += segMi / pieces;
           bandMiles[band] += segMi / pieces;
-          if ((feature.properties.voltage_kv ?? 0) >= 200) hvLineMiles += segMi / pieces;
+          if ((kv ?? 0) >= 200) hvLineMiles += segMi / pieces;
+          // Only a segment that actually enters the circle sets the circle's
+          // voltage class; a bbox overlap is not a delivered circuit.
+          if (kv !== null && (maxKv === null || kv > maxKv)) maxKv = kv;
         }
       }
     }
@@ -254,13 +295,33 @@ export function scanArea(
   const renewablePct = nameplate > 0 ? (renewableMw / nameplate) * 100 : 0;
   const capAge = ageBasis > 0 ? ageWeighted / ageBasis : null;
 
+  // The highest-voltage tie in the circle is the one that sets deliverability,
+  // so it is the one the 2024 archive is asked about.
+  const wire = maxKv !== null && options.rateVoltage ? options.rateVoltage(maxKv) : null;
+
   const fossilScore = nameplate > 0 ? (fossilMw / nameplate) * 100 : 0;
   const ageScore = capAge === null ? 40 : Math.min(100, Math.max(0, ((capAge - 20) / 40) * 100));
+  const turnoverNote =
+    plannedRetirementMw > 0
+      ? ` ${round(plannedRetirementMw, 1)} MW of ${round(nameplate, 1)} MW retires on an announced EIA-860 date.`
+      : "";
   const redundancyScore =
     hvSubstationCount === 0 ? 85 : hvSubstationCount === 1 ? 65 : hvSubstationCount <= 3 ? 40 : 20;
   const deliveryScore =
     lineMiles === 0 ? 90 : hvLineMiles === 0 ? 70 : hvLineMiles < radius * 2 ? 55 : 30;
-  const stressScore = options.heatwave ? 80 : 35;
+
+  // Heat stress is the conductor's own heat balance, not a scenario constant:
+  // a breeze worth 1.5x the still-air rating is no thermal constraint; a calm
+  // hour worth 1.0x is the wire's whole margin gone.
+  const wireRatio = wire
+    ? options.heatwave
+      ? wire.heatwave.ratio
+      : wire.hottest?.ratio ?? null
+    : null;
+  const heatScore =
+    wireRatio === null
+      ? 40
+      : Math.min(100, Math.max(0, ((1.5 - wireRatio) / 0.5) * 100));
 
   const factors: ScanFactor[] = [
     {
@@ -273,7 +334,10 @@ export function scanArea(
       label: "Asset age",
       score: round(ageScore, 0),
       weight: 0.2,
-      detail: capAge === null ? "No capacity-weighted age in range." : `${round(capAge, 1)} yr capacity-weighted age.`,
+      detail:
+        (capAge === null
+          ? "No capacity-weighted age in range."
+          : `${round(capAge, 1)} yr capacity-weighted age.`) + turnoverNote,
     },
     {
       label: "Substation redundancy",
@@ -288,12 +352,16 @@ export function scanArea(
       detail: `${round(hvLineMiles, 1)} mi of 200 kV+ line, ${round(lineMiles, 1)} mi total.`,
     },
     {
-      label: "Heat exposure",
-      score: stressScore,
+      label: "Heat stress on wires",
+      score: round(heatScore, 0),
       weight: 0.15,
-      detail: options.heatwave
-        ? "Modeled at 105 °F: demand +45%, grid carbon +25%."
-        : "Baseline conditions; toggle the heatwave scenario to stress the area.",
+      detail: !wire
+        ? "The 2024 conductor archive is not loaded, so heat stress is neutral."
+        : options.heatwave
+          ? `At 105 °F the fixed rating falls ${wire.heatwave.derate_pct}% and a 3 m/s breeze returns ${wire.heatwave.ratio.toFixed(2)}× it.`
+          : wire.hottest
+            ? `Hottest 2024 hour (${hourLabel(wire.hottest.time)}, ${round(wire.hottest.temp_c, 1)} °C): the breeze was worth ${wire.hottest.ratio.toFixed(2)}× the still-air rating.`
+            : "No hourly weather in the archive.",
     },
   ];
 
@@ -324,12 +392,27 @@ export function scanArea(
   if (capAge !== null && capAge > 35) {
     ideas.push(`Refurbish the ${round(capAge, 0)} yr fleet before extending its service life.`);
   }
+  if (plannedRetirementMw > 0) {
+    ideas.push(
+      `Schedule the ${round(plannedRetirementMw, 1)} MW replacement before the announced retirement date, not after it.`,
+    );
+  }
   if (ideas.length === 0) {
     ideas.push("Area looks resilient on these screens; verify with interval data before committing capital.");
   }
 
   const result: Omit<ScanResult, "report"> = {
     point: { lat: round(lat, 4), lon: round(lon, 4), radius_mi: radius },
+    label:
+      nearestPlant?.city
+        ? `${nearestPlant.city} · near ${nearestPlant.name}`
+        : nearestLoadCenter?.name ?? `${round(lat, 2)}, ${round(lon, 2)}`,
+    inside_coverage: options.regionCenter
+      ? haversineMi(options.regionCenter.lat, options.regionCenter.lon, lat, lon) <=
+        (options.coverageMi ?? 100)
+      : true,
+    max_voltage_kv: maxKv,
+    wire,
     plant_count: plants.length,
     nameplate_mw: round(nameplate, 1),
     renewable_mw: round(renewableMw, 1),
@@ -365,9 +448,12 @@ function scanReport(result: Omit<ScanResult, "report">): string {
     .filter(([, value]) => value > 0)
     .map(([key, value]) => `${sourceLabel(key)} ${value} MW`);
 
-  lines.push(`# GridSentinel Area Scan — ${result.point.lat}, ${result.point.lon}`);
+  lines.push(`# GridSentinel Area Scan — ${result.label}`);
   lines.push("");
-  lines.push(`**Radius:** ${result.point.radius_mi} mi`);
+  lines.push(`**At:** ${result.point.lat}, ${result.point.lon} · radius ${result.point.radius_mi} mi`);
+  if (!result.inside_coverage) {
+    lines.push("**Coverage:** outside the 100 mi data footprint — layers may be incomplete here");
+  }
   lines.push(`**Risk:** ${result.risk.score}/100 (${result.risk.level})`);
   lines.push("");
   lines.push("## Generation");
@@ -403,6 +489,30 @@ function scanReport(result: Omit<ScanResult, "report">): string {
     );
   }
   lines.push("");
+  if (result.wire) {
+    const wire = result.wire;
+    lines.push("## The wire that breathes (MODELED, IEEE 738 screening)");
+    lines.push(
+      `- ${wire.conductor} at ${wire.voltage_kv} kV · still air vs the 2024 wind at ${wire.site}`,
+    );
+    if (wire.now) {
+      lines.push(
+        `- This hour (${hourLabel(wire.now.time)}): still air ${wire.now.still_a} A, with this wind ${wire.now.breeze_a} A → ${wire.now.ratio.toFixed(2)}× static`,
+      );
+    }
+    lines.push(
+      `- 2024: above the still-air rating in ${wire.pct_hours_above_still_air}% of ${wire.hours} hours, median ${wire.median_ratio.toFixed(2)}×`,
+    );
+    if (wire.hottest) {
+      lines.push(
+        `- Hottest hour ${hourLabel(wire.hottest.time)}: ${wire.hottest.temp_c} °C, ${wire.hottest.ratio.toFixed(2)}× static`,
+      );
+    }
+    lines.push(
+      `- 105 °F: fixed rating ${wire.heatwave.derate_pct}% lower, a 3 m/s breeze returns ${wire.heatwave.ratio.toFixed(2)}×`,
+    );
+    lines.push("");
+  }
   lines.push("## Risk factors");
   for (const factor of result.risk.factors) {
     lines.push(

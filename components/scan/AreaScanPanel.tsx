@@ -5,6 +5,8 @@ import type { ScanResult } from "@/lib/scan/areaScan";
 import { haversineMi } from "@/lib/scan/areaScan";
 import type { NicheCase } from "@/lib/niche";
 import { fmtNumber } from "@/lib/format";
+import { Sparkline } from "@/components/primitives/Sparkline";
+import { dayLabel, hourLabel } from "@/lib/scan/wire";
 
 interface Props {
   result: ScanResult | null;
@@ -181,16 +183,24 @@ export default function AreaScanPanel({
     return out.slice(0, 10);
   }, [casesHere]);
 
+  const wire = result?.wire ?? null;
+  const archiveRatio = wire?.now?.ratio ?? null;
+  const activeRatio = wire ? (heatwave ? wire.heatwave.ratio : archiveRatio) : null;
+  const headroomPct =
+    activeRatio === null ? null : Math.round(Math.abs(activeRatio - 1) * 100);
+  const dayRatios = wire ? wire.today.map((hour) => hour.ratio) : [];
+
   return (
     <aside className="scan-panel" aria-label="Area scan result">
       <header className="scan-head">
         <div className="scan-head-text">
           <span className="scan-kicker">Area scan · {radius} mi</span>
-          <b>
-            {result
-              ? `${result.point.lat.toFixed(3)}, ${result.point.lon.toFixed(3)}`
-              : "Click the map"}
-          </b>
+          <b>{result ? result.label : "Click the map"}</b>
+          {result ? (
+            <small className="scan-coords">
+              {result.point.lat.toFixed(3)}, {result.point.lon.toFixed(3)}
+            </small>
+          ) : null}
         </div>
         <button type="button" className="scan-close" onClick={onClose} aria-label="Close scan">
           ×
@@ -217,6 +227,12 @@ export default function AreaScanPanel({
         <p className="scan-note">
           Scan mode is on. Click anywhere on the map to read the generation, transmission and
           redundancy inside that circle.
+        </p>
+      ) : null}
+
+      {result && !result.inside_coverage ? (
+        <p className="scan-note">
+          Outside the 100 mi data footprint: the plant and line layers may be incomplete here.
         </p>
       ) : null}
 
@@ -323,18 +339,22 @@ export default function AreaScanPanel({
                 <Row
                   label="Planned retirement"
                   value={
-                    result.planned_retirement_mw > 0
-                      ? `${fmtNumber(result.planned_retirement_mw, 0)} MW`
-                      : "none announced"
+                    result.plant_count === 0
+                      ? "n/a"
+                      : result.planned_retirement_mw > 0
+                        ? `${fmtNumber(result.planned_retirement_mw, 0)} MW`
+                        : "none listed"
                   }
                 />
-                {result.planned_retirement_plants > 0 ? (
-                  <p className="scan-caption">
-                    {result.planned_retirement_plants} plant
-                    {result.planned_retirement_plants === 1 ? "" : "s"} with an EIA-860
-                    retirement date in this circle.
-                  </p>
-                ) : null}
+                <p className="scan-caption">
+                  {result.plant_count === 0
+                    ? "No plants in this circle, so there is nothing to retire."
+                    : result.planned_retirement_plants > 0
+                      ? `${result.planned_retirement_plants} plant${
+                          result.planned_retirement_plants === 1 ? "" : "s"
+                        } carry a retirement date in the EIA-860 2025 extract.`
+                      : "The EIA-860 2025 extract lists no planned retirement date for the plants in this circle."}
+                </p>
               </Group>
 
               {result.nearest_load_center ? (
@@ -360,9 +380,83 @@ export default function AreaScanPanel({
               </Group>
             </div>
             <p className="scan-caption scan-source">
-              Source: EIA-860 2025 · OpenStreetMap (ODbL). Screening estimates, not operating data.
+              Source: EIA-860 2025 · OpenStreetMap (ODbL) · 2024 weather archive. Line ratings are
+              MODELED (IEEE 738 screening), not operating ratings.
             </p>
           </section>
+
+          {wire ? (
+            <section className="scan-section">
+              <h3>The wire that breathes</h3>
+              <div className="scan-wire">
+                <div className="scan-wire-head">
+                  <b
+                    style={{
+                      color:
+                        activeRatio !== null && activeRatio < 1 ? RISK_COLOR.HIGH : undefined,
+                    }}
+                  >
+                    {activeRatio === null ? "—" : `${fmtNumber(activeRatio, 2)}×`}
+                  </b>
+                  <div>
+                    <span>
+                      {activeRatio === null
+                        ? "No weather for this hour in the archive."
+                        : heatwave
+                          ? `At 105 °F a 3 m/s breeze returns ${fmtNumber(activeRatio, 2)}× the fixed rating.`
+                          : activeRatio >= 1
+                            ? `Lines here can carry ${headroomPct}% more than their still-air rating at this hour.`
+                            : `Calm air caps the line ${headroomPct}% below its still-air rating at this hour.`}
+                    </span>
+                    <small>
+                      {wire.conductor} · {wire.voltage_kv} kV · {wire.site}
+                    </small>
+                  </div>
+                </div>
+
+                {dayRatios.length > 1 ? (
+                  <>
+                    <Sparkline
+                      values={dayRatios}
+                      floor={0.75}
+                      width={290}
+                      height={34}
+                      area
+                      className="scan-wire-chart"
+                    />
+                    <div className="scan-wire-axis">
+                      <span>00:00</span>
+                      <span>{dayLabel(wire.now?.time ?? null)}</span>
+                      <span>23:00</span>
+                    </div>
+                  </>
+                ) : null}
+
+                <Row label="Still-air rating" value={`${fmtNumber(wire.still_air_a, 0)} A`} />
+                <Row label="With this wind" value={`${fmtNumber(wire.breeze_a, 0)} A`} />
+                <Row label="2024 median gain" value={`${wire.median_ratio.toFixed(2)}×`} />
+                <Row
+                  label="Hours above still air"
+                  value={`${fmtNumber(wire.pct_hours_above_still_air, 0)}%`}
+                />
+                {wire.hottest ? (
+                  <Row
+                    label="Hottest hour"
+                    value={`${wire.hottest.ratio.toFixed(2)}× · ${fmtNumber(wire.hottest.temp_c, 1)} °C`}
+                  />
+                ) : null}
+                <p className="scan-caption">
+                  {wire.now ? `${hourLabel(wire.now.time)} in the 2024 archive. ` : ""}
+                  Still air is 0.61 m/s; temperature and sun are held at the hour&apos;s own
+                  values, so the difference is the wind alone.
+                </p>
+                <p className="scan-caption">
+                  105 °F: fixed rating {fmtNumber(wire.heatwave.derate_pct, 1)}% lower, a 3 m/s
+                  breeze returns {wire.heatwave.ratio.toFixed(2)}×.
+                </p>
+              </div>
+            </section>
+          ) : null}
 
           <section className="scan-section">
             <h3>Why this score</h3>

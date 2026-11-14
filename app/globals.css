@@ -3329,6 +3329,66 @@ input[type="range"]::-moz-range-thumb {
   color: var(--text-dim);
 }
 
+.scan-coords {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.scan-wire {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scan-wire-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.scan-wire-head > b {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.scan-wire-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scan-wire-head span {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+.scan-wire-head small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.scan-wire-chart {
+  display: block;
+  max-width: 100%;
+  margin: 4px 0 2px;
+}
+
+.scan-wire-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
 .scan-actions {
   margin-top: 14px;
 }

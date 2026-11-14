@@ -18,6 +18,7 @@ import {
   type BasemapId,
 } from "@/lib/basemaps";
 import { scanArea, type ScanInput, type ScanResult } from "@/lib/scan/areaScan";
+import { RATING_CSV_URL, summarizeWire } from "@/lib/scan/wire";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
 import AreaScanPanel from "@/components/scan/AreaScanPanel";
 import LayerPicker from "./LayerPicker";
@@ -80,6 +81,7 @@ export default function MapCanvas({
   const [scanPoint, setScanPoint] = useState<{ lat: number; lon: number } | null>(null);
   const [scanRadius, setScanRadius] = useState(5);
   const [scanData, setScanData] = useState<ScanInput | null>(null);
+  const [ratingCsv, setRatingCsv] = useState<string | null>(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
@@ -92,17 +94,25 @@ export default function MapCanvas({
     let alive = true;
     setScanLoading(true);
     setScanError(null);
-    Promise.all([loadPlants(), loadSubstations(), loadTransmission()])
-      .then(([plants, substations, transmission]) => {
-        if (!alive) return;
-        setScanData({
-          plants: plants.features,
-          substations: substations.features,
-          transmission: transmission.features,
-          loadCenters: [],
-        });
-        setScanLoading(false);
-      })
+    Promise.all([
+      loadPlants(),
+      loadSubstations(),
+      loadTransmission(),
+      // Optional: without the archive the scan reports the gap, it does not guess.
+      fetch(RATING_CSV_URL)
+        .then((response) => (response.ok ? response.text() : ""))
+        .catch(() => ""),
+    ]).then(([plants, substations, transmission, rating]) => {
+      if (!alive) return;
+      setScanData({
+        plants: plants.features,
+        substations: substations.features,
+        transmission: transmission.features,
+        loadCenters: [],
+      });
+      setRatingCsv(rating || null);
+      setScanLoading(false);
+    })
       .catch((error: unknown) => {
         if (!alive) return;
         setScanError(error instanceof Error ? error.message : "Grid layers failed to load");
@@ -134,9 +144,16 @@ export default function MapCanvas({
     return scanArea(
       { lat: scanPoint.lat, lon: scanPoint.lon, radius_mi: scanRadius },
       scanInput,
-      { heatwave },
+      {
+        heatwave,
+        regionCenter: { lat: center[0], lon: center[1] },
+        coverageMi: radiusMiles,
+        rateVoltage: ratingCsv
+          ? (voltageKv) => summarizeWire(ratingCsv, voltageKv)
+          : undefined,
+      },
     );
-  }, [scanPoint, scanInput, scanRadius, heatwave]);
+  }, [scanPoint, scanInput, scanRadius, heatwave, ratingCsv, center, radiusMiles]);
 
   const scanOverlay = scanPoint
     ? { lat: scanPoint.lat, lon: scanPoint.lon, radius_mi: scanRadius }
