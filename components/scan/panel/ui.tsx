@@ -91,7 +91,7 @@ export function SourcesButton({
       onClick={onToggle}
       aria-expanded={open}
       aria-controls={controls}
-      className="shrink-0 text-[13px] leading-snug text-[#0284c7] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+      className="shrink-0 text-[13px] leading-snug text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
     >
       Sources
     </button>
@@ -117,7 +117,7 @@ export function SourceNote({ sources, id }: { sources: SourceId[]; id?: string }
             {s.method && <p>{s.method}</p>}
             {s.note && <p>{s.note}</p>}
             {s.url && (
-              <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#0284c7] hover:underline">
+              <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[#0369a1] hover:underline">
                 View source
               </a>
             )}

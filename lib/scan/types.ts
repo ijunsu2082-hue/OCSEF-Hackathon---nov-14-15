@@ -49,6 +49,10 @@ export interface RatingSiteSummary {
   median_conservative_dlr_vs_static: number; pct_hours_conservative_dlr_above_static: number;
   summer_4to8pm_median_wind_gain_over_aar: number;
   hottest_hour: string; hottest_temp_c: number; hottest_hour_dlr_vs_static: number;
+  /** 2025 median of temperature-adjusted rating (AAR) / static. Absent if not in summary.json. */
+  median_aar_vs_static?: number;
+  /** 2025 median of conservative DLR / AAR (what real wind adds over temperature alone). */
+  median_wind_gain_over_aar?: number;
 }
 
 export interface GridData {

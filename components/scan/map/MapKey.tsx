@@ -55,7 +55,7 @@ export function MapKey() {
           type="button"
           aria-expanded
           onClick={() => setOpen(false)}
-          className="text-[12px] font-medium text-[#0284c7] hover:underline"
+          className="text-[12px] font-medium text-[#0369a1] hover:underline"
         >
           Hide key
         </button>

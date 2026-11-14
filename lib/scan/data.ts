@@ -101,6 +101,8 @@ function toSites(summary: SummaryJson): RatingSiteSummary[] {
       hottest_hour: j.hottest_hour ?? "",
       hottest_temp_c: j.hottest_temp_c ?? 0,
       hottest_hour_dlr_vs_static: j.hottest_hour_dlr_vs_static ?? 1,
+      median_aar_vs_static: j.median_aar_vs_static,
+      median_wind_gain_over_aar: j.median_wind_gain_over_aar,
     };
   });
 }

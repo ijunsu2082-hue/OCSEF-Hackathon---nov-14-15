@@ -79,7 +79,7 @@ export function LayerPicker({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={b.thumb} alt="" width={48} height={48} className="h-full w-full object-cover" />
                   </span>
-                  <span className={selected ? "text-[12px] font-medium text-[#0284c7]" : "text-[12px] text-[#556070]"}>
+                  <span className={selected ? "text-[12px] font-medium text-[#0369a1]" : "text-[12px] text-[#556070]"}>
                     {b.label}
                   </span>
                 </button>

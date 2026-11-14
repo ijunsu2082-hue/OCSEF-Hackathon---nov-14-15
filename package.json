@@ -8,12 +8,11 @@
     "start": "next start",
     "sync-layers": "node scripts/sync-layers.mjs",
     "predev": "node scripts/sync-layers.mjs",
-    "prebuild": "node scripts/sync-layers.mjs"
+    "prebuild": "node scripts/sync-layers.mjs",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.8.0",
     "@google/genai": "^1.20.0",
-    "@netlify/functions": "^6.1.1",
     "leaflet": "^1.9.4",
     "next": "^15.5.0",
     "react": "^19.0.0",

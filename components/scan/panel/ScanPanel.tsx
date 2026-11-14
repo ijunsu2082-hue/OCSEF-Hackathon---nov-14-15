@@ -6,7 +6,10 @@ import { scanReportMarkdown } from "@/lib/scan";
 import { RISK_COLORS } from "@/lib/scan/colors";
 import type { DailyRating, LineRatingNow, NicheCase, RiskLevel, ScanResult } from "@/lib/scan";
 import type { PanelTab, ReportTarget } from "@/lib/scan/target";
+import { AreaBrief, areaTakeaway } from "./AreaBrief";
 import { AreaCharts } from "./AreaCharts";
+import { Explainer } from "./Explainer";
+import { GridImpact } from "./GridImpact";
 import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LocalNews, groupLocalNews } from "./LocalNews";
@@ -65,6 +68,25 @@ function Header({ result }: { result: ScanResult }) {
   );
 }
 
+/** One-sentence takeaway plus the one main action: a printable brief for the city council. */
+function Takeaway({ result, live, onBrief }: { result: ScanResult; live: LineRatingNow | null; onBrief: () => void }) {
+  return (
+    <section className="px-6 py-6">
+      <p className="text-[15px] leading-snug text-[#1d2733]">{areaTakeaway(result, live)}</p>
+      <button
+        type="button"
+        onClick={onBrief}
+        className="mt-4 h-10 rounded-[6px] bg-[#0ea5e9] px-4 text-[14px] font-semibold text-[#1d2733] transition-colors hover:bg-[#38bdf8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+      >
+        Make a one-page brief for your city council
+      </button>
+      <p className="mt-2 text-[12px] leading-snug text-[#6b7583]">
+        For city council members, city sustainability staff, and residents who want a cleaner, safer grid near them.
+      </p>
+    </section>
+  );
+}
+
 function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow | null }) {
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +121,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
   const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
   const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
+  const [briefOpen, setBriefOpen] = useState(false);
 
   if (!result || !news) {
     return (
@@ -114,10 +137,12 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
     <div className="h-full overflow-y-auto bg-white text-[#1d2733]">
       <Header result={result} />
       <Tabs tab={tab} onTab={onTab} newsCount={news.within.length} />
+      <Explainer />
 
       <div role="tabpanel" id={tabPanelId(tab)} aria-labelledby={tabId(tab)}>
         {tab === "area" && (
           <>
+            <Takeaway result={result} live={live} onBrief={() => setBriefOpen(true)} />
             {selected && (
               <SelectedAsset
                 target={selected}
@@ -127,6 +152,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
               />
             )}
             <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
+            <GridImpact result={result} live={live} />
             <AreaCharts result={result} />
             <WhatsHere result={result} live={live} />
             <RiskBreakdown factors={result.risk.factors} />
@@ -143,7 +169,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
                 <button
                   type="button"
                   onClick={onReportArea}
-                  className="h-8 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#0284c7] transition-colors hover:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+                  className="h-8 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#0369a1] transition-colors hover:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
                 >
                   Report a problem with this area
                 </button>
@@ -152,6 +178,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
                 Sources: EIA-860 2025, OpenStreetMap (ODbL), Open-Meteo. Line ratings modeled with IEEE 738.
               </p>
             </footer>
+            {briefOpen && <AreaBrief result={result} live={live} onClose={() => setBriefOpen(false)} />}
           </>
         )}
 

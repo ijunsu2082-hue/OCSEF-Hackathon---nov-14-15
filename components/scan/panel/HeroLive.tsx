@@ -2,11 +2,12 @@
 
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { UI } from "@/lib/scan/colors";
+import { aarRatio, conductorRange, ratioRange, windSentence } from "@/lib/scan/rating";
 import type { DailyRating, LineRatingNow, ScanResult, WeatherNow } from "@/lib/scan";
 import { DASH, fmtNum, fmtPct, fmtRatio, isNum, monthTick } from "./format";
 import { Caption, Section } from "./ui";
 
-const GRID = "#eef1f4";
+const GRID = "#e6e9ee";
 const FIXED = "#94a3b8";
 const AXIS_TICK = { fill: UI.text3, fontSize: 12 };
 
@@ -30,6 +31,8 @@ function hottestLabel(iso: string | null | undefined): string | null {
   return `${date}, ${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "am" : "pm"}`;
 }
 
+const pctOf = (r: number) => Math.round(Math.abs(r - 1) * 100);
+
 function LiveBlock({ live, liveLoading }: { live: LineRatingNow | null; liveLoading: boolean }) {
   if (liveLoading || !live) {
     return (
@@ -39,26 +42,67 @@ function LiveBlock({ live, liveLoading }: { live: LineRatingNow | null; liveLoad
     );
   }
 
-  const ratio = live.ratio;
-  const over = isNum(ratio) && ratio < 1;
-  const pct = isNum(live.extra_pct) ? Math.abs(live.extra_pct) : null;
+  const aar = aarRatio(live);
+  const dlr = isNum(live.ratio) && live.ratio > 0 ? live.ratio : null;
+  const range = conductorRange(live.weather);
+  const aarLow = isNum(aar) && aar < 1;
+  const dlrLow = isNum(dlr) && dlr < 1;
 
   return (
     <div className="flex flex-col gap-2">
       <p
         className="text-[40px] font-semibold leading-none tabular-nums"
-        style={{ color: over ? UI.danger : UI.accentStrong }}
+        style={{ color: aarLow ? UI.danger : UI.accentStrong }}
       >
-        {fmtRatio(ratio)}
+        {fmtRatio(aar)}
       </p>
       <p className="text-[14px] leading-snug text-[#1d2733]">
-        {pct === null
-          ? "Live rating could not be computed for this spot."
-          : over
-            ? `In this heat the fixed rating is ${fmtNum(pct, 0)}% too high. Lines would overheat.`
-            : `Lines here can safely carry ${fmtNum(pct, 0)}% more than their fixed rating right now.`}
+        {!isNum(aar)
+          ? "The rating could not be computed for this spot."
+          : pctOf(aar) === 0
+            ? "Right now lines here can safely carry about the same as their fixed 40 °C worst-case rating."
+            : aarLow
+              ? `In this heat, lines here can safely carry about ${pctOf(aar)}% less than their fixed worst-case rating. Loading them to the fixed rating would push the wire past its 75 °C design limit (modeled).`
+              : `Lines here could carry up to about ${pctOf(aar)}% more than a fixed rating built for a 40 °C worst-case day, just from today's real air temperature. The gain is smaller against the utility's own seasonal ratings, and zero where equipment or grid stability sets the limit.`}
       </p>
       <p className="text-[13px] leading-snug tabular-nums text-[#556070]">{weatherLine(live.weather)}</p>
+
+      {isNum(aar) && isNum(dlr) && (
+        <div className="mt-2 border-t border-[#e6e9ee] pt-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0 text-[13px] leading-snug text-[#556070]">
+              With today&apos;s wind too (dynamic line rating, wind halved for safety)
+            </span>
+            <span
+              className="shrink-0 text-[15px] font-semibold tabular-nums"
+              style={{ color: dlrLow ? UI.danger : UI.text }}
+            >
+              {fmtRatio(dlr)}
+            </span>
+          </div>
+          <p className="mt-1 text-[13px] leading-snug text-[#556070]">{windSentence(aar, dlr)}</p>
+        </div>
+      )}
+
+      {isNum(aar) && (
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="min-w-0 text-[13px] leading-snug text-[#556070]">
+            Range for 3 common wire types (temperature only)
+          </span>
+          <span className="shrink-0 text-[15px] font-semibold tabular-nums text-[#1d2733]">
+            {ratioRange(range.aar_min, range.aar_max, "×")}
+          </span>
+        </div>
+      )}
+
+      <p className="mt-2 text-[13px] leading-snug text-[#556070]">
+        A federal rule (FERC Order 881) requires temperature-based ratings; utilities that own lines in California&apos;s
+        main grid (CAISO), such as SCE, SDG&amp;E and PG&amp;E, have up to Oct 15, 2027.
+      </p>
+      <Caption>
+        Screening estimate for a typical wire. Real limits also depend on the exact wire, its worst span, and equipment
+        like breakers, so a utility must confirm.
+      </Caption>
     </div>
   );
 }
@@ -150,13 +194,13 @@ export function HeroLive({
     <Section
       title="Line capacity right now"
       subtitle="The Wire That Breathes"
-      sources={["openmeteo_live", "era5_2025", "ieee738"]}
+      sources={["openmeteo_live", "era5_2025", "ieee738", "acsr_datasheet", "ferc881", "caiso881_extension"]}
     >
       <LiveBlock live={live} liveLoading={liveLoading} />
 
       <div className="mt-6">
         <p className="mb-2 text-[13px] leading-snug text-[#556070]">
-          Each day&apos;s worst-hour safe rating in 2025, against the fixed rating of{" "}
+          Worst hour each day in 2025 (real wind, halved for safety), against the fixed rating of{" "}
           <span className="tabular-nums">{fmtNum(staticA, 0)} A</span> (dashed).
         </p>
         {daily && daily.length > 0 ? (
@@ -165,12 +209,19 @@ export function HeroLive({
           <p className="text-[14px] text-[#556070]">Loading…</p>
         )}
         <Caption className="mt-3 tabular-nums">
-          2025 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): safe rating beat the fixed rating in{" "}
-          {fmtPct(beat, beatDigits)} of hours. Modeled with IEEE 738.
+          2025 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away):{" "}
+          {isNum(site.median_aar_vs_static) && (
+            <>
+              a typical hour was {fmtRatio(site.median_aar_vs_static)} from temperature alone and{" "}
+              {fmtRatio(site.median_conservative_dlr_vs_static)} with wind halved.{" "}
+            </>
+          )}
+          With wind halved, the rating beat the fixed rating in {fmtPct(beat, beatDigits)} of hours. Modeled with IEEE
+          738.
         </Caption>
         {hottest && (
           <p className="mt-1 text-[13px] leading-snug tabular-nums text-[#556070]">
-            On the hottest 2025 hour ({hottest}, {fmtNum(site.hottest_temp_c, 0)} °C) the safe rating was{" "}
+            On the hottest 2025 hour ({hottest}, {fmtNum(site.hottest_temp_c, 0)} °C) the rating with wind halved was{" "}
             <span style={hotRatio < 1 ? { color: "#dc2626" } : undefined}>{fmtRatio(hotRatio)}</span> the fixed rating.
           </p>
         )}

@@ -34,11 +34,11 @@ export const FUEL_LABELS: Record<FuelKey, string> = {
 };
 
 export const RISK_COLORS: Record<RiskLevel, string> = {
-  LOW: "#556070", WATCH: "#d97706", HIGH: "#dc2626", CRITICAL: "#dc2626",
+  LOW: "#556070", WATCH: "#b45309", HIGH: "#dc2626", CRITICAL: "#dc2626",
 };
 
 export const UI = {
   accent: "#0ea5e9", accentStrong: "#0284c7", accentSoft: "#e0f2fe",
   text: "#1d2733", text2: "#556070", text3: "#6b7583",
-  border: "#e6e9ee", subtle: "#f6f8fa", danger: "#dc2626", warning: "#d97706",
+  border: "#e6e9ee", subtle: "#f6f8fa", danger: "#dc2626", warning: "#b45309",
 } as const;

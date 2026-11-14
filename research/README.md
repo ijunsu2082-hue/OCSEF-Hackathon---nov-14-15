@@ -22,7 +22,7 @@ Everything here is centered on **Westminster High School (33.7538, -118.0111), 1
 `scripts/line_rating.py` runs a simplified IEEE Std 738 steady-state heat balance for an ACSR 795 kcmil "Drake" conductor at 75 °C (checked: 915 A at 25 °C / 0.61 m/s / full sun, against ~907 A published). For each hour it reports:
 
 - `static_A`: fixed worst-case rating (40 °C, 0.61 m/s wind, 1000 W/m² sun), 723 A
-- `aar_A`: ambient-adjusted rating (real temperature and sun, fixed wind), which FERC Order 881 requires
+- `aar_A`: ambient-adjusted rating (real temperature, worst-case sun by day and none at night, fixed wind), as FERC Order 881 defines it
 - `dlr_A`: dynamic rating with real wind at 45° to the line
 - `dlr_conservative_A`: same with wind halved, **the number to quote**
 

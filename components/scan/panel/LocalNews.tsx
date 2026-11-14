@@ -84,7 +84,7 @@ function NewsRow({ item, onShowOnMap }: { item: NewsItem; onShowOnMap: (c: Niche
         <button
           type="button"
           onClick={() => onShowOnMap(c)}
-          className="text-[13px] text-[#0284c7] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+          className="text-[13px] text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
         >
           Show on map
         </button>
@@ -93,7 +93,7 @@ function NewsRow({ item, onShowOnMap }: { item: NewsItem; onShowOnMap: (c: Niche
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[13px] text-[#0284c7] hover:underline"
+            className="text-[13px] text-[#0369a1] hover:underline"
           >
             Sources
           </a>

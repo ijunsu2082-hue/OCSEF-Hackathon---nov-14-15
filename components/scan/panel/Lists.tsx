@@ -1,7 +1,8 @@
 "use client";
 
-import { CATEGORY_COLORS, FUEL_CATEGORY, FUEL_LABELS, UI } from "@/lib/scan/colors";
-import type { FuelKey, GenEvent, Plant, RiskFactor, ScanResult } from "@/lib/scan";
+import { CATEGORY_COLORS, FUEL_CATEGORY, FUEL_LABELS, RISK_COLORS, UI } from "@/lib/scan/colors";
+import type { FuelKey, GenEvent, Plant, RiskFactor, RiskLevel, ScanResult } from "@/lib/scan";
+import { riskLevel, riskRange, WEIGHTS, type RiskWeightKey } from "@/lib/scan/risk";
 import { DASH, fmtNum, fmtPowerText, isNum } from "./format";
 import { Caption, Section } from "./ui";
 
@@ -14,9 +15,34 @@ function fmtMw(mw: number | null | undefined): string {
 
 /* ---------------------------------------------------------------- Risk */
 
-export function RiskBreakdown({ factors }: { factors: RiskFactor[] }) {
+const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
+
+export function RiskBreakdown({
+  factors,
+  score: scoreIn,
+  level: levelIn,
+}: {
+  factors: RiskFactor[];
+  /** Area score; computed from factors when omitted. */
+  score?: number;
+  level?: RiskLevel;
+}) {
+  const total = isNum(scoreIn) ? scoreIn : Math.round(factors.reduce((s, f) => s + f.score * f.weight, 0));
+  const level = levelIn ?? riskLevel(total);
+  const range = riskRange(factors);
   return (
     <Section title="Risk factors" sources={["risk", "eia860", "osm", "ieee738", "news"]}>
+      {factors.length > 0 && (
+        <p className="mb-4 text-[14px] text-[#1d2733]">
+          Risk <span className="font-semibold tabular-nums">{fmtNum(total, 0)}</span> ·{" "}
+          <span className="font-semibold" style={{ color: RISK_COLORS[level] }}>
+            {LEVEL_WORD[level]}
+          </span>{" "}
+          <span className="tabular-nums text-[#556070]">
+            (range {fmtNum(range.min, 0)}-{fmtNum(range.max, 0)} if the weights change)
+          </span>
+        </p>
+      )}
       {factors.length === 0 ? (
         <p className="text-[14px] text-[#556070]">No risk factors computed.</p>
       ) : (
@@ -33,7 +59,7 @@ export function RiskBreakdown({ factors }: { factors: RiskFactor[] }) {
                   </span>
                 </div>
                 <div
-                  className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-[#eef1f4]"
+                  className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-[#e6e9ee]"
                   role="meter"
                   aria-label={f.label}
                   aria-valuemin={0}
@@ -51,6 +77,27 @@ export function RiskBreakdown({ factors }: { factors: RiskFactor[] }) {
       <Caption className="mt-4">
         Each factor is scored 0 to 100. The area score is their weighted average. This is GridSentinel's own index, not an official utility or regulator rating.
       </Caption>
+      <details className="mt-3 text-[13px] text-[#556070]">
+        <summary className="cursor-pointer text-[13px] font-medium text-[#0369a1]">How this score works</summary>
+        <ul className="mt-2 flex flex-col gap-2">
+          {factors.map((f) => {
+            const w = WEIGHTS[f.key as RiskWeightKey];
+            return (
+              <li key={f.key} className="leading-snug">
+                <span className="text-[#1d2733]">{f.label}</span>{" "}
+                <span className="tabular-nums">({fmtNum(f.weight * 100, 0)}%)</span>
+                {w ? `: ${w.reason}` : null}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="mt-2 leading-snug">
+          The range shows the lowest and highest score if each weight is moved up or down by half.
+        </p>
+        <p className="mt-2 leading-snug">
+          This is our own index. It has not yet been checked against official outage records (SAIDI/SAIFI) or shutoff history.
+        </p>
+      </details>
     </Section>
   );
 }
@@ -90,7 +137,7 @@ export function TopPlants({
                 onFocus(p.lat, p.lon);
                 onSelect?.(p);
               }}
-              className={`${PLANT_COLS} -mx-2 w-[calc(100%+16px)] rounded-[6px] px-2 py-2 text-left transition-colors hover:bg-[#f6f8fa] focus-visible:bg-[#f6f8fa] focus-visible:outline-none`}
+              className={`${PLANT_COLS} -mx-2 w-[calc(100%+16px)] rounded-[6px] px-2 py-2 text-left transition-colors hover:bg-[#f6f8fa] focus-visible:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-[#0284c7]`}
               title={`Show ${p.plant_name} on the map`}
             >
               <span className="min-w-0">
