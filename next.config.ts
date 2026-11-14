@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // A package-lock.json in the user profile makes Next infer that directory as
-  // the workspace root, so file tracing walks the whole home folder. Pin it to
-  // this project: builds stay fast and the output stays reproducible.
+  // OneDrive intermittently drops freshly written files inside dot-directories
+  // such as .next, which aborts builds at manifest/trace collection. Keep build
+  // output in a plain directory so `next dev`/`build`/`start` stay stable here.
+  distDir: "build-out",
   outputFileTracingRoot: process.cwd(),
 };
 
