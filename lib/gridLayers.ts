@@ -14,8 +14,15 @@ import type { NicheCase } from "./niche";
 export interface PlantFeature {
   geometry: { type: "Point"; coordinates: [number, number] };
   properties: {
+    plant_code?: number;
     plant_name: string;
     utility_name: string;
+    /** Straight-line miles from the region center, as shipped in the layer. */
+    distance_mi?: number;
+    county?: string;
+    city?: string;
+    grid_voltage_kv?: number | null;
+    generator_count?: number;
     nameplate_mw: number;
     mw_by_source: Record<string, number>;
     oldest_year: number | null;
@@ -29,12 +36,24 @@ export interface PlantFeature {
 
 export interface TransmissionFeature {
   geometry: { type: "LineString"; coordinates: [number, number][] };
-  properties: { voltage_kv: number | null; operator: string | null; name: string | null };
+  properties: {
+    osm_id?: number;
+    voltage_kv: number | null;
+    operator: string | null;
+    name: string | null;
+  };
 }
 
 export interface SubstationFeature {
   geometry: { type: "Point"; coordinates: [number, number] };
-  properties: { name: string | null; operator: string | null; voltage_kv: number | null };
+  properties: {
+    osm_id?: string;
+    name: string | null;
+    operator: string | null;
+    voltage_kv: number | null;
+    /** OSM `substation=*` tag: transmission, distribution, minor_distribution, … */
+    substation?: string | null;
+  };
 }
 
 interface FeatureCollection<T> {

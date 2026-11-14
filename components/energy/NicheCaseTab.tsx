@@ -226,6 +226,41 @@ export default function NicheCaseTab({ nicheCase }: Props) {
         </ul>
       </Panel>
 
+      {(() => {
+        const seen = new Set<string>();
+        const links: { url: string; host: string; path: string }[] = [];
+        for (const stat of nicheCase.stats) {
+          const url = stat.source.trim();
+          if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+          seen.add(url);
+          const parsed = new URL(url);
+          links.push({
+            url,
+            host: parsed.hostname.replace(/^www\./, ""),
+            path: `${parsed.pathname}${parsed.search}`,
+          });
+        }
+        if (links.length === 0) return null;
+        return (
+          <Panel title="In the news" hint="reporting links">
+            <p className="facility-note">
+              Where these figures come from. Reporting and documents only — these links are
+              not generation assets and add nothing to the energy mix.
+            </p>
+            <ul className="news-list">
+              {links.map((link) => (
+                <li key={link.url}>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.host}
+                  </a>
+                  <span>{link.path.slice(0, 72)}</span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        );
+      })()}
+
       {nicheCase.chart?.kind === "line_rating" ? (
         <Panel title="Safe rating vs fixed rating, 2024" hint="modeled · hourly">
           <RatingChart url={nicheCase.chart.data_url} />

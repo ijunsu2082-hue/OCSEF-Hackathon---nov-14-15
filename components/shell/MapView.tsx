@@ -18,7 +18,6 @@ import {
   type TransmissionFeature,
 } from "@/lib/gridLayers";
 import { basemapById, type BasemapId } from "@/lib/basemaps";
-import type { CorridorLoading } from "@/lib/grid";
 import type { NicheCase } from "@/lib/niche";
 import type { RiskEntry } from "@/lib/risk";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
@@ -35,7 +34,6 @@ interface MapViewProps {
   center: [number, number];
   radiusMiles: number;
   layers: LayerVisibility;
-  corridors: CorridorLoading[];
   nicheCases: NicheCase[];
   selectedNicheId: string | null;
   onSelect: (id: string) => void;
@@ -71,7 +69,6 @@ export default function MapView({
   center,
   radiusMiles,
   layers,
-  corridors,
   nicheCases,
   selectedNicheId,
   onSelect,
@@ -95,6 +92,7 @@ export default function MapView({
   const substationRendererRef = useRef<L.Canvas | null>(null);
   const basemapLayersRef = useRef<Map<BasemapId, L.TileLayer>>(new Map());
   const scanModeRef = useRef(scanMode);
+  const view3dRef = useRef(view3d);
   const onScanPointRef = useRef(onScanPoint);
   const scanGroupRef = useRef<L.LayerGroup | null>(null);
   const syncRef = useRef<() => void>(() => undefined);
@@ -119,6 +117,7 @@ export default function MapView({
   onSelectNicheRef.current = onSelectNiche;
   onReadyRef.current = onMapReady;
   scanModeRef.current = scanMode;
+  view3dRef.current = view3d;
   onScanPointRef.current = onScanPoint;
 
   useEffect(() => {
@@ -189,6 +188,40 @@ export default function MapView({
       if (typeof original.clientX !== "number") return;
       const cx = original.clientX;
       const cy = original.clientY;
+
+      // In 3D the pillars are real DOM columns with exact geometry, so hit-test
+      // them first. The marker-distance pass below scores by vertical offset,
+      // which makes a tall column's head lose to a short column whose base sits
+      // nearby — pointing at Hyperion selected its neighbour.
+      if (view3dRef.current) {
+        const pillarRoot = host.parentElement;
+        const pillars = pillarRoot?.querySelectorAll<HTMLElement>(".pillar[data-facility]");
+        // Measure the column body, not the whole pillar: the MW chip is wider
+        // than the stem, so a container hit would match a neighbour's label.
+        // Overlapping columns resolve to the one the pointer is closest to.
+        let hit: string | null = null;
+        let hitDistance = Number.POSITIVE_INFINITY;
+        for (const pillar of pillars ?? []) {
+          const body = pillar.querySelector<HTMLElement>(".pillar-body") ?? pillar;
+          const rect = body.getBoundingClientRect();
+          if (
+            cx >= rect.left - 3 &&
+            cx <= rect.right + 3 &&
+            cy >= rect.top - 3 &&
+            cy <= rect.bottom + 3
+          ) {
+            const distance = Math.abs(cx - (rect.left + rect.width / 2));
+            if (distance < hitDistance) {
+              hitDistance = distance;
+              hit = pillar.dataset.facility ?? null;
+            }
+          }
+        }
+        if (hit) {
+          onSelectRef.current(hit);
+          return;
+        }
+      }
 
       let bestId: string | null = null;
       let bestDistance = Number.POSITIVE_INFINITY;
@@ -437,34 +470,23 @@ export default function MapView({
       coordById.set(f.properties.id, [lat, lon]);
     }
 
-    const corridorById = new Map(corridors.map((corridor) => [corridor.id, corridor]));
     const flowColor = heatwave ? "#FFB020" : "#38D6C4";
     for (const flow of flows) {
       const from = coordById.get(flow.from);
       const to = coordById.get(flow.to);
       if (!from || !to) continue;
-      const corridor = corridorById.get(flow.id);
-      const loadClass =
-        corridor?.severity === "watch"
-          ? " is-watch"
-          : corridor?.severity === "high" || corridor?.severity === "critical"
-            ? " is-congested"
-            : "";
-      const loading =
-        corridor === undefined
-          ? ""
-          : `<br/>${corridor.loading_pct}% of ${corridor.capacity_mva} MVA derated rating`;
       // These ties are modeled, not published circuits (README §4.1): dashed,
-      // and the tooltip says so plainly.
+      // and the tooltip says so plainly. No loading is claimed for them — the
+      // real circuits come from the OSM transmission layer.
       L.polyline([from, to], {
         color: flowColor,
         weight: 1 + flow.mva / 90,
         opacity: 0.5,
-        className: `flow-line${loadClass}`,
+        className: "flow-line",
         interactive: true,
       })
         .bindTooltip(
-          `${escapeHtml(flow.label)} · ${flow.mva} MVA${loading}<br/><span class="tt-src">modeled tie (illustrative)</span>`,
+          `${escapeHtml(flow.label)} · ${flow.mva} MVA<br/><span class="tt-src">modeled tie (illustrative)</span>`,
           { direction: "top", className: "grid-tooltip" },
         )
         .addTo(fg);
@@ -502,7 +524,7 @@ export default function MapView({
     }
 
     markerElsRef.current = markers;
-  }, [nodes, flows, risks, selectedId, heatwave, layers.loadCenters, corridors]);
+  }, [nodes, flows, risks, selectedId, heatwave, layers.loadCenters]);
 
   useEffect(() => {
     const group = nicheGroupRef.current;
@@ -645,6 +667,7 @@ export default function MapView({
                 <div
                   className={`pillar${selected ? " is-selected" : ""}`}
                   style={pillarStyle}
+                  data-facility={f.properties.id}
                   aria-hidden
                 >
                   <span className="pillar-stem" />

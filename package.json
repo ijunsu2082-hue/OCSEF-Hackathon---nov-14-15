@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "verify:physics": "tsx scripts/verify-physics.ts"
+    "verify:physics": "tsx scripts/verify-physics.ts",
+    "typecheck": "tsc --noEmit",
+    "evidence:build": "tsx research/cli.ts build --profile westminster-100mi",
+    "evidence:verify": "tsx research/cli.ts verify --bundle public/evidence/westminster-100mi.json",
+    "evidence:verify:files": "tsx research/cli.ts verify --bundle public/evidence/westminster-100mi.json --files --strict",
+    "evidence:discover": "tsx research/cli.ts discover",
+    "evidence:report": "tsx research/cli.ts report --bundle public/evidence/westminster-100mi.json",
+    "evidence:hash": "tsx research/cli.ts hash",
+    "evidence:sources": "tsx research/cli.ts sources",
+    "evidence:profiles": "tsx research/cli.ts profiles"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",

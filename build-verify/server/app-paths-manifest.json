@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/region/[regionId]/route": "app/api/region/[regionId]/route.js",
+  "/api/generate-brief/route": "app/api/generate-brief/route.js",
+  "/api/send-audit/route": "app/api/send-audit/route.js",
+  "/api/simulate/route": "app/api/simulate/route.js",
+  "/page": "app/page.js"
+}

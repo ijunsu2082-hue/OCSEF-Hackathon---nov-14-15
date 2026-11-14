@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/send-audit/route": "/api/send-audit",
+  "/api/simulate/route": "/api/simulate",
+  "/api/generate-brief/route": "/api/generate-brief",
+  "/api/region/[regionId]/route": "/api/region/[regionId]",
+  "/page": "/"
+}

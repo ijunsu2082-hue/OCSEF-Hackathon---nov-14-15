@@ -30,6 +30,8 @@ export interface RuntimeClaimSpec {
   inputs: RuntimeInput[];
   params?: Record<string, string | number | boolean | null>;
   rounding?: number;
+  /** Canonical unit from the predicate registry. */
+  unit?: string | null;
   caveats?: string[];
 }
 
@@ -57,7 +59,7 @@ export function buildRuntimeClaim(spec: RuntimeClaimSpec): Claim {
     subject: spec.subject,
     predicate: spec.predicate,
     value,
-    unit: null,
+    unit: spec.unit ?? null,
     method: "derived" as const,
     confidence: "high" as const,
     source_id: null,
@@ -70,10 +72,8 @@ export function buildRuntimeClaim(spec: RuntimeClaimSpec): Claim {
     escalation: null,
   };
 
-  // Unit is copied from the target predicate at render time; the id intentionally
-  // excludes display-only unit metadata, which is registry-derived.
-  // maxConfidence only inspects method and the input claims; the id is computed
-  // from the resulting confidence below, so a placeholder satisfies the shape.
+  // `maxConfidence` only inspects method and the inputs. The unit participates
+  // in the claim id, so it is set above from the predicate registry.
   const confidence = maxConfidence(
     { ...withoutMeta, id: "" },
     null,

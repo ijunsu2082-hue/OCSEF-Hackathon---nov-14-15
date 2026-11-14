@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Cite, ScenarioTag } from "@/components/evidence/Citations";
 import { RiskPill } from "@/components/ui/kit";
+import { facilitySubject } from "@/lib/evidence/citation";
 import { compact, fmtNumber } from "@/lib/format";
 import type { NicheCase } from "@/lib/niche";
 import type { RiskEntry } from "@/lib/risk";
@@ -40,6 +42,14 @@ export default function AnalyzerDrawer({
   onTab,
   children,
 }: Props) {
+  const subject = facilitySubject(properties.id);
+  const cite = (predicate: string) =>
+    sim.heatwave_active ? (
+      <ScenarioTag />
+    ) : (
+      <Cite subject={subject} predicate={predicate} quiet />
+    );
+
   return (
     <aside className="drawer" aria-label="Facility analysis">
       <header className="drawer-head">
@@ -79,16 +89,30 @@ export default function AnalyzerDrawer({
             <div className="drawer-metrics">
               <div className="drawer-metric">
                 <b>{fmtNumber(sim.effective_draw_mw, 1)}</b>
-                <span>Grid draw MW</span>
+                <span>Grid draw MW {cite("facility.baseline_draw_mw")}</span>
               </div>
               <div className="drawer-metric">
                 <b>{fmtNumber(sim.carbon_intensity, 0)}</b>
-                <span>gCO₂ / kWh</span>
+                <span>gCO₂ / kWh {cite("facility.carbon_intensity_gco2_kwh")}</span>
               </div>
               <div className="drawer-metric">
                 <b>{compact(sim.annual_co2_tons)}</b>
-                <span>t CO₂ / yr</span>
+                <span>t CO₂ / yr {cite("facility.annual_co2_tons")}</span>
               </div>
+            </div>
+
+            <div className="riskline" aria-label="Risk decomposition">
+              <span>
+                L <b>{risk.exposure.toFixed(1)}</b>
+              </span>
+              <span>
+                C <b>{risk.criticality.toFixed(1)}</b>
+                {risk.criticality_assumed ? <em>assumed</em> : null}
+              </span>
+              <span>
+                R <b>{risk.score.toFixed(1)}</b>
+              </span>
+              <span className="riskline-note">{risk.confidence} confidence</span>
             </div>
           </>
         )}

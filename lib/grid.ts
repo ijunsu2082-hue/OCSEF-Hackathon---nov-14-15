@@ -1,21 +1,24 @@
 /**
- * Six-phase grid chain — the end-to-end electrical data model, one exposure
- * report per load center.
+ * Six-phase grid chain — one exposure report per load center.
  *
- * Every phase carries the telemetry that drives it, the diagnostics it can
- * trip, and two priced upgrade pathways with a simple payback. The pathway
- * catalogue is what the app was missing: co-located BESS and inverter
- * retrofits (phase 1), dynamic line rating and reconductoring (phase 2),
- * DGA monitoring and modular substations (phase 3), smart reclosers and
- * right-sized feeder transformers (phase 4), VPP aggregation and managed
- * charging (phase 5), demand response and price arbitrage (phase 6).
+ * Every grid fact in here is either read off a real layer (EIA-860 plants, OSM
+ * transmission and substations, via `lib/gridAssets.ts`) or computed by the
+ * physics in `lib/physics` (IEEE 738 conductor ratings, inertia, project
+ * economics). The only modelled numbers left are the load center's own
+ * simulated demand — the app's existing contract — and the intervention unit
+ * costs, which are labelled screening estimates.
  *
- * Pure: no I/O, no React. Screening estimates only — the same caveat as
- * `lib/simulation.ts`.
+ * Cut on purpose: derived generation MW from `source_mix`, invented tie MVA
+ * loading, transformer DGA / top-oil scores, SAIDI/SAIFI, phase imbalance and
+ * nodal price / reserve figures. Each of those either duplicated a real layer
+ * or claimed a measurement this repo does not have.
  */
 
-import { clamp } from "./risk";
-import type { FacilityProperties, PowerFlow, SimResult } from "./types";
+import { dailyProfile } from "./simulation";
+import { inertiaBand } from "./physics/dynamics";
+import { DEFAULT_ECONOMICS, capacityValue, carbonCost, simplePayback } from "./physics/economics";
+import { reconductorScreen, thermalScreen, type RealGridAssets } from "./gridAssets";
+import type { FacilityProperties, SimResult } from "./types";
 
 export type Severity = "ok" | "watch" | "high" | "critical";
 
@@ -33,25 +36,20 @@ const SEVERITY_RANK: Record<Severity, number> = {
   critical: 3,
 };
 
-/** 105 °F: conductors sag, so a line's thermal rating falls ~12 %. */
-export const HEATWAVE_LINE_DERATE = 0.88;
 /** Large power transformer design life, years. */
 export const TRANSFORMER_DESIGN_LIFE = 35;
 /** Current industry lead time for a replacement LPT, weeks. */
 export const LPT_LEAD_TIME_WEEKS = 130;
 const MWH_PER_HOME = 10.5;
 
-/** Screening unit economics. Every pathway lands somewhere in a 1–6 year band. */
+/** Screening unit costs for interventions. Not claims about the grid. */
 const UNIT = {
   bess_mw: 1_350_000,
   bess_mw_savings: 260_000,
   inverter_mw_capex: 62_000,
   inverter_mw_savings: 11_000,
   dlr_mva_capex: 45_000,
-  dlr_release_pct: 0.15,
   reconductor_mva_capex: 210_000,
-  reconductor_release_pct: 0.3,
-  capacity_value_mw_yr: 120_000,
   substation_monitor_capex: 210_000,
   substation_monitor_per_bank: 46_000,
   substation_mva_capex: 165_000,
@@ -93,22 +91,11 @@ export interface PhaseState {
   name: string;
   short: string;
   headline: string;
+  /** Where the numbers come from, shown in the UI so the cut is visible. */
+  provenance: string;
   telemetry: { label: string; value: string }[];
   diagnostics: Diagnostic[];
   pathways: Pathway[];
-  severity: Severity;
-}
-
-export interface CorridorLoading {
-  id: string;
-  label: string;
-  from: string;
-  to: string;
-  mva: number;
-  capacity_mva: number;
-  throughput_mw: number;
-  loading_pct: number;
-  loss_pct: number;
   severity: Severity;
 }
 
@@ -127,19 +114,23 @@ export interface PhaseExposure {
 }
 
 export interface GridContext {
-  flows: PowerFlow[];
-  sims: Record<string, SimResult>;
+  /** Summaries of the real layers around this load center; null until loaded. */
+  assets: RealGridAssets | null;
 }
 
 // ---- helpers ----------------------------------------------------------------
 
-function num(value: number, digits = 1): number {
+function nf(value: number, digits = 1): number {
   const f = Math.pow(10, digits);
   return Math.round(value * f) / f;
 }
 
 function money(value: number): number {
   return Math.max(0, Math.round(value));
+}
+
+function pct(part: number, whole: number): number {
+  return whole > 0 ? (part / whole) * 100 : 0;
 }
 
 function band(value: number, watch: number, high: number, critical: number): Severity {
@@ -149,12 +140,8 @@ function band(value: number, watch: number, high: number, critical: number): Sev
   return "ok";
 }
 
-function paybackYears(capex: number, savings: number): number | null {
-  return savings > 0 ? num(capex / savings, 2) : null;
-}
-
 function pathway(p: Omit<Pathway, "payback_years">): Pathway {
-  return { ...p, payback_years: paybackYears(p.capex_usd, p.annual_savings_usd) };
+  return { ...p, payback_years: simplePayback(p.capex_usd, p.annual_savings_usd) };
 }
 
 function worstSeverity(diagnostics: Diagnostic[]): Severity {
@@ -164,298 +151,277 @@ function worstSeverity(diagnostics: Diagnostic[]): Severity {
   );
 }
 
-/** Line loss fraction rises with the square of loading — a modelled I²R proxy. */
-function lineLossPct(loadingPct: number): number {
-  return 0.7 + 1.6 * Math.pow(loadingPct / 100, 2);
+function listNames(items: { name: string; mw: number }[]): string {
+  return items.map((item) => `${item.name} (${nf(item.mw, 0)} MW)`).join(", ");
 }
 
-/**
- * Corridor throughput proxy: the larger of the two connected draws. These MVA
- * ratings size ties between load centers, so the bigger endpoint is the load
- * the tie actually carries. Under the heatwave the rating is derated.
- */
-export function corridorLoadings(
-  flows: PowerFlow[],
-  sims: Record<string, SimResult>,
-  heatwave: boolean,
-): CorridorLoading[] {
-  return flows.map((flow) => {
-    const a = sims[flow.from]?.effective_draw_mw ?? 0;
-    const b = sims[flow.to]?.effective_draw_mw ?? 0;
-    const throughput = Math.max(a, b);
-    const capacity = flow.mva * (heatwave ? HEATWAVE_LINE_DERATE : 1);
-    const loading = capacity > 0 ? (throughput / capacity) * 100 : 0;
-    return {
-      id: flow.id,
-      label: flow.label,
-      from: flow.from,
-      to: flow.to,
-      mva: flow.mva,
-      capacity_mva: num(capacity, 1),
-      throughput_mw: num(throughput, 2),
-      loading_pct: num(loading, 1),
-      loss_pct: num(lineLossPct(loading), 2),
-      severity: band(loading, 55, 70, 85),
-    };
-  });
-}
+type PhaseBase = Pick<PhaseState, "phase" | "id" | "name" | "short" | "headline" | "provenance">;
 
-function servingCorridor(
-  nodeId: string,
-  flows: PowerFlow[],
-  sims: Record<string, SimResult>,
-  heatwave: boolean,
-): CorridorLoading | null {
-  const touching = corridorLoadings(flows, sims, heatwave).filter(
-    (c) => c.from === nodeId || c.to === nodeId,
-  );
-  if (touching.length === 0) return null;
-  return touching.sort((x, y) => y.loading_pct - x.loading_pct)[0];
-}
-
-function voltageClass(label: string): string {
-  const match = label.match(/(\d{2,3})\s*kV/);
-  return match ? `${match[1]} kV` : "modeled tie";
-}
-
-// ---- phase 1: generation & primary supply ------------------------------------
-
-function phaseGeneration(p: FacilityProperties, sim: SimResult): PhaseState {
-  const mix = p.energy_profile.source_mix;
-  const draw = sim.effective_draw_mw;
-  const annualMWh = sim.annual_mwh;
-
-  const renewablePct = mix.solar + mix.hydro + mix.wind;
-  const fossilPct = Math.max(0, 100 - renewablePct);
-  const renewableMW = (draw * renewablePct) / 100;
-  const fossilMW = draw - renewableMW;
-  const variablePct = mix.solar + mix.wind;
-  const curtailPct = Math.max(0, variablePct - 25) * 0.25;
-  const curtailMWh = (annualMWh * renewablePct * curtailPct) / 10_000;
-
-  const bessMW = num(Math.max(0.5, draw * 0.25), 1);
-  const bessCapex = money(bessMW * UNIT.bess_mw);
-  const bessSavings = money(bessMW * UNIT.bess_mw_savings);
-
+function unavailable(base: PhaseBase, layer: string): PhaseState {
   const diagnostics: Diagnostic[] = [
     {
-      id: "curtailment",
-      label: "Renewable curtailment risk",
-      detail:
-        curtailPct > 0
-          ? `${num(curtailMWh, 0).toLocaleString("en-US")} MWh/yr of solar and wind output sits behind a ${variablePct}% variable share with no dispatchable storage on site — it gets curtailed at the midday belly.`
-          : `${variablePct}% of supply is variable and currently absorbed; the surplus window is thin rather than absent.`,
-      severity: band(curtailPct, 1, 4, 7),
-    },
-    {
-      id: "baseload-cliff",
-      label: "Baseload cliff",
-      detail: `${mix.natural_gas}% of supply is natural gas (${num((draw * mix.natural_gas) / 100, 1)} MW live). Retiring or re-rating that block strands ${num(fossilMW, 1)} MW of fossil supply the site still depends on.`,
-      severity: band(mix.natural_gas, 38, 45, 52),
-    },
-    {
-      id: "inertia",
-      label: "Inertia shortfall",
-      detail: `${num(renewableMW, 1)} MW of inverter-based supply against ${num(fossilMW, 1)} MW of synchronous machines — grid-forming inverters are the cheap way back to frequency response.`,
-      severity: band(renewablePct, 55, 65, 75),
+      id: "layer-missing",
+      label: `${layer} layer not loaded`,
+      detail: `This phase reads ${layer}. The layer has not arrived yet, so the panel reports nothing rather than a modelled stand-in.`,
+      severity: "watch",
     },
   ];
+  return { ...base, telemetry: [], pathways: [], diagnostics, severity: "watch" };
+}
 
-  return {
+// ---- phase 1: generation & primary supply -----------------------------------
+
+function phaseGeneration(sim: SimResult, assets: RealGridAssets | null): PhaseState {
+  const base = {
     phase: 1,
     id: "generation",
     name: "Generation & primary supply",
     short: "Generation",
-    headline: `${num(fossilPct, 0)}% fossil`,
+    provenance: "EIA-860 2025 · physics inertia",
+  };
+  const g = assets?.generation;
+  if (!g) return unavailable({ ...base, headline: "—" }, "EIA-860 plant");
+
+  const fossilShare = pct(g.fossil_mw, g.total_mw);
+  const retireShare = pct(g.retiring_mw, g.total_mw);
+  const hSys = g.total_mw > 0 ? g.inertia_mws / g.total_mw : 0;
+  const largest = g.largest;
+
+  const diagnostics: Diagnostic[] = [
+    {
+      id: "fossil-share",
+      label: "Fossil share inside the ring",
+      detail: `${g.fossil_mw.toLocaleString("en-US")} MW of ${g.total_mw.toLocaleString("en-US")} MW within ${g.radius_mi} mi is gas or oil${
+        largest ? `; the largest plant is ${largest.name} at ${nf(largest.mw, 0)} MW, ${largest.distance_mi} mi out` : ""
+      }.`,
+      severity: band(fossilShare, 40, 55, 70),
+    },
+    {
+      id: "retirements",
+      label: "Planned retirements",
+      detail:
+        g.retiring_mw > 0
+          ? `${g.retiring_mw.toLocaleString("en-US")} MW (${nf(retireShare, 1)}% of ring capacity) is scheduled to retire — ${listNames(g.retiring)}.`
+          : `No generator inside ${g.radius_mi} mi carries a planned retirement date in the EIA-860 table.`,
+      severity: band(retireShare, 4, 10, 20),
+    },
+    {
+      id: "fleet-age",
+      label: "Capacity-weighted fleet age",
+      detail:
+        g.fleet_age_years === null
+          ? "The layer carries no capacity-weighted year for these plants."
+          : `${nf(g.fleet_age_years, 1)} years, weighted by nameplate MW. Weighting by capacity keeps one old peaker from standing in for the fleet.`,
+      severity: g.fleet_age_years === null ? "ok" : band(g.fleet_age_years, 25, 35, 45),
+    },
+    {
+      id: "inertia",
+      label: "Synchronous share & stored inertia",
+      detail: `${nf(g.synchronous_share_pct, 1)}% of ring MVA is synchronous, storing ${g.inertia_mws.toLocaleString("en-US")} MW·s (H = ${nf(hSys, 2)} s). Inverter-based MW contribute no inertia unless the controls provide it.`,
+      severity: hSys > 0 ? inertiaBand(hSys) : "ok",
+    },
+  ];
+
+  const draw = sim.effective_draw_mw;
+  const bessMW = nf(Math.max(0.5, draw * 0.25), 1);
+
+  return {
+    ...base,
+    headline: `${nf(fossilShare, 0)}% fossil`,
     telemetry: [
-      { label: "Live supply", value: `${num(draw, 1)} MW` },
-      { label: "Fossil", value: `${num(fossilMW, 1)} MW` },
-      { label: "Renewable", value: `${num(renewableMW, 1)} MW` },
-      { label: "Curtailed", value: `${num(curtailMWh, 0).toLocaleString("en-US")} MWh` },
+      { label: "Plants", value: `${g.plant_count} ≤ ${g.radius_mi} mi` },
+      { label: "Ring capacity", value: `${g.total_mw.toLocaleString("en-US")} MW` },
+      { label: "Fossil", value: `${g.fossil_mw.toLocaleString("en-US")} MW` },
+      { label: "Storage", value: `${g.storage_mw.toLocaleString("en-US")} MW` },
+      { label: "Retiring", value: `${g.retiring_mw.toLocaleString("en-US")} MW` },
     ],
     diagnostics,
     pathways: [
       pathway({
         id: "bess",
-        label: `Co-located BESS · ${num(bessMW, 1)} MW / 4 h`,
+        label: `Co-located BESS · ${nf(bessMW, 1)} MW / 4 h`,
         detail:
           "Absorbs the midday surplus and discharges into the evening ramp. Shifts energy rather than abating it, so the carbon credit sits with the solar it makes dispatchable.",
-        capex_usd: bessCapex,
-        annual_savings_usd: bessSavings,
+        capex_usd: money(bessMW * UNIT.bess_mw),
+        annual_savings_usd: money(bessMW * UNIT.bess_mw_savings),
         co2_avoided_tons: 0,
       }),
       pathway({
         id: "grid-forming",
         label: "Synthetic-inertia inverter retrofit",
         detail:
-          "Grid-forming controls on the existing inverter fleet restore frequency and voltage response without new rotating mass.",
+          "Grid-forming controls on the region's inverter fleet restore frequency and voltage response without new rotating mass.",
         capex_usd: money(draw * UNIT.inverter_mw_capex),
         annual_savings_usd: money(draw * UNIT.inverter_mw_savings),
         co2_avoided_tons: 0,
       }),
     ],
-    severity: "ok", // replaced below
+    severity: "ok", // replaced by gridChain
   };
 }
 
-// ---- phase 2: high-voltage transmission --------------------------------------
+// ---- phase 2: high-voltage transmission -------------------------------------
 
-function phaseTransmission(
-  p: FacilityProperties,
-  sim: SimResult,
-  corridor: CorridorLoading | null,
-): PhaseState {
-  const mva = corridor?.mva ?? num(p.infrastructure.nameplate_draw_mw * 2, 0);
-  const capacity = corridor?.capacity_mva ?? mva;
-  const loading = corridor?.loading_pct ?? 0;
-  const throughput = corridor?.throughput_mw ?? sim.effective_draw_mw;
-  const lossPct = lineLossPct(loading);
-  const lossMWh = (sim.annual_mwh * lossPct) / 100;
-  const kV = corridor ? voltageClass(corridor.label) : "modeled tie";
-
-  const releasedDLR = mva * UNIT.dlr_release_pct;
-  const releasedReconductor = mva * UNIT.reconductor_release_pct;
-
-  const diagnostics: Diagnostic[] = [
-    {
-      id: "thermal",
-      label: "Thermal loading & sag",
-      detail: `${num(loading, 1)}% of the ${num(capacity, 0)} MVA rating${
-        sim.heatwave_active
-          ? ` at 105 °F (rating derated ${Math.round((1 - HEATWAVE_LINE_DERATE) * 100)}%)`
-          : " at ambient"
-      }; ${num(throughput, 1)} MW is riding on the ${corridor?.label ?? "serving tie"}.`,
-      severity: band(loading, 55, 70, 85),
-    },
-    {
-      id: "losses",
-      label: "Resistive line loss",
-      detail: `${num(lossPct, 2)}% of throughput, ${num(lossMWh, 0).toLocaleString("en-US")} MWh/yr lost as heat at the current operating point.`,
-      severity: band(lossPct, 1.4, 1.8, 2.2),
-    },
-    {
-      id: "wildfire",
-      label: "Wildfire ignition exposure",
-      detail: sim.heatwave_active
-        ? `${num(loading, 1)}% loading in a 105 °F drought window — sag, conductor slap and vegetation contact are the ignition path on this corridor.`
-        : `Southern California corridor at ${num(loading, 1)}% loading; the ignition window opens when the heatwave scenario is on.`,
-      severity: sim.heatwave_active
-        ? band(loading, 55, 75, 90)
-        : band(loading, 85, 100, 120),
-    },
-  ];
-
-  return {
+function phaseTransmission(sim: SimResult, assets: RealGridAssets | null): PhaseState {
+  const base = {
     phase: 2,
     id: "transmission",
     name: "High-voltage transmission",
     short: "Transmission",
-    headline: `${num(loading, 0)}% loaded`,
+    provenance: "OSM circuits · IEEE 738",
+  };
+  const t = assets?.transmission;
+  if (!t || !t.thermal) return unavailable({ ...base, headline: "—" }, "OSM transmission");
+
+  const thermal = t.thermal;
+  const nearest = t.nearest[0] ?? null;
+  const kv = thermal.voltage_kv;
+  const coverage: Severity = kv >= 230 ? "ok" : kv >= 115 ? "watch" : "high";
+
+  const diagnostics: Diagnostic[] = [
+    {
+      id: "thermal-derate",
+      label: "Thermal rating at 105 °F",
+      detail: `${thermal.conductor} at ${kv} kV rates ${thermal.rating_mva_25c} MVA at 25 °C and ${thermal.rating_mva_105f} MVA at 40.6 °C — ${nf(thermal.derate_pct, 1)}% lower, from the IEEE 738 heat balance. Holding the 25 °C rating through that afternoon would push the conductor to ${nf(thermal.conductor_temp_c_at_rating, 0)} °C against a ${thermal.max_temp_c} °C limit.`,
+      severity: band(thermal.derate_pct, 8, 14, 20),
+    },
+    {
+      id: "redundancy",
+      label: "Circuits at the top voltage",
+      detail: `${t.top_voltage_count} of ${t.line_count} tagged circuits inside ${t.radius_mi} mi run at ${kv} kV; the remaining ${t.line_count - t.top_voltage_count} sit at lower classes.`,
+      severity:
+        t.top_voltage_count >= 8
+          ? "ok"
+          : t.top_voltage_count >= 4
+            ? "watch"
+            : t.top_voltage_count >= 2
+              ? "high"
+              : "critical",
+    },
+    {
+      id: "coverage",
+      label: "Voltage coverage at the site",
+      detail: `${t.line_count} tagged circuits inside ${t.radius_mi} mi; the highest is ${kv} kV.${
+        nearest ? ` Nearest: ${nearest.name}${nearest.operator ? ` (${nearest.operator})` : ""}, ${nearest.distance_mi} mi.` : ""
+      }`,
+      severity: coverage,
+    },
+    {
+      id: "dlr",
+      label: "Dynamic line rating headroom",
+      detail: `The same conductor rates ${thermal.dlr_rating_mva} MVA in a 3 m/s breeze at 105 °F — ${thermal.dlr_uplift_mva} MVA that a static rating leaves on the table.`,
+      severity: "ok",
+    },
+  ];
+
+  const reconductor = reconductorScreen(kv);
+  const capacityValueUsd = (mw: number) => capacityValue(mw, 45_000);
+
+  return {
+    ...base,
+    headline: `${kv} kV`,
     telemetry: [
-      { label: "Serving tie", value: `${mva} MVA` },
-      { label: "Voltage", value: kV },
-      { label: "Loading", value: `${num(loading, 1)}%` },
-      { label: "Loss", value: `${num(lossPct, 2)}%` },
+      { label: "Circuits", value: `${t.line_count} ≤ ${t.radius_mi} mi` },
+      { label: "Highest", value: `${kv} kV` },
+      { label: "105 °F rating", value: `${thermal.rating_mva_105f} MVA` },
+      { label: "DLR headroom", value: `+${thermal.dlr_uplift_mva} MVA` },
     ],
     diagnostics,
     pathways: [
       pathway({
         id: "dlr",
-        label: `Dynamic line rating · +${num(releasedDLR, 1)} MW headroom`,
+        label: `Dynamic line rating · +${thermal.dlr_uplift_mva} MVA`,
         detail:
-          "Sensors plus weather modelling release thermal headroom that the static rating leaves unused, deferring a reconductoring cycle.",
-        capex_usd: money(mva * UNIT.dlr_mva_capex),
-        annual_savings_usd: money(releasedDLR * UNIT.capacity_value_mw_yr),
-        co2_avoided_tons: Math.round((lossMWh * 0.3 * sim.carbon_intensity) / 1000),
+          "Sensors plus weather modelling release the thermal headroom the static rating already gives up on a breezy afternoon.",
+        capex_usd: money(kv * UNIT.dlr_mva_capex),
+        annual_savings_usd: money(capacityValueUsd(thermal.dlr_uplift_mva)),
+        co2_avoided_tons: 0,
       }),
       pathway({
         id: "reconductor",
-        label: `Composite reconductoring · +${num(releasedReconductor, 1)} MW`,
-        detail:
-          "Advanced composite conductor replaces the existing phase conductors in place, cutting sag and resistive loss at the same voltage.",
-        capex_usd: money(mva * UNIT.reconductor_mva_capex),
-        annual_savings_usd: money(releasedReconductor * UNIT.capacity_value_mw_yr),
-        co2_avoided_tons: Math.round((lossMWh * 0.45 * sim.carbon_intensity) / 1000),
+        label: `Reconductoring · +${reconductor.uplift_mva} MVA`,
+        detail: `Replace ${reconductor.from} with ${reconductor.to}: ${reconductor.rating_mva_105f} MVA at 105 °F, with the voltage class and structures kept.`,
+        capex_usd: money(reconductor.uplift_mva * UNIT.reconductor_mva_capex),
+        annual_savings_usd: money(capacityValueUsd(reconductor.uplift_mva)),
+        co2_avoided_tons: 0,
       }),
     ],
     severity: "ok",
   };
 }
 
-// ---- phase 3: substations & transformation -----------------------------------
+// ---- phase 3: substations & transformation ----------------------------------
 
-function phaseSubstation(
-  p: FacilityProperties,
-  sim: SimResult,
-  corridor: CorridorLoading | null,
-): PhaseState {
-  const mva = num(
-    Math.max((corridor?.mva ?? 0) * 1.15, p.infrastructure.nameplate_draw_mw * 2),
-    1,
-  );
-  const banks = Math.max(1, Math.ceil(mva / 120));
-  const ratingPct = mva > 0 ? (sim.effective_draw_mw / mva) * 100 : 0;
-  const age = p.infrastructure.age_years;
-  const remaining = TRANSFORMER_DESIGN_LIFE - age;
-  const dga = Math.round(
-    clamp(100 - Math.max(0, age - 25) * 1.1 - Math.max(0, ratingPct - 75) * 0.35, 5, 99),
-  );
-  const oilC = num(52 + ratingPct * 0.42 + (sim.heatwave_active ? 12 : 0), 1);
-
-  const diagnostics: Diagnostic[] = [
-    {
-      id: "design-life",
-      label: "Past 35-year design life",
-      detail:
-        remaining < 0
-          ? `${age} years in service, ${Math.abs(remaining)} years past the ${TRANSFORMER_DESIGN_LIFE}-yr design life. Failure risk now rises faster than maintenance spend.`
-          : `${age} years in service, ${remaining} years of design life left.`,
-      severity:
-        remaining < -10
-          ? "critical"
-          : remaining < 0
-            ? "high"
-            : remaining < 7
-              ? "watch"
-              : "ok",
-    },
-    {
-      id: "dga",
-      label: "DGA health score",
-      detail: `${dga}/100 from dissolved-gas trend, age and thermal duty — ${
-        dga < 45
-          ? "multiple fault gases indicate incipient winding distress."
-          : dga < 70
-            ? "watch the acetylene and ethylene channels each quarter."
-            : "clean gas signature at the current load."
-      }`,
-      severity: dga < 45 ? "critical" : dga < 60 ? "high" : dga < 75 ? "watch" : "ok",
-    },
-    {
-      id: "oil-temp",
-      label: "Top-oil temperature",
-      detail: `${num(oilC, 1)} °C estimated at ${num(ratingPct, 0)}% of the ${num(mva, 0)} MVA bank${banks > 1 ? "s" : ""}${sim.heatwave_active ? ", including the 105 °F ambient lift" : ""}.`,
-      severity: band(oilC, 85, 95, 105),
-    },
-    {
-      id: "lead-time",
-      label: `${LPT_LEAD_TIME_WEEKS}-week replacement lead time`,
-      detail: `A failed ${num(mva, 0)} MVA unit cannot be replaced inside a quarter — long-lead spares and monitoring are the only mitigation that fits the supply chain.`,
-      severity: age > 35 ? "high" : "watch",
-    },
-  ];
-
-  return {
+function phaseSubstation(p: FacilityProperties, sim: SimResult, assets: RealGridAssets | null): PhaseState {
+  const base = {
     phase: 3,
     id: "substation",
     name: "Substations & transformation",
     short: "Substation",
-    headline: `DGA ${dga}`,
+    provenance: "OSM substations · site vintage",
+  };
+  const s = assets?.substations;
+  if (!s) return unavailable({ ...base, headline: "—" }, "OSM substation");
+
+  const nearest = s.nearest_named[0] ?? null;
+  const age = p.infrastructure.age_years;
+  const distance = nearest?.distance_mi ?? null;
+
+  const diagnostics: Diagnostic[] = [
+    {
+      id: "nearest-transmission",
+      label: "Nearest transmission-class substation",
+      detail: nearest
+        ? `${nearest.name}${nearest.voltage_kv !== null ? ` at ${nearest.voltage_kv} kV` : ""}${
+            nearest.operator ? `, operated by ${nearest.operator}` : ""
+          }, ${nf(nearest.distance_mi, 1)} mi from the site. ${s.transmission_count} transmission-class substations sit inside ${s.radius_mi} mi.`
+        : `No named transmission substation inside ${s.radius_mi} mi; OSM tags ${s.count} substation outlines nearby without a name or voltage.`,
+      severity:
+        distance === null
+          ? "watch"
+          : distance <= 2
+            ? "ok"
+            : distance <= 5
+              ? "watch"
+              : distance <= 10
+                ? "high"
+                : "critical",
+    },
+    {
+      id: "voltage-coverage",
+      label: "Transformation voltage available",
+      detail:
+        s.max_kv !== null
+          ? `The highest tagged voltage within ${s.radius_mi} mi is ${s.max_kv} kV across ${s.named_count} named substations.`
+          : "OSM carries no voltage tag for these substation outlines — the layer cannot support a voltage claim here.",
+      severity: s.max_kv === null ? "watch" : s.max_kv >= 230 ? "ok" : s.max_kv >= 115 ? "watch" : "high",
+    },
+    {
+      id: "site-vintage",
+      label: "Site vintage against transformer design life",
+      detail: `${age} years in service. OSM carries no transformer age, DGA trend or nameplate MVA — the ${TRANSFORMER_DESIGN_LIFE}-yr design life is applied to the site's vintage, not to a named unit.`,
+      severity: age > 60 ? "critical" : age > 45 ? "high" : age > TRANSFORMER_DESIGN_LIFE ? "watch" : "ok",
+    },
+    {
+      id: "lead-time",
+      label: `${LPT_LEAD_TIME_WEEKS}-week replacement lead time`,
+      detail:
+        "A failed large power transformer cannot be replaced inside a quarter. Long-lead spares and monitoring are the only mitigations that fit that supply chain.",
+      severity: age > TRANSFORMER_DESIGN_LIFE ? "high" : "watch",
+    },
+  ];
+
+  const mva = nf(Math.max(1, p.infrastructure.nameplate_draw_mw * 2), 0);
+  const banks = Math.max(1, Math.ceil(mva / 120));
+
+  return {
+    ...base,
+    headline: s.max_kv !== null ? `${s.max_kv} kV` : `${s.count} subs`,
     telemetry: [
-      { label: "Banks", value: `${banks} · ${num(mva, 0)} MVA` },
-      { label: "Rating used", value: `${num(ratingPct, 0)}%` },
-      { label: "Age", value: `${age} yr` },
-      { label: "Top oil", value: `${num(oilC, 0)} °C` },
+      { label: "Substations", value: `${s.count} ≤ ${s.radius_mi} mi` },
+      { label: "Named", value: `${s.named_count}` },
+      { label: "Transmission class", value: `${s.transmission_count}` },
+      { label: "Site vintage", value: `${age} yr` },
     ],
     diagnostics,
     pathways: [
@@ -472,7 +438,7 @@ function phaseSubstation(
         id: "modular-substation",
         label: "Modular substation retrofit",
         detail:
-          "Skid-mounted transformer, breaker and busbar modules replace the vintage bank with a shorter build and a smaller footprint.",
+          "Skid-mounted transformer, breaker and busbar modules replace a vintage bank with a shorter build and a smaller footprint.",
         capex_usd: money(mva * UNIT.substation_mva_capex),
         annual_savings_usd: money(mva * UNIT.substation_mva_savings),
         co2_avoided_tons: 0,
@@ -484,54 +450,56 @@ function phaseSubstation(
 
 // ---- phase 4: distribution networks -----------------------------------------
 
-function phaseDistribution(p: FacilityProperties, sim: SimResult): PhaseState {
-  const draw = sim.effective_draw_mw;
-  const feeders = Math.max(2, Math.ceil(draw / 8));
-  const feederCapacity = feeders * 12;
-  const loading = feederCapacity > 0 ? (draw / feederCapacity) * 100 : 0;
-  const age = p.infrastructure.age_years;
-  const saidi = num(96 + age * 0.85 + Math.max(0, loading - 70) * 2.2, 0);
-  const saifi = num(1.2 + age * 0.012 + Math.max(0, loading - 70) * 0.03, 2);
-  const imbalance = num(Math.max(0, 0.85 - p.infrastructure.motor_efficiency_rating) * 62, 1);
-
-  const diagnostics: Diagnostic[] = [
-    {
-      id: "feeder-loading",
-      label: "Feeder overload",
-      detail: `${num(draw, 1)} MW over ${feeders} feeders rated ${feederCapacity} MVA total — ${num(loading, 1)}% loaded${loading > 100 ? ", past the emergency rating" : ""}.`,
-      severity: band(loading, 70, 85, 100),
-    },
-    {
-      id: "reliability",
-      label: "SAIDI / SAIFI reliability",
-      detail: `${num(saidi, 0)} customer-minutes and ${num(saifi, 2)} interruptions per year, modelled from feeder age and loading.`,
-      severity: band(saidi, 120, 150, 180),
-    },
-    {
-      id: "radial",
-      label: "Single point of failure",
-      detail: `Radial topology: one open feeder or blown cutout drops the whole load block until a crew arrives. No automated tie switch exists on this run.`,
-      severity: "watch",
-    },
-    {
-      id: "imbalance",
-      label: "Phase imbalance",
-      detail: `${num(imbalance, 1)}% modelled current unbalance from the motor load mix — neutral current and transformer heating follow it.`,
-      severity: band(imbalance, 4, 7, 10),
-    },
-  ];
-
-  return {
+function phaseDistribution(p: FacilityProperties, assets: RealGridAssets | null): PhaseState {
+  const base = {
     phase: 4,
     id: "distribution",
     name: "Distribution networks",
     short: "Distribution",
-    headline: `${num(loading, 0)}% feeder`,
+    provenance: "OSM distribution substations",
+  };
+  const s = assets?.substations;
+  if (!s) return unavailable({ ...base, headline: "—" }, "OSM substation");
+
+  const nearest = s.nearest_distribution_mi;
+  const nameplate = p.infrastructure.nameplate_draw_mw;
+  const feeders = Math.max(2, Math.ceil(nameplate / 8));
+
+  const diagnostics: Diagnostic[] = [
+    {
+      id: "distribution-density",
+      label: "Distribution substation density",
+      detail: `${s.distribution_count} of the ${s.count} substations inside ${s.radius_mi} mi are tagged distribution (${s.named_count} carry a name). OSM coverage thins away from cities, so this is a floor, not a census.`,
+      severity:
+        s.distribution_count >= 8 ? "ok" : s.distribution_count >= 4 ? "watch" : s.distribution_count >= 1 ? "high" : "critical",
+    },
+    {
+      id: "nearest-distribution",
+      label: "Nearest distribution substation",
+      detail:
+        nearest === null
+          ? `No substation tagged distribution inside ${s.radius_mi} mi.`
+          : `${nf(nearest, 1)} mi to the nearest distribution substation outline.`,
+      severity:
+        nearest === null ? "critical" : nearest <= 1 ? "ok" : nearest <= 3 ? "watch" : nearest <= 6 ? "high" : "critical",
+    },
+    {
+      id: "reliability-gap",
+      label: "No reliability claim",
+      detail:
+        "OSM does not publish SAIDI, SAIFI or feeder topology. The chain does not invent them; reliability work needs the utility's outage data.",
+      severity: "ok",
+    },
+  ];
+
+  return {
+    ...base,
+    headline: `${s.distribution_count} distribution subs`,
     telemetry: [
-      { label: "Feeders", value: `${feeders}` },
-      { label: "Feeder load", value: `${num(loading, 0)}%` },
-      { label: "SAIDI", value: `${num(saidi, 0)} min` },
-      { label: "SAIFI", value: `${num(saifi, 2)}` },
+      { label: "Distribution subs", value: `${s.distribution_count}` },
+      { label: "Nearest", value: nearest === null ? "—" : `${nf(nearest, 1)} mi` },
+      { label: "Feeder estimate", value: `${feeders}` },
+      { label: "Site nameplate", value: `${nf(nameplate, 1)} MW` },
     ],
     diagnostics,
     pathways: [
@@ -548,7 +516,7 @@ function phaseDistribution(p: FacilityProperties, sim: SimResult): PhaseState {
         id: "feeder-transformers",
         label: "Right-sized distribution transformers",
         detail:
-          "Replace the overloaded pole and pad units with the correct kVA class so the feeder stops carrying transformer losses and heat.",
+          "Replace pole and pad units with the correct kVA class so the feeder stops carrying transformer losses and heat.",
         capex_usd: money(feeders * UNIT.feeder_tx_capex),
         annual_savings_usd: money(feeders * UNIT.feeder_tx_savings),
         co2_avoided_tons: 0,
@@ -562,37 +530,26 @@ function phaseDistribution(p: FacilityProperties, sim: SimResult): PhaseState {
 
 function phaseBehindMeter(p: FacilityProperties, sim: SimResult): PhaseState {
   const draw = sim.effective_draw_mw;
-  const solarShare = p.energy_profile.source_mix.solar;
-  // Same evening-bell shape as the telemetry curve: trough overnight, ramp to a
-  // 4 pm peak, which is the duck-curve mechanism in one line.
-  const peak = draw;
-  const trough = draw * 0.72;
-  const rampMW = num(peak - trough, 2);
-  const rampPct = num((rampMW / (peak || 1)) * 100, 1);
+  const profile = dailyProfile(sim);
+  const peak = Math.max(...profile);
+  const trough = Math.min(...profile);
+  const rampMW = nf(peak - trough, 2);
+  const rampPct = nf(pct(rampMW, peak || 1), 1);
   const nameplate = p.infrastructure.nameplate_draw_mw;
-  const derShare = solarShare;
+  const peakDraw = p.energy_profile.peak_draw_mw;
 
   const diagnostics: Diagnostic[] = [
     {
-      id: "duck-curve",
-      label: "Evening duck-curve ramp",
-      detail: `${num(rampMW, 1)} MW must arrive inside four hours (${num(rampPct, 1)}% of peak) while ${derShare}% of supply is behind-meter solar that is fading.`,
-      severity: derShare >= 30 ? "high" : "watch",
+      id: "evening-ramp",
+      label: "Evening ramp",
+      detail: `${nf(rampMW, 1)} MW must arrive across the 4 pm ramp (${nf(rampPct, 1)}% of peak) in the modelled 24-hour shape — the site's own load, not a grid measurement.`,
+      severity: "watch",
     },
     {
       id: "load-shock",
       label: "Multi-megawatt load shock",
-      detail: `A single process start, fleet charge or cooling pull moves ${num(nameplate, 1)} MW at nameplate — a swing the local feeder sees as one step.`,
+      detail: `Peak draw is ${nf(peakDraw, 1)} MW against ${nf(nameplate, 1)} MW nameplate: a swing the local feeder sees as one step.`,
       severity: band(nameplate, 10, 20, 30),
-    },
-    {
-      id: "der",
-      label: "DER penetration without dispatch",
-      detail:
-        derShare >= 30
-          ? `${derShare}% of delivered kWh is modelled behind-meter solar with no dispatchable battery, so the site cannot shape its own net load.`
-          : `${derShare}% behind-meter solar; the site still leans on the grid for the evening peak.`,
-      severity: band(derShare, 30, 38, 45),
     },
   ];
 
@@ -601,12 +558,13 @@ function phaseBehindMeter(p: FacilityProperties, sim: SimResult): PhaseState {
     id: "behind-meter",
     name: "Behind-the-meter consumption",
     short: "Load",
-    headline: `${num(rampPct, 0)}% ramp`,
+    provenance: "modelled site load",
+    headline: `${nf(rampPct, 0)}% ramp`,
     telemetry: [
-      { label: "Peak draw", value: `${num(peak, 1)} MW` },
-      { label: "Evening ramp", value: `${num(rampMW, 1)} MW` },
-      { label: "Solar share", value: `${derShare}%` },
+      { label: "Peak draw", value: `${nf(peak, 1)} MW` },
+      { label: "Evening ramp", value: `${nf(rampMW, 1)} MW` },
       { label: "Homes eq.", value: `${Math.round(sim.annual_mwh / MWH_PER_HOME).toLocaleString("en-US")}` },
+      { label: "Heatwave draw", value: `${nf(draw, 1)} MW` },
     ],
     diagnostics,
     pathways: [
@@ -614,7 +572,7 @@ function phaseBehindMeter(p: FacilityProperties, sim: SimResult): PhaseState {
         id: "vpp",
         label: "Virtual power plant aggregation",
         detail:
-          "Bundle the site's flexible cells, pumps and batteries into one dispatchable block that the utility can call instead of a peaker.",
+          "Bundle the site's flexible cells, pumps and batteries into one dispatchable block the utility can call instead of a peaker.",
         capex_usd: money(draw * UNIT.vpp_mw_capex),
         annual_savings_usd: money(draw * UNIT.vpp_mw_savings),
         co2_avoided_tons: Math.round((sim.annual_mwh * 0.02 * sim.carbon_intensity) / 1000),
@@ -635,64 +593,61 @@ function phaseBehindMeter(p: FacilityProperties, sim: SimResult): PhaseState {
 
 // ---- phase 6: market operations & dispatch ----------------------------------
 
-function phaseMarket(
-  p: FacilityProperties,
-  sim: SimResult,
-  corridor: CorridorLoading | null,
-): PhaseState {
-  const ci = sim.carbon_intensity;
-  const loading = corridor?.loading_pct ?? 0;
-  const congestion = Math.max(0, loading - 70) * 0.6;
-  const lmp = num(
-    34 + clamp((ci - 250) * 0.11, 0, 26) + (sim.heatwave_active ? 9 : 0) + congestion,
-    1,
-  );
-  const nameplate = p.infrastructure.nameplate_draw_mw;
-  const spareMW = Math.max(0, nameplate - sim.effective_draw_mw);
-  const reservePct = nameplate > 0 ? num((spareMW / nameplate) * 100, 1) : 0;
-  const curtailableMW = num(sim.effective_draw_mw * 0.12, 1);
-  const arbitrageMW = num(Math.max(0.5, sim.effective_draw_mw * 0.1), 1);
-
-  const diagnostics: Diagnostic[] = [
-    {
-      id: "congestion",
-      label: "Transmission congestion premium",
-      detail: `${num(loading, 1)}% corridor loading adds $${num(congestion, 2)}/MWh to the ${p.energy_profile.grid_zone} nodal price; the site pays it on every megawatt-hour.`,
-      severity: band(loading, 55, 70, 85),
-    },
-    {
-      id: "reserve",
-      label: "Peaker reserve depletion",
-      detail: sim.heatwave_active
-        ? `${num(spareMW, 1)} MW of local headroom (${reservePct}%) while the 45% draw surge pulls fossil peakers online at the worst carbon intensity of the day.`
-        : `${num(spareMW, 1)} MW of local headroom (${reservePct}%) before the site itself is the constraint.`,
-      severity: sim.heatwave_active ? (sim.overload ? "critical" : "watch") : "ok",
-    },
-    {
-      id: "price",
-      label: "Wholesale price exposure",
-      detail: `$${num(lmp, 2)}/MWh modelled locational marginal price against ${num(sim.annual_mwh, 0).toLocaleString("en-US")} MWh/yr of consumption.`,
-      severity: band(lmp, 50, 60, 80),
-    },
-  ];
-
-  return {
+function phaseMarket(sim: SimResult, assets: RealGridAssets | null): PhaseState {
+  const base = {
     phase: 6,
     id: "market",
     name: "Market operations & dispatch",
-    short: "Market",
-    headline: `$${num(lmp, 0)}/MWh`,
+    short: "Dispatch",
+    provenance: "EIA-860 MW · planner assumptions",
+  };
+  const g = assets?.generation;
+  if (!g) return unavailable({ ...base, headline: "—" }, "EIA-860 plant");
+
+  const variable = (g.by_source.solar ?? 0) + (g.by_source.wind ?? 0);
+  const storageRatio = pct(g.storage_mw, variable);
+  const gapMW = Math.max(0, g.retiring_mw - g.storage_mw);
+  const annualCost = sim.annual_mwh * DEFAULT_ECONOMICS.energy_price_usd_per_mwh;
+  const co2Cost = carbonCost(sim.annual_co2_tons);
+
+  const diagnostics: Diagnostic[] = [
+    {
+      id: "retirement-gap",
+      label: "Retirement against storage in the ring",
+      detail: `${g.retiring_mw.toLocaleString("en-US")} MW retiring against ${g.storage_mw.toLocaleString("en-US")} MW of battery in the same ring — a ${gapMW.toLocaleString("en-US")} MW firm-capacity gap if nothing else is built.`,
+      severity: gapMW <= 0 ? "ok" : band(pct(gapMW, Math.max(1, g.total_mw)), 3, 8, 15),
+    },
+    {
+      id: "storage-ratio",
+      label: "Storage against variable generation",
+      detail: `${nf(storageRatio, 1)}% storage-to-variable ratio (${g.storage_mw.toLocaleString("en-US")} MW battery, ${variable.toLocaleString("en-US")} MW solar + wind).`,
+      severity: storageRatio >= 25 ? "ok" : storageRatio >= 12 ? "watch" : storageRatio >= 5 ? "high" : "critical",
+    },
+    {
+      id: "cost-exposure",
+      label: "Annual energy cost at the planner price",
+      detail: `${sim.annual_mwh.toLocaleString("en-US")} MWh/yr at $${DEFAULT_ECONOMICS.energy_price_usd_per_mwh}/MWh (a planning assumption, not a market quote) is about $${Math.round(annualCost / 1_000_000)}M/yr, plus $${Math.round(co2Cost / 1000)}k/yr at $${DEFAULT_ECONOMICS.carbon_price_usd_per_ton}/t CO₂.`,
+      severity: "ok",
+    },
+  ];
+
+  const curtailableMW = nf(sim.effective_draw_mw * 0.12, 1);
+  const arbitrageMW = nf(Math.max(0.5, sim.effective_draw_mw * 0.1), 1);
+
+  return {
+    ...base,
+    headline: `${g.storage_mw.toLocaleString("en-US")} MW storage`,
     telemetry: [
-      { label: "LMP", value: `$${num(lmp, 2)}` },
-      { label: "Congestion", value: `+$${num(congestion, 2)}` },
-      { label: "Reserve", value: `${reservePct}%` },
-      { label: "Zone", value: p.energy_profile.grid_zone },
+      { label: "Ring storage", value: `${g.storage_mw.toLocaleString("en-US")} MW` },
+      { label: "Retiring", value: `${g.retiring_mw.toLocaleString("en-US")} MW` },
+      { label: "Planner price", value: `$${DEFAULT_ECONOMICS.energy_price_usd_per_mwh}/MWh*` },
+      { label: "Carbon", value: `$${DEFAULT_ECONOMICS.carbon_price_usd_per_ton}/t*` },
     ],
     diagnostics,
     pathways: [
       pathway({
         id: "demand-response",
-        label: `Automated demand response · ${num(curtailableMW, 1)} MW`,
+        label: `Automated demand response · ${nf(curtailableMW, 1)} MW`,
         detail:
           "Curtail the flexible block on a price or reserve signal instead of buying the peak; dispatch is automated, not a phone call.",
         capex_usd: money(curtailableMW * UNIT.dr_mw_capex),
@@ -701,7 +656,7 @@ function phaseMarket(
       }),
       pathway({
         id: "arbitrage",
-        label: `BESS price arbitrage · ${num(arbitrageMW, 1)} MW`,
+        label: `BESS price arbitrage · ${nf(arbitrageMW, 1)} MW`,
         detail:
           "Buy in the solar belly, sell into the evening peak; the same battery that stabilises the site earns a spread.",
         capex_usd: money(arbitrageMW * UNIT.arbitrage_mw_capex),
@@ -721,20 +676,14 @@ export function gridChain(
   sim: SimResult,
   ctx: GridContext,
 ): PhaseState[] {
-  const corridor = servingCorridor(
-    properties.id,
-    ctx.flows,
-    ctx.sims,
-    sim.heatwave_active,
-  );
-
+  const assets = ctx.assets;
   const states = [
-    phaseGeneration(properties, sim),
-    phaseTransmission(properties, sim, corridor),
-    phaseSubstation(properties, sim, corridor),
-    phaseDistribution(properties, sim),
+    phaseGeneration(sim, assets),
+    phaseTransmission(sim, assets),
+    phaseSubstation(properties, sim, assets),
+    phaseDistribution(properties, assets),
     phaseBehindMeter(properties, sim),
-    phaseMarket(properties, sim, corridor),
+    phaseMarket(sim, assets),
   ];
 
   return states.map((state) => ({
@@ -787,11 +736,11 @@ export function phaseExposure(
       short,
       severity,
       alerts,
-      at_risk_mw: num(atRiskMW, 1),
-      share_pct: 0, // filled below
+      at_risk_mw: nf(atRiskMW, 1),
+      share_pct: 0,
       capex_usd: money(capex),
       annual_savings_usd: money(savings),
-      payback_years: paybackYears(capex, savings),
+      payback_years: simplePayback(capex, savings),
     });
   }
 

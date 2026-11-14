@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { compactUSD, fmtNumber, fmtYears, fmtPercent } from "../format";
 import { gridChain } from "../grid";
-import { listFacilities, listFlows } from "../region";
-import { simulate } from "../simulation";
+import { assetsForSite } from "../gridAssets.server";
+import { listFacilities } from "../region";
 import type { BriefResponse, FacilityProperties, SimResult } from "../types";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
@@ -13,14 +13,17 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
  * with the screen.
  */
 function chainFor(properties: FacilityProperties, sim: SimResult) {
-  const sims: Record<string, SimResult> = {};
+  let point: [number, number] | null = null;
   for (const facility of listFacilities()) {
-    sims[facility.properties.id] =
-      facility.properties.id === properties.id
-        ? sim
-        : simulate(facility.properties, { heatwave_active: sim.heatwave_active });
+    if (facility.properties.id === properties.id) {
+      const [lon, lat] = facility.geometry.coordinates;
+      point = [lon, lat];
+      break;
+    }
   }
-  return gridChain(properties, sim, { flows: listFlows(), sims });
+  // The memo reads the same EIA-860 / OSM layers the screen does; if they are
+  // unreadable the chain reports the gap rather than a modelled stand-in.
+  return gridChain(properties, sim, { assets: point ? assetsForSite(point) : null });
 }
 
 function economics(properties: FacilityProperties, sim: SimResult) {

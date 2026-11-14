@@ -8,6 +8,22 @@ A dark-mode "command center" for **electrical** infrastructure: it maps every ma
 
 Swapping `data/nodes.json` + `data/regions.json` and the region id relocates the whole platform; every formula, endpoint and component is region-agnostic.
 
+### Evidence framework — every number has a citation
+
+A deterministic, source-backed evidence layer sits under the UI. Every displayed claim is
+one of **observed / derived / modeled / inferred**, is content-addressed, and is re-verified
+from the exact bytes or formula that produce it. The UI reads claim values (not parallel
+literals) and shows an **Evidence** tab in the analyzer drawer with verification status,
+sources, snapshots and disclosures. Click any `S1`/`∂` chip for the provenance chain.
+
+```bash
+npm run evidence:build          # offline, deterministic, committed inputs only
+npm run evidence:verify:files   # re-hash snapshots + re-resolve every locator (strict)
+```
+
+Full contract, architecture, commands, extension rules and restore paths:
+**[`research/README.md`](research/README.md)**.
+
 ---
 
 ## 0. Parallel work: read this first
@@ -320,7 +336,7 @@ Anyone still on the old field names is unblocked by §4.2: `loadRatio` replaces 
 // data/nodes.json — FeatureCollection + the region it belongs to + grid ties
 { "region_id": "westminster-100mi", "type": "FeatureCollection",
   "features": [ /* 11 features, §4.1 */ ],
-  "flows": [ /* 9 PowerFlow segments */ ] }
+  "flows": [ /* 10 PowerFlow segments, one an explicitly modeled tie */ ] }
 ```
 
 Eleven real sites, every one inside 100 miles of Westminster High School (**farthest** is Carlsbad at ~58 mi). Coordinates and in-service years were verified against operator/agency records.
@@ -374,9 +390,9 @@ node -e "const d=require('./data/nodes.json');for(const f of d.features){const p
 
 **Power flows** (`flows` in `nodes.json`, MVA sizes the line — one directed segment per tie, no reverse duplicates):
 
-`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
+`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `oc-02 → la-07` **Fountain Valley–Harbor 69 kV tie (45, modeled)** · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
 
-That is **9 segments over 11 nodes**, one connected component, no pair linked twice. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
+That is **10 segments over 11 nodes**, one connected component, no pair linked twice. The `oc-02 → la-07` tie is **modeled**, not an operator-published circuit; it exists to connect the Orange County pair to the LA/San Diego tree so the graph is one network instead of two islands. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
 
 ### 4.2 Formulas (§3 of the spec, energy units — `lib/simulation.ts`, pure)
 
@@ -566,7 +582,7 @@ Left: product mark + region selector (one option, `Westminster 100-Mile Radius`)
 | --- | --- | --- |
 | **G0 — Contract** | G0 commit | ✅ `lib/types.ts`, `design/tokens.css`, `components/primitives/*` committed. Everyone unblocked. |
 | **G1 — Data spine** | Dev 2 | `nodes.json` + `regions.json` valid GeoJSON; §4.4 assertions reproduce exactly; `/api/simulate` returns sane numbers for `node-la-05` under heatwave. |
-| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 9 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
+| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 10 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
 | **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders move payback instantly; no `NaN`/`Infinity` anywhere. |
 | **G4 — Outreach live** | Dev 3 | Memo generates (fallback if no key), dispatch returns a receipt, button has pending/done/error states. |
 | **G5 — Integration** | All | `npx tsc --noEmit` clean, `npm run build` clean, one browser pass heatwave on/off × three tabs × one dispatch. |

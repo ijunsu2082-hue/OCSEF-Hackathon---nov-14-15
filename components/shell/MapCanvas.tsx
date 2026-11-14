@@ -2,16 +2,25 @@
 
 import dynamic from "next/dynamic";
 import type { LatLngBoundsExpression, Map as LeafletMap } from "leaflet";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_LAYERS,
-  LAYER_OPTIONS,
+  loadPlants,
+  loadSubstations,
+  loadTransmission,
   type LayerVisibility,
 } from "@/lib/gridLayers";
-import type { CorridorLoading } from "@/lib/grid";
 import type { NicheCase } from "@/lib/niche";
-import { RISK_COLORS, type RiskEntry, type RiskBucket } from "@/lib/risk";
+import type { RiskEntry } from "@/lib/risk";
+import {
+  loadBasemap,
+  saveBasemap,
+  type BasemapId,
+} from "@/lib/basemaps";
+import { scanArea, type ScanInput, type ScanResult } from "@/lib/scan/areaScan";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
+import AreaScanPanel from "@/components/scan/AreaScanPanel";
+import LayerPicker from "./LayerPicker";
 
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
@@ -22,8 +31,6 @@ const MapView = dynamic(() => import("./MapView"), {
     </div>
   ),
 });
-
-const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
 
 interface Props {
   nodes: FacilityFeature[];
@@ -36,7 +43,6 @@ interface Props {
   selectedId: string;
   heatwave: boolean;
   view3d: boolean;
-  corridors: CorridorLoading[];
   nicheCases: NicheCase[];
   selectedNicheId: string | null;
   onSelect: (id: string) => void;
@@ -54,7 +60,6 @@ export default function MapCanvas({
   selectedId,
   heatwave,
   view3d,
-  corridors,
   nicheCases,
   selectedNicheId,
   onSelect,
@@ -64,8 +69,87 @@ export default function MapCanvas({
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const onMapReady = useCallback((instance: LeafletMap) => setMap(instance), []);
 
+  const [basemap, setBasemap] = useState<BasemapId>("dark");
+  useEffect(() => setBasemap(loadBasemap()), []);
+  const chooseBasemap = useCallback((id: BasemapId) => {
+    setBasemap(id);
+    saveBasemap(id);
+  }, []);
+
+  const [scanMode, setScanMode] = useState(false);
+  const [scanPoint, setScanPoint] = useState<{ lat: number; lon: number } | null>(null);
+  const [scanRadius, setScanRadius] = useState(5);
+  const [scanData, setScanData] = useState<ScanInput | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
   const toggleLayer = (id: keyof LayerVisibility) =>
     setLayers((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  // Layers load the first time scan mode opens, never again (gridLayers caches).
+  useEffect(() => {
+    if (!scanMode || scanData) return;
+    let alive = true;
+    setScanLoading(true);
+    setScanError(null);
+    Promise.all([loadPlants(), loadSubstations(), loadTransmission()])
+      .then(([plants, substations, transmission]) => {
+        if (!alive) return;
+        setScanData({
+          plants: plants.features,
+          substations: substations.features,
+          transmission: transmission.features,
+          loadCenters: [],
+        });
+        setScanLoading(false);
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        setScanError(error instanceof Error ? error.message : "Grid layers failed to load");
+        setScanLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [scanMode, scanData]);
+
+  const scanInput = useMemo<ScanInput | null>(() => {
+    if (!scanData) return null;
+    return {
+      ...scanData,
+      loadCenters: nodes.map((feature) => {
+        const [lon, lat] = feature.geometry.coordinates;
+        return {
+          name: feature.properties.name,
+          lat,
+          lon,
+          draw_mw: sims[feature.properties.id]?.effective_draw_mw ?? 0,
+        };
+      }),
+    };
+  }, [scanData, nodes, sims]);
+
+  const scanResult = useMemo<ScanResult | null>(() => {
+    if (!scanPoint || !scanInput) return null;
+    return scanArea(
+      { lat: scanPoint.lat, lon: scanPoint.lon, radius_mi: scanRadius },
+      scanInput,
+      { heatwave },
+    );
+  }, [scanPoint, scanInput, scanRadius, heatwave]);
+
+  const scanOverlay = scanPoint
+    ? { lat: scanPoint.lat, lon: scanPoint.lon, radius_mi: scanRadius }
+    : null;
+
+  const handleScanPoint = useCallback((lat: number, lon: number) => {
+    setScanPoint({ lat, lon });
+  }, []);
+
+  const closeScan = useCallback(() => {
+    setScanMode(false);
+    setScanPoint(null);
+  }, []);
 
   return (
     <div className={`map-stage${view3d ? " is-3d" : ""}`}>
@@ -83,12 +167,15 @@ export default function MapCanvas({
           heatwave={heatwave}
           view3d={view3d}
           layers={layers}
-          corridors={corridors}
           nicheCases={nicheCases}
           selectedNicheId={selectedNicheId}
           onSelect={onSelect}
           onSelectNiche={onSelectNiche}
           onMapReady={onMapReady}
+          basemap={basemap}
+          scanMode={scanMode}
+          scan={scanOverlay}
+          onScanPoint={handleScanPoint}
         />
       </div>
 
@@ -98,6 +185,9 @@ export default function MapCanvas({
       <div className="map-topline">
         <span className="map-mode">{view3d ? "3D terrain · tilt 56°" : "2D top-down"}</span>
         {heatwave ? <span className="map-mode">Heatwave · 105 °F</span> : null}
+        {scanMode ? (
+          <span className="map-mode is-scan">Scan mode · click to query</span>
+        ) : null}
       </div>
 
       <div className="map-controls">
@@ -106,6 +196,30 @@ export default function MapCanvas({
         </button>
         <button type="button" onClick={() => map?.zoomOut()} aria-label="Zoom out">
           −
+        </button>
+        <button
+          type="button"
+          data-active={scanMode}
+          aria-pressed={scanMode}
+          onClick={() => {
+            setScanMode((value) => !value);
+            setScanPoint(null);
+          }}
+          aria-label={scanMode ? "Exit area scan" : "Scan an area"}
+          title="Scan an area"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 4v3M12 17v3M4 12h3M17 12h3" />
+            <circle cx="12" cy="12" r="8.4" strokeDasharray="3 3" />
+          </svg>
         </button>
         <button
           type="button"
@@ -123,42 +237,25 @@ export default function MapCanvas({
         </button>
       </div>
 
-      <div className="legend">
-        <div className="legend-title">Energy risk score</div>
-        <div className="legend-ramp">
-          {RAMP.map((bucket) => (
-            <div className="legend-step" key={bucket}>
-              <span
-                className="legend-swatch"
-                style={{ background: RISK_COLORS[bucket] }}
-                aria-hidden
-              />
-              <span>{bucket}</span>
-            </div>
-          ))}
-        </div>
+      <LayerPicker
+        basemap={basemap}
+        onBasemap={chooseBasemap}
+        layers={layers}
+        onLayers={setLayers}
+      />
 
-        <div className="legend-layers" role="group" aria-label="Map layers">
-          {LAYER_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className="layer-toggle"
-              data-active={layers[option.id]}
-              aria-pressed={layers[option.id]}
-              onClick={() => toggleLayer(option.id)}
-            >
-              <i aria-hidden />
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="legend-foot">
-          <span className="legend-dash" aria-hidden />
-          Modeled tie (illustrative) · {radiusMiles} mi radius
-        </div>
-      </div>
+      {scanMode ? (
+        <AreaScanPanel
+          result={scanResult}
+          radius={scanRadius}
+          loading={scanLoading}
+          error={scanError}
+          heatwave={heatwave}
+          nicheCases={nicheCases}
+          onRadius={setScanRadius}
+          onClose={closeScan}
+        />
+      ) : null}
 
       <div className="map-attrib">
         Tiles © Esri · Plants EIA-860 2025 · Grid © OpenStreetMap contributors
