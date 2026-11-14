@@ -3,7 +3,7 @@
 **What the multi-billion-dollar grid platforms actually sell, and what we should rip.**
 
 Status: research / brainstorm, 2026-11-14. No application code changed by this document.
-Companion: [`docs/FEATURE-BACKLOG.md`](./FEATURE-BACKLOG.md) (gap map, ranked backlog, optimizations, demo script, sources, formulas).
+Companion: [`docs/FEATURE-BACKLOG.md`](./FEATURE-BACKLOG.md) (gap map, ranked backlog, optimizations, demo script, sources, formulas) and [`docs/PLATFORM-REFERENCE.md`](./PLATFORM-REFERENCE.md) (module-level product detail, standards matrix, pricing evidence, feature dictionary).
 Ground truth for our numbers: `README.md` §4, `docs/GRID-MODEL.md`, `docs/PHYSICS-HANDOFF.md`.
 
 ---
@@ -22,17 +22,14 @@ The other session's product list is directionally right, but several claims need
 
 ### 0.1 A real topology bug the cascade feature would expose
 
-`data/nodes.json` has **9 edges over 11 nodes**, which is **two connected components**, not one:
+`data/nodes.json` **had 9 edges over 11 nodes**, which was **two connected components**, not one:
 
 ```
 component A (2): node-oc-01, node-oc-02
 component B (9): node-la-01 … node-la-08, node-sd-01
 ```
 
-The Orange County pair is electrically floating from the LA/San Diego tree. The README claims "one connected component" — that line is wrong. Before we ship any N-1, cascade, PSPS or "trace upstream/downstream" feature, we must either:
-
-1. add one sourced OC↔LA tie (the Fountain Valley–Westminster 69 kV corridor is the obvious candidate), or
-2. render and report the two islands honestly, with the OC pair labeled "islanded / no modeled tie".
+The Orange County pair is electrically floating from the LA/San Diego tree. The README claimed "one connected component" — that line was wrong. **Fixed in this pass:** `data/nodes.json` now has a 10th tie, `flow-oc-02-la-07` (Fountain Valley–Harbor 69 kV, 45 MVA), labeled `(modeled)` in the UI and README. The graph is now one 11-node component (a tree). The remaining prerequisite for a true **cascade** — rather than a de-energization — is one loop tie; that is still a separate, explicitly modeled step.
 
 This matters because a cascade demo on a **tree** is not a cascade — removing an edge simply de-energizes a subtree. To show rerouting and overload propagation we need at least one **loop** (one extra tie). Any added tie must be tagged `modeled` in the data and the UI.
 
@@ -57,7 +54,7 @@ Three corridors cross 100 % **without inventing a single number**. That is the c
 
 | Capability | Where it lives | Maturity vs. enterprise | Notes |
 |---|---|---|---|
-| 2D command-center map, 100-mile ring, 11 load centers, 9 flows | `components/shell/MapView.tsx`, `MapCanvas.tsx`, `data/nodes.json` | Good demo, below GIS-grade | Leaflet + CARTO raster; real EIA-860 plants, OSM transmission/substations in `public/layers` |
+| 2D command-center map, 100-mile ring, 11 load centers, 10 flows | `components/shell/MapView.tsx`, `MapCanvas.tsx`, `data/nodes.json` | Good demo, below GIS-grade | Leaflet + CARTO raster; real EIA-860 plants, OSM transmission/substations in `public/layers` |
 | Composite energy risk score (0–100) | `lib/risk.ts` | Screening only | 40 % fossil, 25 % CI, 20 % motor inefficiency, 15 % age; +8 heatwave |
 | Heatwave demand shock + theme | `lib/simulation.ts`, `Workspace.tsx`, `design/tokens.css` | Good | 1.35× utilization capped at 105 %, 1.45× draw, 1.25× CI |
 | Solar + VFD upgrade simulator, payback chart | `simulation.ts`, `UpgradeSimulatorTab.tsx` | Good | Per-asset sliders; bundle economics are screening estimates |
@@ -348,7 +345,7 @@ EAL = (L/100) × baselineFailureRate × consequence$   // $/yr, screening only
 | **Restoration** | Order load centers by criticality; estimate crew travel + switching time (assumption); ETR | Restoration sequence and ETR band |
 | **Cost** | Unserved MWh × VOLL + customer interruption | $ consequence, screening |
 
-**Prerequisite data fix:** add one **modeled** OC↔LA tie (Fountain Valley–Westminster 69 kV) and one **modeled** loop tie (West Basin/Harbor 69 kV, `la-06 ↔ la-07`). Tag both `modeled: true` with a note. Without the loop, the feature is "N-1 de-energization", not "cascade" — still useful, but label it correctly.
+**Prerequisite data fix:** the **modeled** OC↔LA tie is now in `data/nodes.json` (`flow-oc-02-la-07`, Fountain Valley–Harbor 69 kV, 45 MVA, labeled modeled). The graph is connected. A **loop** tie (for example West Basin/Harbor 69 kV, `la-06 ↔ la-07`) is still required for rerouting and overload propagation; without it the feature is "N-1 de-energization", not "cascade" — still useful, but label it correctly.
 
 **Demo trigger (real numbers from §0.2):**
 
@@ -363,7 +360,7 @@ EAL = (L/100) × baselineFailureRate × consequence$   // $/yr, screening only
 - `Grid chain` tab: a `Trip this corridor` button on each corridor row.
 - Map: tripped edge red/dashed, islanded subtree dimmed, bottleneck star on the overloaded parallel tie, restoration order numbered.
 - Drawer: a **cascade timeline** (`T+0`, `T+1`, `T+2`, `T+restore`) with the event, MW lost, customers, and the protection/crew assumption.
-- A `Run N-1 screen` button that runs all 9 edges and ranks the worst by unserved MW/customers.
+- A `Run N-1 screen` button that runs all 10 edges and ranks the worst by unserved MW/customers.
 
 **New module:** `lib/contingency.ts` (graph + reroute + cascade + restoration), pure and deterministic. Keep `lib/grid.ts` for diagnostics; do not mutate stored properties.
 

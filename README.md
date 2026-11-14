@@ -441,6 +441,16 @@ risk = 40 * fossilShare                                        // (100 - solar -
 // Display-only escalation — never mutate the stored properties.
 ```
 
+`energyRisk()` remains the legacy exposure score and is unchanged for `/api/simulate` and the evidence formulas. The UI uses **Risk Index v2** from `assessRisk()`:
+
+```ts
+L = energyRisk factors + overload penalty (0–10)
+C = criticality 1–5; default 3, `assumed = true` until a customer/CFI layer exists
+R = clamp(L × C / 3, 0, 100)
+```
+
+`C = 3` is neutral, so the baseline `R` reproduces the §4.4 scores exactly while the consequence dimension is unloaded. The drawer and telemetry tab show the `L`/`C`/`R` decomposition, factor bars, a deterministic regional rank/percentile, a confidence badge and — on the upgrade tab — risk points removed per $M of capex (motor-efficiency and overload effects only; solar carbon reduction is not scored yet). `rankRisks()` breaks ties by id. Every `C` is labelled **assumed** until `criticalityFor()` receives both population and critical-facility counts.
+
 ### 4.4 Expected values (use as G1 assertions)
 
 Every figure below is computed from the **unrounded** `nameplate_draw_mw × utilization_pct` in `data/nodes.json` — not from the 2-dp `Live MW` column. Rounding that column first drifts annual energy by ~20 MWh/yr, which is exactly enough for a judge's calculator to disagree with the screen. `npx tsc --noEmit` is clean and these were re-derived from the file after the §3.1 migration:

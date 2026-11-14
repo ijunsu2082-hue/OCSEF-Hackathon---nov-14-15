@@ -4,8 +4,18 @@
 
 Status: research / brainstorm, 2026-11-14. No application code changed.
 Part 1: [`docs/COMPETITIVE-TEARDOWN.md`](./COMPETITIVE-TEARDOWN.md).
+Part 3: [`docs/PLATFORM-REFERENCE.md`](./PLATFORM-REFERENCE.md) — named modules/screens, data inputs, standards, deployment, public pricing evidence and limitations for each platform.
 
 ---
+
+## 3.5 Implementation status (2026-11-14)
+
+| Item | Status | Where |
+|---|---|---|
+| Risk Index v2 (`L × C`, waterfall, percentile, risk-per-$) | **Implemented** | `lib/risk.ts`, `lib/criticality.ts`, `TelemetryTab`, `FacilityRail`, `AnalyzerDrawer`, `UpgradeSimulatorTab` |
+| Two-component topology | **Fixed** | `data/nodes.json` (`flow-oc-02-la-07`, modeled), README §4.1 |
+| C assumed default | **Implemented** | `lib/criticality.ts` returns `C = 3`, `assumed = true` until a customer/CFI layer exists |
+| PSPS / N-1 / queue / portfolio / situation report | Backlog | See §7 |
 
 ## 4. TL;DR — the ten things we are actually missing
 
