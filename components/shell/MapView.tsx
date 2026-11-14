@@ -613,4 +613,52 @@ export default function MapView({
       {view3d ? (
         <div className="pillar-layer">
           {nodes.map((f) => {
-            const p
+            const point = points[f.properties.id];
+            if (!point) return null;
+            const sim = sims[f.properties.id];
+            const risk = risks[f.properties.id];
+            const height = Math.round(34 + sim.effective_draw_mw * 5.5);
+            const selected = f.properties.id === selectedId;
+            const pillarStyle = {
+              left: point.x,
+              top: point.y,
+              height,
+              "--h": `${height}px`,
+              "--c": risk.color,
+            } as CSSProperties;
+
+            return (
+              <Fragment key={f.properties.id}>
+                <span
+                  className="pillar-ground"
+                  aria-hidden
+                  style={
+                    {
+                      left: point.x,
+                      top: point.y,
+                      width: 34 + sim.effective_draw_mw * 2,
+                      height: 34 + sim.effective_draw_mw * 2,
+                      "--c": risk.color,
+                    } as CSSProperties
+                  }
+                />
+                <div
+                  className={`pillar${selected ? " is-selected" : ""}`}
+                  style={pillarStyle}
+                  aria-hidden
+                >
+                  <span className="pillar-stem" />
+                  <span className="pillar-body" />
+                  <span className="pillar-chip">
+                    <b>{sim.effective_draw_mw.toFixed(1)} MW</b>
+                    <span>{shortName(f.properties.name)}</span>
+                  </span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
