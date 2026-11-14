@@ -152,7 +152,7 @@ function observedState(feed: Feed, loaded: LoadedSnapshot, now: Date, attempted_
   return {
     attempted_at, status, observation_at: observation.timestamp,
     observation_time_basis: observation.basis,
-    source_age_seconds: observation.basis === "utc" && Number.isFinite(age) ? Math.max(0, age) : null,
+    source_age_seconds: observation.basis === "utc" && Number.isFinite(age) && age >= 0 ? age : null,
     ...(status === "unknown" ? { issue: "Observation age cannot be established safely." } : {}),
     snapshot: loaded.snapshot,
   };
@@ -190,6 +190,8 @@ export async function runLocation(
 ): Promise<LocationReport> {
   const id = locationId(query);
   const previous = pinned ?? await readReport(id);
+  const legacyReplay = !!pinned && Object.values(pinned.feeds).every((state) =>
+    state.observation_at === undefined && state.observation_time_basis === undefined && state.source_age_seconds === undefined);
   const feeds = feedsFor(query);
   const entries = await Promise.all(feeds.map(async (feed): Promise<[string, FeedState, LoadedSnapshot | null]> => {
     const source = feed.source.id;
@@ -213,6 +215,7 @@ export async function runLocation(
     if (!state.snapshot) return [source, state, null];
     try {
       const loaded = await replaySnapshot(state.snapshot);
+      if (legacyReplay) return [source, state, loaded];
       const measured = observedState(feed, loaded, now, state.attempted_at);
       return [source, state.status === "fallback" ? { ...measured, status: "fallback", issue: state.issue } : measured, loaded];
     } catch {
@@ -235,8 +238,10 @@ export async function runLocation(
   const measurements: unknown[] = [];
   for (const [source, state, loaded] of entries) {
     const feed = feeds.find((item) => item.source.id === source)!;
-    const aged = state.status === "stale";
-    if (state.status !== "fresh") unresolved.push({
+    const legacyAged = legacyReplay && loaded && now.getTime() - Date.parse(loaded.snapshot.retrieved_at) >
+      feed.source.freshness.max_age_days * 86400000;
+    const aged = state.status === "stale" || legacyAged;
+    if (state.status !== "fresh" || aged) unresolved.push({
       subject, predicate: source, reason: loaded ? "stale" : "no_source",
       detail: state.issue ?? (aged ? "Latest observation exceeds source freshness window" :
         state.status === "unknown" ? "Latest observation age is unknown" : "Source unavailable"),
@@ -290,8 +295,9 @@ export async function runLocation(
   if (errors.length) throw new Error(errors.map(({ code, detail }) => `${code}: ${detail}`).join("\n"));
   const state_hash = digest({
     measurements,
-    coverage: Object.entries(states).map(([source, state]) => [source, state.status,
-      state.observation_at ?? null, state.source_age_seconds ?? null, state.issue ?? null]),
+    coverage: Object.entries(states).map(([source, state]) => legacyReplay
+      ? [source, state.status, state.issue ?? null]
+      : [source, state.status, state.observation_at ?? null, state.issue ?? null]),
     gaps: unresolved.map(({ predicate, reason }) => [predicate, reason]),
   });
   const report = { query, state_hash, feeds: states, evidence };

@@ -7,6 +7,7 @@ import { locationQuery, runLocation, verifyLocation } from "./pipeline";
 import { backupReport, restoreReport } from "./backup";
 import { reconcile, type Observation } from "./reconcile";
 import { backfillWeather } from "./weather-history";
+import { feedsFor } from "./sources";
 
 test("location ETL captures, throttles, replays and falls back with cited values", async (t) => {
   process.env.ETL_STATE_NAMESPACE = `test-${randomUUID()}`;
@@ -100,9 +101,13 @@ test("location ETL captures, throttles, replays and falls back with cited values
   observationTimestamp = "2026-11-13T18:00:00Z";
   const stale = await runLocation(query, true, new Date(start.getTime() + 20 * 60000));
   assert.equal(stale.feeds["nws-observation"].status, "stale");
-  assert.equal(stale.feeds["nws-observation"].observation_at, observationTimestamp);
+  assert.equal(stale.feeds["nws-observation"].observation_at, new Date(observationTimestamp).toISOString());
   assert.ok((stale.feeds["nws-observation"].source_age_seconds ?? 0) > 86400);
   assert.ok(stale.evidence.unresolved.some((item) => item.predicate === "nws-observation"));
+  observationTimestamp = "2026-11-15T19:00:00Z";
+  const future = await runLocation(query, true, new Date(start.getTime() + 31 * 60000));
+  assert.equal(future.feeds["nws-observation"].status, "unknown");
+  assert.equal(future.feeds["nws-observation"].source_age_seconds, null);
 });
 
 test("provider disagreement requires compatible scope and explicit authority", () => {
@@ -118,6 +123,15 @@ test("provider disagreement requires compatible scope and explicit authority", (
   assert.equal(reconcile(left, { ...right, publisher: "A" }).independent, false);
 });
 
+test("EIA invalid periods and local reporting times cannot qualify as fresh UTC data", () => {
+  const feed = feedsFor(locationQuery(34, -118, 100, "CISO")).find((item) => item.source.id === "eia-hourly-demand")!;
+  const bad = { response: { data: [{ period: "2026-11-14T99", respondent: "CISO", value: 2,
+    "value-units": "megawatthours", type: "D" }] } };
+  assert.deepEqual(feed.extract(bad), []);
+  const futureLocal = { response: { data: [{ period: "2099-11-14T18", respondent: "CISO", value: 2,
+    "value-units": "megawatthours", type: "D" }] } };
+  assert.equal(feed.observationTime?.(futureLocal)?.basis, "local-unknown");
+});
 test("weather backfill rejects gaps and preserves modeled data and locators", async (t) => {
   process.env.ETL_STATE_NAMESPACE = `test-${randomUUID()}`;
   t.after(() => { delete process.env.ETL_STATE_NAMESPACE; });

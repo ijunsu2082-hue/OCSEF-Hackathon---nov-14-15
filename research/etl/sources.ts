@@ -44,6 +44,15 @@ function validEiaPeriod(value: unknown): value is string {
   const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
   return hour >= 0 && hour <= 23 && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value.slice(0, 10);
 }
+function validNwsTimestamp(value: unknown): value is string {
+  if (typeof value !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) ||
+      !Number.isFinite(Date.parse(value))) return false;
+  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  const [hour, minute, second] = value.slice(11, 19).split(":").map(Number);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value.slice(0, 10) &&
+    hour <= 23 && minute <= 59 && second <= 59;
+}
 
 function nwsLink(data: unknown, pointer: string, path: RegExp): URL {
   const value = at(data, pointer);
@@ -193,8 +202,7 @@ export function feedsFor(query: LocationQuery): Feed[] {
     },
     observationTime(data) {
       const timestamp = at(data, "/properties/timestamp");
-      if (typeof timestamp !== "string" || !/(?:Z|[+-]\d{2}:\d{2})$/.test(timestamp) ||
-          !Number.isFinite(Date.parse(timestamp))) return null;
+      if (!validNwsTimestamp(timestamp)) return null;
       return { timestamp: new Date(timestamp).toISOString(), basis: "utc" };
     },
   };
