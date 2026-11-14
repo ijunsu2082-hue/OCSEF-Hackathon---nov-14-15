@@ -14,4 +14,12 @@ build-out
 build-out-*
 build-dev
 buildtest
+# One-off verification builds (NEXT_DIST_DIR) must never enter git.
+build-verify
+verify-out
+prcheck-out
+build-ui
+# Agent scratch: parallel-session worktrees and handoff notes
+.worktrees
+handoff
 *.log

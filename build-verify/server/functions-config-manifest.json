@@ -1,8 +1,0 @@
-{
-  "version": 1,
-  "functions": {
-    "/api/send-audit": {},
-    "/api/generate-brief": {},
-    "/api/simulate": {}
-  }
-}
