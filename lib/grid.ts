@@ -313,14 +313,18 @@ function phaseTransmission(
   const lossMWh = (sim.annual_mwh * lossPct) / 100;
   const kV = corridor ? voltageClass(corridor.label) : "modeled tie";
 
-  const releasedDLR = (mva * UNIT.dlr_release_pct) / 1;
-  const releasedReconductor = (mva * UNIT.reconductor_release_pct) / 1;
+  const releasedDLR = mva * UNIT.dlr_release_pct;
+  const releasedReconductor = mva * UNIT.reconductor_release_pct;
 
   const diagnostics: Diagnostic[] = [
     {
       id: "thermal",
       label: "Thermal loading & sag",
-      detail: `${num(loading, 1)}% of the ${num(capacity, 0)} MVA rating at 105 °F (rating derated ${Math.round((1 - HEATWAVE_LINE_DERATE) * 100)}%); ${num(throughput, 1)} MW is riding on the ${corridor?.label ?? "serving tie"}.`,
+      detail: `${num(loading, 1)}% of the ${num(capacity, 0)} MVA rating${
+        sim.heatwave_active
+          ? ` at 105 °F (rating derated ${Math.round((1 - HEATWAVE_LINE_DERATE) * 100)}%)`
+          : " at ambient"
+      }; ${num(throughput, 1)} MW is riding on the ${corridor?.label ?? "serving tie"}.`,
       severity: band(loading, 55, 70, 85),
     },
     {
