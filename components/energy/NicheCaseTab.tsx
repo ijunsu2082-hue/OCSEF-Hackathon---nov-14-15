@@ -20,7 +20,7 @@ interface RatingPoint {
 }
 
 /** Daily summary of the hourly `dlr_conservative_vs_static` column. */
-export function dailyRatingSeries(csv: string): RatingPoint[] {
+function dailyRatingSeries(csv: string): RatingPoint[] {
   const rows = csv.split(/\r?\n/);
   if (rows.length < 2) return [];
   const header = rows[0].split(",");
@@ -140,7 +140,6 @@ function RatingChart({ url }: { url: string }) {
               fontSize: 10,
               color: "var(--text)",
             }}
-            labelFormatter={(label) => String(label)}
             formatter={(value) => `${Number(value).toFixed(2)}×`}
           />
           <Line
@@ -215,7 +214,9 @@ export default function NicheCaseTab({ nicheCase }: Props) {
           {nicheCase.stats.map((stat) => (
             <li className="niche-stat" key={stat.label}>
               <div className="niche-stat-head">
-                <b>{stat.value}</b>
+                {/* Most research cards carry the number inside the label; only
+                    render a headline value when one exists. */}
+                {stat.value ? <b>{stat.value}</b> : null}
                 <span className={`tag tag-${stat.kind}`}>{stat.kind}</span>
               </div>
               <span className="niche-stat-label">{stat.label}</span>

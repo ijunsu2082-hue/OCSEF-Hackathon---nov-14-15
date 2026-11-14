@@ -11,66 +11,35 @@ import type { NicheCase } from "./niche";
 
 // ---- Shapes -----------------------------------------------------------------
 
-export type PlantSource =
-  | "natural_gas"
-  | "solar"
-  | "battery"
-  | "wind"
-  | "hydro"
-  | "biogas"
-  | "other_gas"
-  | "waste_heat"
-  | "oil"
-  | string;
-
-export interface PlantProperties {
-  plant_code: number;
-  plant_name: string;
-  utility_name: string;
-  distance_mi: number;
-  nameplate_mw: number;
-  mw_by_source: Record<string, number>;
-  oldest_year: number | null;
-  newest_year: number | null;
-  planned_retirement_mw: number;
-  generator_count: number;
-  primary_source: PlantSource;
-  technologies: string[];
-  capacity_weighted_age_years: number | null;
-}
-
-export interface TransmissionProperties {
-  osm_id: number;
-  voltage_kv: number | null;
-  operator: string | null;
-  name: string | null;
-  cables?: string | null;
-  circuits?: string | null;
-}
-
-export interface SubstationProperties {
-  osm_id: string;
-  name: string | null;
-  operator: string | null;
-  voltage_kv: number | null;
-  substation: string | null;
-}
-
-interface Collection<P> {
-  type: "FeatureCollection";
-  features: { type: "Feature"; geometry: { type: string; coordinates: unknown }; properties: P }[];
-}
-
-export type PlantFeature = Collection<PlantProperties>["features"][number] & {
+export interface PlantFeature {
   geometry: { type: "Point"; coordinates: [number, number] };
-};
-export type TransmissionFeature =
-  Collection<TransmissionProperties>["features"][number] & {
-    geometry: { type: "LineString"; coordinates: [number, number][] };
+  properties: {
+    plant_name: string;
+    utility_name: string;
+    nameplate_mw: number;
+    mw_by_source: Record<string, number>;
+    oldest_year: number | null;
+    newest_year: number | null;
+    planned_retirement_mw: number;
+    primary_source: string;
+    technologies: string[];
+    capacity_weighted_age_years: number | null;
   };
-export type SubstationFeature = Collection<SubstationProperties>["features"][number] & {
+}
+
+export interface TransmissionFeature {
+  geometry: { type: "LineString"; coordinates: [number, number][] };
+  properties: { voltage_kv: number | null; operator: string | null; name: string | null };
+}
+
+export interface SubstationFeature {
   geometry: { type: "Point"; coordinates: [number, number] };
-};
+  properties: { name: string | null; operator: string | null; voltage_kv: number | null };
+}
+
+interface FeatureCollection<T> {
+  features: T[];
+}
 
 // ---- Layer toggles ----------------------------------------------------------
 
@@ -104,7 +73,7 @@ export const LAYER_OPTIONS: { id: keyof LayerVisibility; label: string }[] = [
 /**
  * `--src-*` tokens live in design/tokens.css. They are deliberately outside the
  * teal → amber → vermilion → crimson risk ramp so a fuel colour never reads as
- * a risk level.
+ * a risk level. Fuels without a token (biogas, oil, waste heat) share `other`.
  */
 const SOURCE_CLASSES: Record<string, string> = {
   natural_gas: "src-gas",
@@ -114,10 +83,6 @@ const SOURCE_CLASSES: Record<string, string> = {
   wind: "src-wind",
   hydro: "src-hydro",
 };
-
-export function sourceClass(source: PlantSource): string {
-  return SOURCE_CLASSES[source] ?? "src-other";
-}
 
 const SOURCE_LABELS: Record<string, string> = {
   natural_gas: "natural gas",
@@ -131,7 +96,11 @@ const SOURCE_LABELS: Record<string, string> = {
   oil: "oil",
 };
 
-export function sourceLabel(source: PlantSource): string {
+export function sourceClass(source: string): string {
+  return SOURCE_CLASSES[source] ?? "src-other";
+}
+
+export function sourceLabel(source: string): string {
   return SOURCE_LABELS[source] ?? "other";
 }
 
@@ -158,7 +127,7 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// ---- Loaders (cached; every layer is fetched at most once) ------------------
+// ---- Loaders (each file is fetched at most once per session) ----------------
 
 const cache = new Map<string, Promise<unknown>>();
 
@@ -176,36 +145,18 @@ function loadJson<T>(url: string): Promise<T> {
   return pending;
 }
 
-export function loadPlants(): Promise<Collection<PlantProperties>> {
-  return loadJson<Collection<PlantProperties>>("/layers/plants.geojson");
+export function loadPlants(): Promise<FeatureCollection<PlantFeature>> {
+  return loadJson("/layers/plants.geojson");
 }
 
-export function loadTransmission(): Promise<Collection<TransmissionProperties>> {
-  return loadJson<Collection<TransmissionProperties>>("/layers/transmission.geojson");
+export function loadTransmission(): Promise<FeatureCollection<TransmissionFeature>> {
+  return loadJson("/layers/transmission.geojson");
 }
 
-export function loadSubstations(): Promise<Collection<SubstationProperties>> {
-  return loadJson<Collection<SubstationProperties>>("/layers/substations.geojson");
+export function loadSubstations(): Promise<FeatureCollection<SubstationFeature>> {
+  return loadJson("/layers/substations.geojson");
 }
 
 export function loadNicheCases(): Promise<NicheCase[]> {
-  return loadJson<NicheCase[]>("/layers/niche_cases.json");
-}
-
-/** Headline totals for the intro beat, recomputed from the file — never quoted from memory. */
-export function plantTotals(features: PlantFeature[]): {
-  plants: number;
-  mw: number;
-  by_source: Record<string, number>;
-} {
-  const bySource: Record<string, number> = {};
-  let mw = 0;
-  for (const feature of features) {
-    const props = feature.properties;
-    if (!Number.isFinite(props.nameplate_mw)) continue;
-    mw += props.nameplate_mw;
-    const key = sourceClass(props.primary_source);
-    bySource[key] = (bySource[key] ?? 0) + props.nameplate_mw;
-  }
-  return { plants: features.length, mw, by_source: bySource };
+  return loadJson("/layers/niche_cases.json");
 }

@@ -45,10 +45,3 @@ export interface NicheCase {
   chart?: { kind: "line_rating"; data_url: string };
 }
 
-export const TEAM_BULLET_LABELS: Record<TeamBullet, string> = {
-  output_draw: "Output / draw",
-  capacity: "Capacity",
-  energy_cycle: "Energy cycle",
-  infra_age: "Infrastructure age",
-  upgrade_potential: "Upgrade potential",
-};

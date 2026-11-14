@@ -12,8 +12,8 @@ const TABS = [
   { id: "grid", label: "Grid chain" },
   { id: "upgrade", label: "Upgrade plan" },
   { id: "action", label: "Provider memo" },
-  { id: "niche", label: "Niche case" },
   { id: "process", label: "Process" },
+  { id: "evidence", label: "Evidence" },
 ] as const;
 
 export type DrawerTab = (typeof TABS)[number]["id"];
@@ -22,7 +22,9 @@ interface Props {
   properties: FacilityProperties;
   risk: RiskEntry;
   sim: SimResult;
+  /** Non-null puts the drawer in niche-case mode: no tabs, a back link instead. */
   nicheCase: NicheCase | null;
+  onCloseNiche: () => void;
   tab: DrawerTab;
   onTab: (tab: DrawerTab) => void;
   children: ReactNode;
@@ -33,20 +35,24 @@ export default function AnalyzerDrawer({
   risk,
   sim,
   nicheCase,
+  onCloseNiche,
   tab,
   onTab,
   children,
 }: Props) {
-  const nicheMode = tab === "niche" && nicheCase !== null;
-
   return (
     <aside className="drawer" aria-label="Facility analysis">
       <header className="drawer-head">
-        {nicheMode && nicheCase ? (
+        {nicheCase ? (
           <>
             <div className="drawer-kicker">
               <span className="drawer-id">{nicheCase.id}</span>
-              <span className="pill pill-accent">{nicheCase.category}</span>
+              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <span className="pill pill-accent">{nicheCase.category}</span>
+                <button type="button" className="drawer-back" onClick={onCloseNiche}>
+                  ← Back
+                </button>
+              </span>
             </div>
             <h2>{nicheCase.title}</h2>
             <p className="drawer-sub">
@@ -88,19 +94,21 @@ export default function AnalyzerDrawer({
         )}
       </header>
 
-      <nav className="tabs" aria-label="Analysis views">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            data-active={item.id === tab}
-            aria-current={item.id === tab ? "page" : undefined}
-            onClick={() => onTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      {nicheCase ? null : (
+        <nav className="tabs" aria-label="Analysis views">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              data-active={item.id === tab}
+              aria-current={item.id === tab ? "page" : undefined}
+              onClick={() => onTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       <div className="drawer-body">{children}</div>
     </aside>

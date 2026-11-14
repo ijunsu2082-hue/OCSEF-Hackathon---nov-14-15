@@ -17,6 +17,7 @@ import {
   type SubstationFeature,
   type TransmissionFeature,
 } from "@/lib/gridLayers";
+import { basemapById, type BasemapId } from "@/lib/basemaps";
 import type { CorridorLoading } from "@/lib/grid";
 import type { NicheCase } from "@/lib/niche";
 import type { RiskEntry } from "@/lib/risk";
@@ -40,6 +41,10 @@ interface MapViewProps {
   onSelect: (id: string) => void;
   onSelectNiche: (id: string) => void;
   onMapReady?: (map: L.Map) => void;
+  basemap: BasemapId;
+  scanMode: boolean;
+  scan: { lat: number; lon: number; radius_mi: number } | null;
+  onScanPoint: (lat: number, lon: number) => void;
 }
 
 export function shortName(name: string): string {
@@ -72,6 +77,10 @@ export default function MapView({
   onSelect,
   onSelectNiche,
   onMapReady,
+  basemap,
+  scanMode,
+  scan,
+  onScanPoint,
 }: MapViewProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -82,8 +91,12 @@ export default function MapView({
   const substationGroupRef = useRef<L.LayerGroup | null>(null);
   const plantGroupRef = useRef<L.LayerGroup | null>(null);
   const nicheGroupRef = useRef<L.LayerGroup | null>(null);
-  const darkLayerRef = useRef<L.TileLayer | null>(null);
-  const satLayerRef = useRef<L.TileLayer | null>(null);
+  const transmissionRendererRef = useRef<L.Canvas | null>(null);
+  const substationRendererRef = useRef<L.Canvas | null>(null);
+  const basemapLayersRef = useRef<Map<BasemapId, L.TileLayer>>(new Map());
+  const scanModeRef = useRef(scanMode);
+  const onScanPointRef = useRef(onScanPoint);
+  const scanGroupRef = useRef<L.LayerGroup | null>(null);
   const syncRef = useRef<() => void>(() => undefined);
   const markerElsRef = useRef<{ id: string; el: HTMLElement }[]>([]);
   const nodesRef = useRef(nodes);
@@ -105,6 +118,8 @@ export default function MapView({
   onSelectRef.current = onSelect;
   onSelectNicheRef.current = onSelectNiche;
   onReadyRef.current = onMapReady;
+  scanModeRef.current = scanMode;
+  onScanPointRef.current = onScanPoint;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -127,13 +142,7 @@ export default function MapView({
       { maxZoom: 19, className: "dark-tile" },
     ).addTo(map);
 
-    const satelliteTiles = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19, className: "sat-tile" },
-    );
-
-    darkLayerRef.current = darkTiles;
-    satLayerRef.current = satelliteTiles;
+    basemapLayersRef.current.set("dark", darkTiles);
 
     map.fitBounds(bounds as L.LatLngBoundsExpression, {
       padding: [46, 46],
@@ -170,6 +179,12 @@ export default function MapView({
     // Selection is resolved against rendered marker positions so it survives
     // the CSS 3D tilt, where Leaflet's own coordinate math no longer matches.
     map.on("click", (event: L.LeafletMouseEvent) => {
+      // In scan mode a click is a query, not a selection: hand the coordinate
+      // back and let the panel answer what sits inside that circle.
+      if (scanModeRef.current) {
+        onScanPointRef.current(event.latlng.lat, event.latlng.lng);
+        return;
+      }
       const original = event.originalEvent as MouseEvent;
       if (typeof original.clientX !== "number") return;
       const cx = original.clientX;
@@ -202,6 +217,8 @@ export default function MapView({
       if (bestId) onSelectRef.current(bestId);
     });
 
+    scanGroupRef.current = L.layerGroup().addTo(map);
+
     sync();
 
     mapRef.current = map;
@@ -218,8 +235,10 @@ export default function MapView({
       substationGroupRef.current = null;
       plantGroupRef.current = null;
       nicheGroupRef.current = null;
-      darkLayerRef.current = null;
-      satLayerRef.current = null;
+      transmissionRendererRef.current = null;
+      substationRendererRef.current = null;
+      scanGroupRef.current = null;
+      basemapLayersRef.current.clear();
     };
   }, [bounds]);
 
@@ -230,7 +249,7 @@ export default function MapView({
     let alive = true;
     loadTransmission()
       .then((data) => {
-        if (alive) setTransmission(data.features as TransmissionFeature[]);
+        if (alive) setTransmission(data.features);
       })
       .catch(() => {
         if (alive) setTransmission([]);
@@ -245,7 +264,7 @@ export default function MapView({
     let alive = true;
     loadSubstations()
       .then((data) => {
-        if (alive) setSubstations(data.features as SubstationFeature[]);
+        if (alive) setSubstations(data.features);
       })
       .catch(() => {
         if (alive) setSubstations([]);
@@ -260,7 +279,7 @@ export default function MapView({
     let alive = true;
     loadPlants()
       .then((data) => {
-        if (alive) setPlants(data.features as PlantFeature[]);
+        if (alive) setPlants(data.features);
       })
       .catch(() => {
         if (alive) setPlants([]);
@@ -278,9 +297,13 @@ export default function MapView({
     group.clearLayers();
     if (!layers.transmission || !transmission) return;
 
-    const renderer = L.canvas({ pane: "gs-transmission", padding: 0.5 });
+    const renderer =
+      transmissionRendererRef.current ??
+      (transmissionRendererRef.current = L.canvas({
+        pane: "gs-transmission",
+        padding: 0.5,
+      }));
     for (const feature of transmission) {
-      if (feature.geometry?.type !== "LineString") continue;
       const latlngs = feature.geometry.coordinates.map(
         ([lon, lat]) => [lat, lon] as [number, number],
       );
@@ -304,7 +327,12 @@ export default function MapView({
     group.clearLayers();
     if (!layers.substations || !substations) return;
 
-    const renderer = L.canvas({ pane: "gs-substation", padding: 0.5 });
+    const renderer =
+      substationRendererRef.current ??
+      (substationRendererRef.current = L.canvas({
+        pane: "gs-substation",
+        padding: 0.5,
+      }));
     for (const feature of substations) {
       const [lon, lat] = feature.geometry.coordinates;
       const props = feature.properties;
@@ -432,7 +460,6 @@ export default function MapView({
         color: flowColor,
         weight: 1 + flow.mva / 90,
         opacity: 0.5,
-        dashArray: "6 8",
         className: `flow-line${loadClass}`,
         interactive: true,
       })
@@ -506,20 +533,33 @@ export default function MapView({
     }
   }, [layers.nicheCases, nicheCases, selectedNicheId]);
 
+  // Basemap selection swaps a single tile layer; the rest stay detached so a
+  // switch never leaks a second request stream.
   useEffect(() => {
     const map = mapRef.current;
-    const dark = darkLayerRef.current;
-    const satellite = satLayerRef.current;
-    if (!map || !dark || !satellite) return;
-
-    if (view3d) {
-      if (map.hasLayer(dark)) map.removeLayer(dark);
-      if (!map.hasLayer(satellite)) satellite.addTo(map);
-    } else {
-      if (map.hasLayer(satellite)) map.removeLayer(satellite);
-      if (!map.hasLayer(dark)) dark.addTo(map);
+    if (!map) return;
+    for (const [id, layer] of basemapLayersRef.current) {
+      if (id !== basemap && map.hasLayer(layer)) map.removeLayer(layer);
     }
+    let target = basemapLayersRef.current.get(basemap);
+    if (!target) {
+      const definition = basemapById(basemap);
+      target = L.tileLayer(definition.url, {
+        maxZoom: 19,
+        maxNativeZoom: definition.maxNativeZoom,
+        className: "base-tile",
+      });
+      basemapLayersRef.current.set(basemap, target);
+    }
+    if (!map.hasLayer(target)) {
+      target.addTo(map);
+      target.bringToBack();
+    }
+  }, [basemap]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
     const timer = window.setTimeout(() => {
       map.invalidateSize();
       syncRef.current();
@@ -540,59 +580,37 @@ export default function MapView({
     map.flyTo([lat, lon], Math.max(map.getZoom(), 10), { duration: 0.8 });
   }, [selectedId, nodes]);
 
+  useEffect(() => {
+    const group = scanGroupRef.current;
+    if (!group) return;
+    group.clearLayers();
+    if (!scan) return;
+    const center: [number, number] = [scan.lat, scan.lon];
+    L.circle(center, {
+      radius: scan.radius_mi * 1609.344,
+      color: "#f5c66b",
+      weight: 1.6,
+      opacity: 0.95,
+      fillColor: "#f5c66b",
+      fillOpacity: 0.09,
+      dashArray: "5 5",
+      interactive: false,
+    }).addTo(group);
+    L.circleMarker(center, {
+      radius: 4,
+      color: "#0b1015",
+      weight: 2,
+      fillColor: "#f5c66b",
+      fillOpacity: 1,
+      interactive: false,
+    }).addTo(group);
+  }, [scan]);
+
   return (
-    <div className="map-root">
+    <div className={`map-root${scanMode ? " is-scanning" : ""}`}>
       <div ref={hostRef} className="leaflet-host" />
 
       {view3d ? (
         <div className="pillar-layer">
           {nodes.map((f) => {
-            const point = points[f.properties.id];
-            if (!point) return null;
-            const sim = sims[f.properties.id];
-            const risk = risks[f.properties.id];
-            const height = Math.round(34 + sim.effective_draw_mw * 5.5);
-            const selected = f.properties.id === selectedId;
-            const pillarStyle = {
-              left: point.x,
-              top: point.y,
-              height,
-              "--h": `${height}px`,
-              "--c": risk.color,
-            } as CSSProperties;
-
-            return (
-              <Fragment key={f.properties.id}>
-                <span
-                  className="pillar-ground"
-                  aria-hidden
-                  style={
-                    {
-                      left: point.x,
-                      top: point.y,
-                      width: 34 + sim.effective_draw_mw * 2,
-                      height: 34 + sim.effective_draw_mw * 2,
-                      "--c": risk.color,
-                    } as CSSProperties
-                  }
-                />
-                <div
-                  className={`pillar${selected ? " is-selected" : ""}`}
-                  style={pillarStyle}
-                  aria-hidden
-                >
-                  <span className="pillar-stem" />
-                  <span className="pillar-body" />
-                  <span className="pillar-chip">
-                    <b>{sim.effective_draw_mw.toFixed(1)} MW</b>
-                    <span>{shortName(f.properties.name)}</span>
-                  </span>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+            const p
