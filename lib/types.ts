@@ -2,13 +2,18 @@
  * Shared domain contract — frozen. Owned by the G0 contract (see README §3).
  * Every layer imports from here; nobody redefines these shapes.
  *
- * ENERGY-ONLY MODEL: an asset is an electrical load center. There is no water
- * throughput anywhere in this contract — capacity, output and efficiency are
- * all electrical.
+ * ENERGY-ONLY MODEL: every asset is an electrical load center. Capacity,
+ * output and efficiency are all electrical — nothing in this contract models
+ * a process throughput. Site names identify physical locations; the platform
+ * makes no claim about what those sites do with the electricity.
  */
 
 // ---- Domain -----------------------------------------------------------------
-export type FacilityType = "Process Load" | "Pumping Load" | "Reclamation Load" | "Desalination Load";
+export type FacilityType =
+  | "Continuous Process"
+  | "High-Duty Process"
+  | "Pumping Load"
+  | "Desalination Load";
 
 export interface SourceMix {
   natural_gas: number;
