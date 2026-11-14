@@ -223,6 +223,7 @@ export default function Workspace({
             selectedId={selected.properties.id}
             heatwave={heatwave}
             view3d={view3d}
+            onView3d={setView3d}
             nicheCases={nicheCases}
             selectedNicheId={selectedNiche?.id ?? null}
             onSelect={setSelectedId}

@@ -7,6 +7,7 @@ npx tsx research/etl/cli.ts collect --lat 34.0522 --lon -118.2437 --radius 100 -
 npx tsx research/etl/cli.ts verify <location-id> <revision>
 npx tsx research/etl/cli.ts replay <location-id> <revision>
 npx tsx research/etl/cli.ts coverage --strict
+npx tsx research/etl/cli.ts backfill weather 34.0522 -118.2437 2024-01-01 2024-01-03
 ```
 
 Collection prints the location ID and pinned revision to stderr and the report to stdout. The Next.js JSON endpoint accepts `?revision=<revision>`. Collection stores final source responses locally before parsing and records rejected captures separately. Sources use their configured refresh intervals. Failed attempts retain the previous capture if its checksum and parser replay succeed.
@@ -24,7 +25,7 @@ npx tsx research/etl/cli.ts restore <destination-file>
 npx tsx research/etl/cli.ts verify <location-id> <restored-revision>
 ```
 
-Restore verifies hashes and reconstructs the report before publishing a pinned revision in the target namespace. Claim IDs persist across namespaces. The full revision hash reflects restored capture paths. Run backup per published revision through the deployment scheduler.
+Restore verifies hashes and reconstructs the report before publishing a pinned revision in the target namespace. Claim IDs persist across namespaces. The full revision hash reflects restored capture paths. Set `ETL_BACKUP_DIRECTORY` on the scheduled FastAPI worker to back up published revisions to a separate mounted destination. Keep the destination and key available after loss of the ingestion host.
 
 ## Comparison
 

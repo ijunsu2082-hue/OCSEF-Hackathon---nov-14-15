@@ -277,6 +277,8 @@ export default function MapView({
         }),
       flyTo: (center, zoom, options) => map.flyTo(center, zoom, options),
       setView: (center, zoom, options) => map.setView(center, zoom, options),
+      setCamera: () => undefined,
+      resetNorth: () => undefined,
     });
 
     return () => {

@@ -184,6 +184,34 @@ export default function MapCanvas({
     );
   }, [bounds, center, map, nodes, selectedId, selectedCorridor]);
 
+  useEffect(() => {
+    if (!map) return;
+    if (!view3d) { map.setCamera(0, 0); return; }
+    const pitch = cameraPreset === "regional" ? 45 : cameraPreset === "facility" ? 55 : 50;
+    let bearing = 0;
+    if (cameraPreset === "corridor" && selectedCorridor && selectedCorridor.coordinates.length > 1) {
+      const first = selectedCorridor.coordinates[0];
+      const last = selectedCorridor.coordinates[selectedCorridor.coordinates.length - 1];
+      const [lon1, lat1] = first;
+      const [lon2, lat2] = last;
+      const toRad = Math.PI / 180;
+      const y = Math.sin((lon2 - lon1) * toRad) * Math.cos(lat2 * toRad);
+      const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) - Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lon2 - lon1) * toRad);
+      bearing = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+    }
+    map.setCamera(pitch, bearing);
+  }, [map, view3d, cameraPreset, selectedCorridor]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (scanMode) { setScanMode(false); setScanPoint(null); }
+      else if (selectedCorridor) { setSelectedCorridor(null); setCameraPreset("regional"); map?.fitBounds(bounds, { padding: [46, 46], animate: true }); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [scanMode, selectedCorridor, map, bounds]);
+
   const handleScanPoint = useCallback((lat: number, lon: number) => {
     setScanPoint({ lat, lon });
   }, []);
@@ -227,7 +255,7 @@ export default function MapCanvas({
       <div className="map-horizon" aria-hidden />
 
       <div className="map-topline">
-        <span className="map-mode">{view3d ? "Elevation · terrain tilt 50°" : "Flat · top-down"}</span>
+        <span className="map-mode">{view3d ? `Elevation · ${cameraPreset} · pitch ${cameraPreset === "regional" ? 45 : cameraPreset === "facility" ? 55 : 50}°` : `Flat · ${cameraPreset} · top-down`}</span>
         {heatwave ? <span className="map-mode">Heatwave · 105 °F</span> : null}
         {scanMode ? (
           <span className="map-mode is-scan">Scan mode · click to query</span>
@@ -240,6 +268,9 @@ export default function MapCanvas({
         </button>
         <button type="button" onClick={() => map?.zoomOut()} aria-label="Zoom out">
           −
+        </button>
+        <button type="button" onClick={() => map?.resetNorth()} aria-label="Reset north" title="Reset north">
+          ↑
         </button>
         <button
           type="button"
@@ -287,7 +318,7 @@ export default function MapCanvas({
             {preset}
           </button>
         ))}
-        {selectedCorridor ? <button type="button" onClick={() => { setSelectedCorridor(null); setCameraPreset("regional"); }}>Clear line</button> : null}
+        {selectedCorridor ? <button type="button" onClick={() => { setSelectedCorridor(null); setCameraPreset("regional"); map?.fitBounds(bounds, { padding: [46, 46], animate: true }); }}>Clear line</button> : null}
       </div>
 
       <LayerPicker

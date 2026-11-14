@@ -40,7 +40,7 @@ export async function atomicJson(path: string, value: unknown): Promise<void> {
   }
 }
 
-async function request(url: URL): Promise<{ bytes: Uint8Array; response: Response }> {
+export async function request(url: URL): Promise<{ bytes: Uint8Array; response: Response }> {
   const target = new URL(url);
   if (target.hostname === "api.eia.gov") {
     const key = process.env.EIA_API_KEY;
@@ -81,16 +81,7 @@ async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
     url = nwsObservationUrl(JSON.parse(Buffer.from(stations.bytes).toString("utf8")));
   }
   const { bytes, response } = await request(url);
-  const hash = createHash("sha256").update(bytes).digest("hex");
-  const cachePath = `${stateRoot()}/blobs/${hash}.json`;
-  await mkdir(dirname(cachePath), { recursive: true });
-  const temporary = `${cachePath}.${randomUUID()}.tmp`;
-  try {
-    await writeFile(temporary, bytes, { flag: "wx" });
-    await rename(temporary, cachePath);
-  } finally {
-    await rm(temporary, { force: true });
-  }
+  const { hash, cachePath } = await storeCapture(bytes);
   try {
     const loaded = buildSnapshot({
       sourceId: feed.source.id, url: url.href, retrievedAt: now.toISOString(),
@@ -107,6 +98,20 @@ async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
     });
     throw error;
   }
+}
+
+export async function storeCapture(bytes: Uint8Array) {
+  const hash = createHash("sha256").update(bytes).digest("hex");
+  const cachePath = `${stateRoot()}/blobs/${hash}.json`;
+  await mkdir(dirname(cachePath), { recursive: true });
+  const temporary = `${cachePath}.${randomUUID()}.tmp`;
+  try {
+    await writeFile(temporary, bytes, { flag: "wx" });
+    await rename(temporary, cachePath);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+  return { hash, cachePath };
 }
 
 interface FeedState {

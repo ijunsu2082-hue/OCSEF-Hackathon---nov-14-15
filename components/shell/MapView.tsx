@@ -133,6 +133,8 @@ function NativeMap(props: PropsWithFallback) {
       map.addLayer({ id: "gs-context-fill", type: "fill", source: "gs-context", paint: { "fill-color": "#38d6c4", "fill-opacity": 0.035 } });
       map.addLayer({ id: "gs-context-line", type: "line", source: "gs-context", paint: { "line-color": "#38d6c4", "line-width": 1, "line-opacity": 0.55, "line-dasharray": [2, 3] } });
       map.addLayer({ id: "gs-transmission-line", type: "line", source: "gs-transmission", layout: { visibility: props.layers.transmission ? "visible" : "none" }, paint: { "line-color": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], "#f5c66b", "#9aa8bb"], "line-opacity": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 1, 0.48], "line-width": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 5, ["interpolate", ["linear"], ["get", "voltage"], 0, 0.7, 138, 1.25, 230, 2, 500, 3]] } });
+      map.on("mouseenter", "gs-transmission-line", () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", "gs-transmission-line", () => { map.getCanvas().style.cursor = ""; });
       map.addLayer({ id: "gs-flow-lines", type: "line", source: "gs-flows", paint: { "line-color": props.heatwave ? "#ffb020" : "#38d6c4", "line-width": 1.5, "line-opacity": 0.65, "line-dasharray": [2, 2] } });
       map.addLayer({ id: "gs-facilities", type: "circle", source: "gs-facilities", layout: { visibility: props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["get", "size"], "circle-color": ["get", "color"], "circle-stroke-color": "#eef8ff", "circle-stroke-width": 1, "circle-opacity": 0.92, "circle-pitch-alignment": "map" } });
       map.addLayer({ id: "gs-facility-extrusions", type: "circle", source: "gs-facilities", layout: { visibility: props.view3d && props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["+", ["get", "size"], 3], "circle-color": ["get", "color"], "circle-opacity": 0.32, "circle-translate": [0, -18], "circle-pitch-alignment": "map" } });
@@ -145,7 +147,7 @@ function NativeMap(props: PropsWithFallback) {
       const current = sourcesRef.current;
       if (current) for (const [id, data] of Object.entries({ "gs-context": current.context, "gs-transmission": current.transmission, "gs-substations": current.substations, "gs-plants": current.plants, "gs-flows": current.flows, "gs-facilities": current.facilities, "gs-extrusions": current.extrusions, "gs-niches": current.niches, "gs-scan": current.scan })) setData(map, id, data);
       map.addSource("gs-terrain", { type: "raster-dem", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], tileSize: 256, encoding: "terrarium", maxzoom: 15 });
-      if (props.view3d) map.setTerrain({ source: "gs-terrain", exaggeration: 1.15 });
+      if (props.view3d) map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
       map.fitBounds([[props.bounds[0][1], props.bounds[0][0]], [props.bounds[1][1], props.bounds[1][0]]], { padding: 46, duration: 0 });
       const controller: MapController = {
         zoomIn: () => map.zoomIn(), zoomOut: () => map.zoomOut(),
@@ -162,6 +164,8 @@ function NativeMap(props: PropsWithFallback) {
         },
         flyTo: (center, zoom, options) => map.flyTo({ center: [center[1], center[0]], zoom, duration: options?.duration ? options.duration * 1000 : 800 }),
         setView: (center, zoom, options) => map.easeTo({ center: [center[1], center[0]], zoom, duration: options?.animate ? 700 : 0 }),
+        setCamera: (pitch, bearing) => map.easeTo({ pitch, bearing, duration: 450 }),
+        resetNorth: () => map.easeTo({ bearing: 0, pitch: map.getPitch(), duration: 350 }),
       };
       readyRef.current?.(controller);
     });
@@ -176,8 +180,6 @@ function NativeMap(props: PropsWithFallback) {
         props.onSelectCorridor({ id: String(hit.properties?.corridorId ?? ""), coordinates, voltage: Number(hit.properties?.voltage) || null });
       }
     });
-    map.on("mouseenter", "gs-transmission-line", () => { map.getCanvas().style.cursor = "pointer"; });
-    map.on("mouseleave", "gs-transmission-line", () => { map.getCanvas().style.cursor = ""; });
     map.on("error", (event) => { if (event.error?.message?.toLowerCase().includes("webgl")) props.onFallback(); });
     return () => { map.remove(); mapRef.current = null; };
   // Initial map construction only. Runtime changes flow through the effects below.
@@ -192,8 +194,7 @@ function NativeMap(props: PropsWithFallback) {
   }, [sources]);
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
-    map.setPitch(props.view3d ? 50 : 0); map.setBearing(props.view3d ? -10 : 0);
-    if (map.getSource("gs-terrain")) map.setTerrain(props.view3d ? { source: "gs-terrain", exaggeration: 1.15 } : null);
+    if (map.getSource("gs-terrain")) map.setTerrain(props.view3d ? { source: "gs-terrain", exaggeration: 1 } : null);
     for (const id of ["gs-facility-extrusions", "gs-facility-columns"]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", props.view3d && props.layers.loadCenters ? "visible" : "none");
   }, [props.view3d, props.layers.loadCenters]);
   useEffect(() => {

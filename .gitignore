@@ -14,6 +14,7 @@ next-env.d.ts
 build-out
 build-out-*
 build-dev
+build-*
 buildtest
 # One-off verification builds (NEXT_DIST_DIR) must never enter git.
 build-verify

@@ -3,10 +3,19 @@ import { atomicJson, locationQuery, readReport, reportRevision, runLocation, ver
 import { backupReport, restoreReport } from "./backup";
 import { reconcile } from "./reconcile";
 import { coverageInventory } from "./coverage";
+import { backfillWeather } from "./weather-history";
 
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";
+  if (command === "backfill") {
+    const [source, lat, lon, start, end] = args;
+    if (source !== "weather" || args.length !== 5 || !lat.trim() || !lon.trim()) {
+      throw new Error("Expected backfill weather <lat> <lon> <start-date> <end-date>");
+    }
+    console.log(JSON.stringify(await backfillWeather(Number(lat), Number(lon), start, end)));
+    return;
+  }
   if (command === "coverage") {
     if (args.length && (args.length !== 1 || args[0] !== "--strict")) throw new Error("Expected only --strict");
     const coverage = await coverageInventory();

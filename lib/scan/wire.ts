@@ -19,6 +19,7 @@ import type { ConductorSpec } from "../physics/network";
 import { conductorAmpacity } from "../physics/thermal";
 
 export const RATING_CSV_URL = "/layers/line_rating_2025_westminster_hs.csv";
+export const RATING_CALLBACK_CSV_URL = "/layers/line_rating_2024_westminster_hs.csv";
 export const RATING_SITE_LABEL = "Westminster HS";
 
 /** IEEE 738 light-wind assumption the fixed rating is based on, m/s. */
@@ -169,6 +170,16 @@ export function rateWeatherSample(voltageKv: number, sample: WeatherForRating): 
   return rateHour(row, conductorForKv(voltageKv));
 }
 
+export function conductorForVoltage(voltageKv: number): string {
+  return conductorForKv(voltageKv).label;
+}
+
+export function heatwaveWireSummary(voltageKv: number): { ratio: number; derate_pct: number } {
+  const screen = thermalScreen(voltageKv);
+  const ratio = screen.rating_mva_105f > 0 ? screen.dlr_rating_mva / screen.rating_mva_105f : 1;
+  return { ratio: round(ratio, 2), derate_pct: screen.derate_pct };
+}
+
 // Rating every hour is ~17k heat-balance solves; cache by conductor and archive
 // so a radius drag reuses the series instead of recomputing the year.
 let seriesKey: string | null = null;
@@ -183,10 +194,10 @@ function seriesFor(csv: string, conductor: ConductorSpec): WireHour[] {
 }
 
 /** The archive key for this clock hour, e.g. `2025-09-06T13:00`. */
-function csvHourKey(now = new Date()): string {
+function csvHourKey(now: Date, archiveYear: string): string {
   const shifted = new Date(now.getTime() - CSV_UTC_OFFSET_H * 3_600_000);
   const p = (n: number) => String(n).padStart(2, "0");
-  return `2025-${p(shifted.getUTCMonth() + 1)}-${p(shifted.getUTCDate())}T${p(
+  return `${archiveYear}-${p(shifted.getUTCMonth() + 1)}-${p(shifted.getUTCDate())}T${p(
     shifted.getUTCHours(),
   )}:00`;
 }
@@ -221,7 +232,8 @@ export function summarizeWire(
   const hours = seriesFor(csv, conductor);
   if (hours.length === 0) return null;
 
-  const key = csvHourKey();
+  const archiveYear = rows[0]?.time.slice(0, 4) ?? "2025";
+  const key = csvHourKey(new Date(), archiveYear);
   const archiveClock = key.slice(5);
   const applicable = hours.filter((hour) => hour.time.slice(5) <= archiveClock);
   const now =

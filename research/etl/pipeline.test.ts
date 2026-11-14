@@ -6,6 +6,7 @@ import { verifyEvidenceFiles } from "../verify-files";
 import { locationQuery, runLocation, verifyLocation } from "./pipeline";
 import { backupReport, restoreReport } from "./backup";
 import { reconcile, type Observation } from "./reconcile";
+import { backfillWeather } from "./weather-history";
 
 test("location ETL captures, throttles, replays and falls back with cited values", async (t) => {
   process.env.ETL_STATE_NAMESPACE = `test-${randomUUID()}`;
@@ -104,4 +105,26 @@ test("provider disagreement requires compatible scope and explicit authority", (
   assert.equal(reconcile(left, right, { scope: left.scope, authority: "a" }).selected, left);
   assert.equal(reconcile(left, { ...right, scope: { ...right.scope, entity: "LDWP" } }).status, "incomparable");
   assert.equal(reconcile(left, { ...right, publisher: "A" }).independent, false);
+});
+
+test("weather backfill rejects gaps and preserves modeled data and locators", async (t) => {
+  process.env.ETL_STATE_NAMESPACE = `test-${randomUUID()}`;
+  t.after(() => { delete process.env.ETL_STATE_NAMESPACE; });
+  let complete = true;
+  t.mock.method(globalThis, "fetch", async () => Response.json({
+    latitude: 34, longitude: -118,
+    hourly_units: { temperature_2m: "°C", wind_speed_10m: "m/s", shortwave_radiation: "W/m²" },
+    hourly: {
+      time: Array.from({ length: complete ? 24 : 23 }, (_, i) => `2024-01-01T${String(i).padStart(2, "0")}:00`),
+      temperature_2m: Array(24).fill(20), wind_speed_10m: Array(24).fill(2),
+      shortwave_radiation: Array(24).fill(0),
+    },
+  }));
+  const result = await backfillWeather(34, -118, "2024-01-01", "2024-01-01");
+  assert.equal(result.rows, 24);
+  const saved = JSON.parse(await readFile(result.path, "utf8"));
+  assert.equal(saved.basis, "modeled_reanalysis");
+  assert.equal(saved.rows[0].metrics[0].locator, "/hourly/temperature_2m/0");
+  complete = false;
+  await assert.rejects(backfillWeather(34, -118, "2024-01-01", "2024-01-01"), /Incomplete hourly weather time axis/);
 });
