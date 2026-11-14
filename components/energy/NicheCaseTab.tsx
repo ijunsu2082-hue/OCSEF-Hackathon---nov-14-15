@@ -231,9 +231,11 @@ export default function NicheCaseTab({ nicheCase }: Props) {
         const links: { url: string; host: string; path: string }[] = [];
         for (const stat of nicheCase.stats) {
           const url = stat.source.trim();
-          if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
-          seen.add(url);
+          if (!/^https?:\/\//i.test(url)) continue;
           const parsed = new URL(url);
+          const key = `${parsed.hostname}${parsed.pathname}`.replace(/\/$/, "").toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
           links.push({
             url,
             host: parsed.hostname.replace(/^www\./, ""),

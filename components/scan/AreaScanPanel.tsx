@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { ScanResult } from "@/lib/scan/areaScan";
 import { haversineMi } from "@/lib/scan/areaScan";
 import type { NicheCase } from "@/lib/niche";
+import { sourceLabel } from "@/lib/gridLayers";
 import { fmtNumber } from "@/lib/format";
 import { Sparkline } from "@/components/primitives/Sparkline";
 import { dayLabel, hourLabel } from "@/lib/scan/wire";
@@ -35,20 +36,14 @@ const KV_LABEL: Record<string, string> = {
   unknown: "Voltage unknown",
 };
 
-const FUEL_LABEL: Record<string, string> = {
-  natural_gas: "Natural gas",
-  other_gas: "Other gas",
-  oil: "Oil",
-  solar: "Solar",
-  wind: "Wind",
-  hydro: "Hydro",
-  battery: "Battery",
-  biogas: "Biogas",
-  waste_heat: "Waste heat",
+// One label table for the whole map: gridLayers owns the fuel names.
+const fuelLabel = (key: string) => {
+  const label = sourceLabel(key);
+  return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-const fuelLabel = (key: string) => FUEL_LABEL[key] ?? key.replace(/_/g, " ");
 const isUrl = (value: string) => /^https?:\/\//i.test(value.trim());
+const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, "");
 
 function Row({ label, value, sub }: { label: string; value: string; sub?: boolean }) {
   return (
@@ -167,20 +162,25 @@ export default function AreaScanPanel({
       .sort((a, b) => a.distance_mi - b.distance_mi);
   }, [nicheCases, result]);
 
-  // News and document links for the cases above. These are reporting, not
-  // generation: they never enter the energy mix or a capacity figure.
+  // News and document links for the cases above, one row per case with one
+  // link per distinct source host. These are reporting, not generation: they
+  // never enter the energy mix or a capacity figure.
   const news = useMemo(() => {
-    const seen = new Set<string>();
-    const out: { title: string; url: string }[] = [];
+    const out: { id: string; title: string; sources: { host: string; url: string }[] }[] = [];
     for (const { entry } of casesHere) {
+      const hosts = new Set<string>();
+      const sources: { host: string; url: string }[] = [];
       for (const stat of entry.stats) {
         const url = stat.source.trim();
-        if (!isUrl(url) || seen.has(url)) continue;
-        seen.add(url);
-        out.push({ title: entry.title, url });
+        if (!isUrl(url)) continue;
+        const host = hostOf(url);
+        if (hosts.has(host)) continue;
+        hosts.add(host);
+        sources.push({ host, url });
       }
+      if (sources.length > 0) out.push({ id: entry.id, title: entry.title, sources });
     }
-    return out.slice(0, 10);
+    return out;
   }, [casesHere]);
 
   const wire = result?.wire ?? null;
@@ -513,11 +513,20 @@ export default function AreaScanPanel({
               </p>
               <ul className="scan-news">
                 {news.map((item) => (
-                  <li key={item.url}>
-                    <a href={item.url} target="_blank" rel="noopener noreferrer">
-                      {item.title}
-                    </a>
-                    <span>{new URL(item.url).hostname.replace(/^www\./, "")}</span>
+                  <li key={item.id}>
+                    <b>{item.title}</b>
+                    <span className="scan-news-links">
+                      {item.sources.map((source) => (
+                        <a
+                          key={source.host}
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {source.host}
+                        </a>
+                      ))}
+                    </span>
                   </li>
                 ))}
               </ul>
