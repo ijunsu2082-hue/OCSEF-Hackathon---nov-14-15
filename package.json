@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "sync-layers": "node scripts/sync-layers.mjs",
+    "predev": "node scripts/sync-layers.mjs",
+    "prebuild": "node scripts/sync-layers.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",

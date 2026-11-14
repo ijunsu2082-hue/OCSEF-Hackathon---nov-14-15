@@ -1,0 +1,343 @@
+@import "tailwindcss";
+@import "../design/tokens.css";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Thin, quiet scrollbars for the drawer (the only scroll region). */
+.gs-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.gs-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.gs-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+/* ---- Range slider (radius control) ---------------------------------------- */
+.gs-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+.gs-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.gs-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+.gs-range:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* ---- Dark Leaflet ----------------------------------------------------------
+   Prefixed with :root because leaflet.css is imported later (by the map chunk)
+   and would otherwise win every equal-specificity tie. */
+:root .leaflet-container {
+  background: var(--bg);
+  font-family: var(--font-ui);
+  cursor: crosshair;
+}
+:root .leaflet-container.leaflet-grab {
+  cursor: crosshair;
+}
+:root .leaflet-container.leaflet-dragging .leaflet-grab {
+  cursor: grabbing;
+}
+
+:root .leaflet-tooltip {
+  background: var(--panel-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pop);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+:root .leaflet-tooltip-top::before {
+  border-top-color: var(--border-strong);
+}
+:root .leaflet-tooltip-bottom::before {
+  border-bottom-color: var(--border-strong);
+}
+:root .leaflet-tooltip-left::before {
+  border-left-color: var(--border-strong);
+}
+:root .leaflet-tooltip-right::before {
+  border-right-color: var(--border-strong);
+}
+:root .leaflet-tooltip.gs-tip-wrap {
+  white-space: normal;
+  width: 280px;
+}
+.gs-tip-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+}
+.gs-tip-row {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.gs-tip-src {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+:root .leaflet-popup-content-wrapper,
+:root .leaflet-popup-tip {
+  background: var(--panel-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-pop);
+}
+:root .leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md);
+}
+:root .leaflet-container a.leaflet-popup-close-button {
+  color: var(--muted);
+}
+
+:root .leaflet-container .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--muted);
+  font-size: 10px;
+  border-top-left-radius: var(--radius-sm);
+}
+:root .leaflet-container .leaflet-control-attribution a {
+  color: var(--text-dim);
+}
+
+:root .leaflet-bar {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-panel) !important;
+  overflow: hidden;
+}
+:root .leaflet-bar a,
+:root .leaflet-bar a:hover {
+  background: var(--panel);
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+}
+:root .leaflet-bar a:hover {
+  background: var(--panel-raised);
+  color: var(--text);
+}
+:root .leaflet-bar a:last-child {
+  border-bottom: none;
+}
+:root .leaflet-bar a.leaflet-disabled {
+  background: var(--bg-elevated);
+  color: var(--border-strong);
+}
+
+/* Leaflet divIcons default to a white box; ours are transparent. */
+:root .leaflet-div-icon.gs-icon {
+  background: transparent;
+  border: none;
+}
+
+/* ---- Map markers ----------------------------------------------------------- */
+.gs-home {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: var(--bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.gs-case {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.gs-case-diamond {
+  position: absolute;
+  inset: 18%;
+  transform: rotate(45deg);
+  background: var(--accent-2);
+  border: 1.5px solid var(--bg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-2) 60%, transparent);
+  border-radius: 2px;
+}
+.gs-case.is-selected .gs-case-diamond {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.gs-case-pulse {
+  position: absolute;
+  inset: -40%;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent-2);
+  animation: gs-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gs-pulse {
+  from {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.gs-scan-label {
+  display: inline-block;
+  transform: translate(8px, -50%);
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---- Radar scan (replayed on every new scan) ------------------------------- */
+.gs-radar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  animation: gs-radar-fade 900ms ease-out forwards;
+}
+.gs-radar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  transform: scale(0);
+  animation: gs-radar-ring 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.gs-radar-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--accent) 38%, transparent) 0deg,
+    transparent 70deg,
+    transparent 360deg
+  );
+  animation: gs-radar-sweep 900ms linear forwards;
+}
+
+@keyframes gs-radar-ring {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.15;
+  }
+}
+@keyframes gs-radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes gs-radar-fade {
+  0% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Loading spinner for the boot screen */
+.gs-boot-radar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 45%, transparent), transparent 80deg);
+  animation: gs-radar-sweep 1.2s linear infinite;
+}
+
+/* ---- Toast ----------------------------------------------------------------- */
+.gs-toast {
+  animation: gs-toast-in 180ms ease-out;
+}
+@keyframes gs-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gs-radar,
+  .gs-radar-ring,
+  .gs-radar-sweep,
+  .gs-case-pulse,
+  .gs-boot-radar,
+  .gs-toast {
+    animation: none;
+  }
+  .gs-radar {
+    opacity: 0;
+  }
+  .gs-case-pulse {
+    opacity: 0.5;
+    transform: none;
+  }
+}
