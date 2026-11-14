@@ -1,0 +1,217 @@
+/**
+ * GridSentinel design tokens — single source of truth for color, type and texture.
+ * Owner: Dev 4. Imported once from app/globals.css:
+ *   @import "../design/tokens.css";
+ *
+ * Every color is a CSS variable so the heatwave simulation can retheme the whole
+ * app with one attribute flip: document.documentElement.dataset.stress = "true".
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #080b12;
+  --bg-elevated: #0b1018;
+  --panel: #0e1420;
+  --panel-raised: #141c2b;
+  --border: #22304a;
+  --border-strong: #33456a;
+
+  /* Text */
+  --text: #edf2f8;
+  --text-dim: #c2cddd;
+  --muted: #8fa0b8;
+
+  /* Brand + status */
+  --accent: #38d6c4;
+  --accent-2: #4c8dff;
+  --accent-soft: rgba(56, 214, 196, 0.12);
+  --ok: #2dd4a7;
+  --warn: #e8a33d;
+  --high: #f97316;
+  --critical: #f04d5e;
+
+  /* Map / texture */
+  --grid-line: rgba(56, 214, 196, 0.1);
+  --flow: #38d6c4;
+  --flow-speed: 1.2s;
+
+  /* Shape + depth */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+  --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+
+  /* Type */
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* Layout */
+  --bar-h: 64px;
+  --drawer-w: 35%;
+  --drawer-min-w: 400px;
+  --grid-step: 24px;
+
+  /* Stacking */
+  --z-map: 0;
+  --z-map-overlay: 20;
+  --z-drawer: 30;
+  --z-bar: 40;
+  --z-toast: 60;
+
+  color-scheme: dark;
+}
+
+/* Stress scenario: the same keys, retinted amber/crimson. No component changes. */
+[data-stress="true"] {
+  --bg: #0c0709;
+  --bg-elevated: #110a0c;
+  --panel: #150c0e;
+  --panel-raised: #1c1013;
+  --border: #4a2318;
+  --border-strong: #6b3222;
+
+  --text: #fdf3ec;
+  --text-dim: #e8cdc1;
+  --muted: #c4a79c;
+
+  --accent: #ffb020;
+  --accent-2: #ff6b3d;
+  --accent-soft: rgba(255, 176, 32, 0.13);
+  --ok: #2dd4a7;
+  --warn: #ffb020;
+  --high: #ff6b3d;
+  --critical: #ff2e4d;
+
+  --grid-line: rgba(255, 176, 32, 0.12);
+  --flow: #ffb020;
+  --flow-speed: 0.5s;
+
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px -24px rgba(0, 0, 0, 0.92);
+}
+
+/* Tailwind v4 bridge: exposes tokens as utilities (bg-panel, text-muted, …). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-ink-dim: var(--text-dim);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-high: var(--high);
+  --color-critical: var(--critical);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}
+
+/* ---- Base helpers ---------------------------------------------------------- */
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.hairline {
+  border: 1px solid var(--border);
+}
+
+.grid-texture {
+  background-image: linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-step) var(--grid-step);
+}
+
+/* ---- Risk semantics -------------------------------------------------------
+   Color is never the only signal: RiskPill always renders LOW/WATCH/HIGH/CRITICAL.
+   Backgrounds use color-mix so they follow the stress retheme automatically. */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pill::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: currentColor;
+  flex: none;
+}
+
+.pill-low,
+.pill-ok {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 30%, transparent);
+}
+
+.pill-watch {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 13%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 32%, transparent);
+}
+
+.pill-high {
+  color: var(--high);
+  background: color-mix(in srgb, var(--high) 14%, transparent);
+  border-color: color-mix(in srgb, var(--high) 34%, transparent);
+}
+
+.pill-critical {
+  color: var(--critical);
+  background: color-mix(in srgb, var(--critical) 16%, transparent);
+  border-color: color-mix(in srgb, var(--critical) 40%, transparent);
+}
+
+.pill-neutral {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 10%, transparent);
+  border-color: var(--border);
+}
+
+/* ---- Map flow animation (Leaflet polylines get .flow-line) -----------------
+   A stylesheet rule overrides Leaflet's stroke presentation attribute, so the
+   token flip handles the stress recolor with no JS. */
+
+.flow-line {
+  stroke: var(--flow);
+  stroke-dasharray: 2 10;
+  stroke-linecap: round;
+  animation: gs-flow var(--flow-speed) linear infinite;
+}
+
+@keyframes gs-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-line {
+    animation: none;
+  }
+}

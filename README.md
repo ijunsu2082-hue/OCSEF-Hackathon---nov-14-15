@@ -1,8 +1,10 @@
-# GridSentinel — Water Infrastructure Energy Intelligence
+# GridSentinel — Regional Energy Infrastructure Intelligence
 
-A dark-mode "command center" for water-utility infrastructure: it maps every facility in a region, scores its energy risk, simulates a 105 °F heatwave stress event, models decarbonization upgrades with live ROI, and drafts + dispatches an AI utility-audit memo.
+A dark-mode "command center" for **electrical** infrastructure: it maps every major load center in a region, scores its grid-risk exposure, simulates a 105 °F heatwave demand shock, models solar + drive-retrofit upgrades with live ROI, and drafts + dispatches an AI energy-audit memo.
 
-**Event:** OCSEF Hackathon, Nov 14–15. **Region seeded:** Greater Los Angeles Basin (`la-basin`).
+**Scope:** a **100-mile radius around Westminster High School**, Westminster CA (`33.7538, -118.0111`). **Region id:** `westminster-100mi`. **Seeded:** 11 real sites, all inside the radius.
+
+This dataset is the **only** one that needs to change to relocate the platform: swap `data/nodes.json` + `data/regions.json` and the region id. Every formula, endpoint and component is region-agnostic.
 
 ---
 
@@ -19,16 +21,23 @@ Four sessions work in this repo at once. **The only way this stays mergeable is 
 | **Commit small, on your branch** | `git checkout -b dev1-map` (etc.). Never commit on `main`; the integrator merges in the order in §8. |
 | **Never run `git checkout`/`reset` on files you don't own** | Discards another session's in-flight work. |
 
+### G0 status — already committed, do not rewrite
+
+| Path | State |
+| --- | --- |
+| `lib/types.ts` | **Frozen contract**, energy-native (nameplate MW, utilization %, MVA power flows). Import it; never fork it. |
+| `design/tokens.css` | Delivered: dark + `[data-stress="true"]` heatwave tokens, Tailwind `@theme` bridge, `.pill-*` risk semantics, `.flow-line` animation. |
+| `components/primitives/` | Delivered: `Panel`, `Stat`, `RiskPill`, `Sparkline`, `cx`. Props-only, zero dependencies. |
+| `package.json` · `tsconfig.json` · `next.config.ts` · `postcss.config.mjs` | Scaffolded. Tailwind v4, no `tailwind.config.js`. |
+
 ### Ownership table
 
 | Owner | Paths (exclusive) | Deliverables |
 | --- | --- | --- |
-| **Dev 1 — Geospatial & shell** | `app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/shell/**` (`ControlBar.tsx`, `MapCanvas.tsx`, `MapView.tsx`, `AnalyzerDrawer.tsx`, `Tabs.tsx`, `StatusBadge.tsx`) | Dark Leaflet map, risk-colored markers, animated flow lines, 64 px control bar, 65/35 split, heatwave theme switch, tab routing |
-| **Dev 2 — Data & simulation** | `data/**`, `lib/types.ts`, `lib/simulation.ts`, `lib/risk.ts`, `lib/region.ts`, `lib/format.ts`, `app/api/region/**`, `app/api/simulate/**`, `components/energy/**` (`TelemetryTab.tsx`, `UpgradeSimulatorTab.tsx`, `charts/**`) | `nodes.json` (8 real facilities), all math, Recharts energy-mix + payback charts, region/simulate APIs |
+| **Dev 1 — Geospatial & shell** | `app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/shell/**` (`ControlBar.tsx`, `MapCanvas.tsx`, `MapView.tsx`, `AnalyzerDrawer.tsx`, `Tabs.tsx`, `StatusBadge.tsx`) | Dark Leaflet map + 100-mile ring, risk-colored markers, animated power-flow lines, 64 px control bar, 65/35 split, heatwave theme switch, tab routing |
+| **Dev 2 — Data & simulation** | `data/**`, `lib/simulation.ts`, `lib/risk.ts`, `lib/region.ts`, `lib/format.ts`, `app/api/region/**`, `app/api/simulate/**`, `components/energy/**` (`TelemetryTab.tsx`, `UpgradeSimulatorTab.tsx`, `charts/**`) | `nodes.json`/`regions.json` for `westminster-100mi`, all math, Recharts energy-mix + payback charts, region/simulate APIs |
 | **Dev 3 — AI & outreach** | `lib/ai/**`, `lib/email/**`, `app/api/generate-brief/**`, `app/api/send-audit/**`, `components/outreach/**` (`ProviderActionTab.tsx`, `MemoPreview.tsx`, `DispatchForm.tsx`) | Gemini memo generation with offline fallback, Resend dispatch with simulated fallback, memo UI |
-| **Dev 4 — Design & pitch** | `components/primitives/**` (`Panel.tsx`, `Stat.tsx`, `RiskPill.tsx`, `Sparkline.tsx`), `design/tokens.css`, `docs/**` | Token sheet delivered **first**, UI primitives, `docs/DEMO.md` + `docs/PITCH.md`, final consistency pass (report, not edits) |
-
-**Already scaffolded (do not re-create):** `package.json`, `tsconfig.json`, `next.config.ts`, `postcss.config.mjs`, `.env.example`, `.gitignore`.
+| **Dev 4 — Design & pitch** | `components/primitives/**`, `design/tokens.css`, `docs/**` | Tokens + primitives (**done**), `docs/DEMO.md` + `docs/PITCH.md`, final consistency pass (report, not edits) |
 
 ---
 
@@ -37,8 +46,8 @@ Four sessions work in this repo at once. **The only way this stays mergeable is 
 | Layer | Choice | Why |
 | --- | --- | --- |
 | Frontend | Next.js 15 App Router + React 19 + TypeScript | One repo, one deploy, server routes for secrets |
-| Styling | **Tailwind CSS v4** (`@import "tailwindcss"`, `@tailwindcss/postcss`) | No `tailwind.config.js` needed; theme lives in `app/globals.css` `@theme` |
-| Map | **Leaflet 1.9 + react-leaflet 5** with CARTO `dark_all` raster tiles | **No API key.** Mapbox needs a token we don't have and a demo that 404s on stage is worse than raster tiles |
+| Styling | **Tailwind CSS v4** (`@import "tailwindcss"`, `@tailwindcss/postcss`) | No config file; theme lives in `design/tokens.css` |
+| Map | **Leaflet 1.9 + react-leaflet 5** with CARTO `dark_all` raster tiles | **No API key.** Mapbox needs a token we don't have, and a basemap that 404s on stage is unrecoverable |
 | Charts | Recharts 3 | Stacked bars + area charts, matches spec |
 | Backend | Next.js Route Handlers (`app/api/**`) | No second process, no CORS, no API base URL |
 | AI | `@google/genai` → Gemini (`GEMINI_MODEL`, default `gemini-2.5-flash`) | Server-side only; falls back to a deterministic memo |
@@ -52,11 +61,9 @@ Four sessions work in this repo at once. **The only way this stays mergeable is 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npx tsc --noEmit     # the only check anyone needs to run before pushing
+npx tsc --noEmit     # the only check anyone needs before pushing
 npm run build        # integrator runs this before the demo
 ```
-
-`npm install` has already been kicked off with these versions. If it fails on a peer conflict, `--legacy-peer-deps` is acceptable **only** for `react-leaflet`/`recharts` peer mismatches — note it in the commit.
 
 ---
 
@@ -65,8 +72,8 @@ npm run build        # integrator runs this before the demo
 ```
 app/
   layout.tsx                  Dev 1
-  page.tsx                    Dev 1   (server component: loads region, renders 3 zones)
-  globals.css                 Dev 1   (Tailwind import + tokens from design/tokens.css)
+  page.tsx                    Dev 1   (server component: loads region, composes the 3 zones)
+  globals.css                 Dev 1   (@import "tailwindcss" + ../design/tokens.css)
   api/
     region/[regionId]/route.ts   Dev 2   GET
     simulate/route.ts            Dev 2   POST
@@ -76,23 +83,24 @@ components/
   shell/       ControlBar · MapCanvas · MapView · AnalyzerDrawer · Tabs · StatusBadge   Dev 1
   energy/      TelemetryTab · UpgradeSimulatorTab · charts/EnergyMixChart · charts/PaybackChart   Dev 2
   outreach/    ProviderActionTab · MemoPreview · DispatchForm   Dev 3
-  primitives/  Panel · Stat · RiskPill · Sparkline   Dev 4
+  primitives/  Panel · Stat · RiskPill · Sparkline · cx         Dev 4  (done)
 lib/
-  types.ts simulation.ts risk.ts region.ts format.ts     Dev 2
-  ai/brief.ts  email/dispatch.ts                        Dev 3
+  types.ts     frozen contract                                  G0    (done)
+  simulation.ts risk.ts region.ts format.ts                     Dev 2
+  ai/brief.ts  email/dispatch.ts                                Dev 3
 data/
-  nodes.json    (GeoJSON FeatureCollection + `flows`)   Dev 2
-design/tokens.css                                       Dev 4
-docs/DEMO.md docs/PITCH.md                              Dev 4
+  nodes.json   GeoJSON FeatureCollection + `flows`              Dev 2
+  regions.json region metadata (center, radius, bounds)         Dev 2
+design/tokens.css                                               Dev 4 (done)
+docs/DEMO.md docs/PITCH.md                                      Dev 4
 ```
 
 ---
 
-## 3. Shared contract — `lib/types.ts` (Dev 2 writes this verbatim, everyone imports it)
+## 3. Shared contract — `lib/types.ts` (frozen, energy-native)
 
 ```ts
-// ---- Domain -----------------------------------------------------------------
-export type FacilityType = "Treatment Plant" | "Reclamation Plant" | "Pump Station";
+export type FacilityType = "Process Load" | "Pumping Load" | "Reclamation Load" | "Desalination Load";
 
 export interface SourceMix {
   natural_gas: number; solar: number; hydro: number; wind: number; other: number; // percent, sums to 100
@@ -100,16 +108,16 @@ export interface SourceMix {
 
 export interface Infrastructure {
   year_built: number;
-  age_years: number;              // computed at load time from current year
-  pump_efficiency_rating: number; // 0–1
-  capacity_mgd: number;
-  current_output_mgd: number;
+  age_years: number;                  // computed at load time
+  motor_efficiency_rating: number;    // 0–1, electrical (0.85 = benchmark)
+  nameplate_draw_mw: number;          // demand at 100 % utilization — the basis of every formula
+  utilization_pct: number;            // 0–100, current share of nameplate
 }
 
 export interface EnergyProfile {
-  baseline_draw_mw: number;
+  baseline_draw_mw: number;   // average actual draw today = nameplate × utilization (display only)
   peak_draw_mw: number;
-  grid_zone: string;               // e.g. "US-CAL-LDWP"
+  grid_zone: string;
   carbon_intensity_gco2_kwh: number;
   source_mix: SourceMix;
 }
@@ -117,20 +125,15 @@ export interface EnergyProfile {
 export interface UpgradePotential {
   recommended_intervention: string;
   solar_capacity_add_mw: number;
-  efficiency_gain_pct: number;      // percent, e.g. 18
+  efficiency_gain_pct: number;
   capex_estimate_usd: number;
   annual_savings_usd: number;
-  // --- extensions beyond the base spec (unit economics drive the sliders) ---
-  solar_capex_per_mw_usd: number;
-  solar_savings_per_mw_usd: number;
-  vfd_capex_usd: number;
-  vfd_savings_usd: number;
+  solar_capex_per_mw_usd: number; solar_savings_per_mw_usd: number;
+  vfd_capex_usd: number; vfd_savings_usd: number;
 }
 
 export interface FacilityProperties {
-  id: string;
-  name: string;
-  type: FacilityType;
+  id: string; name: string; type: FacilityType;
   provider: { utility_name: string; contact_email: string };
   infrastructure: Infrastructure;
   energy_profile: EnergyProfile;
@@ -143,231 +146,236 @@ export type FacilityFeature = {
   properties: FacilityProperties;
 };
 
-export interface Flow {
-  id: string;
-  from: string;                 // facility id
-  to: string;                   // facility id
-  label: string;                // "Colorado River Aqueduct → Diemer"
-  mgd: number;                  // sized line width
-}
+export interface PowerFlow { id: string; from: string; to: string; label: string; mva: number; }
 
-// ---- Simulation -------------------------------------------------------------
-export interface SimInput {
-  node_id: string;
-  heatwave_active: boolean;
-  added_solar_mw: number;        // 0 … 2 × recommended
-  vfd_retrofit: boolean;
-}
+export interface SimInput { node_id: string; heatwave_active: boolean; added_solar_mw: number; vfd_retrofit: boolean; }
 
 export interface SimResult {
-  node_id: string;
-  heatwave_active: boolean;
-  capacity_mgd: number;
-  effective_output_mgd: number;
-  load_ratio: number;            // effective_output / capacity
-  overload: boolean;             // heatwave pushed output past nameplate
+  node_id: string; heatwave_active: boolean;
+  nameplate_mw: number; utilization_pct: number; load_ratio: number; overload: boolean;
   effective_draw_mw: number;
-  daily_mwh: number;
-  annual_mwh: number;
-  carbon_intensity: number;
-  annual_co2_tons: number;
-  baseline_annual_co2_tons: number;   // no heatwave, no upgrades
-  co2_delta_tons: number;             // result − baseline (negative = avoided)
+  daily_mwh: number; annual_mwh: number;
+  carbon_intensity: number; annual_co2_tons: number; baseline_annual_co2_tons: number; co2_delta_tons: number;
   homes_equivalent: number;
-  /** Post-upgrade state, only when solar/vfd requested (else === baseline values) */
   upgraded: {
-    draw_mw: number;
-    solar_mw: number;
-    grid_offset_mw: number;
-    annual_co2_tons: number;
-    co2_avoided_tons: number;
-    capex_usd: number;
-    annual_savings_usd: number;
-    payback_years: number | null;   // null when savings <= 0
+    draw_mw: number; solar_mw: number; grid_offset_mw: number;
+    annual_co2_tons: number; co2_avoided_tons: number;
+    capex_usd: number; annual_savings_usd: number; payback_years: number | null;
   } | null;
-  risk_score: number;            // 0–100, see §4.3
+  risk_score: number;
 }
 
-// ---- Region payload (GET /api/region/[regionId]) ----------------------------
 export interface RegionPayload {
-  region: { id: string; name: string; state: string; bounds: [[number, number], [number, number]]; grid_zone: string };
+  region: {
+    id: string; name: string; state: string;
+    bounds: [[number, number], [number, number]];
+    grid_zone: string;
+    center: [number, number];     // Westminster High School
+    radius_miles: number;         // 100
+  };
   nodes: { type: "FeatureCollection"; features: FacilityFeature[] };
-  flows: Flow[];
-  grid: {
-    carbon_intensity_gco2_kwh: number;  // output-weighted regional mean
-    source_mix: SourceMix;              // MW-weighted mean
-  };
+  flows: PowerFlow[];
+  grid: { carbon_intensity_gco2_kwh: number; source_mix: SourceMix };
   kpis: {
-    total_draw_mw: number;
-    total_annual_co2_tons: number;
-    total_annual_mwh: number;
-    total_capacity_mgd: number;
-    total_output_mgd: number;
-    facility_count: number;
+    total_draw_mw: number; total_annual_co2_tons: number; total_annual_mwh: number;
+    total_nameplate_mw: number; facility_count: number;
   };
-  generated_at: string;          // ISO
-}
-
-// ---- AI + outreach ----------------------------------------------------------
-export interface BriefRequest {
-  node_id: string;
-  simulation: SimResult;
-  tone?: "technical" | "executive";
-}
-export interface BriefResponse {
-  node_id: string;
-  brief: string;                 // ~200 words, plain text with section labels
-  source: "gemini" | "fallback";
-  model: string | null;
   generated_at: string;
 }
-export interface AuditRequest {
-  node_id: string;
-  brief: string;
-  to: string;                    // recipient email
-  simulation?: SimResult;
+
+export interface BriefRequest { node_id: string; simulation: SimResult; tone?: "technical" | "executive"; }
+export interface BriefResponse {
+  node_id: string; brief: string; source: "gemini" | "fallback"; model: string | null; generated_at: string;
 }
+export interface AuditRequest { node_id: string; brief: string; to: string; simulation?: SimResult; }
 export interface AuditResponse {
-  delivered: boolean;
-  mode: "live" | "simulated";
-  provider_id: string | null;    // Resend message id
-  to: string;
-  subject: string;
-  detail: string;                // human-readable reason / next step
-  sent_at: string;
+  delivered: boolean; mode: "live" | "simulated"; provider_id: string | null;
+  to: string; subject: string; detail: string; sent_at: string;
 }
 ```
+
+> The committed file is authoritative; this block is the readable mirror. If they ever disagree, `lib/types.ts` wins and the README is the bug.
+
+### 3.1 Migration from the water contract (do this in your own files)
+
+The G0 commit replaced a water-domain contract with this energy one. Any code written before it will not typecheck. Owners fix **their own** files; the mechanical map is:
+
+| Old | New |
+| --- | --- |
+| `Infrastructure.capacity_mgd` | `Infrastructure.nameplate_draw_mw` |
+| `Infrastructure.current_output_mgd` | `Infrastructure.utilization_pct` (0–100) |
+| `Infrastructure.pump_efficiency_rating` | `Infrastructure.motor_efficiency_rating` |
+| `Flow` / `flows` | `PowerFlow`, `mgd` → `mva` |
+| `SimResult.capacity_mgd` | `SimResult.nameplate_mw` |
+| `SimResult.effective_output_mgd` | drop it — `effective_draw_mw` carries the post-stress load |
+| `kpis.total_capacity_mgd` | `kpis.total_nameplate_mw` |
+| `kpis.total_output_mgd` | drop it — `kpis.total_draw_mw` is the live figure |
+| `"Treatment Plant"` / `"Reclamation Plant"` / `"Pumping Station"` | `"Process Load"` / `"Reclamation Load"` / `"Pumping Load"` (plus `"Desalination Load"`) |
+| `output / capacity` ratio | `utilization_pct / 100` |
+
+Anyone still on the old field names is unblocked by reading §4.2: `loadRatio` replaces the output/capacity ratio and `nameplate_draw_mw` replaces capacity.
 
 ---
 
 ## 4. Data + math (Dev 2; everyone else consumes these numbers)
 
-### 4.1 Seed facilities — `data/nodes.json`
+### 4.1 Region + seed assets — `westminster-100mi`
 
-Real facilities, real approximate coordinates, plausible specs. **Label the numbers illustrative in the UI footer** — they are seeded for the demo, not metered.
+```jsonc
+// data/regions.json
+{ "id": "westminster-100mi", "name": "Westminster 100-Mile Radius", "state": "CA",
+  "center": [33.7538, -118.0111], "radius_miles": 100,
+  "bounds": [[33.10, -118.60], [34.50, -117.28]], "grid_zone": "US-CAL-CAMX" }
+```
 
-| id | name | type | operator | MGD cap | year | lat, lon |
-| --- | --- | --- | --- | --- | --- | --- |
-| `node-la-01` | Los Angeles Aqueduct Filtration Plant | Treatment Plant | LADWP Water System | 600 | 1986 | 34.2981, -118.4851 |
-| `node-la-02` | Joseph Jensen Filtration Plant | Treatment Plant | MWD of Southern California | 750 | 1972 | 34.2762, -118.4747 |
-| `node-la-03` | Weymouth Filtration Plant | Treatment Plant | MWD of Southern California | 400 | 1941 | 34.1131, -117.7647 |
-| `node-la-04` | Robert B. Diemer Filtration Plant | Treatment Plant | MWD of Southern California | 400 | 1965 | 33.8896, -117.7591 |
-| `node-la-05` | Hyperion Water Reclamation Plant | Reclamation Plant | LA Sanitation & Environment | 450 | 1950 | 33.9601, -118.4296 |
-| `node-la-06` | Edward C. Little Water Recycling Facility | Reclamation Plant | West Basin Municipal Water District | 30 | 1995 | 33.9271, -118.3852 |
-| `node-la-07` | Terminal Island Water Reclamation Plant | Reclamation Plant | LA Sanitation & Environment | 30 | 1972 | 33.7703, -118.2477 |
-| `node-la-08` | Rio Vista Water Treatment Plant | Treatment Plant | Santa Clarita Valley Water | 60 | 1980 | 34.4212, -118.5592 |
+Eleven real sites, every one inside 100 miles of Westminster High School (**farthest** is Carlsbad at ~58 mi). Coordinates and in-service years were verified against operator/agency records; **MW figures are modeled electrical loads**, not published numbers — say so in the UI footer.
 
-Baseline draws must total **80.6 MW** (per-node values below) so the top bar reads a stable number:
+| id | Site | Type | Operator | Nameplate MW | Util % | Live MW | Yr | CI g/kWh | Motor eff | gas/solar/hydro/wind/other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `node-oc-01` | Groundwater Replenishment System | Reclamation Load | Orange County Water District | 24.0 | 75.0 | 18.0 | 2008 | 284 | 0.86 | 22/30/6/12/30 |
+| `node-oc-02` | OC Sanitation District Plant No. 1 | Reclamation Load | OC San | 25.0 | 66.0 | 16.5 | 1954 | 312 | 0.64 | 52/14/8/6/20 |
+| `node-la-01` | Los Angeles Aqueduct Filtration Plant | Process Load | LADWP | 21.0 | 69.0 | 14.5 | 1987 | 310 | 0.68 | 48/22/15/10/5 |
+| `node-la-02` | Joseph Jensen Filtration Plant | Process Load | MWD of Southern California | 24.0 | 67.5 | 16.2 | 1972 | 305 | 0.76 | 44/20/18/13/5 |
+| `node-la-03` | F.E. Weymouth Filtration Plant | Process Load | MWD of Southern California | 15.0 | 62.7 | 9.4 | 1941 | 322 | 0.61 | 52/16/14/12/6 |
+| `node-la-04` | Robert B. Diemer Filtration Plant | Process Load | MWD of Southern California | 16.5 | 65.5 | 10.8 | 1963 | 318 | 0.72 | 46/21/16/12/5 |
+| `node-la-05` | Hyperion Water Reclamation Plant | Reclamation Load | LA Sanitation & Environment | 31.4 | 68.8 | 21.6 | 1950 | 341 | 0.58 | 55/14/12/11/8 |
+| `node-la-06` | Edward C. Little Recycling Facility | Reclamation Load | West Basin MWD | 4.0 | 77.5 | 3.1 | 1995 | 268 | 0.84 | 22/41/16/14/7 |
+| `node-la-07` | Terminal Island Reclamation Plant | Reclamation Load | LA Sanitation & Environment | 4.0 | 65.0 | 2.6 | 1935 | 330 | 0.66 | 50/18/13/13/6 |
+| `node-la-08` | Rio Vista (Gladbach) Treatment Plant | Pumping Load | Santa Clarita Valley Water | 3.5 | 68.6 | 2.4 | 1995 | 296 | 0.71 | 40/24/18/12/6 |
+| `node-sd-01` | Claude "Bud" Lewis Carlsbad Desalination Plant | Desalination Load | Poseidon Resources / IDE | 38.0 | 84.2 | 32.0 | 2015 | 402 | 0.79 | 58/12/2/6/22 |
 
-`14.5 · 16.2 · 9.4 · 10.8 · 21.6 · 3.1 · 2.6 · 2.4`
+Coordinates (lon, lat) for `nodes.json`, all verified:
 
-Other per-node seed values (keep these; they make the story cohesive):
+```
+oc-01  -117.9456, 33.6912    oc-02  -117.9377, 33.6940    sd-01  -117.3387, 33.1382
+la-01  -118.4886, 34.3053    la-02  -118.4960, 34.3118    la-03  -117.7800, 34.1131
+la-04  -117.8202, 33.9123    la-05  -118.4307, 33.9255    la-06  -118.3940, 33.9097
+la-07  -118.2658, 33.7445    la-08  -118.5181, 34.4371
+```
 
-| id | CI g/kWh | pump eff | output MGD | solar rec MW | eff gain % | gas/solar/hydro/wind/other |
-| --- | --- | --- | --- | --- | --- | --- |
-| 01 | 310 | 0.68 | 420 | 4.5 | 18 | 48/22/15/10/5 |
-| 02 | 305 | 0.76 | 505 | 6.0 | 14 | 44/20/18/13/5 |
-| 03 | 322 | 0.61 | 150 | 3.0 | 22 | 52/16/14/12/6 |
-| 04 | 318 | 0.72 | 210 | 3.5 | 16 | 46/21/16/12/5 |
-| 05 | 341 | 0.58 | 275 | 8.0 | 24 | 55/14/12/11/8 |
-| 06 | 268 | 0.84 | 22 | 1.2 | 9 | 22/41/16/14/7 |
-| 07 | 330 | 0.66 | 19 | 1.0 | 20 | 50/18/13/13/6 |
-| 08 | 296 | 0.71 | 41 | 1.5 | 15 | 40/24/18/12/6 |
+**Corrections applied from the fact-check** (previous values were wrong): Diemer is 1963 (not 1965) and sits at 33.9123/−117.8202 (the old coordinate was ~4 mi off); Weymouth is at −117.7800; LAAFP entered service 1987 (construction completed 1986) at 34.3053/−118.4886; Jensen is at 34.3118/−118.4960; Terminal Island dates to 1935 (not 1972); Hyperion's coordinate moved ~4 km south to 33.9255/−118.4307; E.C. Little sits at 33.9097/−118.3940. Jensen's capacity is 750 MGD and Diemer's **520 MGD** — neither number appears in the energy model, but do not reintroduce the old 400 MGD figures if throughput is ever displayed.
 
-Expected top-bar values with these seeds (use them as assertions in G1): total draw **80.6 MW**, MW-weighted regional CI **318 gCO₂/kWh**, total annual CO₂ **≈136,200 t** (facilities run at 27–76 % of nameplate, so this is well under the 80.6 MW × 8 760 h ceiling), total annual energy **≈429,400 MWh**, 2,720 MGD nameplate vs 1,642 MGD delivered. Expected §4.3 risk scores: `01 49.7 · 02 46.4 · 03 67.2 · 04 52.8 · 05 72.3 · 06 23.4 · 07 58.0 · 08 44.9` — one LOW, five WATCH, two HIGH; the heatwave must visibly escalate 03/05/07.
+Per-asset upgrade economics (all recommended bundles land a **4.9–5.9 year** simple payback):
 
-`flows` (draw rivers/projects, direction = water movement):
-`01 → 05` Hyperion collection trunk · `02 → 01` MWD East Branch delivery · `03 → 04` Weymouth/Rampart trunk · `04 → 07` Harbor distribution trunk · `05 → 06` Hyperion effluent → West Basin recycling · `08 → 02` Castaic Lake supply · `03 → 01` Upper feeder.
+| id | solar rec MW | eff gain % | solar $/MW | solar sav/MW | VFD capex | VFD sav | bundle capex | bundle sav | payback |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| oc-01 | 6.0 | 10 | 1,320,000 | 208,000 | 1,900,000 | 420,000 | 9,820,000 | 1,668,000 | 5.89 |
+| oc-02 | 5.5 | 20 | 1,340,000 | 215,000 | 2,300,000 | 520,000 | 9,670,000 | 1,702,500 | 5.68 |
+| la-01 | 4.5 | 18 | 1,340,000 | 215,000 | 1,900,000 | 420,000 | 7,930,000 | 1,387,500 | 5.72 |
+| la-02 | 6.0 | 14 | 1,340,000 | 215,000 | 1,900,000 | 420,000 | 9,940,000 | 1,710,000 | 5.81 |
+| la-03 | 3.0 | 22 | 1,380,000 | 222,000 | 1,400,000 | 470,000 | 5,540,000 | 1,136,000 | 4.88 |
+| la-04 | 3.5 | 16 | 1,340,000 | 215,000 | 1,700,000 | 400,000 | 6,390,000 | 1,152,500 | 5.54 |
+| la-05 | 8.0 | 24 | 1,340,000 | 215,000 | 2,500,000 | 700,000 | 13,220,000 | 2,420,000 | 5.46 |
+| la-06 | 1.2 | 9 | 1,420,000 | 230,000 | 420,000 | 95,000 | 2,124,000 | 371,000 | 5.73 |
+| la-07 | 1.0 | 20 | 1,420,000 | 230,000 | 500,000 | 150,000 | 1,920,000 | 380,000 | 5.05 |
+| la-08 | 1.5 | 15 | 1,400,000 | 226,000 | 680,000 | 155,000 | 2,780,000 | 494,000 | 5.63 |
+| sd-01 | 9.5 | 12 | 1,300,000 | 210,000 | 2,400,000 | 520,000 | 14,750,000 | 2,515,000 | 5.86 |
 
-### 4.2 Formulas (§3 of the spec, exact — `lib/simulation.ts`, pure)
+Invariant (assert it after editing the JSON): `capex_estimate_usd === solar_capacity_add_mw × solar_capex_per_mw_usd + vfd_capex_usd` and `annual_savings_usd === solar_capacity_add_mw × solar_savings_per_mw_usd + vfd_savings_usd`.
+
+```bash
+node -e "const d=require('./data/nodes.json');for(const f of d.features){const p=f.properties.upgrade_potential;const c=p.solar_capacity_add_mw*p.solar_capex_per_mw_usd+p.vfd_capex_usd;const s=p.solar_capacity_add_mw*p.solar_savings_per_mw_usd+p.vfd_savings_usd;if(c!==p.capex_estimate_usd||s!==p.annual_savings_usd)console.log('MISMATCH',f.properties.id,c,s)}"
+```
+
+**Power flows** (`flows` in `nodes.json`, MVA sizes the line): `oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `oc-01 → oc-02` GWRS process tie (30) · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
+
+`la-04 → sd-01` is the long southern leg — it keeps Carlsbad electrically connected to the rest of the network instead of floating alone on the map.
+
+### 4.2 Formulas (§3 of the spec, energy units — `lib/simulation.ts`, pure)
 
 ```ts
-const HW = { output: 1.35, outputCap: 1.05, draw: 1.45, ci: 1.25 };
-const SOLAR_CAPACITY_FACTOR = 0.28;   // SoCal utility-scale, 24–30% typical
-const HOURS = 24, DAYS = 365, CO2_DIVISOR = 1_000_000;
+const HW = { util: 1.35, utilCap: 105, draw: 1.45, ci: 1.25 };
+const SOLAR_CAPACITY_FACTOR = 0.28;   // Southern California utility-scale, 24–30 % typical
+const CO2_DIVISOR = 1_000_000;
 
 // 1. stress-adjusted operating point
-effectiveOutput = heatwave ? min(output * 1.35, capacity * 1.05) : output;
-overload        = heatwave && output * 1.35 > capacity;
-loadRatio       = effectiveOutput / capacity;
-effectiveDraw   = baselineDraw * (heatwave ? 1.45 : 1);
+loadRatio       = (heatwave ? min(utilization_pct * 1.35, 105) : utilization_pct) / 100;
+overload        = heatwave && utilization_pct * 1.35 > 100;
+effectiveDraw   = nameplate_draw_mw * loadRatio * (heatwave ? 1.45 : 1);
 carbonIntensity = CI * (heatwave ? 1.25 : 1);
 
-// 2. energy + carbon  (these two lines are the ONLY place a 365 appears)
-dailyMWh        = effectiveDraw * 24 * loadRatio;
+// 2. energy + carbon — the ONLY place a 365 appears
+dailyMWh        = effectiveDraw * 24;
 annualMWh       = dailyMWh * 365;
-annualCO2Tons   = dailyMWh * 1000 * carbonIntensity * 365 / 1_000_000;  // spec §3, exact
-baselineCO2Tons = baselineDraw * 24 * (output / capacity) * 1000 * CI * 365 / 1e6;
+annualCO2Tons   = dailyMWh * 1000 * carbonIntensity * 365 / CO2_DIVISOR;   // spec §3, exact
+baselineCO2Tons = nameplate_draw_mw * (utilization_pct / 100) * 24 * 1000 * CI * 365 / CO2_DIVISOR;
 
 // 3. upgrades
-postDraw   = effectiveDraw * (1 - (vfd ? effGainPct / 100 : 0));
-solarMW    = max(0, addedSolarMw);
-gridOffset = min(postDraw, solarMW * SOLAR_CAPACITY_FACTOR);   // MW actually displaced
+postDraw   = effectiveDraw * (1 - (vfd ? efficiency_gain_pct / 100 : 0));
+gridOffset = min(postDraw, added_solar_mw * SOLAR_CAPACITY_FACTOR);       // MW actually displaced
 postMWh    = annualMWh * (postDraw > 0 ? (postDraw - gridOffset) / postDraw : 0);  // already annual
-postCO2    = postMWh * 1000 * carbonIntensity / 1e6;            // no extra 365 — postMWh is annual
+postCO2    = postMWh * 1000 * carbonIntensity / CO2_DIVISOR;              // no extra 365
 co2Avoided = annualCO2Tons - postCO2;
-capex      = solarMW * solar_capex_per_mw_usd + (vfd ? vfd_capex_usd : 0);
-savings    = solarMW * solar_savings_per_mw_usd + (vfd ? vfd_savings_usd : 0);
+capex      = added_solar_mw * solar_capex_per_mw_usd + (vfd ? vfd_capex_usd : 0);
+savings    = added_solar_mw * solar_savings_per_mw_usd + (vfd ? vfd_savings_usd : 0);
 payback    = savings > 0 ? capex / savings : null;
 
 // 4. homes equivalent (annual MWh / 10.5 MWh per US home-year)
 homesEquivalent = round(annualMWh / 10.5);
 ```
 
-> **One conversion rule, no exceptions:** `dailyMWh` is a *daily* figure, so it gets the `× 365`. `annualMWh` is already annual — never multiply it by 365 again (that is the classic 365× bug in this build). `postMWh` above is annual by construction, hence `/ 1e6` with no days.
-
-`solar_savings_per_mw_usd` ≈ **215,000/yr**, `solar_capex_per_mw_usd` ≈ **1,340,000/MW** (≈6.2 yr solar-only payback), VFD ≈ **1.9 M capex / 0.42 M annual savings**. Tune the per-facility unit costs so every recommended bundle lands a **4–8 year** simple payback. `capex_estimate_usd` and `annual_savings_usd` in the JSON **must equal** the sum for the recommended bundle:
-`capex = rec_solar_mw × solar_capex_per_mw + vfd_capex`, `savings = rec_solar_mw × solar_savings_per_mw + vfd_savings`.
-Scale per facility by size: big plants (01, 02, 05) as above; small plants (06, 07, 08) use cheaper VFDs (0.35–0.6 M) and lower savings. Verify with a one-liner before committing:
-
-```bash
-node -e "const d=require('./data/nodes.json');for(const f of d.features){const p=f.properties.upgrade_potential;const c=p.solar_capacity_add_mw*p.solar_capex_per_mw_usd+p.vfd_capex_usd;const s=p.solar_capacity_add_mw*p.solar_savings_per_mw_usd+p.vfd_savings_usd;if(c!==p.capex_estimate_usd||s!==p.annual_savings_usd)console.log('MISMATCH',f.properties.id,c,s)}"
-```
+> **Two traps.** (1) `dailyMWh` is a daily figure and gets the `× 365`; `annualMWh` and `postMWh` are already annual — never multiply them by 365 again. (2) `baseline_draw_mw` is **display only**: it already equals `nameplate × utilization`, so the math must start from `nameplate_draw_mw`. Multiplying baseline by utilization again understates demand by ~31 %.
 
 ### 4.3 Energy Risk Score (`lib/risk.ts`, 0–100, higher = worse)
 
 ```ts
-risk = 40 * fossilShare          // (100 - solar - hydro - wind) / 100
+risk = 40 * fossilShare                                        // (100 - solar - hydro - wind) / 100
      + 25 * clamp((CI - 200) / 200, 0, 1)
-     + 20 * clamp((0.85 - pumpEff) / 0.35, 0, 1)
+     + 20 * clamp((0.85 - motorEff) / 0.35, 0, 1)
      + 15 * clamp((age - 20) / 60, 0, 1)
 // buckets: <35 LOW · 35–59 WATCH · 60–79 HIGH · ≥80 CRITICAL
-// heatwave mode: recompute with the stressed CI, then add a flat +8 stress penalty.
+// heatwave: recompute with the stressed CI, then add a flat +8 stress penalty.
 // Display-only escalation — never mutate the stored properties.
 ```
 
-### 4.4 Tab 1 & 2 content (Dev 2)
+### 4.4 Expected values (use as G1 assertions)
 
-- **Telemetry:** facility name/type/operator, age, capacity vs output bar, current MW, `homesEquivalent`, stacked `EnergyMixChart` (Recharts `BarChart` with `stackId`, five sources, legend = mix legend), mini risk pill, CO₂/yr.
-- **Upgrade Simulator:** two sliders — *Solar array* `0…2×rec` step 0.25 MW, *VFD retrofit* toggle. Live readouts: new draw, grid offset, CO₂ avoided, capex, annual savings, **payback years**. `PaybackChart` = Recharts `AreaChart`: cumulative net position over 15 years (a `-capex` line that crosses zero at payback; the crossing is the story). Sliders update instantly from `lib/simulation.ts` on the client — **do not** round-trip `/api/simulate` for slider drags; that endpoint exists for the memo pipeline and judges' curl.
+| Assertion | Expected |
+| --- | --- |
+| Live regional draw | **147.1 MW** (nameplate 206.4 MW) |
+| Annual energy | **1,288,620 MWh** |
+| Annual CO₂ | **427,371 t** |
+| Load-weighted grid CI | **331.7 gCO₂/kWh** |
+| Homes equivalent | **122,726** |
+| Heatwave draw | **283.2 MW** (×1.93) |
+| Heatwave annual CO₂ | **1,024,695 t** (+139.8 %) |
+| Overloads during heatwave | **3** — `node-oc-01`, `node-la-06`, `node-sd-01` (utilization × 1.35 > 100) |
+
+Risk scores: `oc-01 31.3 · oc-02 67.8 · la-01 49.4 · la-02 46.4 · la-03 67.2 · la-04 53.3 · la-05 72.3 · la-06 23.4 · la-07 64.5 · la-08 41.2 · sd-01 60.4` → **2 LOW · 4 WATCH · 5 HIGH · 0 CRITICAL**. The story is deliberate: Hyperion is the risk leader (72.3) and Carlsbad is the most *utilized* (84.2 %), so the heatwave surfaces different failures than the baseline ranking.
+
+### 4.5 Tab 1 & 2 content (Dev 2)
+
+- **Telemetry:** site name/type/operator, in-service year, utilization bar (live MW vs nameplate), live MW, `homesEquivalent`, stacked `EnergyMixChart` (Recharts `BarChart`, `stackId`, five sources), `RiskPill`, CO₂/yr.
+- **Upgrade Simulator:** two controls — *Solar array* `0…2×rec` step 0.25 MW, *Drive retrofit (VFD)* toggle. Live readouts: post-upgrade draw, grid offset, CO₂ avoided, capex, annual savings, **payback years**. `PaybackChart` = Recharts `AreaChart` of cumulative net position over 15 years: it starts at `−capex` and crosses zero at payback — that crossing is the story. Sliders compute locally from `lib/simulation.ts`; **do not** round-trip `/api/simulate` on drag.
 
 ---
 
 ## 5. API contract (frozen JSON)
 
-All handlers: `export const runtime = "nodejs"` and `export const dynamic = "force-dynamic"` where they read env. Never leak keys or stack traces; return `{ error: { code, message } }` with 4xx/5xx.
+All handlers: `export const runtime = "nodejs"`; `export const dynamic = "force-dynamic"` where they read env. Never leak keys or stack traces; return `{ error: { code, message } }` with 4xx/5xx.
 
 ### 5.1 `GET /api/region/[regionId]` → `RegionPayload` (200) · 404 unknown region
 
 ### 5.2 `POST /api/simulate` — body `SimInput` → `SimResult` (200)
-Validate: `node_id` exists (404), `added_solar_mw` finite 0–100 (422). Defaults: `heatwave_active=false`, `added_solar_mw=0`, `vfd_retrofit=false` — so a bare `{ "node_id": "node-la-05" }` works for a curl demo.
+Validate: `node_id` exists (404), `added_solar_mw` finite 0–100 (422). Defaults: `heatwave_active=false`, `added_solar_mw=0`, `vfd_retrofit=false` — a bare `{ "node_id": "node-la-05" }` must work for the curl demo.
 
 ### 5.3 `POST /api/generate-brief` — body `BriefRequest` → `BriefResponse`
-**Memo shape (the exact contract, so the fallback and the LLM output match):**
+
+**Memo shape (fallback and LLM must emit the same labels):**
 
 ```
-To: <utility_name> — Sustainability & Operations
+To: <operator> — Energy & Sustainability
 From: GridSentinel Audit Desk
-Re: <facility name> (<type>, <age> yr) — energy resilience & decarbonization screen
+Re: <site name> (<load type>, <age> yr) — grid-risk and decarbonization screen
 
-RECOMMENDATION  <the intervention, in one sentence, with MW and % named>
-FINDINGS        <baseline MW, load factor, carbon intensity, pump efficiency vs 0.85 benchmark>
+RECOMMENDATION  <the intervention, one sentence, with MW and % named>
+FINDINGS        <live MW, utilization vs nameplate, carbon intensity, motor efficiency vs the 0.85 benchmark>
 ECONOMICS       <capex, annual savings, simple payback, CO₂ avoided t/yr — mark as screening estimates>
-RISK            <heatwave exposure: projected output vs nameplate, overload status>
-NEXT STEP       <one concrete request: interval data + site verification, funding path>
+RISK            <heatwave exposure: demand vs nameplate, overload status>
+NEXT STEP       <one concrete request: 15-minute interval data + site verification, funding path>
 ```
 
-Prompt: system instruction = utility energy-audit memo voice; user content = compact JSON of the facility + simulation. Ask for **~200 words** in exactly those five labeled sections, plain text (no markdown tables, no bullet glyphs required), grade-level and decision-oriented. `temperature: 0.4`, `maxOutputTokens: 400`. The deterministic fallback must emit the **same five labels** so the UI never needs two renderers.
+Prompt: system instruction = utility energy-audit memo voice; user content = compact JSON of the asset + `SimResult`. Ask for **~200 words** in exactly those five labeled sections, plain text (no markdown tables). `temperature: 0.4`, `maxOutputTokens: 400`.
 
 If no key or the call fails: return `source: "fallback"` with a template-built memo from the same numbers (never an error page). Log only `err.message`.
 
@@ -375,19 +383,19 @@ If no key or the call fails: return `source: "fallback"` with a template-built m
 - No `RESEND_API_KEY` → **200** `{ delivered: false, mode: "simulated", ... }` with a detail telling the operator to add the key. The UI shows a "simulated dispatch" receipt so the demo never dead-ends.
 - Key present → `resend.emails.send({ from: AUDIT_FROM_EMAIL, to, subject, html, text })`; handle `{ error }` as 502 with a sanitized message; `provider_id = data.id`.
 - `from` defaults to `GridSentinel Audits <audits@resend.dev>`; without a verified domain Resend only delivers to the account owner's address — say so in the UI under the recipient field.
-- Only send to addresses matching a sane email regex; reject otherwise (400). No CC/BCC, no arrays, max one recipient.
+- Only send to addresses matching a sane email regex; reject otherwise (400). One recipient, no CC/BCC, no arrays.
 
 ### 5.5 UI-side fallback values (so shell work never blocks)
 
-`ControlBar` KPIs before data: `— MW`, `— g/kWh`, `— t`; `MapCanvas` renders a "loading telemetry" skeleton on the dark base tiles; `AnalyzerDrawer` shows the empty state "Select a facility". Dev 1 must render the shell with `RegionPayload` fixtures of their own if Dev 2 is not merged yet — keep the fixture in `components/shell/__fixtures__.ts` (Dev 1-owned) so it is deleted before ship.
+`ControlBar` KPIs before data: `— MW`, `— g/kWh`, `— t`; `MapCanvas` renders a "loading telemetry" skeleton over the dark base tiles; `AnalyzerDrawer` shows "Select an asset". Dev 1 may keep a local `RegionPayload` fixture in `components/shell/__fixtures__.ts` (Dev 1-owned) until Dev 2 merges — delete it before ship.
 
 ---
 
-## 6. Design system (Dev 4 delivers `design/tokens.css` in the first hour)
+## 6. Design system (`design/tokens.css`, committed)
 
-Tokens as CSS custom properties, consumed in `app/globals.css` via `@import "../../design/tokens.css";` (Dev 1 adds that one line). Tailwind v4 `@theme` maps them to utilities.
+Tokens as CSS custom properties; `[data-stress="true"]` on `<html>` retints the entire app with no component changes.
 
-| Token | Dark default | Heatwave (`[data-stress="true"]`) |
+| Token | Dark default | Heatwave |
 | --- | --- | --- |
 | `--bg` | `#080B12` | `#0C0709` |
 | `--panel` | `#0E1420` | `#150C0E` |
@@ -395,7 +403,7 @@ Tokens as CSS custom properties, consumed in `app/globals.css` via `@import "../
 | `--border` | `#22304A` | `#4A2318` |
 | `--text` | `#EDF2F8` | `#FDF3EC` |
 | `--muted` | `#8FA0B8` | `#C4A79C` |
-| `--accent` | `#38D6C4` (teal) | `#FFB020` (amber) |
+| `--accent` | `#38D6C4` | `#FFB020` |
 | `--accent-2` | `#4C8DFF` | `#FF6B3D` |
 | `--ok` | `#2DD4A7` | `#2DD4A7` |
 | `--warn` | `#E8A33D` | `#FFB020` |
@@ -403,22 +411,24 @@ Tokens as CSS custom properties, consumed in `app/globals.css` via `@import "../
 | `--critical` | `#F04D5E` | `#FF2E4D` |
 | `--grid-line` | `rgba(56,214,196,.10)` | `rgba(255,176,32,.12)` |
 
-Risk ramp is **green → amber → vermilion → crimson** and **always paired with a text label** (`LOW/WATCH/HIGH/CRITICAL`), never color alone. Numerics use `font-variant-numeric: tabular-nums`; values are the dominant element, units smaller and muted.
+Risk ramp is green → amber → vermilion → crimson and **always paired with a text label** (`LOW/WATCH/HIGH/CRITICAL`) via `RiskPill`, never color alone. Numbers use `.num` (tabular figures); the value is dominant, units smaller and muted.
 
-Layout: top bar `height:64px`, main `display:flex`, canvas `flex: 1 1 65%`, drawer `flex: 0 0 35%; min-width: 400px` — collapse under `lg` (drawer becomes a full-height overlay). The drawer is the only scrolling region.
+Layout: top bar `64px`; `display:flex` with canvas `flex: 1 1 65%` and drawer `flex: 0 0 35%; min-width: 400px`; under `lg` the drawer becomes a full-height overlay. The drawer is the only scrolling region.
 
-Anti-goals: no gradients-for-gradients'-sake, no neon glow on body text, no purple SaaS gradients, no animated counters, no icon fonts. Texture allowed: 24 px grid overlay at `--grid-line`, 1 px hairlines, monospace for IDs/timestamps only.
+Anti-goals: gradients for their own sake, neon glow on body text, purple SaaS gradients, animated counters, icon fonts. Texture allowed: the 24 px `--grid-line` grid, 1 px hairlines, monospace for ids/timestamps only.
 
 ### Control bar contents
 
-Left: product mark + region selector (single option `Greater Los Angeles Basin`, a real `<select>` so it looks extensible). Center: three `Stat` KPIs — **TOTAL GRID DRAW (MW)**, **GRID CARBON INTENSITY (gCO₂/kWh)**, **ANNUAL CO₂ (t)**. Right: heatwave toggle switch labeled `SIMULATE 105 °F HEATWAVE`, and an `N OVERLOAD` pill that appears only when any facility overloads. Toggling sets `data-stress` on `<html>` and a `useHeatwave` prop threaded to map + tabs.
+Left: product mark + region selector (one option, `Westminster 100-Mile Radius`). Center: three `Stat` KPIs — **TOTAL GRID DRAW (MW)**, **GRID CARBON INTENSITY (gCO₂/kWh)**, **ANNUAL CO₂ (t)**. Right: heatwave toggle `SIMULATE 105 °F HEATWAVE` and an `N OVERLOAD` pill that appears only when an asset overloads. Toggling sets `data-stress` on `<html>` and threads a `useHeatwave` prop to the map and tabs.
 
 ### Map
 
-- Base: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`, attribution `&copy; OpenStreetMap contributors &copy; CARTO`, `maxZoom 19`, initial center `[34.05, -118.25]`, zoom `9`.
-- Markers: `L.divIcon` dot sized `10 + capacity/60` px, fill = risk color, `2px` ring in `--bg`; selected marker gets an accent halo + `bringToFront`. Include an invisible larger click target (min 28 px).
-- Flow lines: `L.polyline([[lat,lon],…], { className: "flow-line", color: "var(--accent)", weight: 1 + mgd/120, opacity: .55 })`, CSS `@keyframes dash { to { stroke-dashoffset: -24 } }`, `stroke-dasharray: 2 10`, `animation: dash 1.2s linear infinite`. Heatwave: `animation-duration: .5s`, color `--warn`. Compass/legend card (bottom-left): risk ramp + `flow direction` note; heatwave legend note.
-- Avoid SSR: `MapCanvas` does `dynamic(() => import("./MapView"), { ssr: false })`; `import "leaflet/dist/leaflet.css"` inside `MapView`. Call `map.invalidateSize()` on drawer/tab changes.
+- Base: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`, attribution `&copy; OpenStreetMap contributors &copy; CARTO`, `maxZoom 19`, `center [33.7538, -118.0111]`, `zoom 9`, `fitBounds` on the region bounds.
+- **Home marker at Westminster High School** plus a 100-mile radius circle (`L.circle(center, { radius: 160934, weight: 1, dashArray: "4 6" })` in `--accent`, 4 % fill) — this is the single most legible "we scoped our own region" signal on stage.
+- Load markers: `L.divIcon` dot sized `10 + nameplate/8` px, fill = risk color, 2 px ring in `--bg`; selected gets an accent halo + `bringToFront`; include an invisible ≥28 px hit target.
+- Power flows: `L.polyline([[lat,lon],…], { className: "flow-line", weight: 1 + mva/90, opacity: .55 })`. `design/tokens.css` already animates `.flow-line` (`stroke-dasharray: 2 10`, 1.2 s) and retints it to `--flow` under stress (0.5 s) — no JS needed for the recolour.
+- Avoid SSR: `MapCanvas` uses `dynamic(() => import("./MapView"), { ssr: false })`; import `"leaflet/dist/leaflet.css"` inside `MapView`. Call `map.invalidateSize()` when the drawer or tabs change.
+- Legend card (bottom-left): risk ramp + `power flow direction` + the radius scale.
 
 ---
 
@@ -426,27 +436,27 @@ Left: product mark + region selector (single option `Greater Los Angeles Basin`,
 
 | Gate | Who | Exit criteria |
 | --- | --- | --- |
-| **G0 — Contract** | Dev 4 + Dev 2 | `design/tokens.css` + `components/primitives/*` exist; `lib/types.ts` committed. Everyone unblocked. (~45 min) |
-| **G1 — Data spine** | Dev 2 | `data/nodes.json` valid GeoJSON, totals match §4.1, `lib/simulation.ts` + `/api/simulate` return sane numbers for `node-la-05` in heatwave. |
-| **G2 — Shell on screen** | Dev 1 | Dark map + 8 markers + flows + control bar + working 3-tab drawer navigation, KPIs wired to `RegionPayload`. |
-| **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders change payback instantly; no `NaN`/`Infinity` in any readout. |
-| **G4 — Outreach live** | Dev 3 | Memo generates (fallback if no key), dispatch returns a receipt; button shows pending/done/error states. |
-| **G5 — Integration** | All | `npx tsc --noEmit` clean, `npm run build` clean, one browser pass with heatwave on/off, three tabs, one dispatch. |
-| **G6 — Pitch** | Dev 4 | `docs/DEMO.md` rehearsed twice; numbers on screen match `docs/PITCH.md`; one fallback path tested (no API keys). |
+| **G0 — Contract** | G0 commit | ✅ `lib/types.ts`, `design/tokens.css`, `components/primitives/*` committed. Everyone unblocked. |
+| **G1 — Data spine** | Dev 2 | `nodes.json` + `regions.json` valid GeoJSON; §4.4 assertions reproduce; `/api/simulate` returns sane numbers for `node-la-05` under heatwave. |
+| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
+| **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders move payback instantly; no `NaN`/`Infinity` anywhere. |
+| **G4 — Outreach live** | Dev 3 | Memo generates (fallback if no key), dispatch returns a receipt, button has pending/done/error states. |
+| **G5 — Integration** | All | `npx tsc --noEmit` clean, `npm run build` clean, one browser pass heatwave on/off × three tabs × one dispatch. |
+| **G6 — Pitch** | Dev 4 | `docs/DEMO.md` rehearsed twice; screen numbers match `docs/PITCH.md`; fallback path tested with no API keys. |
 
-**Blocking order:** G0 → G1/G2 in parallel → G3 after G2 → G4 after G1 → G5 → G6. Dev 3 can build the entire memo UI against `SimResult` fixtures before G1.
+**Blocking order:** G0 ✅ → G1/G2 in parallel → G3 after G2 → G4 after G1 → G5 → G6.
 
 ---
 
 ## 8. Merge order
 
-1. `feat/dev4-tokens` (tokens + primitives + docs)
-2. `feat/dev2-data-sim` (types, data, lib, APIs, tab 1–2 components)
+1. ✅ `feat/g0-contract` (tokens, primitives, types)
+2. `feat/dev2-data-sim` (data, simulation, APIs, tabs 1–2)
 3. `feat/dev1-shell` (layout, page, globals, map, control bar, drawer)
 4. `feat/dev3-outreach` (AI, email, tab 3)
-5. Integrator applies dev1's one-line tokens import, wires tabs to components, deletes `components/shell/__fixtures__.ts`.
+5. Integrator wires `app/page.tsx` (Dev 1-owned), adds the tokens import to `app/globals.css`, deletes `components/shell/__fixtures__.ts`.
 
-`app/page.tsx` is the single composition point **and is owned by Dev 1 only** — everyone else ships self-contained components that take the props documented in §3.
+`app/page.tsx` is the single composition point and is owned by Dev 1 only — everyone else ships self-contained components taking the props in §3.
 
 ---
 
@@ -458,28 +468,28 @@ cp .env.example .env.local
 
 | Var | Effect if missing |
 | --- | --- |
-| `GEMINI_API_KEY` | Memo falls back to deterministic template, banner reads "template memo" |
+| `GEMINI_API_KEY` | Memo falls back to the deterministic template, banner reads "template memo" |
 | `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
-| `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` receipt |
+| `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` |
 | `AUDIT_FROM_EMAIL` | `GridSentinel Audits <audits@resend.dev>` |
-| `DEMO_INBOX_EMAIL` | Recipient field starts empty with placeholder |
+| `DEMO_INBOX_EMAIL` | Recipient field starts empty with a placeholder |
 
-Secrets stay server-side and out of git. `.env.local` is ignored.
+Secrets stay server-side and out of git.
 
 ---
 
-## 10. Demo script (Dev 4 owns the final version in `docs/DEMO.md`)
+## 10. Demo script (Dev 4 finalises in `docs/DEMO.md`)
 
 | Time | Beat |
 | --- | --- |
-| 0:00–0:20 | "Water is a 4 %-of-US-electricity industry, and its risk is invisible until something fails. This is the region's 8 largest facilities, colored by energy risk." |
-| 0:20–0:55 | Click Hyperion (worst CI, oldest pumps). Telemetry: 21.6 MW, ~341 g/kWh, X homes, 24 % pump inefficiency. |
-| 0:55–1:30 | Hit **105 °F HEATWAVE**. Theme shifts amber, output pushes past nameplate → **OVERLOAD**, draw +45 %. "This is the afternoon a peaker plant gets called." |
-| 1:30–2:15 | Upgrade Simulator: 8 MW solar + VFD → draw falls, CO₂ avoided, payback ~5 yrs, cumulative-cashflow line crosses zero on screen. |
-| 2:15–2:45 | Provider Action → generate memo → **Dispatch**. Email lands in the demo inbox live. |
-| 2:45–3:00 | "Same pipeline, every region. The analysis that took a consultant a quarter now takes a click." |
+| 0:00–0:20 | "This is every major load center within 100 miles of this school — 206 MW of nameplate demand, 147 MW live. Color is grid risk, not age." |
+| 0:20–0:55 | Click Hyperion (risk 72.3, 341 g/kWh, 58 % motor efficiency vs the 85 % benchmark). "High fossil reliance plus worn drives." |
+| 0:55–1:30 | Hit **105 °F HEATWAVE**: draw 147 → 283 MW, carbon +140 %, three assets overload — Carlsbad pins at its 105 % ceiling. |
+| 1:30–2:15 | Upgrade Simulator on Hyperion: 8 MW solar + drive retrofit → 21.6 → 16.4 MW, CO₂ avoided, 5.5-year payback, cashflow line crosses zero. |
+| 2:15–2:45 | Provider Action → generate memo → **Dispatch**; the email lands in the demo inbox live. |
+| 2:45–3:00 | "Same engine, any region. The study that took a consultant a quarter now takes a click." |
 
-Numbers must be checked against the live screen in rehearsal — no reading from memory.
+Rehearse against the live screen; never read numbers from memory.
 
 ---
 
@@ -488,9 +498,9 @@ Numbers must be checked against the live screen in rehearsal — no reading from
 | Risk | Mitigation |
 | --- | --- |
 | No Mapbox token | Leaflet + CARTO (decided) |
-| No Gemini key on demo laptop | Deterministic fallback memo, labeled |
-| Resend domain not verified | `onboarding@resend.dev` to account owner; simulated mode otherwise |
-| Spectator wifi dies | All data static, no external calls on the happy path |
-| Parallel sessions stomping files | Ownership table §0, single composition point |
-| Slider math shows `Infinity` | `payback_years: null` + "n/a" render; Dev 2 unit-checks `savings = 0` |
-| Numbers called out as fake | Footer disclaimer "seeded demo data — facilities real, telemetry modeled" |
+| No Gemini key on the demo laptop | Deterministic fallback memo, visibly labeled |
+| Resend domain not verified | `onboarding@resend.dev` to the account owner; simulated mode otherwise |
+| Venue wifi dies | All data static; no external calls on the happy path |
+| Parallel sessions stomping files | Ownership table §0 + single composition point |
+| Slider math shows `Infinity` | `payback_years: null` + "n/a" render; unit-check `savings = 0` |
+| MW figures challenged as invented | Footer states: sites and coordinates real, electrical loads modeled |
