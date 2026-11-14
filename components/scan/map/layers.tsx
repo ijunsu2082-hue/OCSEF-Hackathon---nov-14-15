@@ -2,15 +2,16 @@
 
 /**
  * Imperative Leaflet layers for the big static datasets (5k+ lines, ~700 plants,
- * substations). Each layer is built ONCE on a dedicated canvas pane; a new scan
- * only re-styles the features whose inside/outside status actually changed.
+ * substations). Each layer is built ONCE on a shared canvas; a new scan only
+ * re-styles the features whose inside/outside status actually changed.
  */
 
 import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import { useMap } from "react-leaflet";
-import { FUEL_COLORS, FUEL_LABELS, lineWeight } from "@/lib/scan";
+import { FUEL_COLORS, FUEL_LABELS, haversineMi, lineWeight } from "@/lib/scan";
 import type { GenEvent, Line, Plant, ScanResult, Substation } from "@/lib/scan";
+import type { ReportTarget } from "@/lib/scan/target";
 
 /** Canvas layers can't read CSS vars, so the map colors live here. */
 export const MAP_COLORS = {
@@ -22,7 +23,6 @@ export const MAP_COLORS = {
 
 export const PANES = {
   casing: { name: "gs-line-casing", z: 405 },
-  lines: { name: "gs-lines", z: 410 },
   points: { name: "gs-points", z: 430 },
 } as const;
 
@@ -33,10 +33,12 @@ function ensurePane(map: L.Map, name: string, z: number) {
 }
 
 /*
- * All interactive point layers share ONE canvas. A canvas element swallows every
- * mouse event over its full extent, so separate per-layer canvases would block
- * hover/click on the layers beneath. Draw order inside the shared canvas is
- * restored with bringToFront: substations → plants → events.
+ * All interactive layers (lines AND points) share ONE canvas. A canvas element
+ * swallows every mouse event over its full extent and only hit-tests its own
+ * layers, so a separate line canvas under the points canvas could never be
+ * clicked. Draw order inside the shared canvas: lines first (in-scan lines on
+ * top of the rest), then bringToFront restores substations → plants → events.
+ * `tolerance` widens the hit area around every feature so thin lines are clickable.
  */
 type PointKind = "substations" | "plants" | "events";
 const POINT_ORDER: PointKind[] = ["substations", "plants", "events"];
@@ -47,7 +49,7 @@ function pointsRenderer(map: L.Map): L.Canvas {
   let r = pointRenderers.get(map);
   if (!r) {
     ensurePane(map, PANES.points.name, PANES.points.z);
-    r = L.canvas({ pane: PANES.points.name, padding: 0.4 });
+    r = L.canvas({ pane: PANES.points.name, padding: 0.4, tolerance: 6 });
     pointRenderers.set(map, r);
   }
   return r;
@@ -90,7 +92,8 @@ function fuelText(k: string): string {
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
-function plantTooltip(p: Plant): string {
+/** Escaped " solar" / ": solar 60%, battery 40%" suffix for "N MW". */
+function plantFuels(p: Plant): string {
   const total = p.nameplate_mw || 0;
   const mix = Object.entries(p.mw_by_source)
     .filter(([, v]) => (v ?? 0) > 0)
@@ -100,16 +103,23 @@ function plantTooltip(p: Plant): string {
       const pct = total > 0 ? Math.round(((v ?? 0) / total) * 100) : 0;
       return { label: fuelText(k), pct };
     });
-  const fuels =
-    mix.length === 0
-      ? ""
-      : mix.length === 1
-        ? ` ${esc(mix[0].label)}`
-        : `: ${mix.map((m) => `${esc(m.label)} ${m.pct}%`).join(", ")}`;
-  const age =
-    p.capacity_weighted_age_years != null
-      ? `Capacity-weighted age ${Math.round(p.capacity_weighted_age_years)} yr`
-      : "Age not reported";
+  return mix.length === 0
+    ? ""
+    : mix.length === 1
+      ? ` ${esc(mix[0].label)}`
+      : `: ${mix.map((m) => `${esc(m.label)} ${m.pct}%`).join(", ")}`;
+}
+
+function plantAge(p: Plant): string {
+  return p.capacity_weighted_age_years != null
+    ? `Capacity-weighted age ${Math.round(p.capacity_weighted_age_years)} yr`
+    : "Age not reported";
+}
+
+function plantTooltip(p: Plant): string {
+  const total = p.nameplate_mw || 0;
+  const fuels = plantFuels(p);
+  const age = plantAge(p);
   return `<div class="gs-tip-title">${esc(p.plant_name)}</div>
 <div class="gs-tip-row">${fmtMw(total)} MW${fuels}</div>
 <div class="gs-tip-row">${age}</div>
@@ -142,11 +152,119 @@ function useLatest<T>(v: T) {
   return r;
 }
 
+/* ---- click popups ------------------------------------------------------------ */
+
+const REPORT_BUTTON = '<button type="button" class="gs-pop-btn" data-gs-report>Report a problem</button>';
+
+function popupHtml(title: string, rows: string[], src: string): string {
+  return `<div class="gs-pop"><div class="gs-pop-title">${title}</div>${rows
+    .map((r) => `<div class="gs-pop-row">${r}</div>`)
+    .join("")}<div class="gs-pop-src">${src}</div>${REPORT_BUTTON}</div>`;
+}
+
+function plantPopup(p: Plant): string {
+  const place = [p.city, p.utility_name].filter(Boolean).map(esc).join(" · ");
+  return popupHtml(
+    esc(p.plant_name),
+    [`${fmtMw(p.nameplate_mw || 0)} MW${plantFuels(p)}`, plantAge(p), ...(place ? [place] : [])],
+    "Power plant. Source: EIA-860 2025",
+  );
+}
+
+function kvText(kv: number | null): string {
+  return kv != null ? `${Math.round(kv)} kV` : "kV unknown";
+}
+
+function substationPopup(s: Substation): string {
+  return popupHtml(
+    esc(s.name ?? "Unnamed substation"),
+    [kvText(s.voltage_kv), s.operator ? `Operator: ${esc(s.operator)}` : "Operator not listed"],
+    "Substation. Source: OpenStreetMap",
+  );
+}
+
+function lineMiles(line: Line): number {
+  let mi = 0;
+  for (let i = 1; i < line.coords.length; i++) {
+    const [aLat, aLon] = line.coords[i - 1];
+    const [bLat, bLon] = line.coords[i];
+    mi += haversineMi(aLat, aLon, bLat, bLon);
+  }
+  return mi;
+}
+
+function linePopup(line: Line, inside: boolean): string {
+  const mi = lineMiles(line);
+  return popupHtml(
+    esc(line.name ?? "Transmission line"),
+    [
+      kvText(line.voltage_kv),
+      line.operator ? `Operator: ${esc(line.operator)}` : "Operator not listed",
+      `${mi >= 10 ? Math.round(mi).toLocaleString("en-US") : mi.toFixed(1)} mi long`,
+      inside ? "Inside your scan area" : "Outside your scan area",
+    ],
+    "Power line. Source: OpenStreetMap",
+  );
+}
+
+const POPUP_OPTIONS: L.PopupOptions = {
+  className: "gs-pop-wrap",
+  minWidth: 220,
+  maxWidth: 280,
+  autoPanPadding: [16, 16],
+};
+
+/** Which asset each popup belongs to; read by <ReportPopups> when a popup opens. */
+const popupTargets = new WeakMap<L.Popup, { target: ReportTarget; layer: L.Layer }>();
+
+function bindReportPopup(layer: L.Layer, html: () => string, target: ReportTarget) {
+  layer.bindPopup(() => html(), POPUP_OPTIONS);
+  const popup = layer.getPopup();
+  if (popup) popupTargets.set(popup, { target, layer });
+}
+
+/** Wires the "Report a problem" button inside every asset popup to `onReport`. */
+export function ReportPopups({ onReport }: { onReport: (t: ReportTarget) => void }) {
+  const map = useMap();
+  const onReportRef = useLatest(onReport);
+
+  useEffect(() => {
+    const onOpen = (e: L.PopupEvent) => {
+      const entry = popupTargets.get(e.popup);
+      if (!entry) return;
+      // The popup repeats the hover tooltip, so hide the tooltip under it.
+      entry.layer.closeTooltip();
+      const btn = e.popup.getElement()?.querySelector<HTMLButtonElement>("[data-gs-report]");
+      btn?.addEventListener("click", () => {
+        onReportRef.current(entry.target);
+        map.closePopup();
+      });
+    };
+    map.on("popupopen", onOpen);
+    return () => {
+      map.off("popupopen", onOpen);
+    };
+  }, [map, onReportRef]);
+
+  return null;
+}
+
 /* ---------------------------------------------------------------------------- */
 
-/** Outside-scan line style; on satellite imagery slate gray disappears, so use white. */
-function outsideLineStyle(onImagery: boolean): L.PathOptions {
-  return onImagery ? { color: MAP_COLORS.white, opacity: 0.6 } : { color: MAP_COLORS.gray, opacity: 0.5 };
+/**
+ * Line style by scan status. On satellite imagery slate gray disappears, so outside
+ * lines are white there (and in-scan lines get a white casing underneath).
+ */
+function lineStyle(kv: number | null, inside: boolean, onImagery: boolean): L.PathOptions {
+  const w = lineWeight(kv);
+  if (onImagery) {
+    return inside
+      ? { color: MAP_COLORS.accent, opacity: 0.9, weight: w }
+      : { color: MAP_COLORS.white, opacity: 0.6, weight: w };
+  }
+  return inside
+    ? { color: MAP_COLORS.accent, opacity: 1, weight: w + 1 }
+    : { color: MAP_COLORS.gray, opacity: 0.9, weight: w + 0.5 };
 }
 
 export function TransmissionLayer({
@@ -168,51 +286,53 @@ export function TransmissionLayer({
 
   const insideIds = useMemo(() => new Set((result?.lines ?? []).map((l) => l.osm_id)), [result]);
 
-  // Build once per dataset.
+  // Build once per dataset, on the shared canvas (see pointsRenderer).
   useEffect(() => {
-    ensurePane(map, PANES.lines.name, PANES.lines.z);
-    const renderer = L.canvas({ pane: PANES.lines.name, padding: 0.4 });
+    const renderer = pointsRenderer(map);
     const group = L.layerGroup();
     const entries = lines.map((line) => {
       const layer = L.polyline(line.coords, {
         renderer,
-        pane: PANES.lines.name,
-        interactive: false,
-        color: MAP_COLORS.gray,
-        opacity: 0.5,
-        weight: lineWeight(line.voltage_kv),
+        pane: PANES.points.name,
+        interactive: true,
+        bubblingMouseEvents: false,
+        ...lineStyle(line.voltage_kv, false, false),
         lineCap: "round",
         lineJoin: "round",
         smoothFactor: 1.2,
       });
+      const entry = { line, layer, inside: false };
+      bindReportPopup(layer, () => linePopup(line, entry.inside), { kind: "line", line });
       group.addLayer(layer);
-      return { line, layer, inside: false };
+      return entry;
     });
     entriesRef.current = entries;
     groupRef.current = group;
     imageryRef.current = false;
     return () => {
       group.remove();
-      renderer.remove();
       groupRef.current = null;
       entriesRef.current = [];
     };
   }, [map, lines]);
 
-  // Re-style only what changed (or every outside line when the basemap kind flips).
+  // Re-style only what changed (or every line when the basemap kind flips).
   useEffect(() => {
     const full = imageryRef.current !== onImagery;
     imageryRef.current = onImagery;
-    const outside = outsideLineStyle(onImagery);
     const newlyInside: L.Polyline[] = [];
     for (const e of entriesRef.current) {
       const inside = insideIds.has(e.line.osm_id);
-      if (inside === e.inside && !(full && !inside)) continue;
+      if (inside === e.inside && !full) continue;
       e.inside = inside;
-      e.layer.setStyle(inside ? { color: MAP_COLORS.accent, opacity: 0.9 } : outside);
+      e.layer.setStyle(lineStyle(e.line.voltage_kv, inside, onImagery));
       if (inside) newlyInside.push(e.layer);
     }
-    if (groupRef.current && map.hasLayer(groupRef.current)) newlyInside.forEach((l) => l.bringToFront());
+    if (groupRef.current && map.hasLayer(groupRef.current) && newlyInside.length > 0) {
+      newlyInside.forEach((l) => l.bringToFront());
+      // Lines share the points canvas: keep every point above every line.
+      restackPoints(map);
+    }
   }, [insideIds, onImagery, map, lines]);
 
   // White casing under in-scan lines, satellite only (drawn on a pane just below the lines).
@@ -250,6 +370,7 @@ export function TransmissionLayer({
     if (visible && !map.hasLayer(g)) {
       g.addTo(map);
       for (const e of entriesRef.current) if (e.inside) e.layer.bringToFront();
+      restackPoints(map);
     }
     if (!visible && map.hasLayer(g)) g.remove();
   }, [visible, map, lines]);
@@ -284,8 +405,10 @@ export function SubstationLayer({
         stroke: false,
         fillColor: MAP_COLORS.gray,
         fillOpacity: 0.6,
+        bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => substationTooltip(s), { direction: "top", offset: [0, -4] });
+      bindReportPopup(layer, () => substationPopup(s), { kind: "substation", substation: s });
       group.addLayer(layer);
       return { s, layer, inside: false };
     });
@@ -331,17 +454,14 @@ export function PlantLayer({
   plants,
   result,
   visible,
-  onFocus,
 }: {
   plants: Plant[];
   result: ScanResult | null;
   visible: boolean;
-  onFocus: (lat: number, lon: number) => void;
 }) {
   const map = useMap();
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ p: Plant; layer: L.CircleMarker; inside: boolean }[]>([]);
-  const onFocusRef = useLatest(onFocus);
   const insideIds = useMemo(() => new Set((result?.plants ?? []).map((p) => p.plant_code)), [result]);
 
   useEffect(() => {
@@ -362,7 +482,7 @@ export function PlantLayer({
         bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => plantTooltip(p), { direction: "top", offset: [0, -6] });
-      layer.on("click", () => onFocusRef.current(p.lat, p.lon));
+      bindReportPopup(layer, () => plantPopup(p), { kind: "plant", plant: p });
       group.addLayer(layer);
       return { p, layer, inside: false };
     });
@@ -374,7 +494,7 @@ export function PlantLayer({
       groupRef.current = null;
       entriesRef.current = [];
     };
-  }, [map, plants, onFocusRef]);
+  }, [map, plants]);
 
   useEffect(() => {
     for (const e of entriesRef.current) {

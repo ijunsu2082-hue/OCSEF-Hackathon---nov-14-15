@@ -53,8 +53,8 @@ export const BASEMAPS: Basemap[] = [
   },
 ];
 
-export const DEFAULT_BASEMAP: BasemapId = "map";
-const STORAGE_KEY = "gs-basemap";
+export const DEFAULT_BASEMAP: BasemapId = "simple";
+const STORAGE_KEY = "gs-basemap-v2";
 
 export function basemapById(id: BasemapId): Basemap {
   return BASEMAPS.find((b) => b.id === id) ?? BASEMAPS[0];

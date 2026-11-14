@@ -11,6 +11,7 @@ import {
   scanArea,
 } from "@/lib/scan";
 import type { DailyRating, GridData, LineRatingNow, NicheCase, ScanArea } from "@/lib/scan";
+import type { NewsPin, PanelTab, ReportTarget } from "@/lib/scan/target";
 import ScanMap, { type MapFocus } from "@/components/scan/map";
 import { TopBar } from "@/components/scan/shell/TopBar";
 import ScanPanel from "@/components/scan/panel/ScanPanel";
@@ -18,6 +19,7 @@ import { cx } from "@/components/primitives";
 
 const DEFAULT_AREA: ScanArea = { lat: CENTER.lat, lon: CENTER.lon, radius_mi: 5 };
 const LIVE_DEBOUNCE_MS = 300;
+const EMPTY_CASES: NicheCase[] = [];
 
 export default function Page() {
   const [data, setData] = useState<GridData | null>(null);
@@ -27,7 +29,9 @@ export default function Page() {
   const [live, setLive] = useState<LineRatingNow | null>(null);
   const [liveLoading, setLiveLoading] = useState(true);
   const [daily, setDaily] = useState<DailyRating[] | null>(null);
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [tab, setTab] = useState<PanelTab>("area");
+  const [reportTarget, setReportTarget] = useState<ReportTarget>({ kind: "area" });
+  const [newsPin, setNewsPin] = useState<NewsPin | null>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false); // only matters below lg
   const nonce = useRef(0);
@@ -116,13 +120,21 @@ export default function Page() {
     setArea((a) => ({ ...a, radius_mi }));
   }, []);
 
-  const onSelectCase = useCallback(
-    (c: NicheCase) => {
-      setSelectedCaseId(c.id);
-      flyTo(c.location.lat, c.location.lon, 12);
-    },
-    [flyTo],
-  );
+  const onReport = useCallback((t: ReportTarget) => {
+    setReportTarget(t);
+    setTab("report");
+    setDrawerOpen(true);
+  }, []);
+
+  const onReportArea = useCallback(() => onReport({ kind: "area" }), [onReport]);
+
+  const onClearTarget = useCallback(() => setReportTarget({ kind: "area" }), []);
+
+  const onShowOnMap = useCallback((c: NicheCase) => {
+    nonce.current += 1;
+    setNewsPin({ lat: c.location.lat, lon: c.location.lon, nonce: nonce.current });
+    setDrawerOpen(false);
+  }, []);
 
   const onFocus = useCallback((lat: number, lon: number) => flyTo(lat, lon), [flyTo]);
 
@@ -146,11 +158,11 @@ export default function Page() {
               data={data}
               area={area}
               result={result}
-              selectedCaseId={selectedCaseId}
               focus={focus}
+              newsPin={newsPin}
               onScan={onScan}
               onFocus={onFocus}
-              onSelectCase={onSelectCase}
+              onReport={onReport}
             />
           ) : (
             <BootScreen error={loadError} />
@@ -176,9 +188,14 @@ export default function Page() {
             liveLoading={liveLoading}
             heatwave={heatwave}
             daily={daily}
-            selectedCaseId={selectedCaseId}
-            onSelectCase={onSelectCase}
             onFocus={onFocus}
+            tab={tab}
+            onTab={setTab}
+            cases={data?.cases ?? EMPTY_CASES}
+            reportTarget={reportTarget}
+            onClearTarget={onClearTarget}
+            onShowOnMap={onShowOnMap}
+            onReportArea={onReportArea}
           />
         </aside>
 

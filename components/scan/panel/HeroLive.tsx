@@ -147,7 +147,11 @@ export function HeroLive({
   const hotRatio = site.hottest_hour_dlr_vs_static;
 
   return (
-    <Section title="Line capacity right now" subtitle="The Wire That Breathes">
+    <Section
+      title="Line capacity right now"
+      subtitle="The Wire That Breathes"
+      sources={["openmeteo_live", "era5_2024", "ieee738"]}
+    >
       <LiveBlock live={live} liveLoading={liveLoading} />
 
       <div className="mt-6">

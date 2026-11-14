@@ -75,7 +75,7 @@ async function fallbackWeather(lat: number, lon: number, data: GridData): Promis
 
 export async function fetchWeatherNow(lat: number, lon: number, data: GridData): Promise<WeatherNow> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 4000);
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const url =
       "https://api.open-meteo.com/v1/forecast?latitude=" + lat.toFixed(4) + "&longitude=" + lon.toFixed(4) +

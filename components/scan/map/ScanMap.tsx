@@ -6,9 +6,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { Circle, MapContainer, Marker, Pane, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { CENTER, COVERAGE_MI, haversineMi } from "@/lib/scan";
-import type { NicheCase, ScanArea } from "@/lib/scan";
-import { EventLayer, MAP_COLORS, PlantLayer, SubstationLayer, TransmissionLayer, esc } from "./layers";
+import type { ScanArea } from "@/lib/scan";
+import type { NewsPin } from "@/lib/scan/target";
+import {
+  EventLayer,
+  MAP_COLORS,
+  PlantLayer,
+  ReportPopups,
+  SubstationLayer,
+  TransmissionLayer,
+  esc,
+} from "./layers";
 import { LayerPicker, type LayerVisibility } from "./LayerPicker";
+import { MapKey } from "./MapKey";
 import { basemapById, loadBasemap, saveBasemap, type BasemapId } from "./basemaps";
 import type { MapFocus, ScanMapProps } from "./types";
 
@@ -16,12 +26,14 @@ const COVERAGE_M = 160934;
 const INITIAL_ZOOM = 10;
 
 const MI_PER_DEG_LAT = 69.0;
+/** Same Earth radius Leaflet's Circle uses, so the ring label sits exactly on the ring. */
+const COVERAGE_DLAT = (COVERAGE_M / 6371000) * (180 / Math.PI);
+const NEWS_PIN_ZOOM = 12;
 
 const DEFAULT_LAYERS: LayerVisibility = {
   plants: true,
   transmission: true,
   substations: true,
-  cases: true,
   events: false,
 };
 
@@ -103,64 +115,38 @@ const homeIcon = L.divIcon({
   html: '<div class="gs-home"></div>',
 });
 
-function caseIcon(selected: boolean) {
-  const size = selected ? 14 : 12;
-  return L.divIcon({
-    className: "gs-icon",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<div class="gs-case${selected ? " is-selected" : ""}"></div>`,
-  });
-}
+const ringLabelIcon = L.divIcon({
+  className: "gs-icon",
+  iconSize: [0, 0],
+  iconAnchor: [0, 0],
+  html: '<span class="gs-scan-label gs-ring-label">100-mile study area</span>',
+});
 
-function CaseMarkers({
-  cases,
-  selectedCaseId,
-  onSelectCase,
-}: {
-  cases: NicheCase[];
-  selectedCaseId: string | null;
-  onSelectCase: (c: NicheCase) => void;
-}) {
-  const icons = useMemo(() => ({ base: caseIcon(false), sel: caseIcon(true) }), []);
-  return (
-    <>
-      {cases.map((c) => {
-        const selected = c.id === selectedCaseId;
-        const icon = selected ? icons.sel : icons.base;
-        return (
-          <Marker
-            key={c.id}
-            position={[c.location.lat, c.location.lon]}
-            icon={icon}
-            zIndexOffset={selected ? 1000 : 0}
-            eventHandlers={{ click: () => onSelectCase(c) }}
-          >
-            <Tooltip direction="top" offset={[0, -8]} className="gs-tip-wrap">
-              <div className="gs-tip-title">{c.title}</div>
-              <div className="gs-tip-row">{c.one_liner}</div>
-              <div className="gs-tip-src">Niche case. {clip(c.location.name, 64)}</div>
-            </Tooltip>
-          </Marker>
-        );
-      })}
-    </>
-  );
+const newsPinIcon = L.divIcon({
+  className: "gs-icon",
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+  html: '<div class="gs-news-pin"></div>',
+});
+
+/** Flies to a story's spot from the Local news tab (nonce re-triggers the same story). */
+function NewsPinFly({ pin }: { pin: NewsPin | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!pin) return;
+    map.flyTo([pin.lat, pin.lon], NEWS_PIN_ZOOM, { duration: 0.8 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin?.nonce, map]);
+  return null;
 }
 
 /* ---- main ----------------------------------------------------------------- */
 
-export default function ScanMap({
-  data,
-  area,
-  result,
-  selectedCaseId,
-  focus,
-  onScan,
-  onFocus,
-  onSelectCase,
-}: ScanMapProps) {
+export default function ScanMap({ data, area, result, focus, newsPin, onScan, onReport }: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
+  // The news pin hides on the next map click; a new pin (new nonce) shows again.
+  const [clearedPinNonce, setClearedPinNonce] = useState<number | null>(null);
+  const shownPin = newsPin && newsPin.nonce !== clearedPinNonce ? newsPin : null;
   const [toast, setToast] = useState<string | null>(null);
   const [basemapId, setBasemapId] = useState<BasemapId>(loadBasemap);
   const basemap = basemapById(basemapId);
@@ -175,6 +161,7 @@ export default function ScanMap({
   }, []);
 
   const handleClick = (lat: number, lon: number) => {
+    if (newsPin) setClearedPinNonce(newsPin.nonce);
     if (haversineMi(lat, lon, CENTER.lat, CENTER.lon) > COVERAGE_MI) {
       setToast("This point is outside the 100-mile coverage area, so data may be incomplete.");
       if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -215,6 +202,8 @@ export default function ScanMap({
         <AutoResize />
         <ClickToScan onClick={handleClick} />
         <FlyTo focus={focus} />
+        <NewsPinFly pin={newsPin} />
+        <ReportPopups onReport={onReport} />
 
         {/* Coverage ring — 100 mi around Westminster HS */}
         <Circle
@@ -222,12 +211,17 @@ export default function ScanMap({
           radius={COVERAGE_M}
           interactive={false}
           pathOptions={{
-            color: MAP_COLORS.accent,
-            weight: 1,
-            opacity: 0.8,
-            dashArray: "4 6",
+            color: MAP_COLORS.accentStrong,
+            weight: 2,
+            opacity: 0.75,
             fill: false,
           }}
+        />
+        <Marker
+          position={[CENTER.lat + COVERAGE_DLAT, CENTER.lon]}
+          icon={ringLabelIcon}
+          interactive={false}
+          keyboard={false}
         />
 
         {/* Active scan circle (drawn under the data panes) */}
@@ -251,7 +245,7 @@ export default function ScanMap({
           onImagery={basemap.id === "satellite"}
         />
         <SubstationLayer substations={data.substations} result={result} visible={layers.substations} />
-        <PlantLayer plants={data.plants} result={result} visible={layers.plants} onFocus={onFocus} />
+        <PlantLayer plants={data.plants} result={result} visible={layers.plants} />
         <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
 
         <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
@@ -261,8 +255,15 @@ export default function ScanMap({
           </Tooltip>
         </Marker>
 
-        {layers.cases && (
-          <CaseMarkers cases={data.cases} selectedCaseId={selectedCaseId} onSelectCase={onSelectCase} />
+        {shownPin && (
+          <Marker
+            key={shownPin.nonce}
+            position={[shownPin.lat, shownPin.lon]}
+            icon={newsPinIcon}
+            interactive={false}
+            keyboard={false}
+            zIndexOffset={1000}
+          />
         )}
 
         <ScanLabel area={scanArea} text={label} />
@@ -301,15 +302,12 @@ export default function ScanMap({
       </div>
 
       <LayerPicker basemap={basemap.id} onBasemap={onBasemap} layers={layers} onLayers={setLayers} />
+      <MapKey />
     </div>
   );
 }
 
 const EMPTY: never[] = [];
-
-function clip(s: string, n: number) {
-  return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
-}
 
 function formatRadius(r: number) {
   return Number.isInteger(r) ? String(r) : r.toFixed(1);

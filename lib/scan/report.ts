@@ -12,7 +12,7 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   L.push("");
   L.push(`**Area:** ${r.area.lat.toFixed(4)}, ${r.area.lon.toFixed(4)} · radius ${r.area.radius_mi} mi${r.inside_coverage ? "" : " · OUTSIDE the 100-mi coverage area (data may be incomplete)"}`);
   L.push("");
-  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level})`);
+  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level}) (GridSentinel's own index, not an official rating)`);
   for (const f of r.risk.factors) L.push(`- ${f.label}: ${n0(f.score)} (weight ${Math.round(f.weight * 100)}%) — ${f.detail}`);
   L.push("");
   L.push("## Sources: renewable vs current");
@@ -55,5 +55,6 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   L.push("");
   L.push("---");
   L.push("Sources: EIA-860 2025 (plants, retired & proposed generators); OpenStreetMap contributors, ODbL (lines, substations); Open-Meteo (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings.");
+  L.push("Plants: EIA-860 final 2025 (released Sep 2026). Lines/substations: OpenStreetMap. Weather: Open-Meteo live + 2024 reanalysis. Line ratings modeled with IEEE 738 for one typical conductor.");
   return L.join("\n");
 }

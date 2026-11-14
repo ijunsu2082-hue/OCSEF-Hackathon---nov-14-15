@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CATEGORY_COLORS, CATEGORY_KEYS, CATEGORY_LABELS } from "@/lib/scan/colors";
 import { BASEMAPS, basemapById, type BasemapId } from "./basemaps";
 
 export interface LayerVisibility {
   plants: boolean;
   transmission: boolean;
   substations: boolean;
-  cases: boolean;
   events: boolean;
 }
 
@@ -16,7 +14,6 @@ const TOGGLES: { key: keyof LayerVisibility; label: string }[] = [
   { key: "plants", label: "Power plants" },
   { key: "transmission", label: "Transmission lines" },
   { key: "substations", label: "Substations" },
-  { key: "cases", label: "Niche cases" },
   { key: "events", label: "Retired & proposed" },
 ];
 
@@ -103,23 +100,6 @@ export function LayerPicker({
                 {t.label}
               </label>
             ))}
-          </div>
-
-          <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] text-[#556070]">
-            {CATEGORY_KEYS.map((k) => (
-              <span key={k} className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: CATEGORY_COLORS[k] }} />
-                {CATEGORY_LABELS[k]}
-              </span>
-            ))}
-            <span className="flex items-center gap-2">
-              <span className="h-[2px] w-2.5 shrink-0 bg-[#0ea5e9]" />
-              Line in scan area
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="box-border h-2.5 w-2.5 shrink-0 rounded-full border-2 border-[#0284c7] bg-white" />
-              Niche case
-            </span>
           </div>
         </div>
       )}
