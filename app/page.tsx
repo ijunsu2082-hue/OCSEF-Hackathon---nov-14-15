@@ -94,16 +94,6 @@ export default function Page() {
     };
   }, [siteKey]);
 
-  // ---- heatwave retheme -------------------------------------------------------
-  useEffect(() => {
-    const root = document.documentElement;
-    if (heatwave) root.dataset.stress = "true";
-    else delete root.dataset.stress;
-    return () => {
-      delete root.dataset.stress;
-    };
-  }, [heatwave]);
-
   // ---- handlers ---------------------------------------------------------------
   const flyTo = useCallback((lat: number, lon: number, zoom?: number) => {
     nonce.current += 1;
@@ -138,7 +128,7 @@ export default function Page() {
 
   // ---- render -----------------------------------------------------------------
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-bg text-ink">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-ink">
       <TopBar
         data={data}
         area={area}
@@ -156,7 +146,6 @@ export default function Page() {
               data={data}
               area={area}
               result={result}
-              heatwave={heatwave}
               selectedCaseId={selectedCaseId}
               focus={focus}
               onScan={onScan}
@@ -172,9 +161,9 @@ export default function Page() {
         <aside
           aria-label="Scan results"
           className={cx(
-            "gs-scroll overflow-y-auto border-line bg-panel",
+            "gs-scroll overflow-y-auto border-line bg-white",
             "lg:static lg:block lg:h-auto lg:w-[35%] lg:min-w-[400px] lg:translate-y-0 lg:border-l lg:border-t-0 lg:shadow-none",
-            "absolute inset-x-0 bottom-0 h-[62%] border-t shadow-[var(--shadow-pop)] transition-transform duration-200 ease-out",
+            "absolute inset-x-0 bottom-0 h-[62%] border-t transition-transform duration-200 ease-out",
             "sm:left-auto sm:top-0 sm:h-auto sm:w-[420px] sm:max-w-full sm:border-l sm:border-t-0",
             drawerOpen ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-x-full sm:translate-y-0",
             "lg:translate-x-0",
@@ -199,7 +188,7 @@ export default function Page() {
           onClick={() => setDrawerOpen((o) => !o)}
           aria-expanded={drawerOpen}
           className={cx(
-            "absolute right-3 flex h-8 items-center gap-2 rounded-[var(--radius-sm)] border border-line-strong bg-panel-raised px-3 font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink shadow-[var(--shadow-pop)] lg:hidden",
+            "absolute right-3 flex h-8 items-center gap-2 rounded-[6px] border border-line bg-white px-3 text-[13px] font-medium text-ink shadow-[var(--shadow-pop)] lg:hidden",
             // sit just outside the open sheet so it never covers panel content
             drawerOpen ? "bottom-[calc(62%+12px)] sm:bottom-8 sm:right-[432px]" : "bottom-8",
           )}
@@ -207,9 +196,7 @@ export default function Page() {
         >
           {drawerOpen ? "Hide results" : "Scan results"}
           {result && !drawerOpen && (
-            <span className="num rounded-full bg-[var(--accent-soft)] px-1.5 text-accent">
-              {result.totals.plant_count}
-            </span>
+            <span className="num text-[var(--text-dim)]">{result.totals.plant_count}</span>
           )}
         </button>
       </main>
@@ -219,26 +206,21 @@ export default function Page() {
 
 function BootScreen({ error }: { error: string | null }) {
   return (
-    <div className="grid-texture flex h-full w-full flex-col items-center justify-center gap-4 bg-bg">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#f6f8fa]">
       {error ? (
         <>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-critical">Grid layers failed to load</p>
-          <p className="max-w-md text-center text-[12px] text-ink-dim">{error}</p>
+          <p className="text-[14px] font-medium text-critical">Map data failed to load.</p>
+          <p className="max-w-md text-center text-[13px] text-ink-dim">{error}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="h-8 rounded-[var(--radius-sm)] border border-line-strong bg-panel px-3 text-[12px] text-ink"
+            className="h-8 rounded-[6px] border border-line bg-white px-3 text-[13px] text-ink"
           >
             Retry
           </button>
         </>
       ) : (
-        <>
-          <div className="gs-boot-radar" aria-hidden />
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-            Loading plants · transmission lines · substations
-          </p>
-        </>
+        <p className="text-[14px] text-ink-dim">Loading…</p>
       )}
     </div>
   );

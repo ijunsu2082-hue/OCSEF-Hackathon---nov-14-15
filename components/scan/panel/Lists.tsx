@@ -1,68 +1,59 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
-import { cx } from "@/components/primitives";
-import { FUEL_COLORS, FUEL_LABELS, RISK_COLORS, haversineMi } from "@/lib/scan";
-import type { FuelKey, GenEvent, NicheCase, RiskFactor, RiskLevel, ScanResult } from "@/lib/scan";
+import { haversineMi } from "@/lib/scan";
+import { CATEGORY_COLORS, FUEL_CATEGORY, FUEL_LABELS, UI } from "@/lib/scan/colors";
+import type { FuelKey, GenEvent, NicheCase, RiskFactor, ScanResult } from "@/lib/scan";
 import { DASH, fmtNum, fmtPowerText, isNum } from "./format";
-import { SrcTag } from "./ui";
+import { Caption, Section } from "./ui";
 
-const fuelColor = (k: FuelKey) => FUEL_COLORS[k] ?? "#94a3b8";
 const fuelLabel = (k: FuelKey) => FUEL_LABELS[k] ?? String(k).replace(/_/g, " ");
+const fuelColor = (k: FuelKey) => CATEGORY_COLORS[FUEL_CATEGORY[k] ?? "other"] ?? CATEGORY_COLORS.other;
 
-const BAND_FALLBACK: Record<RiskLevel, string> = {
-  LOW: "var(--ok)",
-  WATCH: "var(--warn)",
-  HIGH: "var(--high)",
-  CRITICAL: "var(--critical)",
-};
-
-/** Factor score -> band. Bands match the 0-100 risk scale quartiles. */
-function band(score: number): RiskLevel {
-  if (score >= 75) return "CRITICAL";
-  if (score >= 50) return "HIGH";
-  if (score >= 25) return "WATCH";
-  return "LOW";
+function fmtMw(mw: number | null | undefined): string {
+  return isNum(mw) ? fmtNum(mw, Math.abs(mw) < 100 && mw !== 0 ? 1 : 0) : DASH;
 }
 
 /* ---------------------------------------------------------------- Risk */
 
 export function RiskBreakdown({ factors }: { factors: RiskFactor[] }) {
-  if (factors.length === 0) return <p className="text-[11px] text-muted">No risk factors computed.</p>;
   return (
-    <ul className="flex flex-col gap-2.5">
-      {factors.map((f) => {
-        const score = isNum(f.score) ? Math.max(0, Math.min(100, f.score)) : null;
-        const lvl = band(score ?? 0);
-        const color = RISK_COLORS[lvl] ?? BAND_FALLBACK[lvl];
-        return (
-          <li key={f.key} className="flex flex-col gap-1">
-            <div className="flex items-baseline justify-between gap-2 text-[11.5px]">
-              <span className="truncate font-medium text-ink">{f.label}</span>
-              <span className="flex shrink-0 items-baseline gap-2">
-                <span className="num text-[10px] text-muted">
-                  weight {isNum(f.weight) ? `${fmtNum(f.weight * 100, 0)}%` : DASH}
-                </span>
-                <span className="num w-7 text-right font-semibold" style={{ color }}>
-                  {score === null ? DASH : fmtNum(score, 0)}
-                </span>
-              </span>
-            </div>
-            <div
-              className="h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated"
-              role="meter"
-              aria-label={f.label}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={score ?? 0}
-            >
-              <div className="h-full rounded-full" style={{ width: `${score ?? 0}%`, background: color }} />
-            </div>
-            <p className="text-[10.5px] leading-snug text-muted">{f.detail}</p>
-          </li>
-        );
-      })}
-    </ul>
+    <Section title="Risk factors">
+      {factors.length === 0 ? (
+        <p className="text-[14px] text-[#556070]">No risk factors computed.</p>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {factors.map((f) => {
+            const score = isNum(f.score) ? Math.max(0, Math.min(100, f.score)) : null;
+            const color = score !== null && score >= 75 ? UI.danger : UI.accent;
+            return (
+              <li key={f.key}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 text-[14px] text-[#1d2733]">{f.label}</span>
+                  <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#1d2733]">
+                    {score === null ? DASH : fmtNum(score, 0)}
+                  </span>
+                </div>
+                <div
+                  className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-[#eef1f4]"
+                  role="meter"
+                  aria-label={f.label}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={score ?? 0}
+                >
+                  <div className="h-full" style={{ width: `${score ?? 0}%`, background: color }} />
+                </div>
+                <p className="mt-1.5 text-[12px] leading-snug text-[#6b7583]">{f.detail}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <Caption className="mt-4">
+        Each factor is scored 0 to 100. The area score is their weighted average.
+      </Caption>
+    </Section>
   );
 }
 
@@ -72,7 +63,7 @@ function isUrl(s: string): boolean {
   return /^https?:\/\//i.test(s);
 }
 
-function CaseCard({
+function CaseRow({
   c,
   distanceMi,
   selected,
@@ -89,6 +80,8 @@ function CaseCard({
       onSelect();
     }
   };
+  const link = c.stats.map((s) => s.source.trim()).find(isUrl);
+  const category = c.category ? c.category.charAt(0).toUpperCase() + c.category.slice(1) : "";
   return (
     <div
       role="button"
@@ -96,52 +89,27 @@ function CaseCard({
       aria-pressed={selected}
       onClick={onSelect}
       onKeyDown={onKey}
-      className={cx(
-        "flex cursor-pointer flex-col gap-2 rounded-[var(--radius-sm)] border p-3 text-left transition-colors outline-none focus-visible:border-accent",
-        selected ? "border-accent bg-panel-raised" : "border-line bg-panel hover:border-line-strong hover:bg-panel-raised",
-      )}
-      style={selected ? { boxShadow: "inset 3px 0 0 var(--accent)" } : undefined}
+      className={`-mx-3 cursor-pointer border-l-2 px-3 py-3 outline-none transition-colors focus-visible:bg-[#f6f8fa] ${
+        selected ? "border-[#0ea5e9] bg-[#f6f8fa]" : "border-transparent hover:bg-[#f6f8fa]"
+      }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="pill pill-neutral">{c.category}</span>
-        <span className="num text-[10.5px] text-muted">{isNum(distanceMi) ? `${fmtNum(distanceMi, 1)} mi` : DASH} from center</span>
-      </div>
-      <h4 className="text-[13px] font-semibold leading-snug text-ink">{c.title}</h4>
-      {c.shock_line && (
-        <p className="border-l-2 border-line-strong pl-2 text-[11.5px] italic leading-snug text-ink-dim">
-          “{c.shock_line}”
-        </p>
-      )}
-      {c.stats.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
-          {c.stats.slice(0, 3).map((s, i) => (
-            <li key={i} className="flex flex-col gap-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className={cx("min-w-0 text-[10.5px] leading-snug", s.value ? "text-muted" : "text-ink-dim")}>{s.label}</span>
-                {s.value && <span className="num shrink-0 text-[12px] font-semibold text-ink">{s.value}</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                <SrcTag kind={s.kind === "measured" ? "MEASURED" : "MODELED"} />
-                {isUrl(s.source) ? (
-                  <a
-                    href={s.source}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="truncate text-[10px] text-accent underline decoration-dotted underline-offset-2 hover:decoration-solid"
-                    title={s.source}
-                  >
-                    source
-                  </a>
-                ) : (
-                  <span className="truncate text-[10px] text-muted" title={s.source}>
-                    source: {s.source}
-                  </span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+      <h4 className="text-[14px] font-semibold leading-snug text-[#1d2733]">{c.title}</h4>
+      <p className="mt-0.5 text-[12px] tabular-nums text-[#6b7583]">
+        {category}
+        {category && " · "}
+        {isNum(distanceMi) ? `${fmtNum(distanceMi, 1)} mi away` : DASH}
+      </p>
+      {c.shock_line && <p className="mt-1.5 text-[14px] leading-snug text-[#556070]">{c.shock_line}</p>}
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1.5 inline-block text-[13px] text-[#0284c7] hover:underline"
+        >
+          Sources
+        </a>
       )}
     </div>
   );
@@ -157,96 +125,128 @@ export function CasesList({
   onSelectCase: (c: NicheCase) => void;
 }) {
   const { lat, lon } = result.area;
-  if (result.cases.length === 0) {
-    return (
-      <p className="rounded-[var(--radius-sm)] border border-dashed border-line px-3 py-4 text-center text-[11.5px] text-muted">
-        No documented niche cases in this circle — try Downtown LA or San Onofre
-      </p>
-    );
-  }
   return (
-    <div className="flex flex-col gap-2">
-      {result.cases.map((c) => (
-        <CaseCard
-          key={c.id}
-          c={c}
-          distanceMi={haversineMi(lat, lon, c.location.lat, c.location.lon)}
-          selected={c.id === selectedCaseId}
-          onSelect={() => onSelectCase(c)}
-        />
-      ))}
-    </div>
+    <Section title="Niche cases">
+      {result.cases.length === 0 ? (
+        <p className="text-[14px] text-[#556070]">No documented cases in this area. Try Downtown LA or San Onofre.</p>
+      ) : (
+        <div className="-my-3 flex flex-col">
+          {result.cases.map((c) => (
+            <CaseRow
+              key={c.id}
+              c={c}
+              distanceMi={haversineMi(lat, lon, c.location.lat, c.location.lon)}
+              selected={c.id === selectedCaseId}
+              onSelect={() => onSelectCase(c)}
+            />
+          ))}
+        </div>
+      )}
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------- Plants */
 
+const PLANT_COLS = "grid grid-cols-[minmax(0,1fr)_96px_56px_44px] items-baseline gap-x-3";
+
 export function TopPlants({ result, onFocus }: { result: ScanResult; onFocus: (lat: number, lon: number) => void }) {
   const top = result.plants.slice(0, 8);
-  if (top.length === 0) return <p className="text-[11px] text-muted">No EIA-860 plants inside this circle.</p>;
   return (
-    <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-[var(--radius-sm)] border border-line">
-      {top.map((p) => (
-        <li key={p.plant_code}>
-          <button
-            type="button"
-            onClick={() => onFocus(p.lat, p.lon)}
-            className="grid w-full grid-cols-[10px_minmax(0,1fr)_auto_auto] items-center gap-x-2.5 bg-panel px-3 py-2 text-left transition-colors hover:bg-panel-raised focus-visible:bg-panel-raised focus-visible:outline-none"
-            title={`${p.plant_name} · ${fuelLabel(p.primary_source)} — fly map here`}
-          >
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: fuelColor(p.primary_source) }} />
-            <span className="min-w-0">
-              <span className="block truncate text-[12px] font-medium text-ink">{p.plant_name}</span>
-              <span className="block truncate text-[10px] text-muted">
-                {p.city || DASH} · {fuelLabel(p.primary_source)}
+    <Section title="Top plants">
+      {top.length === 0 ? (
+        <p className="text-[14px] text-[#556070]">No EIA-860 plants in this area.</p>
+      ) : (
+        <div>
+          <div aria-hidden className={`${PLANT_COLS} border-b border-[#e6e9ee] pb-2 text-[12px] text-[#6b7583]`}>
+            <span>Plant</span>
+            <span>Fuel</span>
+            <span className="text-right">MW</span>
+            <span className="text-right">Age</span>
+          </div>
+          {top.map((p) => (
+            <button
+              key={p.plant_code}
+              type="button"
+              onClick={() => onFocus(p.lat, p.lon)}
+              className={`${PLANT_COLS} -mx-2 w-[calc(100%+16px)] rounded-[6px] px-2 py-2 text-left transition-colors hover:bg-[#f6f8fa] focus-visible:bg-[#f6f8fa] focus-visible:outline-none`}
+              title={`Show ${p.plant_name} on the map`}
+            >
+              <span className="min-w-0">
+                <span className="flex items-center gap-2">
+                  <span
+                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: fuelColor(p.primary_source) }}
+                    aria-hidden
+                  />
+                  <span className="truncate text-[14px] text-[#1d2733]">{p.plant_name}</span>
+                </span>
+                <span className="block truncate pl-3.5 text-[12px] text-[#6b7583]">{p.city || DASH}</span>
               </span>
-            </span>
-            <span className="num text-right text-[12px] font-semibold text-ink">{fmtPowerText(p.nameplate_mw)}</span>
-            <span className="num w-10 text-right text-[10.5px] text-muted">
-              {isNum(p.capacity_weighted_age_years) ? `${fmtNum(p.capacity_weighted_age_years, 0)} yr` : DASH}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
+              <span className="truncate text-[13px] text-[#556070]">
+                {fuelLabel(p.primary_source)}
+              </span>
+              <span className="text-right text-[14px] tabular-nums text-[#1d2733]">
+                {fmtMw(p.nameplate_mw)}
+              </span>
+              <span className="text-right text-[13px] tabular-nums text-[#556070]">
+                {isNum(p.capacity_weighted_age_years) ? `${fmtNum(p.capacity_weighted_age_years, 0)} yr` : DASH}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      <Caption className="mt-3">
+        {top.length > 0 &&
+          `Largest ${top.length} of ${fmtNum(result.plants.length)} plants. Click a row to show it on the map. `}
+        Source: EIA-860 2025.
+      </Caption>
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------- Events */
 
-function EventList({ title, events, kind }: { title: string; events: GenEvent[]; kind: GenEvent["kind"] }) {
+const EVENT_COLS = "grid grid-cols-[minmax(0,1fr)_56px_44px] items-baseline gap-x-3";
+
+function EventTable({ title, events }: { title: string; events: GenEvent[] }) {
   const sorted = [...events].sort((a, b) => (b.mw || 0) - (a.mw || 0));
   const shown = sorted.slice(0, 6);
   const total = events.reduce((s, e) => s + (isNum(e.mw) ? e.mw : 0), 0);
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <span
-          className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.14em]"
-          style={{ color: kind === "retired" ? "var(--muted)" : "var(--ok)" }}
-        >
-          {title} <span className="num">({events.length})</span>
+    <div>
+      <p className="mb-1 flex items-baseline justify-between gap-3 text-[14px] text-[#1d2733]">
+        <span className="font-semibold">
+          {title} <span className="font-normal tabular-nums text-[#6b7583]">({events.length})</span>
         </span>
-        <span className="num text-[10px] text-ink-dim">{fmtPowerText(total)}</span>
-      </div>
+        <span className="tabular-nums text-[#556070]">{fmtPowerText(total)}</span>
+      </p>
       {shown.length === 0 ? (
-        <p className="text-[10.5px] text-muted">None in this circle.</p>
+        <p className="text-[13px] text-[#556070]">None in this area.</p>
       ) : (
-        <ul className="flex flex-col gap-1">
+        <div role="table" aria-label={`${title} generators`}>
+          <div role="row" className={`${EVENT_COLS} border-b border-[#e6e9ee] py-1 text-[12px] text-[#6b7583]`}>
+            <span role="columnheader">Plant</span>
+            <span role="columnheader" className="text-right">MW</span>
+            <span role="columnheader" className="text-right">Year</span>
+          </div>
           {shown.map((e, i) => (
-            <li key={`${e.plant_name}-${i}`} className="flex items-center gap-2 text-[10.5px]">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: fuelColor(e.fuel) }} />
-              <span className="min-w-0 flex-1 truncate text-ink-dim" title={`${e.plant_name} · ${e.technology}`}>
+            <div key={`${e.plant_name}-${i}`} role="row" className={`${EVENT_COLS} py-1 text-[13px]`}>
+              <span role="cell" className="truncate text-[#1d2733]" title={`${e.plant_name} · ${e.technology}`}>
                 {e.plant_name}
               </span>
-              <span className="num shrink-0 text-ink">{fmtPowerText(e.mw)}</span>
-              <span className="num w-9 shrink-0 text-right text-muted">{isNum(e.year) ? e.year : DASH}</span>
-            </li>
+              <span role="cell" className="text-right tabular-nums text-[#1d2733]">
+                {fmtMw(e.mw)}
+              </span>
+              <span role="cell" className="text-right tabular-nums text-[#556070]">
+                {isNum(e.year) ? e.year : DASH}
+              </span>
+            </div>
           ))}
           {sorted.length > shown.length && (
-            <li className="text-[10px] text-muted">+{sorted.length - shown.length} more</li>
+            <p className="pt-1 text-[12px] text-[#6b7583]">{sorted.length - shown.length} more not shown</p>
           )}
-        </ul>
+        </div>
       )}
     </div>
   );
@@ -256,12 +256,12 @@ export function GenEvents({ result }: { result: ScanResult }) {
   const retired = result.events.filter((e) => e.kind === "retired");
   const proposed = result.events.filter((e) => e.kind === "proposed");
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <EventList title="Retired" events={retired} kind="retired" />
-        <EventList title="Proposed" events={proposed} kind="proposed" />
+    <Section title="Retired and proposed generators">
+      <div className="flex flex-col gap-6">
+        <EventTable title="Retired" events={retired} />
+        <EventTable title="Proposed" events={proposed} />
       </div>
-      <SrcTag kind="EIA-860" className="self-start" />
-    </div>
+      <Caption className="mt-3">Source: EIA-860 2025.</Caption>
+    </Section>
   );
 }

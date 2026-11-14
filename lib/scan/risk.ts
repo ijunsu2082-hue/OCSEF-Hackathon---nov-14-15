@@ -32,8 +32,8 @@ export function computeRisk(
     key: "age", label: "Age of generation", weight: 0.25,
     score: age === null ? 0 : round(clamp(((age - 10) / 40) * 100), 0),
     detail: age === null
-      ? "No EIA-860 plants in this circle"
-      : `Capacity-weighted age ${fmt(age, 1)} yr across ${t.plant_count} plant${t.plant_count === 1 ? "" : "s"} (EIA-860)`,
+      ? "No power plants in this circle."
+      : `Capacity-weighted age is ${fmt(age, 1)} years across ${t.plant_count} plant${t.plant_count === 1 ? "" : "s"}.`,
   });
 
   // 2. Fossil dependence
@@ -42,8 +42,8 @@ export function computeRisk(
     key: "fossil", label: "Fossil dependence", weight: 0.2,
     score: round(clamp(fossilPct), 0),
     detail: t.nameplate_mw > 0
-      ? `${fmt(t.fossil_mw)} of ${fmt(t.nameplate_mw)} MW is gas/oil (${fmt(fossilPct)}% of nameplate)`
-      : "No nameplate capacity in this circle",
+      ? `${fmt(t.fossil_mw)} of ${fmt(t.nameplate_mw)} MW is gas or oil (${fmt(fossilPct)}% of nameplate).`
+      : "No nameplate capacity in this circle.",
   });
 
   // 3. Retirement / turnover exposure
@@ -54,7 +54,7 @@ export function computeRisk(
   factors.push({
     key: "turnover", label: "Retirement / turnover exposure", weight: 0.15,
     score: round(clamp((turnover / Math.max(t.nameplate_mw, 1)) * 200), 0),
-    detail: `${fmt(t.planned_retirement_mw)} MW planned to retire + ${fmt(retiredRecent)} MW retired since ${RETIRED_SINCE_YEAR}, vs ${fmt(t.nameplate_mw)} MW operating (EIA-860)`,
+    detail: `${fmt(t.planned_retirement_mw)} MW is planned to retire and ${fmt(retiredRecent)} MW retired since ${RETIRED_SINCE_YEAR}. ${fmt(t.nameplate_mw)} MW is operating.`,
   });
 
   // 4. Heat stress on wires (nearest rating site, MODELED)
@@ -66,8 +66,8 @@ export function computeRisk(
     key: "heat", label: "Heat stress on wires", weight: 0.15,
     score: round(clamp(((1.5 - ratio) / 0.6) * 100), 0),
     detail: heatwave
-      ? `105 °F heatwave scenario: safe rating ${ratio.toFixed(2)}× fixed (MODELED)`
-      : `Hottest 2024 hour at ${site.name} (${fmt(site.hottest_temp_c, 1)} C): safe rating ${ratio.toFixed(2)}x static (MODELED)`,
+      ? `In a 105 °F heatwave the safe rating drops to ${ratio.toFixed(2)}× the fixed rating.`
+      : `On the hottest 2024 hour at ${site.name} (${fmt(site.hottest_temp_c, 1)} °C) the safe rating was ${ratio.toFixed(2)}× the fixed rating.`,
   });
 
   // 5. Hazard history
@@ -76,8 +76,8 @@ export function computeRisk(
     key: "hazard", label: "Hazard history", weight: 0.15,
     score: Math.min(100, hazards.length * 35),
     detail: hazards.length
-      ? `${hazards.length} wildfire/gas/heat case${hazards.length === 1 ? "" : "s"} here: ${hazards.map((c) => c.title).slice(0, 3).join("; ")}`
-      : "No wildfire, gas or heat cases in this circle",
+      ? `${hazards.length} wildfire, gas or heat case${hazards.length === 1 ? "" : "s"} here: ${hazards.map((c) => c.title).slice(0, 3).join("; ")}.`
+      : "No wildfire, gas or heat cases in this circle.",
   });
 
   // 6. Grid thinness
@@ -87,8 +87,8 @@ export function computeRisk(
     key: "thinness", label: "Grid thinness", weight: 0.1,
     score: empty ? 20 : hv === 0 ? 70 : hv === 1 ? 45 : hv === 2 ? 25 : 10,
     detail: empty
-      ? "No plants or lines mapped here (OSM): little grid to stress"
-      : `${hv} substation${hv === 1 ? "" : "s"} at >=200 kV, ${t.substation_count} total (OSM)`,
+      ? "No plants or lines mapped here, so there is little grid to stress."
+      : `${hv} substation${hv === 1 ? "" : "s"} at 200 kV or higher, ${t.substation_count} in total.`,
   });
 
   const score = round(factors.reduce((s, f) => s + f.score * f.weight, 0), 0);

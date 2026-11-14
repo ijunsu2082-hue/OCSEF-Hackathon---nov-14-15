@@ -12,35 +12,16 @@ import { useMap } from "react-leaflet";
 import { FUEL_COLORS, FUEL_LABELS, lineWeight } from "@/lib/scan";
 import type { GenEvent, Line, Plant, ScanResult, Substation } from "@/lib/scan";
 
-export interface MapPalette {
-  accent: string;
-  accent2: string;
-  muted: string;
-  bg: string;
-  text: string;
-  ok: string;
-}
-
-export const PALETTE: MapPalette = {
-  accent: "#38d6c4",
-  accent2: "#4c8dff",
-  muted: "#8fa0b8",
-  bg: "#080b12",
-  text: "#edf2f8",
-  ok: "#2dd4a7",
-};
-
-/** Mirrors the [data-stress="true"] token block — canvas can't read CSS vars. */
-export const STRESS_PALETTE: MapPalette = {
-  accent: "#ffb020",
-  accent2: "#ff6b3d",
-  muted: "#c4a79c",
-  bg: "#0c0709",
-  text: "#fdf3ec",
-  ok: "#2dd4a7",
-};
+/** Canvas layers can't read CSS vars, so the map colors live here. */
+export const MAP_COLORS = {
+  accent: "#0ea5e9",
+  accentStrong: "#0284c7",
+  gray: "#94a3b8",
+  white: "#ffffff",
+} as const;
 
 export const PANES = {
+  casing: { name: "gs-line-casing", z: 405 },
   lines: { name: "gs-lines", z: 410 },
   points: { name: "gs-points", z: 430 },
 } as const;
@@ -100,7 +81,13 @@ const fmtMw = (mw: number) =>
   mw >= 100 ? Math.round(mw).toLocaleString("en-US") : mw >= 10 ? mw.toFixed(0) : mw.toFixed(1);
 
 export function plantRadius(mw: number) {
-  return Math.min(22, 3 + Math.sqrt(Math.max(0, mw)) / 2.2);
+  return Math.min(16, 3 + Math.sqrt(Math.max(0, mw)) / 2.2);
+}
+
+/** Fuel name for use mid-sentence ("natural gas", not "Natural gas"). */
+function fuelText(k: string): string {
+  const label = FUEL_LABELS[k as keyof typeof FUEL_LABELS] ?? k;
+  return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
 function plantTooltip(p: Plant): string {
@@ -111,19 +98,22 @@ function plantTooltip(p: Plant): string {
     .slice(0, 3)
     .map(([k, v]) => {
       const pct = total > 0 ? Math.round(((v ?? 0) / total) * 100) : 0;
-      return `${esc(FUEL_LABELS[k as keyof typeof FUEL_LABELS] ?? k)} ${pct}%`;
-    })
-    .join(" · ");
+      return { label: fuelText(k), pct };
+    });
+  const fuels =
+    mix.length === 0
+      ? ""
+      : mix.length === 1
+        ? ` ${esc(mix[0].label)}`
+        : `: ${mix.map((m) => `${esc(m.label)} ${m.pct}%`).join(", ")}`;
   const age =
     p.capacity_weighted_age_years != null
-      ? `${Math.round(p.capacity_weighted_age_years)} yr cap-weighted age${
-          p.capacity_weighted_year ? ` (${p.capacity_weighted_year})` : ""
-        }`
+      ? `Capacity-weighted age ${Math.round(p.capacity_weighted_age_years)} yr`
       : "Age not reported";
   return `<div class="gs-tip-title">${esc(p.plant_name)}</div>
-<div class="gs-tip-row">${fmtMw(total)} MW · ${mix || "—"}</div>
+<div class="gs-tip-row">${fmtMw(total)} MW${fuels}</div>
 <div class="gs-tip-row">${age}</div>
-<div class="gs-tip-src">EIA-860 2025${p.city ? ` · ${esc(p.city)}` : ""}</div>`;
+<div class="gs-tip-src">${p.city ? `${esc(p.city)}. ` : ""}Source: EIA-860 2025</div>`;
 }
 
 function substationTooltip(s: Substation): string {
@@ -131,18 +121,18 @@ function substationTooltip(s: Substation): string {
 <div class="gs-tip-row">${s.voltage_kv != null ? `${Math.round(s.voltage_kv)} kV` : "kV unknown"}${
     s.operator ? ` · ${esc(s.operator)}` : ""
   }</div>
-<div class="gs-tip-src">OSM substation</div>`;
+<div class="gs-tip-src">Substation. Source: OpenStreetMap</div>`;
 }
 
 function eventTooltip(e: GenEvent): string {
   const label = e.kind === "retired" ? "Retired" : "Proposed";
-  const yr = e.year != null ? (e.kind === "retired" ? ` ${e.year}` : ` · online ${e.year}`) : "";
+  const yr = e.year != null ? (e.kind === "retired" ? ` ${e.year}` : `, online ${e.year}`) : "";
   return `<div class="gs-tip-title">${esc(e.plant_name)}</div>
-<div class="gs-tip-row">${label}${e.kind === "retired" ? yr : ""} · ${fmtMw(e.mw)} MW ${esc(
-    FUEL_LABELS[e.fuel] ?? e.fuel,
+<div class="gs-tip-row">${label}${e.kind === "retired" ? yr : ""}: ${fmtMw(e.mw)} MW ${esc(
+    fuelText(e.fuel),
   )}${e.kind === "proposed" ? yr : ""}</div>
 <div class="gs-tip-row">${esc(e.technology)}</div>
-<div class="gs-tip-src">EIA-860 2025 · ${e.kind === "retired" ? "retired generators" : "proposed generators"}</div>`;
+<div class="gs-tip-src">Source: EIA-860 2025</div>`;
 }
 
 /** Keep a ref pointing at the latest callback so layers built once never go stale. */
@@ -154,21 +144,27 @@ function useLatest<T>(v: T) {
 
 /* ---------------------------------------------------------------------------- */
 
+/** Outside-scan line style; on satellite imagery slate gray disappears, so use white. */
+function outsideLineStyle(onImagery: boolean): L.PathOptions {
+  return onImagery ? { color: MAP_COLORS.white, opacity: 0.6 } : { color: MAP_COLORS.gray, opacity: 0.5 };
+}
+
 export function TransmissionLayer({
   lines,
   result,
   visible,
-  palette,
+  onImagery,
 }: {
   lines: Line[];
   result: ScanResult | null;
   visible: boolean;
-  palette: MapPalette;
+  /** True on the satellite basemap: lighter outside lines and a white casing under in-scan lines. */
+  onImagery: boolean;
 }) {
   const map = useMap();
   const groupRef = useRef<L.LayerGroup | null>(null);
   const entriesRef = useRef<{ line: Line; layer: L.Polyline; inside: boolean }[]>([]);
-  const paletteRef = useRef<MapPalette | null>(null);
+  const imageryRef = useRef(false);
 
   const insideIds = useMemo(() => new Set((result?.lines ?? []).map((l) => l.osm_id)), [result]);
 
@@ -182,8 +178,8 @@ export function TransmissionLayer({
         renderer,
         pane: PANES.lines.name,
         interactive: false,
-        color: PALETTE.muted,
-        opacity: 0.35,
+        color: MAP_COLORS.gray,
+        opacity: 0.5,
         weight: lineWeight(line.voltage_kv),
         lineCap: "round",
         lineJoin: "round",
@@ -194,7 +190,7 @@ export function TransmissionLayer({
     });
     entriesRef.current = entries;
     groupRef.current = group;
-    paletteRef.current = null; // force first full style pass
+    imageryRef.current = false;
     return () => {
       group.remove();
       renderer.remove();
@@ -203,22 +199,50 @@ export function TransmissionLayer({
     };
   }, [map, lines]);
 
-  // Re-style only what changed (or everything when the palette flips).
+  // Re-style only what changed (or every outside line when the basemap kind flips).
   useEffect(() => {
-    const full = paletteRef.current !== palette;
-    paletteRef.current = palette;
+    const full = imageryRef.current !== onImagery;
+    imageryRef.current = onImagery;
+    const outside = outsideLineStyle(onImagery);
     const newlyInside: L.Polyline[] = [];
     for (const e of entriesRef.current) {
       const inside = insideIds.has(e.line.osm_id);
-      if (!full && inside === e.inside) continue;
+      if (inside === e.inside && !(full && !inside)) continue;
       e.inside = inside;
-      e.layer.setStyle(
-        inside ? { color: palette.accent, opacity: 0.9 } : { color: palette.muted, opacity: 0.35 },
-      );
+      e.layer.setStyle(inside ? { color: MAP_COLORS.accent, opacity: 0.9 } : outside);
       if (inside) newlyInside.push(e.layer);
     }
     if (groupRef.current && map.hasLayer(groupRef.current)) newlyInside.forEach((l) => l.bringToFront());
-  }, [insideIds, palette, map, lines]);
+  }, [insideIds, onImagery, map, lines]);
+
+  // White casing under in-scan lines, satellite only (drawn on a pane just below the lines).
+  useEffect(() => {
+    if (!onImagery || !visible || insideIds.size === 0) return;
+    ensurePane(map, PANES.casing.name, PANES.casing.z);
+    const renderer = L.canvas({ pane: PANES.casing.name, padding: 0.4 });
+    const group = L.layerGroup();
+    for (const line of lines) {
+      if (!insideIds.has(line.osm_id)) continue;
+      group.addLayer(
+        L.polyline(line.coords, {
+          renderer,
+          pane: PANES.casing.name,
+          interactive: false,
+          color: MAP_COLORS.white,
+          opacity: 1,
+          weight: lineWeight(line.voltage_kv) + 2,
+          lineCap: "round",
+          lineJoin: "round",
+          smoothFactor: 1.2,
+        }),
+      );
+    }
+    group.addTo(map);
+    return () => {
+      group.remove();
+      renderer.remove();
+    };
+  }, [onImagery, visible, insideIds, lines, map]);
 
   useEffect(() => {
     const g = groupRef.current;
@@ -239,17 +263,14 @@ export function SubstationLayer({
   substations,
   result,
   visible,
-  palette,
 }: {
   substations: Substation[];
   result: ScanResult | null;
   visible: boolean;
-  palette: MapPalette;
 }) {
   const map = useMap();
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ s: Substation; layer: L.CircleMarker; inside: boolean }[]>([]);
-  const paletteRef = useRef<MapPalette | null>(null);
   const insideIds = useMemo(() => new Set((result?.substations ?? []).map((s) => s.osm_id)), [result]);
 
   useEffect(() => {
@@ -259,10 +280,10 @@ export function SubstationLayer({
       const layer = L.circleMarker([s.lat, s.lon], {
         renderer,
         pane: PANES.points.name,
-        radius: 3,
+        radius: 2,
         stroke: false,
-        fillColor: PALETTE.muted,
-        fillOpacity: 0.35,
+        fillColor: MAP_COLORS.gray,
+        fillOpacity: 0.6,
       });
       layer.bindTooltip(() => substationTooltip(s), { direction: "top", offset: [0, -4] });
       group.addLayer(layer);
@@ -270,7 +291,6 @@ export function SubstationLayer({
     });
     groupRef.current = group;
     registerPointGroup(map, "substations", group);
-    paletteRef.current = null;
     return () => {
       group.remove();
       registerPointGroup(map, "substations", null);
@@ -280,17 +300,17 @@ export function SubstationLayer({
   }, [map, substations]);
 
   useEffect(() => {
-    const full = paletteRef.current !== palette;
-    paletteRef.current = palette;
     for (const e of entriesRef.current) {
       const inside = insideIds.has(e.s.osm_id);
-      if (!full && inside === e.inside) continue;
+      if (inside === e.inside) continue;
       e.inside = inside;
       e.layer.setStyle(
-        inside ? { fillColor: palette.text, fillOpacity: 0.8 } : { fillColor: palette.muted, fillOpacity: 0.35 },
+        inside
+          ? { fillColor: MAP_COLORS.accentStrong, fillOpacity: 0.9 }
+          : { fillColor: MAP_COLORS.gray, fillOpacity: 0.6 },
       );
     }
-  }, [insideIds, palette, substations]);
+  }, [insideIds, substations]);
 
   useEffect(() => {
     const g = groupRef.current;
@@ -311,19 +331,16 @@ export function PlantLayer({
   plants,
   result,
   visible,
-  palette,
   onFocus,
 }: {
   plants: Plant[];
   result: ScanResult | null;
   visible: boolean;
-  palette: MapPalette;
   onFocus: (lat: number, lon: number) => void;
 }) {
   const map = useMap();
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ p: Plant; layer: L.CircleMarker; inside: boolean }[]>([]);
-  const paletteRef = useRef<MapPalette | null>(null);
   const onFocusRef = useLatest(onFocus);
   const insideIds = useMemo(() => new Set((result?.plants ?? []).map((p) => p.plant_code)), [result]);
 
@@ -338,10 +355,10 @@ export function PlantLayer({
         pane: PANES.points.name,
         radius: plantRadius(p.nameplate_mw),
         fillColor: FUEL_COLORS[p.primary_source] ?? FUEL_COLORS.other,
-        fillOpacity: 0.25,
-        color: PALETTE.bg,
+        fillOpacity: 0.35,
+        color: MAP_COLORS.white,
         weight: 1,
-        opacity: 0.25,
+        opacity: 0.35,
         bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => plantTooltip(p), { direction: "top", offset: [0, -6] });
@@ -351,7 +368,6 @@ export function PlantLayer({
     });
     groupRef.current = group;
     registerPointGroup(map, "plants", group);
-    paletteRef.current = null;
     return () => {
       group.remove();
       registerPointGroup(map, "plants", null);
@@ -361,19 +377,13 @@ export function PlantLayer({
   }, [map, plants, onFocusRef]);
 
   useEffect(() => {
-    const full = paletteRef.current !== palette;
-    paletteRef.current = palette;
     for (const e of entriesRef.current) {
       const inside = insideIds.has(e.p.plant_code);
-      if (!full && inside === e.inside) continue;
+      if (inside === e.inside) continue;
       e.inside = inside;
-      e.layer.setStyle(
-        inside
-          ? { fillOpacity: 0.95, opacity: 0.95, color: palette.bg, weight: 1 }
-          : { fillOpacity: 0.25, opacity: 0.25, color: palette.bg, weight: 1 },
-      );
+      e.layer.setStyle(inside ? { fillOpacity: 0.95, opacity: 1 } : { fillOpacity: 0.35, opacity: 0.35 });
     }
-  }, [insideIds, palette, plants]);
+  }, [insideIds, plants]);
 
   useEffect(() => {
     const g = groupRef.current;
@@ -394,11 +404,9 @@ export function PlantLayer({
 export function EventLayer({
   events,
   visible,
-  palette,
 }: {
   events: GenEvent[];
   visible: boolean;
-  palette: MapPalette;
 }) {
   const map = useMap();
 
@@ -414,22 +422,20 @@ export function EventLayer({
               renderer,
               pane: PANES.points.name,
               radius: r,
-              color: palette.muted,
-              weight: 1.5,
-              opacity: 0.85,
+              color: MAP_COLORS.gray,
+              weight: 1.25,
+              opacity: 0.9,
               fill: false,
             })
           : L.circleMarker([e.lat, e.lon], {
               renderer,
               pane: PANES.points.name,
               radius: r,
-              color: palette.ok,
-              weight: 1.5,
-              opacity: 0.95,
+              color: MAP_COLORS.accent,
+              weight: 1.25,
+              opacity: 0.9,
               dashArray: "3 3",
-              fill: true,
-              fillColor: palette.ok,
-              fillOpacity: 0.06,
+              fill: false,
             });
       layer.bindTooltip(() => eventTooltip(e), { direction: "top", offset: [0, -4] });
       group.addLayer(layer);
@@ -440,7 +446,7 @@ export function EventLayer({
       group.remove();
       registerPointGroup(map, "events", null);
     };
-  }, [events, visible, palette, map]);
+  }, [events, visible, map]);
 
   return null;
 }

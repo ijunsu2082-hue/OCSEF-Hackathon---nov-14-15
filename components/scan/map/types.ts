@@ -12,7 +12,6 @@ export interface ScanMapProps {
   data: GridData;
   area: ScanArea;
   result: ScanResult | null;
-  heatwave: boolean;
   selectedCaseId: string | null;
   focus: MapFocus | null;
   /** Click anywhere on the map → scan at that point (page keeps the radius). */

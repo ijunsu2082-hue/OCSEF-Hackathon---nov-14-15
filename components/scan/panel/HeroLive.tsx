@@ -1,199 +1,127 @@
 "use client";
 
-import {
-  Area,
-  ComposedChart,
-  Line,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { UI } from "@/lib/scan/colors";
 import type { DailyRating, LineRatingNow, ScanResult, WeatherNow } from "@/lib/scan";
-import { DASH, cToF, fmtHour, fmtNum, fmtPct, fmtRatio, isNum, monthTick } from "./format";
-import { Shimmer, SrcTag } from "./ui";
+import { DASH, fmtNum, fmtPct, fmtRatio, isNum, monthTick } from "./format";
+import { Caption, Section } from "./ui";
 
-const SOURCE_BADGE: Record<WeatherNow["source"], { label: string; color: string }> = {
-  "open-meteo-live": { label: "LIVE · Open-Meteo", color: "var(--accent)" },
-  "fallback-2024": { label: "2024 fallback", color: "var(--warn)" },
-  "heatwave-scenario": { label: "105 °F HEATWAVE SCENARIO", color: "var(--critical)" },
-};
+const GRID = "#eef1f4";
+const FIXED = "#94a3b8";
+const AXIS_TICK = { fill: UI.text3, fontSize: 12 };
 
-function SourceBadge({ source }: { source: WeatherNow["source"] }) {
-  const b = SOURCE_BADGE[source] ?? { label: source, color: "var(--muted)" };
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full border px-2 font-mono text-[9.5px] font-semibold uppercase leading-[18px] tracking-[0.1em]"
-      style={{ color: b.color, borderColor: `color-mix(in srgb, ${b.color} 45%, transparent)` }}
-    >
-      <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: b.color }} />
-      {b.label}
-    </span>
-  );
+function weatherLine(w: WeatherNow): string {
+  const temp = isNum(w.temp_c) ? `${w.temp_c.toFixed(1)} °C` : DASH;
+  const wind = `wind ${isNum(w.wind_ms) ? w.wind_ms.toFixed(1) : DASH} m/s`;
+  const sun = `sun ${isNum(w.sun_wm2) ? fmtNum(w.sun_wm2, 0) : DASH} W/m²`;
+  if (w.source === "heatwave-scenario") return `105 °F heatwave scenario, ${wind}, ${sun}`;
+  if (w.source === "fallback-2024") return `2024 weather (live data unavailable): ${temp}, ${wind}, ${sun}`;
+  return `Live weather ${temp}, ${wind}, ${sun}`;
 }
 
-function WeatherCell({ label, value, unit }: { label: string; value: string; unit: string }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted">{label}</span>
-      <span className="num text-[13px] font-semibold text-ink">
-        {value}
-        <span className="ml-1 text-[10px] font-medium text-muted">{unit}</span>
-      </span>
-    </div>
-  );
+/** "2024-09-06T13:00" -> "Sep 6, 1 pm" (no Date parsing so no TZ drift). */
+function hottestLabel(iso: string | null | undefined): string | null {
+  const m = iso ? /^\d{4}-(\d{2})-(\d{2})(?:T(\d{2}))?/.exec(iso) : null;
+  if (!m) return null;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const date = `${months[Number(m[1]) - 1] ?? m[1]} ${Number(m[2])}`;
+  if (m[3] === undefined) return date;
+  const h = Number(m[3]);
+  return `${date}, ${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "am" : "pm"}`;
 }
 
 function LiveBlock({ live, liveLoading }: { live: LineRatingNow | null; liveLoading: boolean }) {
   if (liveLoading || !live) {
     return (
-      <div className="flex flex-col gap-3" aria-busy="true">
-        <div className="flex items-end gap-3">
-          <Shimmer className="h-[52px] w-[150px]" />
-          <Shimmer className="h-[34px] flex-1" />
-        </div>
-        <Shimmer className="h-[38px] w-full" />
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-          {liveLoading ? "Fetching weather at this spot…" : "Live rating unavailable"}
-        </p>
-      </div>
+      <p className="text-[14px] text-[#556070]" aria-busy={liveLoading}>
+        {liveLoading ? "Getting live weather…" : "Live rating unavailable."}
+      </p>
     );
   }
 
   const ratio = live.ratio;
   const over = isNum(ratio) && ratio < 1;
-  const tone = over ? "var(--critical)" : "var(--accent)";
   const pct = isNum(live.extra_pct) ? Math.abs(live.extra_pct) : null;
-  const w = live.weather;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-end gap-3">
-        <span className="num text-[52px] font-semibold leading-[0.9] tracking-tight" style={{ color: tone }}>
-          {fmtRatio(ratio)}
-        </span>
-        <p className="pb-1 text-[12.5px] leading-snug text-ink">
-          {pct === null ? (
-            "Live rating could not be computed for this spot."
-          ) : over ? (
-            <>
-              Right now the fixed rating is{" "}
-              <strong className="num" style={{ color: "var(--critical)" }}>
-                {fmtNum(pct, 0)}% TOO HIGH
-              </strong>{" "}
-              — the wire would overheat.
-            </>
-          ) : (
-            <>
-              Right now the power lines here can safely carry{" "}
-              <strong className="num" style={{ color: "var(--accent)" }}>
-                {fmtNum(pct, 0)}% more
-              </strong>{" "}
-              than their fixed rating.
-            </>
-          )}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 rounded-[var(--radius-sm)] border border-line bg-bg-elevated px-3 py-2">
-        <WeatherCell
-          label="Air"
-          value={isNum(w.temp_c) ? `${w.temp_c.toFixed(1)} °C` : DASH}
-          unit={isNum(w.temp_c) ? `${Math.round(cToF(w.temp_c))} °F` : ""}
-        />
-        <WeatherCell label="Wind" value={isNum(w.wind_ms) ? w.wind_ms.toFixed(1) : DASH} unit="m/s" />
-        <WeatherCell label="Sun" value={isNum(w.sun_wm2) ? fmtNum(w.sun_wm2, 0) : DASH} unit="W/m²" />
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-[10.5px]">
-        <div className="flex flex-col">
-          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted">Fixed rating</span>
-          <span className="num text-ink-dim">{fmtNum(live.static_A, 0)} A</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted">Safe now</span>
-          <span className="num font-semibold" style={{ color: tone }}>
-            {fmtNum(live.dlr_conservative_A, 0)} A
-          </span>
-        </div>
-        <div className="flex flex-col">
-          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted">Weather time</span>
-          <span className="num truncate text-ink-dim">{fmtHour(w.time)}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <SourceBadge source={w.source} />
-        <SrcTag kind="MODELED" />
-        <span className="text-[10px] text-muted">ACSR Drake conductor, IEEE 738, wind halved for safety</span>
-      </div>
+    <div className="flex flex-col gap-2">
+      <p
+        className="text-[40px] font-semibold leading-none tabular-nums"
+        style={{ color: over ? UI.danger : UI.accentStrong }}
+      >
+        {fmtRatio(ratio)}
+      </p>
+      <p className="text-[14px] leading-snug text-[#1d2733]">
+        {pct === null
+          ? "Live rating could not be computed for this spot."
+          : over
+            ? `In this heat the fixed rating is ${fmtNum(pct, 0)}% too high. Lines would overheat.`
+            : `Lines here can safely carry ${fmtNum(pct, 0)}% more than their fixed rating right now.`}
+      </p>
+      <p className="text-[13px] leading-snug tabular-nums text-[#556070]">{weatherLine(live.weather)}</p>
     </div>
   );
 }
 
+/** First date of Jan / Apr / Jul / Oct present in the series. */
+function quarterTicks(daily: DailyRating[]): string[] {
+  const seen = new Set<string>();
+  const ticks: string[] = [];
+  for (const d of daily) {
+    const mm = String(d.date).slice(5, 7);
+    if (["01", "04", "07", "10"].includes(mm) && !seen.has(mm)) {
+      seen.add(mm);
+      ticks.push(d.date);
+    }
+  }
+  return ticks;
+}
+
 function DailyChart({ daily, staticA }: { daily: DailyRating[]; staticA: number }) {
   return (
-    <div className="h-[140px] w-full">
-      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 380, height: 140 }}>
-        <ComposedChart data={daily} margin={{ top: 6, right: 4, bottom: 0, left: 0 }}>
+    <div className="h-[120px] w-full">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 420, height: 120 }}>
+        <LineChart data={daily} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke={GRID} />
           <XAxis
             dataKey="date"
+            ticks={quarterTicks(daily)}
             tickFormatter={monthTick}
-            interval={30}
-            tick={{ fill: "var(--muted)", fontSize: 9, fontFamily: "var(--font-mono)" }}
-            axisLine={{ stroke: "var(--border)" }}
-            tickLine={false}
-            minTickGap={8}
-          />
-          <YAxis
-            tick={{ fill: "var(--muted)", fontSize: 9, fontFamily: "var(--font-mono)" }}
+            tick={AXIS_TICK}
             axisLine={false}
             tickLine={false}
-            width={30}
+          />
+          <YAxis
+            tick={AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+            width={40}
             domain={[0, "auto"]}
-            tickCount={4}
-            tickFormatter={(v: number) => (v >= 1000 ? `${fmtNum(v / 1000, 1)}k` : fmtNum(v, 0))}
+            tickCount={3}
+            tickFormatter={(v: number) => fmtNum(v, 0)}
           />
           <Tooltip
             contentStyle={{
-              background: "var(--panel-raised)",
-              border: "1px solid var(--border-strong)",
+              background: "#ffffff",
+              border: `1px solid ${UI.border}`,
               borderRadius: 6,
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: UI.text,
             }}
-            labelStyle={{ color: "var(--text)" }}
-            itemStyle={{ color: "var(--text-dim)" }}
-            formatter={(v) => [`${fmtNum(Number(v), 0)} A`]}
+            labelStyle={{ color: UI.text }}
+            itemStyle={{ color: UI.text2 }}
+            formatter={(v) => [`${fmtNum(Number(v), 0)} A`, "Worst-hour safe rating"]}
           />
-          <Area
-            type="monotone"
-            dataKey="median_A"
-            name="Median hour"
-            stroke="var(--accent)"
-            strokeWidth={1}
-            fill="var(--accent)"
-            fillOpacity={0.12}
-            isAnimationActive={false}
-            dot={false}
-          />
+          <ReferenceLine y={staticA} stroke={FIXED} strokeDasharray="4 4" strokeWidth={1} />
           <Line
             type="monotone"
             dataKey="worst_A"
-            name="Worst hour"
-            stroke="var(--warn)"
-            strokeWidth={1.25}
+            stroke={UI.accent}
+            strokeWidth={1.5}
             dot={false}
             isAnimationActive={false}
           />
-          <ReferenceLine
-            y={staticA}
-            stroke="var(--critical)"
-            strokeDasharray="4 3"
-            strokeWidth={1}
-          />
-        </ComposedChart>
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
@@ -212,79 +140,37 @@ export function HeroLive({
 }) {
   const site = result.rating_site;
   const staticA = daily?.find((d) => isNum(d.static_A))?.static_A ?? live?.static_A ?? 723;
-  const daysBelow = daily ? daily.filter((d) => isNum(d.worst_A) && d.worst_A < d.static_A).length : null;
+  const beat = site.pct_hours_conservative_dlr_above_static;
+  const beatDigits = isNum(beat) && Math.round(beat * 10) % 10 === 0 ? 0 : 1;
+
+  const hottest = hottestLabel(site.hottest_hour);
+  const hotRatio = site.hottest_hour_dlr_vs_static;
 
   return (
-    <section className="rounded-[var(--radius-md)] border border-line-strong bg-panel p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-dim">
-          The Wire That Breathes <span className="text-muted">·</span>{" "}
-          <span className="text-accent">
-            {live?.weather.source === "heatwave-scenario"
-              ? "scenario"
-              : live?.weather.source === "fallback-2024"
-                ? "2024 data"
-                : "live"}
-          </span>
-        </p>
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted">dynamic line rating</span>
-      </div>
-
+    <Section title="Line capacity right now" subtitle="The Wire That Breathes">
       <LiveBlock live={live} liveLoading={liveLoading} />
 
-      <div className="mt-4 border-t border-line pt-3">
-        <div className="mb-1 flex items-center gap-3 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-[2px] w-3" style={{ background: "var(--warn)" }} /> daily worst hour
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-3 opacity-40" style={{ background: "var(--accent)" }} /> median hour
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-3 border-t border-dashed" style={{ borderColor: "var(--critical)" }} /> fixed{" "}
-            <span className="num">{fmtNum(staticA, 0)} A</span>
-          </span>
-          <SrcTag kind="MODELED" className="ml-auto" />
-        </div>
+      <div className="mt-6">
+        <p className="mb-2 text-[13px] leading-snug text-[#556070]">
+          Each day&apos;s worst-hour safe rating in 2024, against the fixed rating of{" "}
+          <span className="tabular-nums">{fmtNum(staticA, 0)} A</span> (dashed).
+        </p>
         {daily && daily.length > 0 ? (
           <DailyChart daily={daily} staticA={staticA} />
         ) : (
-          <Shimmer className="h-[140px] w-full" />
+          <p className="text-[14px] text-[#556070]">Loading…</p>
         )}
-        <p className="mt-2 text-[11.5px] leading-snug text-ink-dim">
-          2024 at <span className="text-ink">{site.name}</span>{" "}
-          <span className="num text-muted">({fmtNum(site.distance_mi, 1)} mi away)</span>: safe rating beat the fixed
-          rating in{" "}
-          <strong className="num text-accent">{fmtPct(site.pct_hours_conservative_dlr_above_static, 1)}</strong> of
-          hours.
-        </p>
-        <p className="mt-1 text-[10.5px] leading-snug text-muted">
-          Hottest hour <span className="num text-ink-dim">{fmtHour(site.hottest_hour)}</span> at{" "}
-          <span className="num text-ink-dim">
-            {isNum(site.hottest_temp_c) ? `${site.hottest_temp_c.toFixed(1)} °C` : DASH}
-          </span>{" "}
-          — safe rating was{" "}
-          <span
-            className="num"
-            style={{
-              color:
-                isNum(site.hottest_hour_dlr_vs_static) && site.hottest_hour_dlr_vs_static < 1
-                  ? "var(--critical)"
-                  : "var(--text-dim)",
-            }}
-          >
-            {fmtRatio(site.hottest_hour_dlr_vs_static)}
-          </span>{" "}
-          the fixed rating.
-          {daysBelow !== null && daysBelow > 0 && (
-            <>
-              {" "}
-              On <span className="num" style={{ color: "var(--critical)" }}>{daysBelow}</span>{" "}
-              {daysBelow === 1 ? "day" : "days"} the worst hour fell below it.
-            </>
-          )}
-        </p>
+        <Caption className="mt-3 tabular-nums">
+          2024 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): safe rating beat the fixed rating in{" "}
+          {fmtPct(beat, beatDigits)} of hours. Modeled with IEEE 738.
+        </Caption>
+        {hottest && (
+          <p className="mt-1 text-[13px] leading-snug tabular-nums text-[#556070]">
+            On the hottest 2024 hour ({hottest}, {fmtNum(site.hottest_temp_c, 0)} °C) the safe rating was{" "}
+            <span style={hotRatio < 1 ? { color: "#dc2626" } : undefined}>{fmtRatio(hotRatio)}</span> the fixed rating.
+          </p>
+        )}
       </div>
-    </section>
+    </Section>
   );
 }

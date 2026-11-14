@@ -9,8 +9,8 @@ export type { MapFocus, ScanMapProps } from "./types";
 const ScanMap = dynamic<ScanMapProps>(() => import("./ScanMap"), {
   ssr: false,
   loading: () => (
-    <div className="grid-texture flex h-full w-full items-center justify-center bg-bg">
-      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">Loading map…</span>
+    <div className="flex h-full w-full items-center justify-center bg-[#f6f8fa]">
+      <span className="text-[14px] text-[#556070]">Loading map…</span>
     </div>
   ),
 });

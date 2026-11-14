@@ -4,30 +4,17 @@ import "leaflet/dist/leaflet.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { Circle, MapContainer, Marker, Pane, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import { CENTER, COVERAGE_MI, haversineMi } from "@/lib/scan";
 import type { NicheCase, ScanArea } from "@/lib/scan";
-import {
-  EventLayer,
-  PALETTE,
-  PlantLayer,
-  STRESS_PALETTE,
-  SubstationLayer,
-  TransmissionLayer,
-  esc,
-} from "./layers";
-import { MapLegend, type LayerVisibility } from "./MapLegend";
+import { EventLayer, MAP_COLORS, PlantLayer, SubstationLayer, TransmissionLayer, esc } from "./layers";
+import { LayerPicker, type LayerVisibility } from "./LayerPicker";
+import { basemapById, loadBasemap, saveBasemap, type BasemapId } from "./basemaps";
 import type { MapFocus, ScanMapProps } from "./types";
 
 const COVERAGE_M = 160934;
 const INITIAL_ZOOM = 10;
 
-/**
- * CARTO `dark_all` now serves "API KEY REQUIRED" watermark tiles to keyless clients
- * (verified 2026-11-14), so the default basemap is Esri's keyless Dark Gray Canvas.
- * Set NEXT_PUBLIC_BASEMAP=carto to restore the CARTO layer.
- */
-const BASEMAP = process.env.NEXT_PUBLIC_BASEMAP === "carto" ? "carto" : "esri-dark";
 const MI_PER_DEG_LAT = 69.0;
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -92,31 +79,6 @@ function AutoResize() {
   return null;
 }
 
-function useZoom() {
-  const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
-  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
-  return zoom;
-}
-
-/** Radar sweep sized to the scan circle in screen pixels; remounted per scan to replay. */
-function RadarPulse({ area }: { area: ScanArea }) {
-  const map = useMap();
-  const zoom = useZoom();
-  const icon = useMemo(() => {
-    const c = map.project([area.lat, area.lon], zoom);
-    const n = map.project([area.lat + area.radius_mi / MI_PER_DEG_LAT, area.lon], zoom);
-    const r = Math.max(8, Math.round(Math.abs(c.y - n.y)));
-    return L.divIcon({
-      className: "gs-icon",
-      iconSize: [r * 2, r * 2],
-      iconAnchor: [r, r],
-      html: '<div class="gs-radar"><div class="gs-radar-sweep"></div><div class="gs-radar-ring"></div></div>',
-    });
-  }, [map, zoom, area.lat, area.lon, area.radius_mi]);
-  return <Marker position={[area.lat, area.lon]} icon={icon} interactive={false} keyboard={false} />;
-}
-
 function ScanLabel({ area, text }: { area: ScanArea; text: string }) {
   const icon = useMemo(
     () =>
@@ -136,20 +98,18 @@ function ScanLabel({ area, text }: { area: ScanArea; text: string }) {
 
 const homeIcon = L.divIcon({
   className: "gs-icon",
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
+  iconSize: [10, 10],
+  iconAnchor: [5, 5],
   html: '<div class="gs-home"></div>',
 });
 
-function caseIcon(selected: boolean, pulse: boolean) {
-  const size = selected ? 22 : 14;
+function caseIcon(selected: boolean) {
+  const size = selected ? 14 : 12;
   return L.divIcon({
     className: "gs-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-    html: `<div class="gs-case${selected ? " is-selected" : ""}">${
-      pulse ? '<span class="gs-case-pulse"></span>' : ""
-    }<span class="gs-case-diamond"></span></div>`,
+    html: `<div class="gs-case${selected ? " is-selected" : ""}"></div>`,
   });
 }
 
@@ -162,21 +122,12 @@ function CaseMarkers({
   selectedCaseId: string | null;
   onSelectCase: (c: NicheCase) => void;
 }) {
-  const icons = useMemo(
-    () => ({
-      base: caseIcon(false, false),
-      basePulse: caseIcon(false, true),
-      sel: caseIcon(true, false),
-      selPulse: caseIcon(true, true),
-    }),
-    [],
-  );
+  const icons = useMemo(() => ({ base: caseIcon(false), sel: caseIcon(true) }), []);
   return (
     <>
       {cases.map((c) => {
         const selected = c.id === selectedCaseId;
-        const pulse = c.id === "wire-that-breathes";
-        const icon = selected ? (pulse ? icons.selPulse : icons.sel) : pulse ? icons.basePulse : icons.base;
+        const icon = selected ? icons.sel : icons.base;
         return (
           <Marker
             key={c.id}
@@ -188,7 +139,7 @@ function CaseMarkers({
             <Tooltip direction="top" offset={[0, -8]} className="gs-tip-wrap">
               <div className="gs-tip-title">{c.title}</div>
               <div className="gs-tip-row">{c.one_liner}</div>
-              <div className="gs-tip-src">Niche case · {clip(c.location.name, 64)}</div>
+              <div className="gs-tip-src">Niche case. {clip(c.location.name, 64)}</div>
             </Tooltip>
           </Marker>
         );
@@ -203,7 +154,6 @@ export default function ScanMap({
   data,
   area,
   result,
-  heatwave,
   selectedCaseId,
   focus,
   onScan,
@@ -212,8 +162,13 @@ export default function ScanMap({
 }: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [toast, setToast] = useState<string | null>(null);
+  const [basemapId, setBasemapId] = useState<BasemapId>(loadBasemap);
+  const basemap = basemapById(basemapId);
+  const onBasemap = (id: BasemapId) => {
+    setBasemapId(id);
+    saveBasemap(id);
+  };
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const palette = heatwave ? STRESS_PALETTE : PALETTE;
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -221,7 +176,7 @@ export default function ScanMap({
 
   const handleClick = (lat: number, lon: number) => {
     if (haversineMi(lat, lon, CENTER.lat, CENTER.lon) > COVERAGE_MI) {
-      setToast("Outside the 100-mile coverage — data may be incomplete");
+      setToast("This point is outside the 100-mile coverage area, so data may be incomplete.");
       if (toastTimer.current) clearTimeout(toastTimer.current);
       toastTimer.current = setTimeout(() => setToast(null), 3500);
     } else {
@@ -231,12 +186,11 @@ export default function ScanMap({
   };
 
   const scanArea = result?.area ?? area;
-  const scanKey = `${scanArea.lat.toFixed(5)},${scanArea.lon.toFixed(5)},${scanArea.radius_mi}`;
   const label = result
     ? `${formatRadius(scanArea.radius_mi)} mi · ${result.totals.plant_count.toLocaleString("en-US")} plant${
         result.totals.plant_count === 1 ? "" : "s"
       } · ${Math.round(result.totals.line_miles).toLocaleString("en-US")} mi of lines`
-    : `${formatRadius(scanArea.radius_mi)} mi · scanning…`;
+    : `${formatRadius(scanArea.radius_mi)} mi`;
 
   return (
     <div className="relative h-full w-full">
@@ -251,29 +205,13 @@ export default function ScanMap({
         style={{ zIndex: 0 }}
         attributionControl
       >
-        {BASEMAP === "carto" ? (
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-            subdomains="abcd"
-            maxZoom={19}
-          />
-        ) : (
-          <>
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-              attribution="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors"
-              maxNativeZoom={16}
-              maxZoom={19}
-            />
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-              maxNativeZoom={16}
-              maxZoom={19}
-              opacity={0.75}
-            />
-          </>
-        )}
+        <TileLayer
+          key={basemap.id}
+          url={basemap.url}
+          attribution={basemap.attribution}
+          maxNativeZoom={basemap.maxNativeZoom}
+          maxZoom={19}
+        />
         <AutoResize />
         <ClickToScan onClick={handleClick} />
         <FlyTo focus={focus} />
@@ -284,12 +222,11 @@ export default function ScanMap({
           radius={COVERAGE_M}
           interactive={false}
           pathOptions={{
-            color: palette.accent,
-            weight: 1.25,
-            opacity: 0.55,
+            color: MAP_COLORS.accent,
+            weight: 1,
+            opacity: 0.8,
             dashArray: "4 6",
-            fillColor: palette.accent,
-            fillOpacity: 0.04,
+            fill: false,
           }}
         />
 
@@ -299,34 +236,28 @@ export default function ScanMap({
           radius={scanArea.radius_mi * 1609.344}
           interactive={false}
           pathOptions={{
-            color: palette.accent,
-            weight: 1.5,
-            opacity: 0.95,
-            fillColor: palette.accent,
-            fillOpacity: 0.08,
+            color: MAP_COLORS.accent,
+            weight: 2,
+            opacity: 1,
+            fillColor: MAP_COLORS.accent,
+            fillOpacity: 0.06,
           }}
         />
 
-        <TransmissionLayer lines={data.lines} result={result} visible={layers.transmission} palette={palette} />
-        <SubstationLayer
-          substations={data.substations}
+        <TransmissionLayer
+          lines={data.lines}
           result={result}
-          visible={layers.substations}
-          palette={palette}
+          visible={layers.transmission}
+          onImagery={basemap.id === "satellite"}
         />
-        <PlantLayer
-          plants={data.plants}
-          result={result}
-          visible={layers.plants}
-          palette={palette}
-          onFocus={onFocus}
-        />
-        <EventLayer events={result?.events ?? EMPTY} visible={layers.events} palette={palette} />
+        <SubstationLayer substations={data.substations} result={result} visible={layers.substations} />
+        <PlantLayer plants={data.plants} result={result} visible={layers.plants} onFocus={onFocus} />
+        <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
 
         <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
           <Tooltip direction="top" offset={[0, -8]}>
             <div className="gs-tip-title">{CENTER.name}</div>
-            <div className="gs-tip-row">Coverage center · 100-mile radius</div>
+            <div className="gs-tip-row">Center of the 100-mile coverage area</div>
           </Tooltip>
         </Marker>
 
@@ -334,8 +265,19 @@ export default function ScanMap({
           <CaseMarkers cases={data.cases} selectedCaseId={selectedCaseId} onSelectCase={onSelectCase} />
         )}
 
-        <RadarPulse key={scanKey} area={scanArea} />
         <ScanLabel area={scanArea} text={label} />
+
+        {/* Labels above the data layers so place names stay readable. */}
+        <Pane name="gs-labels" style={{ zIndex: 450, pointerEvents: "none" }}>
+          {basemap.labelsUrl && (
+            <TileLayer
+              key={basemap.id}
+              url={basemap.labelsUrl}
+              maxNativeZoom={basemap.maxNativeZoom}
+              maxZoom={19}
+            />
+          )}
+        </Pane>
       </MapContainer>
 
       {/* Hint + toast: above map overlays (20), below the overlay drawer (30) */}
@@ -346,35 +288,19 @@ export default function ScanMap({
         {toast ? (
           <div
             role="status"
-            className="gs-toast rounded-[var(--radius-sm)] border px-3 py-1.5 text-[12px]"
-            style={{
-              background: "var(--panel-raised)",
-              borderColor: "color-mix(in srgb, var(--warn) 45%, var(--border))",
-              color: "var(--text)",
-              boxShadow: "var(--shadow-pop)",
-              whiteSpace: "nowrap",
-            }}
+            className="whitespace-nowrap rounded-[6px] border border-[#e6e9ee] bg-white px-3 py-1.5 text-[13px] text-[#1d2733]"
+            style={{ boxShadow: "0 1px 3px rgba(16,24,40,.08)" }}
           >
-            <span className="mr-1.5 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--warn)" }}>
-              Notice
-            </span>
             {toast}
           </div>
         ) : (
-          <div
-            className="rounded-full border px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.12em]"
-            style={{
-              background: "color-mix(in srgb, var(--bg) 80%, transparent)",
-              borderColor: "var(--border)",
-              color: "var(--muted)",
-            }}
-          >
-            Click anywhere to scan
+          <div className="whitespace-nowrap rounded-[6px] border border-[#e6e9ee] bg-white px-2.5 py-1 text-[13px] text-[#556070]">
+            Click the map to scan an area
           </div>
         )}
       </div>
 
-      <MapLegend layers={layers} onChange={setLayers} />
+      <LayerPicker basemap={basemap.id} onBasemap={onBasemap} layers={layers} onLayers={setLayers} />
     </div>
   );
 }

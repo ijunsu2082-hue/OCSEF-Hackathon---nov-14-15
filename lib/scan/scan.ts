@@ -177,38 +177,38 @@ function upgradeIdeas(a: {
 
   if (solar > 50 && (t.evening_cover_pct ?? 0) < 50) {
     const add = Math.max(1, solar * 0.5 - t.storage_mw);
-    ideas.push(`Add ~${n0(add)} MW of 4-hour storage so solar covers the evening peak (storage is only ${n0(t.evening_cover_pct ?? 0)}% of solar here)`);
+    ideas.push(`Add about ${n0(add)} MW of 4-hour storage so solar covers the evening peak. Storage is only ${n0(t.evening_cover_pct ?? 0)}% of solar here.`);
   }
   if ((t.cap_weighted_age ?? 0) > 30 && t.fossil_mw > 200) {
     const z = a.fossilAge ?? t.cap_weighted_age ?? 0;
-    ideas.push(`Repower ${n0(t.fossil_mw)} MW of gas averaging ${n0(z)} years old`);
+    ideas.push(`Repower ${n0(t.fossil_mw)} MW of gas averaging ${n0(z)} years old.`);
   }
   if (a.hvLineMiles > 0) {
-    ideas.push(`Dynamic line rating on the ${n0(a.hvLineMiles)} mi of ≥200 kV lines here: +${headroom}% median headroom (MODELED, site ${s.name})`);
+    ideas.push(`Dynamic line rating on the ${n0(a.hvLineMiles)} mi of ≥200 kV lines here: about ${headroom}% more capacity on a typical hour.`);
   } else if (t.line_miles > 0) {
-    ideas.push(`Dynamic line rating on the ${t.line_miles.toFixed(1)} mi of mapped lines here: +${headroom}% median headroom (MODELED, site ${s.name})`);
+    ideas.push(`Dynamic line rating on the ${t.line_miles.toFixed(1)} mi of mapped lines here: about ${headroom}% more capacity on a typical hour.`);
   }
   if (t.proposed_mw > 0) {
     const st = t.proposed_storage_mw > 0 ? `, ${n0(t.proposed_storage_mw)} MW of it storage` : "";
-    ideas.push(`${n0(t.proposed_mw)} MW already proposed (EIA-860${st}) — prioritize interconnection`);
+    ideas.push(`${n0(t.proposed_mw)} MW is already proposed${st}. Prioritize its grid connection.`);
   }
   if (t.planned_retirement_mw > 0) {
-    ideas.push(`Line up replacement for the ${n0(t.planned_retirement_mw)} MW scheduled to retire (EIA-860) before it goes dark`);
+    ideas.push(`Line up replacement for the ${n0(t.planned_retirement_mw)} MW scheduled to retire before it goes offline.`);
   }
   const fire = cases.filter((c) => c.category === "Wildfire");
   if (fire.length) {
-    ideas.push(`Covered conductor or undergrounding on fire-exposed lines (${fire.length} wildfire case${fire.length === 1 ? "" : "s"} here: ${fire[0].title})`);
+    ideas.push(`Covered conductor or undergrounding on fire-exposed lines. ${fire.length} wildfire case${fire.length === 1 ? "" : "s"} here: ${fire[0].title}.`);
   }
 
   // Fallbacks so there are always at least 2 ideas
   if (ideas.length < 2 && t.plant_count === 0) {
-    ideas.push(`No EIA-860 plants within ${a.radius} mi — rooftop solar plus home batteries are the main local supply option`);
+    ideas.push(`No power plants within ${a.radius} mi. Rooftop solar plus home batteries are the main local supply option.`);
   }
   if (ideas.length < 2) {
-    ideas.push(`Pilot dynamic line rating from ${s.name} weather (${s.distance_mi} mi away): conservative rating beats static in ${s.pct_hours_conservative_dlr_above_static}% of 2024 hours (MODELED)`);
+    ideas.push(`Pilot dynamic line rating using ${s.name} weather (${s.distance_mi} mi away). The conservative rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2024 hours.`);
   }
   if (ideas.length < 2) {
-    ideas.push(`Add sensors at the hottest-hour bottleneck: on ${s.hottest_hour.slice(0, 10) || "the hottest 2024 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}x static (MODELED)`);
+    ideas.push(`Add sensors at the hottest-hour bottleneck. On ${s.hottest_hour.slice(0, 10) || "the hottest 2024 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}× the fixed rating.`);
   }
   return ideas.slice(0, 5);
 }
