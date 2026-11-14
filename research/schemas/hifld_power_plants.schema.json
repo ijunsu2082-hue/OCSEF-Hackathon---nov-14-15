@@ -1,0 +1,256 @@
+{
+  "dataset": "hifld_power_plants",
+  "primary_key": [
+    "hifld_id"
+  ],
+  "geometry_type": "Point",
+  "source": {
+    "name": "HIFLD Open 'Power Plants' (Plants_gdb; final HIFLD Open release, re-hosted on ArcGIS Online item 6e0bdfea762046988469da10407f844f)",
+    "url": "https://services7.arcgis.com/2hYXmwteFLemN5bW/arcgis/rest/services/Plants_gdb__8907007659940948974/FeatureServer/0",
+    "vintage": "HIFLD Open Power Plants, final HIFLD Open release (official service last edited 2023-09-21, 13,233 features; max SOURCEDATE 2022-06-02, max VAL_DATE 2022-07-18)"
+  },
+  "fields": [
+    {
+      "name": "hifld_id",
+      "type": "integer",
+      "nullable": false,
+      "description": "HIFLD Power Plants record ID: the layer object ID (FID 1..13233, contiguous, in the source's PLANT_CODE order). The layer has no other unique ID because PLANT_CODE is duplicated for some plants. Primary key.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "eia_plant_code",
+      "type": "integer",
+      "nullable": true,
+      "description": "EIA plant code (source PLANT_CODE parsed as integer; null when PLANT_CODE is a non-EIA HIFLD code such as 'NA02715'). Join key to eia860_plants.plant_code. NOT unique: HIFLD carries duplicate records for a few plants.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant name (source NAME); the placeholder 'UNKNOWN' -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "operator",
+      "type": "string",
+      "nullable": true,
+      "description": "Operating utility/company (source OPERATOR).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "nullable": true,
+      "description": "City (source CITY).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "county",
+      "type": "string",
+      "nullable": true,
+      "description": "County name (source COUNTY).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "nullable": true,
+      "description": "Two-letter state abbreviation (source STATE).",
+      "unit": null,
+      "enum": [
+        "CA",
+        "MN"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "nullable": true,
+      "description": "Operating status (source STATUS; EIA-860 status codes: OP operating, SB standby, OS/OA out of service, RE retired, CN cancelled, IP indefinitely postponed, P planned, L regulatory approvals pending, T approved/not under construction, U/V under construction, TS construction complete/not yet operating).",
+      "unit": null,
+      "enum": [
+        "CN",
+        "IP",
+        "L",
+        "OA",
+        "OP",
+        "OS",
+        "P",
+        "RE",
+        "SB",
+        "T",
+        "TS",
+        "V"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "plant_type",
+      "type": "string",
+      "nullable": true,
+      "description": "Generation technology description(s) (source TYPE); multiple technologies are joined with '; '.",
+      "unit": null,
+      "enum": [
+        "ALL OTHER",
+        "ALL OTHER; NATURAL GAS FIRED COMBUSTION TURBINE",
+        "BATTERIES",
+        "BATTERIES; NATURAL GAS FIRED COMBINED CYCLE",
+        "BATTERIES; NATURAL GAS FIRED COMBUSTION TURBINE",
+        "BATTERIES; PETROLEUM LIQUIDS",
+        "BATTERIES; SOLAR PHOTOVOLTAIC",
+        "CONVENTIONAL HYDROELECTRIC",
+        "CONVENTIONAL HYDROELECTRIC; HYDROELECTRIC PUMPED STORAGE",
+        "FLYWHEELS",
+        "HYDROELECTRIC PUMPED STORAGE",
+        "LANDFILL GAS",
+        "LANDFILL GAS; NATURAL GAS FIRED COMBINED CYCLE; NATURAL GAS FIRED COMBUSTION TURBINE; NATURAL GAS STEAM TURBINE",
+        "MUNICIPAL SOLID WASTE",
+        "NATURAL GAS FIRED COMBINED CYCLE",
+        "NATURAL GAS FIRED COMBINED CYCLE; NATURAL GAS FIRED COMBUSTION TURBINE",
+        "NATURAL GAS FIRED COMBINED CYCLE; NATURAL GAS FIRED COMBUSTION TURBINE; NATURAL GAS STEAM TURBINE",
+        "NATURAL GAS FIRED COMBINED CYCLE; NATURAL GAS STEAM TURBINE",
+        "NATURAL GAS FIRED COMBINED CYCLE; SOLAR PHOTOVOLTAIC",
+        "NATURAL GAS FIRED COMBUSTION TURBINE",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; NATURAL GAS INTERNAL COMBUSTION ENGINE; PETROLEUM LIQUIDS",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; NATURAL GAS STEAM TURBINE",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; OTHER WASTE BIOMASS; SOLAR PHOTOVOLTAIC",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; PETROLEUM LIQUIDS",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; PETROLEUM LIQUIDS; NATURAL GAS FIRED COMBINED CYCLE",
+        "NATURAL GAS FIRED COMBUSTION TURBINE; SOLAR PHOTOVOLTAIC",
+        "NATURAL GAS INTERNAL COMBUSTION ENGINE",
+        "NATURAL GAS INTERNAL COMBUSTION ENGINE; OTHER WASTE BIOMASS",
+        "NATURAL GAS STEAM TURBINE",
+        "NATURAL GAS STEAM TURBINE; OTHER GASES",
+        "NUCLEAR",
+        "ONSHORE WIND TURBINE",
+        "OTHER GASES",
+        "OTHER GASES; OTHER NATURAL GAS",
+        "OTHER NATURAL GAS",
+        "OTHER NATURAL GAS; SOLAR PHOTOVOLTAIC; NATURAL GAS FIRED COMBUSTION TURBINE",
+        "OTHER WASTE BIOMASS",
+        "OTHER WASTE BIOMASS; CONVENTIONAL HYDROELECTRIC",
+        "PETROLEUM LIQUIDS",
+        "SOLAR PHOTOVOLTAIC",
+        "SOLAR THERMAL WITHOUT ENERGY STORAGE"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "primary_fuel",
+      "type": "string",
+      "nullable": true,
+      "description": "Primary fuel / energy source code (source PRIM_FUEL; EIA energy source codes such as NG, SUN, WAT, MWH).",
+      "unit": null,
+      "enum": [
+        "BIT",
+        "DFO",
+        "LFG",
+        "MSW",
+        "MWH",
+        "NG",
+        "NUC",
+        "OBG",
+        "OG",
+        "SUN",
+        "WAT",
+        "WH",
+        "WND"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "total_mw",
+      "type": "number",
+      "nullable": true,
+      "description": "Operating (nameplate) capacity of the plant (source OPER_CAP); -999999 -> null.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "net_gen_mwh",
+      "type": "number",
+      "nullable": true,
+      "description": "Annual net generation (source NET_GEN); may be negative for storage/pumped hydro; -999999 -> null.",
+      "unit": "MWh",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "nullable": true,
+      "description": "Source reference (source SOURCE).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sourcedate",
+      "type": "date",
+      "nullable": true,
+      "description": "Date of source data (source SOURCEDATE, UTC).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Latitude of the point geometry, WGS84, 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -90,
+      "max": 90
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Longitude of the point geometry, WGS84, 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -180,
+      "max": 180
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance (R=3958.8 mi) from Westminster High School (33.7538, -118.0111), 1 decimal.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100.0
+    }
+  ]
+}

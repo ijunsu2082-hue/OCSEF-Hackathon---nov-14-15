@@ -1,0 +1,205 @@
+{
+  "dataset": "hifld_transmission",
+  "primary_key": [
+    "hifld_id"
+  ],
+  "geometry_type": "LineString|MultiLineString",
+  "source": {
+    "name": "HIFLD Electric Power Transmission Lines via Esri Living Atlas (Federal User Community) 'U.S. Electric Power Transmission Lines (Archive)'",
+    "url": "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/US_Electric_Power_Transmission_Lines/FeatureServer/0",
+    "vintage": "2024-09-30"
+  },
+  "fields": [
+    {
+      "name": "hifld_id",
+      "type": "integer",
+      "nullable": false,
+      "description": "HIFLD transmission line unique identifier (source field ID, cast to int).",
+      "unit": null,
+      "enum": null,
+      "min": 200823,
+      "max": 400472
+    },
+    {
+      "name": "owner",
+      "type": "string",
+      "nullable": true,
+      "description": "Transmission line ownership entity (OWNER). 'NOT AVAILABLE'/'UNKNOWN' -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "nullable": true,
+      "description": "Operational status of line (STATUS).",
+      "unit": null,
+      "enum": [
+        "IN SERVICE"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "nullable": true,
+      "description": "Line type as given by HIFLD, e.g. AC/DC and overhead/underground (TYPE).",
+      "unit": null,
+      "enum": [
+        "AC; OVERHEAD",
+        "AC; UNDERGROUND",
+        "DC; OVERHEAD",
+        "OVERHEAD",
+        "UNDERGROUND"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "voltage_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "Line voltage in kilovolts (VOLTAGE). -999999 and non-positive placeholders -> null.",
+      "unit": "kV",
+      "enum": null,
+      "min": 33.0,
+      "max": 1000.0
+    },
+    {
+      "name": "volt_class",
+      "type": "string",
+      "nullable": true,
+      "description": "HIFLD voltage class bucket (VOLT_CLASS). 'NOT AVAILABLE' -> null.",
+      "unit": null,
+      "enum": [
+        "100-161",
+        "220-287",
+        "500",
+        "DC",
+        "UNDER 100"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "inferred",
+      "type": "boolean",
+      "nullable": true,
+      "description": "Whether attributes (voltage) were inferred by HIFLD (INFERRED Y/N).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sub_1",
+      "type": "string",
+      "nullable": true,
+      "description": "Origin substation name (SUB_1). Placeholders -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sub_2",
+      "type": "string",
+      "nullable": true,
+      "description": "Destination substation name (SUB_2). Placeholders -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "naics_desc",
+      "type": "string",
+      "nullable": false,
+      "description": "NAICS description (NAICS_DESC).",
+      "unit": null,
+      "enum": [
+        "ELECTRIC BULK POWER TRANSMISSION AND CONTROL"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "nullable": false,
+      "description": "Data source reference (SOURCE), often a URL or imagery citation.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sourcedate",
+      "type": "date",
+      "nullable": false,
+      "description": "Data source publication date (SOURCEDATE, UTC date of epoch ms).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "val_method",
+      "type": "string",
+      "nullable": false,
+      "description": "Validation method (VAL_METHOD).",
+      "unit": null,
+      "enum": [
+        "IMAGERY",
+        "IMAGERY/OTHER",
+        "OTHER",
+        "UNVERIFIED"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "val_date",
+      "type": "date",
+      "nullable": false,
+      "description": "Validation date (VAL_DATE, UTC date of epoch ms).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "shape_length_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Geodesic length of the delivered geometry on the WGS84 ellipsoid (Vincenty), full line not clipped, 2 dp.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0.01,
+      "max": 844.15
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance (R=3958.8 mi) from Westminster High School (33.7538,-118.0111) to the nearest vertex, 1 dp.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0.7,
+      "max": 99.6
+    },
+    {
+      "name": "vertex_count",
+      "type": "integer",
+      "nullable": false,
+      "description": "Number of vertices in the delivered geometry (all parts).",
+      "unit": null,
+      "enum": null,
+      "min": 2,
+      "max": 1928
+    }
+  ]
+}

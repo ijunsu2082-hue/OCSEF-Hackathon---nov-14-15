@@ -1,0 +1,269 @@
+{
+  "dataset": "eia860_plants_layer",
+  "primary_key": [
+    "plant_code"
+  ],
+  "geometry_type": "Point",
+  "source": {
+    "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+    "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+    "vintage": "2025 final (released 2026-09-10)"
+  },
+  "fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "EIA plant code; primary key.",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "plant_name",
+      "type": "string",
+      "nullable": false,
+      "description": "Plant name.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "utility_name",
+      "type": "string",
+      "nullable": false,
+      "description": "Operating utility name ('' never emitted; falls back to 'Unknown utility' if EIA blank).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance from region center, 1 decimal.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100.0
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Operable nameplate capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "mw_by_source",
+      "type": "object",
+      "nullable": false,
+      "description": "Map source_category -> operable nameplate MW (keys sorted; only non-zero categories).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "oldest_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Earliest operating year of operable generators.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "newest_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Latest operating year of operable generators.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "planned_retirement_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Operable MW with a planned retirement year.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "generator_count",
+      "type": "integer",
+      "nullable": false,
+      "description": "Number of operable generators.",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "primary_source",
+      "type": "string",
+      "nullable": false,
+      "description": "source_category with the most operable MW.",
+      "unit": null,
+      "enum": [
+        "natural_gas",
+        "solar",
+        "battery",
+        "wind",
+        "hydro",
+        "biogas",
+        "other_gas",
+        "waste_heat",
+        "oil",
+        "nuclear",
+        "geothermal",
+        "coal",
+        "biomass",
+        "other"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "technologies",
+      "type": "array",
+      "nullable": false,
+      "description": "Sorted unique EIA technology names of operable generators.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "capacity_weighted_age_years",
+      "type": "number",
+      "nullable": true,
+      "description": "Nameplate-weighted mean age relative to 2025, 1 decimal.",
+      "unit": "years",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "capacity_weighted_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Nameplate-weighted mean operating year, rounded.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "county",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant county.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant city. Placeholders 'N/A', 'NA', 'TBD' and 'TBA' -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "nullable": true,
+      "description": "Two-letter state code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "balancing_authority",
+      "type": "string",
+      "nullable": true,
+      "description": "Balancing authority code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sector",
+      "type": "string",
+      "nullable": true,
+      "description": "EIA sector name.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "grid_voltage_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "Primary grid interconnection voltage.",
+      "unit": "kV",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "utility_id",
+      "type": "integer",
+      "nullable": true,
+      "description": "EIA utility ID.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "summer_capacity_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Operable net summer capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "winter_capacity_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Operable net winter capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "proposed_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Proposed nameplate MW at this plant.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    }
+  ]
+}
