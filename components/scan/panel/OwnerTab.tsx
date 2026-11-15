@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ReportTarget } from "@/lib/scan/target";
 import { KIND_WORD, assetName, claimHref, fromTarget } from "@/components/owner/assets";
 import { daysBetween, fmtDate, todayIso } from "@/components/owner/calendar";
 import { deadlinesIn, nextDeadline, previewFor } from "@/components/owner/engine";
-import { FREQUENCY_WORD } from "@/components/owner/ui";
+import { CopyButton, FREQUENCY_WORD } from "@/components/owner/ui";
 import type { Deadline, Obligation } from "@/lib/owner/types";
 import {
   applicableOnly,
@@ -13,16 +13,16 @@ import {
   loadFactAnswers,
   loadProgramIndex,
   saveFactAnswers,
-  summarize,
   type Determination,
   type FactAnswer,
   type FactAnswers,
   type ProgramIndex,
 } from "@/lib/owner/applicability";
 import {
+  assetFieldValue,
   loadFormCatalog,
   resolveWorksheets,
-  worksheetCoverage,
+  type AssetFieldKey,
   type ExtractionStatus,
   type FormCatalog,
   type FormWorksheet,
@@ -32,44 +32,69 @@ import { Caption } from "./ui";
 /*
  * Compliance tab for one plant, substation or power line.
  *
- * Two things, in this order:
- *   1. The schedule: what has to be filed or signed, and by when.
- *   2. The forms behind those items: what the agency's own page says the form asks
- *      for (lib/owner/forms.ts reads public/compliance/forms.json, which
- *      research/etl/compliance writes), which fields public data fills, and which
- *      ones a person has to fill or sign.
+ * The screen answers three questions in order, and nothing else:
+ *   1. Who is this for, and what is next?      (header + "Do these next")
+ *   2. What must I file or sign, by cadence?   ("Your filings", one row per filing)
+ *   3. What did you rule out, and why?         ("Not yours", one line each)
  *
- * Nothing here claims a filing was made. The public preview shows how the rules
- * apply from public data; a verified owner gets the full calendar at /owner.
+ * Each filing is one row, not two lists: the decision, its basis, the prefilled fields,
+ * the fields only a person can fill, and the agency's own words sit behind the row.
+ * Filings are decided by lib/owner/applicability.ts from the asset's facts and the
+ * agency lists in public/compliance/applicability.json; form fields come from
+ * public/compliance/forms.json, which research/etl/compliance reads.
+ *
+ * Nothing here claims a filing was made.
  */
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]";
 const LINK = `text-[#0369a1] underline-offset-2 hover:underline ${FOCUS}`;
-
-interface ScheduleRow {
-  key: string;
-  due: string;
-  obligation: Obligation;
-  deadline: Deadline;
-  action: "file" | "sign";
-}
+const CHIP = "inline-flex items-center rounded-full border border-[#e6e9ee] bg-white px-2 py-0.5 text-[12px] font-medium text-[#556070]";
 
 const STATUS_WORD: Record<ExtractionStatus, string> = {
-  extracted: "Read from the agency page",
-  partial: "Form known, field list partly read",
-  manual: "Open the form: fields not read yet",
+  extracted: "read from the agency page",
+  partial: "field list partly read",
+  manual: "open the form to read it",
 };
+
+const DETAIL_KEYS: { key: AssetFieldKey; label: string }[] = [
+  { key: "plant_name", label: "Name" },
+  { key: "plant_code", label: "EIA plant code" },
+  { key: "operator", label: "Owner or operator" },
+  { key: "county", label: "County" },
+  { key: "city", label: "City" },
+  { key: "capacity_mw", label: "Capacity" },
+  { key: "primary_source", label: "Primary fuel" },
+  { key: "voltage_kv", label: "Voltage" },
+  { key: "generators", label: "Generators" },
+  { key: "latitude", label: "Latitude" },
+  { key: "longitude", label: "Longitude" },
+];
+
+const GROUPS: { key: string; label: string; hint: string }[] = [
+  { key: "monthly", label: "Every month", hint: "One filing a month, same form each time." },
+  { key: "quarterly", label: "Every quarter or half year", hint: "Four or two filings a year." },
+  { key: "annual", label: "Once a year", hint: "One filing a year, with a fixed date." },
+  { key: "event", label: "When something happens", hint: "No fixed date: these follow an event." },
+];
+
+function groupOf(o: Obligation): string {
+  if (o.frequency === "monthly") return "monthly";
+  if (o.frequency === "quarterly" || o.frequency === "semiannual") return "quarterly";
+  if (o.frequency === "annual") return "annual";
+  return "event";
+}
+
+/* ------------------------------------------------------------- small pieces */
 
 function DueTag({ due, today }: { due: string; today: string }) {
   const days = daysBetween(today, due);
-  if (days < 0) {
-    return <span className="font-semibold text-[#dc2626]">{Math.abs(days)} d overdue</span>;
-  }
+  if (days < 0) return <span className="font-semibold text-[#dc2626]">{Math.abs(days)} d overdue</span>;
+  if (days === 0) return <span className="font-semibold text-[#b45309]">today</span>;
   if (days <= 30) return <span className="font-semibold text-[#b45309]">in {days} d</span>;
   return <span className="text-[#556070]">in {days} d</span>;
 }
 
-/** The decision itself, with the fact that settles it and where it came from. */
+/** The decision, the fact behind it, and where that fact came from. */
 function DecisionLine({ d }: { d: Determination }) {
   const word =
     d.applicability === "applies" ? "Applies" : d.applicability === "does_not_apply" ? "Does not apply" : "Not settled yet";
@@ -81,7 +106,7 @@ function DecisionLine({ d }: { d: Determination }) {
   );
 }
 
-function ApplicabilityBadge({
+function AnswerButtons({
   d,
   onAnswer,
   onClear,
@@ -90,143 +115,171 @@ function ApplicabilityBadge({
   onAnswer: (id: string, answer: FactAnswer) => void;
   onClear: (id: string) => void;
 }) {
-  if (d.applicability === "applies" || d.applicability === "does_not_apply") {
-    const answered = !!d.source?.startsWith("Your answer");
-    return (
-      <span className="flex items-baseline gap-2 text-[13px] font-medium">
-        <span className={d.applicability === "applies" ? "text-[#0369a1]" : "text-[#556070]"}>
-          {d.applicability === "applies" ? "Applies" : "Does not apply"}
-        </span>
-        {answered && (
-          <button type="button" onClick={() => onClear(d.obligationId)} className={`text-[13px] font-normal ${LINK}`}>
-            change
-          </button>
-        )}
-      </span>
-    );
+  if (d.applicability !== "needs_fact" || !d.question) {
+    return d.source?.startsWith("Your answer") ? (
+      <button type="button" onClick={() => onClear(d.obligationId)} className={`text-[13px] ${LINK}`}>
+        change your answer
+      </button>
+    ) : null;
   }
   const q = d.question;
-  if (!q) return null;
   return (
-    <span className="flex flex-col items-start gap-1 text-[13px]">
-      <span className="font-medium text-[#1d2733]">One fact needed: {q.question}</span>
-      <span className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onAnswer(q.id, "yes")}
-          className={`h-7 rounded-[6px] border border-[#e6e9ee] bg-white px-2 text-[13px] font-medium text-[#1d2733] hover:bg-[#f6f8fa] ${FOCUS}`}
-        >
-          Yes
-        </button>
-        <button
-          type="button"
-          onClick={() => onAnswer(q.id, "no")}
-          className={`h-7 rounded-[6px] border border-[#e6e9ee] bg-white px-2 text-[13px] font-medium text-[#1d2733] hover:bg-[#f6f8fa] ${FOCUS}`}
-        >
-          No
-        </button>
-      </span>
-    </span>
+    <div className="mt-2 rounded-[6px] border border-[#e6e9ee] bg-[#f6f8fa] px-3 py-2">
+      <p className="text-[13px] font-medium text-[#1d2733]">{q.question}</p>
+      <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">{q.detail}</p>
+      <div className="mt-2 flex gap-2">
+        {(["yes", "no"] as const).map((answer) => (
+          <button
+            key={answer}
+            type="button"
+            onClick={() => onAnswer(q.id, answer)}
+            className={`h-7 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[13px] font-medium text-[#1d2733] hover:bg-[#eef2f6] ${FOCUS}`}
+          >
+            {answer === "yes" ? "Yes" : "No"}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
-function Worksheet({
+function StatusWord({ d }: { d: Determination }) {
+  if (d.applicability === "applies") return <span className="text-[13px] font-medium text-[#0369a1]">Applies</span>;
+  if (d.applicability === "does_not_apply")
+    return <span className="text-[13px] font-medium text-[#556070]">Does not apply</span>;
+  return <span className="text-[13px] font-medium text-[#b45309]">One question</span>;
+}
+
+/* ------------------------------------------------------------- one filing */
+
+function FilingRow({
   w,
-  assetLabel,
-  determination,
+  d,
+  next,
+  today,
   onAnswer,
   onClear,
 }: {
   w: FormWorksheet;
-  assetLabel: string;
-  determination: Determination;
+  d: Determination;
+  next: Deadline | null;
+  today: string;
   onAnswer: (id: string, answer: FactAnswer) => void;
   onClear: (id: string) => void;
 }) {
+  const o = w.obligation;
   const form = w.form;
-  const status = form?.status ?? "manual";
+  const total = w.prefilled.length + w.awaiting.length;
   return (
-    <li className="py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h4 className="min-w-0 text-[15px] font-semibold leading-snug">{w.obligation.title}</h4>
-        <ApplicabilityBadge d={determination} onAnswer={onAnswer} onClear={onClear} />
-      </div>
-      <DecisionLine d={determination} />
-      <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">
-        {form?.form ?? w.obligation.form} · {form?.agency ?? w.obligation.agency}
-        {form ? ` · ${form.jurisdiction}` : ""}
-      </p>
-      <p className="mt-0.5 text-[13px] leading-snug text-[#6b7583]">
-        {FREQUENCY_WORD[w.obligation.frequency]} ·{" "}
-        {form?.action === "sign" ? "Signed by an authorized official" : "Filed by the owner"} · {STATUS_WORD[status]}
-      </p>
+    <details className="group border-b border-[#e6e9ee] py-3 last:border-b-0">
+      <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="min-w-0">
+          <span className="block text-[15px] font-semibold leading-snug">{o.title}</span>
+          <span className="mt-0.5 block text-[13px] leading-snug text-[#556070]">
+            {form?.form ?? o.form} · {form?.agency ?? o.agency}
+            {next ? ` · next ${fmtDate(next.due)}` : " · no fixed date"}
+          </span>
+        </span>
+        <span className="flex items-baseline gap-3 whitespace-nowrap">
+          <StatusWord d={d} />
+          {next && (
+            <span className="text-[13px]">
+              <DueTag due={next.due} today={today} />
+            </span>
+          )}
+        </span>
+      </summary>
 
-      <p className="mt-2 text-[14px] font-semibold">Prefilled from public data</p>
-      {w.prefilled.length === 0 ? (
-        <p className="mt-1 text-[14px] text-[#556070]">
-          No field on this form could be filled from public data for {assetLabel}.
+      <div className="mt-2">
+        <p className="text-[13px] text-[#556070]">
+          {FREQUENCY_WORD[o.frequency]} ·{" "}
+          {form?.action === "sign" ? "Signed by an authorized official" : "Filed by the owner"} ·{" "}
+          {w.prefilled.length} of {total} fields prefilled
+          {form ? ` · ${STATUS_WORD[form.status]}` : ""}
         </p>
-      ) : (
-        <table className="mt-1 w-full border-collapse text-left text-[13px]">
-          <thead>
-            <tr className="border-b border-[#e6e9ee] text-[#556070]">
-              <th scope="col" className="py-1.5 pr-3 font-medium">Field on the form</th>
-              <th scope="col" className="py-1.5 pr-3 font-medium">Value</th>
-              <th scope="col" className="py-1.5 font-medium">Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {w.prefilled.map((f, i) => (
-              <tr key={`${f.label}|${i}`} className="border-b border-[#e6e9ee] align-top">
-                <td className="py-1.5 pr-3 text-[#556070]">{f.label}</td>
-                <td className="py-1.5 pr-3 font-semibold tabular-nums text-[#1d2733]">{f.value}</td>
-                <td className="py-1.5 text-[#6b7583]">{f.source}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <DecisionLine d={d} />
+        <AnswerButtons d={d} onAnswer={onAnswer} onClear={onClear} />
 
-      {w.awaiting.length > 0 && (
-        <div className="mt-3">
-          <p className="text-[14px] font-semibold">Needs your input</p>
-          <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-5 text-[13px] leading-snug text-[#556070]">
-            {w.awaiting.map((label) => (
-              <li key={label}>{label}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {w.prefilled.length > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[14px] font-semibold">Prefilled from public data</p>
+              <CopyButton
+                text={w.prefilled.map((f) => `${f.label}: ${f.value}`).join("\n")}
+                label="Copy values"
+              />
+            </div>
+            <table className="mt-1 w-full border-collapse text-left text-[13px]">
+              <tbody>
+                {w.prefilled.map((f, i) => (
+                  <tr key={`${f.label}|${i}`} className="border-b border-[#e6e9ee] align-top last:border-b-0">
+                    <td className="py-1 pr-3 text-[#556070]">{f.label}</td>
+                    <td className="py-1 pr-3 font-semibold tabular-nums">{f.value}</td>
+                    <td className="py-1 text-[#6b7583]">{f.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {form && form.evidence.length > 0 && (
-        <details className="mt-3 rounded-[6px] border border-[#e6e9ee] px-3 py-2">
-          <summary className={`cursor-pointer text-[14px] font-medium ${LINK}`}>
-            What the agency page said
-          </summary>
-          <ul className="mt-2 flex flex-col gap-2">
-            {form.evidence.map((e, i) => (
-              <li key={`${e.url}|${i}`} className="text-[13px] leading-snug text-[#556070]">
-                <span className="block">&ldquo;{e.excerpt}&rdquo;</span>
-                <a href={e.url} target="_blank" rel="noopener noreferrer" className={LINK}>
-                  {e.url}
-                </a>
-              </li>
-            ))}
-          </ul>
-          {form.dueText && <p className="mt-2 text-[13px] leading-snug text-[#556070]">Deadline text: {form.dueText}</p>}
-        </details>
-      )}
+        {w.awaiting.length > 0 && (
+          <p className="mt-2 text-[13px] leading-snug text-[#556070]">
+            <span className="font-semibold text-[#1d2733]">Only you can fill: </span>
+            {w.awaiting.join(" · ")}
+          </p>
+        )}
 
-      <p className="mt-2 text-[13px] leading-snug text-[#556070]">The rule: {w.obligation.appliesBecause}</p>
-      <p className="mt-1 text-[13px] leading-snug text-[#556070]">When it is due: {w.obligation.dueRule}</p>
-      {w.obligation.notes && <p className="mt-1 text-[13px] leading-snug text-[#556070]">{w.obligation.notes}</p>}
+        <p className="mt-2 text-[13px] leading-snug text-[#6b7583]">
+          Rule: {o.appliesBecause} Due: {o.dueRule}
+        </p>
+        {o.notes && <p className="mt-1 text-[13px] leading-snug text-[#6b7583]">{o.notes}</p>}
 
-      <p className="mt-2 text-[14px]">
-        <a href={w.obligation.formUrl} target="_blank" rel="noopener noreferrer" className={LINK}>
-          Open the official form
-        </a>
-      </p>
-    </li>
+        {form && form.evidence.length > 0 && (
+          <details className="mt-2 rounded-[6px] border border-[#e6e9ee] px-3 py-2">
+            <summary className={`cursor-pointer text-[13px] font-medium ${LINK}`}>What the agency page said</summary>
+            <ul className="mt-2 flex flex-col gap-2">
+              {form.evidence.map((e, i) => (
+                <li key={`${e.url}|${i}`} className="text-[13px] leading-snug text-[#556070]">
+                  <span className="block">&ldquo;{e.excerpt}&rdquo;</span>
+                  <a href={e.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                    {e.url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {form.dueText && <p className="mt-2 text-[13px] leading-snug text-[#556070]">Deadline text: {form.dueText}</p>}
+          </details>
+        )}
+
+        <p className="mt-2 text-[14px]">
+          <a href={o.formUrl} target="_blank" rel="noopener noreferrer" className={LINK}>
+            Open the official form
+          </a>
+        </p>
+      </div>
+    </details>
+  );
+}
+
+/* ------------------------------------------------------------- the tab */
+
+interface Row {
+  obligation: Obligation;
+  worksheet: FormWorksheet;
+  determination: Determination;
+  next: Deadline | null;
+}
+
+function Section({ id, title, hint, children }: { id: string; title: string; hint?: string; children: ReactNode }) {
+  return (
+    <section className="border-t border-[#e6e9ee] px-6 py-6" aria-labelledby={id}>
+      <h3 id={id} className="text-[16px] font-semibold leading-snug">
+        {title}
+      </h3>
+      {hint && <Caption className="mt-1">{hint}</Caption>}
+      <div className="mt-3">{children}</div>
+    </section>
   );
 }
 
@@ -237,16 +290,10 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   const [answers, setAnswers] = useState<FactAnswers>({});
   const today = todayIso();
 
-  // The ETL snapshots: forms read from the agencies' own pages, and the agency
-  // program lists that decide which filings apply.
   useEffect(() => {
     let alive = true;
-    loadFormCatalog().then((next) => {
-      if (alive) setCatalog(next);
-    });
-    loadProgramIndex().then((next) => {
-      if (alive) setIndex(next);
-    });
+    loadFormCatalog().then((next) => alive && setCatalog(next));
+    loadProgramIndex().then((next) => alive && setIndex(next));
     setAnswers(loadFactAnswers());
     return () => {
       alive = false;
@@ -270,197 +317,220 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
     });
   };
 
-  const obligations = useMemo(() => (asset ? previewFor(asset) : []), [asset]);
+  const all = useMemo(() => (asset ? previewFor(asset) : []), [asset]);
   const determinations = useMemo(
-    () => (asset ? determineAll(asset, obligations, index, answers) : {}),
-    [asset, obligations, index, answers],
+    () => (asset ? determineAll(asset, all, index, answers) : {}),
+    [asset, all, index, answers],
   );
-  const applicable = useMemo(() => applicableOnly(obligations, determinations), [obligations, determinations]);
+  const applicable = useMemo(() => applicableOnly(all, determinations), [all, determinations]);
   const setAside = useMemo(
-    () => obligations.filter((o) => determinations[o.id]?.applicability === "does_not_apply"),
-    [obligations, determinations],
-  );
-  const counts = useMemo(
-    () => summarize(obligations.map((o) => determinations[o.id]).filter(Boolean)),
-    [obligations, determinations],
+    () => all.filter((o) => determinations[o.id]?.applicability === "does_not_apply"),
+    [all, determinations],
   );
 
-  const rows = useMemo(() => {
+  const rows = useMemo<Row[]>(() => {
     if (!asset) return [];
-    return applicable.map((o) => ({ o, schedule: deadlinesIn(o, today, 12).slice(0, 3), next: nextDeadline(o, today) }));
-  }, [asset, applicable, today]);
+    const worksheets = new Map(resolveWorksheets(asset, applicable, catalog).map((w) => [w.obligation.id, w]));
+    return applicable
+      .map((o) => {
+        const worksheet = worksheets.get(o.id);
+        const determination = determinations[o.id];
+        const next = nextDeadline(o, today);
+        if (!worksheet || !determination) return null;
+        return { obligation: o, worksheet, determination, next };
+      })
+      .filter((r): r is Row => r !== null)
+      .sort((a, b) => (a.next?.due ?? "9999").localeCompare(b.next?.due ?? "9999") || a.obligation.title.localeCompare(b.obligation.title));
+  }, [asset, applicable, catalog, determinations, today]);
 
-  const worksheets = useMemo(
-    () => (asset ? resolveWorksheets(asset, rows.map((r) => r.o), catalog) : []),
-    [asset, rows, catalog],
-  );
-  const worksheetById = useMemo(() => new Map(worksheets.map((w) => [w.obligation.id, w])), [worksheets]);
-  const coverage = useMemo(() => worksheetCoverage(worksheets), [worksheets]);
+  const upcoming = rows.filter((r) => r.next).slice(0, 3);
+  const openQuestions = rows.filter((r) => r.determination.applicability === "needs_fact");
+  const covered = rows.reduce((n, r) => n + r.worksheet.prefilled.length, 0);
+  const details = useMemo(() => {
+    if (!asset) return [];
+    return DETAIL_KEYS.map(({ key, label }) => {
+      const hit = assetFieldValue(asset, key);
+      return hit ? { label, value: hit.value } : null;
+    }).filter((d): d is { label: string; value: string } => d !== null);
+  }, [asset]);
 
-  const schedule = useMemo<ScheduleRow[]>(() => {
-    const out: ScheduleRow[] = [];
-    for (const { o, schedule: dueDates } of rows) {
-      const action = worksheetById.get(o.id)?.form?.action ?? "file";
-      for (const d of dueDates) out.push({ key: `${o.id}|${d.due}`, due: d.due, obligation: o, deadline: d, action });
-    }
-    return out.sort((a, b) => a.due.localeCompare(b.due)).slice(0, 10);
-  }, [rows, worksheetById]);
+  const ownerName =
+    asset?.kind === "plant"
+      ? asset.plant.utility_name
+      : asset?.kind === "substation"
+        ? asset.substation.operator
+        : asset?.line.operator;
+
+  if (!asset) {
+    return (
+      <div className="text-[15px] leading-snug text-[#1d2733]">
+        <section className="px-6 py-6">
+          <h3 className="text-[15px] font-semibold leading-snug">Compliance</h3>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#556070]">
+            Click a power plant, substation or power line on the map. You get one row per filing that applies to it,
+            the date it is due, and the fields public data already fills in.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="text-[15px] leading-snug text-[#1d2733]">
-      <p role="note" className="px-6 pt-5 pb-4 text-[14px] leading-snug text-[#1d2733]">
+      <p role="note" className="px-6 pt-5 pb-4 text-[14px] leading-snug">
         <span className="font-semibold">Emergency (fire, sparks, a wire down, someone hurt)? </span>
         <a href="tel:911" className={`font-semibold ${LINK}`}>
           Call 911 now.
         </a>
       </p>
 
-      {!asset ? (
-        <section className="border-t border-[#e6e9ee] px-6 py-6">
-          <h3 className="text-[15px] font-semibold leading-snug">Compliance</h3>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#556070]">
-            Click a power plant, substation or power line on the map to see what its owner must file or sign,
-            the deadlines, and the forms themselves with the fields public data can fill in.
-          </p>
-        </section>
-      ) : (
-        <>
-          <section className="border-t border-[#e6e9ee] px-6 py-6" aria-labelledby="compliance-title">
-            <p className="text-[13px] text-[#6b7583]">{KIND_WORD[asset.kind]}</p>
-            <h3 id="compliance-title" className="mt-0.5 text-[16px] font-semibold leading-snug">
-              {assetName(asset)}
-            </h3>
-            <Caption className="mt-1">
-              Public preview. Forms and fields are read from the agencies&apos; own pages; nothing here is filed for you.
-            </Caption>
-          </section>
+      <Section id="compliance-title" title={assetName(asset)} hint={KIND_WORD[asset.kind]}>
+        <p className="text-[14px] leading-snug">
+          <span className="font-semibold">Owner: </span>
+          {ownerName || "not recorded in public data"}
+        </p>
+        <p className="mt-2 text-[14px] leading-snug">
+          <span className="font-semibold">{rows.length}</span> filing{rows.length === 1 ? "" : "s"} to make
+          {upcoming.length > 0 && (
+            <>
+              {" "}
+              · next is <span className="font-semibold">{upcoming[0].worksheet.form?.form ?? upcoming[0].obligation.form}</span>{" "}
+              due {fmtDate(upcoming[0].next!.due)} (<DueTag due={upcoming[0].next!.due} today={today} />)
+            </>
+          )}
+          {openQuestions.length > 0 && (
+            <>
+              {" "}
+              · <span className="font-semibold text-[#b45309]">{openQuestions.length}</span>{" "}
+              {openQuestions.length === 1 ? "needs" : "need"} one answer from you
+            </>
+          )}
+          {setAside.length > 0 && (
+            <>
+              {" "}
+              · <span className="font-semibold">{setAside.length}</span> ruled out
+            </>
+          )}
+          .
+        </p>
+        <p className="mt-1 text-[13px] leading-snug text-[#6b7583]">
+          {covered} fields prefilled from public data. Forms and fields are read from the agencies&apos; own pages;
+          nothing here is filed for you.
+        </p>
+      </Section>
 
-          <section className="border-t border-[#e6e9ee] px-6 py-6" aria-labelledby="compliance-schedule">
-            <h3 id="compliance-schedule" className="text-[16px] font-semibold leading-snug">
-              Compliance schedule
-            </h3>
-            <Caption className="mt-1">
-              What has to be filed or signed, in date order. Dates follow each agency&apos;s published rule.
-            </Caption>
-            {obligations.length > 0 && (
-              <p className="mt-2 text-[14px] leading-snug text-[#1d2733]">
-                We checked the {obligations.length} filing{obligations.length === 1 ? "" : "s"} in our list against this
-                asset: {counts.applies} appl{counts.applies === 1 ? "ies" : "y"}, {counts.doesNotApply} do
-                {counts.doesNotApply === 1 ? "es" : ""} not apply, and {counts.needsFact} need
-                {counts.needsFact === 1 ? "s" : ""} one fact from you.
-              </p>
-            )}
-            {schedule.length === 0 ? (
-              <p className="mt-3 text-[14px] leading-relaxed text-[#556070]">
-                No dated filing in our list matches this asset&apos;s public data in the next 12 months.
-              </p>
-            ) : (
-              <table className="mt-3 w-full border-collapse text-left text-[14px]">
-                <thead>
-                  <tr className="border-b border-[#e6e9ee] text-[13px] text-[#556070]">
-                    <th scope="col" className="py-2 pr-3 font-medium">Due</th>
-                    <th scope="col" className="py-2 pr-3 font-medium">Form</th>
-                    <th scope="col" className="py-2 pr-3 font-medium">What to do</th>
-                    <th scope="col" className="py-2 font-medium">Agency</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schedule.map((row) => (
-                    <tr key={row.key} className="border-b border-[#e6e9ee] align-top">
-                      <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums">
-                        <span className="block font-semibold">{fmtDate(row.due)}</span>
-                        <span className="block text-[13px]">
-                          <DueTag due={row.due} today={today} />
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-3">
-                        {worksheetById.get(row.obligation.id)?.form?.form ?? row.obligation.form}
-                      </td>
-                      <td className="py-2.5 pr-3">
-                        <span className="block font-medium">
-                          {row.action === "sign" ? "File and sign" : "File"}: {row.obligation.title}
-                        </span>
-                        <span className="block text-[13px] text-[#556070]">{row.deadline.periodLabel}</span>
-                      </td>
-                      <td className="py-2.5 text-[13px] text-[#556070]">{row.obligation.agency}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {rows.some((r) => r.next === null) && (
-              <p className="mt-3 text-[13px] leading-snug text-[#6b7583]">
-                Some items depend on an event (an incident, a retirement) and have no fixed date; they are listed below with their rule.
-              </p>
-            )}
-
-            {setAside.length > 0 && (
-              <details className="mt-4 rounded-[6px] border border-[#e6e9ee] px-3 py-2">
-                <summary className={`cursor-pointer text-[14px] font-medium ${LINK}`}>
-                  Set aside: {setAside.length} filing{setAside.length === 1 ? "" : "s"} that do
-                  {setAside.length === 1 ? "es" : ""} not apply here
-                </summary>
-                <ul className="mt-2 flex flex-col gap-2">
-                  {setAside.map((o) => (
-                    <li key={o.id} className="text-[13px] leading-snug">
-                      <span className="font-medium">{o.title}</span>
-                      <span className="text-[#556070]"> · {o.form} · {o.agency}</span>
-                      <DecisionLine d={determinations[o.id]} />
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </section>
-
-          <section className="border-t border-[#e6e9ee] px-6 py-6" aria-labelledby="compliance-forms">
-            <h3 id="compliance-forms" className="text-[16px] font-semibold leading-snug">
-              Government forms for this asset
-            </h3>
-            <Caption className="mt-1">
-              {catalog
-                ? `Form pages read ${fmtDate(catalog.generated_at.slice(0, 10))}. ${coverage.filled} field${
-                    coverage.filled === 1 ? "" : "s"
-                  } can be filled from public data; ${coverage.manual} need${
-                    coverage.manual === 1 ? "s" : ""
-                  } a person.`
-                : "The form extraction has not run yet, so only the filing rules are shown. Run npm run compliance:forms."}
-            </Caption>
-
-            {worksheets.length === 0 ? (
-              <p className="mt-3 text-[14px] leading-relaxed text-[#556070]">
-                No filing in our list matches what public data shows about this asset. An owner can still sign in to check.
-              </p>
-            ) : (
-              <ul className="mt-2 flex flex-col divide-y divide-[#e6e9ee] border-y border-[#e6e9ee]">
-                {worksheets.map((w) => (
-                  <Worksheet
-                    key={w.obligation.id}
-                    w={w}
-                    assetLabel={assetName(asset)}
-                    determination={determinations[w.obligation.id]}
-                    onAnswer={answerFact}
-                    onClear={clearFact}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="border-t border-[#e6e9ee] px-6 py-6">
-            <p className="text-[13px] leading-snug text-[#6b7583]">
-              Field labels come from the agency&apos;s page for each form. When a page cannot be read (a PDF, a
-              blocked page), the item says so and sends you to the form instead of guessing.
-            </p>
-            <a
-              href={claimHref(asset)}
-              className={`mt-4 inline-flex min-h-10 items-center justify-center rounded-[6px] bg-[#0ea5e9] px-4 text-[14px] font-semibold text-[#1d2733] transition-colors hover:bg-[#38bdf8] ${FOCUS}`}
-            >
-              I own this — sign in to manage filings
-            </a>
-          </section>
-        </>
+      {upcoming.length > 0 && (
+        <Section id="compliance-next" title="Do these next" hint="In date order. A date follows each agency's published rule.">
+          <ol className="flex flex-col divide-y divide-[#e6e9ee] border-y border-[#e6e9ee]">
+            {upcoming.map((r) => (
+              <li key={`next-${r.obligation.id}`} className="py-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="font-semibold">
+                    {r.next!.due === today ? "Today" : fmtDate(r.next!.due)} ·{" "}
+                    {r.worksheet.form?.action === "sign" ? "File and sign" : "File"}
+                  </span>
+                  <span className="text-[13px]">
+                    <DueTag due={r.next!.due} today={today} />
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[15px] font-medium leading-snug">{r.obligation.title}</p>
+                <p className="mt-0.5 text-[13px] text-[#556070]">
+                  {r.worksheet.form?.form ?? r.obligation.form} · {r.obligation.agency} ·{" "}
+                  {r.worksheet.prefilled.length} fields prefilled
+                </p>
+                {r.determination.applicability === "needs_fact" && (
+                  <AnswerButtons d={r.determination} onAnswer={answerFact} onClear={clearFact} />
+                )}
+              </li>
+            ))}
+          </ol>
+        </Section>
       )}
+
+      <Section
+        id="compliance-filings"
+        title="Your filings"
+        hint={
+          rows.length === 0
+            ? undefined
+            : `One row per filing. ${rows.length} apply to this asset; open a row for the prefilled fields, the fields only you can fill, and the agency's own words.`
+        }
+      >
+        {rows.length === 0 ? (
+          <p className="text-[14px] leading-relaxed text-[#556070]">
+            No filing in our list applies to what public data shows about this asset.
+          </p>
+        ) : (
+          GROUPS.map((g) => {
+            const items = rows.filter((r) => groupOf(r.obligation) === g.key);
+            if (items.length === 0) return null;
+            return (
+              <div key={g.key} className={g.key === "monthly" ? "" : "mt-5"}>
+                <h4 className="text-[14px] font-semibold">{g.label}</h4>
+                <p className="text-[13px] text-[#6b7583]">{g.hint}</p>
+                <div className="mt-1 border-t border-[#e6e9ee]">
+                  {items.map((r) => (
+                    <FilingRow
+                      key={r.obligation.id}
+                      w={r.worksheet}
+                      d={r.determination}
+                      next={r.next}
+                      today={today}
+                      onAnswer={answerFact}
+                      onClear={clearFact}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </Section>
+
+      <Section id="compliance-details" title="Your details" hint="The facts public data holds about this asset. Copy them into any form.">
+        <div className="flex items-start justify-between gap-3">
+          <dl className="grid flex-1 grid-cols-1 gap-x-6 gap-y-1 text-[14px] sm:grid-cols-2">
+            {details.map((d) => (
+              <div key={d.label} className="flex justify-between gap-3 border-b border-[#e6e9ee] py-1">
+                <dt className="text-[#556070]">{d.label}</dt>
+                <dd className="font-semibold tabular-nums">{d.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <CopyButton text={details.map((d) => `${d.label}: ${d.value}`).join("\n")} label="Copy all" />
+        </div>
+      </Section>
+
+      {setAside.length > 0 && (
+        <Section
+          id="compliance-set-aside"
+          title="Not yours"
+          hint="Checked against this asset and set aside. Each line says what decided it."
+        >
+          <ul className="flex flex-col gap-2">
+            {setAside.map((o) => (
+              <li key={o.id} className="text-[13px] leading-snug">
+                <span className="font-medium">{o.title}</span>
+                <span className="text-[#556070]"> · {o.form} · {o.agency}</span>
+                <DecisionLine d={determinations[o.id]} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <section className="border-t border-[#e6e9ee] px-6 py-6">
+        <p className="text-[13px] leading-snug text-[#6b7583]">
+          When a page cannot be read (a PDF, a blocked page), the row says so and sends you to the form instead of
+          guessing. Answers to the one-fact questions are kept on this device.
+        </p>
+        <a
+          href={claimHref(asset)}
+          className={`mt-4 inline-flex min-h-10 items-center justify-center rounded-[6px] bg-[#0ea5e9] px-4 text-[14px] font-semibold text-[#1d2733] transition-colors hover:bg-[#38bdf8] ${FOCUS}`}
+        >
+          I own this — sign in to keep these filings on file
+        </a>
+      </section>
     </div>
   );
 }

@@ -112,10 +112,25 @@ test("a GHGRP match decides the greenhouse gas filing", () => {
   assert.equal(d.question, undefined);
 });
 
-test("the GHGRP list sets a plant aside when it was read and does not match", () => {
+test("the GHGRP list sets a plant aside when it was read and holds nothing nearby", () => {
   const d = determine(gasPlant, obligation(gasPlant, "epa-ghgrp"), emptyIndex(), {});
   assert.equal(d.applicability, "does_not_apply");
-  assert.match(d.basis, /not in EPA's GHGRP/);
+  // The claim names the county and the date, so it is about a list that was actually read.
+  assert.match(d.basis, /Los Angeles County/);
+  assert.match(d.basis, /Nov 1, 2026/);
+});
+
+test("a reporter nearby that could not be tied to the plant asks instead of denying", () => {
+  const idx = emptyIndex({
+    ghgrp_near: {
+      "99001": { facility_id: "1000999", facility_name: "Harbor Cogen", distance_mi: 2.4 },
+    },
+  });
+  const d = determine(gasPlant, obligation(gasPlant, "epa-ghgrp"), idx, {});
+  assert.equal(d.applicability, "needs_fact");
+  assert.equal(d.question?.id, "epa-ghgrp:nearby-facility");
+  assert.match(d.question?.detail ?? "", /Harbor Cogen/);
+  assert.match(d.question?.detail ?? "", /2\.4 mi/);
 });
 
 test("an unread GHGRP list leaves one question instead of guessing", () => {

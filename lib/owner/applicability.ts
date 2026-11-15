@@ -46,6 +46,15 @@ export interface GhgrpFacility {
   distance_mi: number;
   year: number | null;
   co2e_tons: number | null;
+  /** True when the facility was tied to the plant by shared name as well as distance. */
+  name_matched?: boolean;
+}
+
+/** A GHGRP facility close enough to be this site, but not tied to the plant. */
+export interface GhgrpNearMiss {
+  facility_id: string;
+  facility_name: string;
+  distance_mi: number;
 }
 
 export interface ProgramIndex {
@@ -53,6 +62,19 @@ export interface ProgramIndex {
   generated_at: string;
   /** GHGRP facilities that match one of our plants, by EIA plant code. */
   ghgrp: Record<string, GhgrpFacility>;
+  /**
+   * The nearest GHGRP facility within NEAR_MI that did NOT pass the match test. Its
+   * presence means "we saw a facility at this site but could not tie it to this plant",
+   * which is not evidence that the plant is outside the program.
+   */
+  ghgrp_near?: Record<string, GhgrpNearMiss>;
+  /**
+   * The nearest GHGRP facility of any distance, so a "does not apply" can say how far
+   * the closest listed reporter actually is instead of asserting a bare negative.
+   */
+  ghgrp_nearest?: Record<string, GhgrpNearMiss>;
+  /** Per-county coverage of the list that was actually read, e.g. {"Los Angeles": 210}. */
+  counties?: Record<string, { facilities: number }>;
   /** Program lists that could not be read in the last ETL run. */
   unavailable: string[];
 }
@@ -63,6 +85,17 @@ export type FactAnswers = Record<string, { answer: FactAnswer; at: string }>;
 export const APPLICABILITY_SCHEMA = "compliance-applicability/1";
 export const ANSWERS_KEY = "gs-applicability-v1";
 export const GHGRP_SOURCE = "EPA Greenhouse Gas Reporting Program facility list (Envirofacts)";
+/**
+ * A reporter this close is the same site under another name or with sloppy coordinates,
+ * so the list cannot settle it. Beyond this, a facility is a different site and the
+ * answer can be given — with its distance shown.
+ */
+const NEAR_MI = 1;
+
+function listDate(index: ProgramIndex | null): string {
+  const iso = index?.generated_at?.slice(0, 10);
+  return iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "an earlier run";
+}
 export const EIA_SOURCE = "EIA-860 2025 final data";
 
 /* ------------------------------------------------------------- answers (this device) */
@@ -241,7 +274,8 @@ function decide(
   o: Obligation,
   index: ProgramIndex | null,
 ): Determination {
-  const ghgrp = asset.kind === "plant" ? index?.ghgrp[String(asset.plant.plant_code)] ?? null : null;
+  const plantCode = asset.kind === "plant" ? String(asset.plant.plant_code) : null;
+  const ghgrp = plantCode ? index?.ghgrp[plantCode] ?? null : null;
   const ghgrpUnread =
     !index ||
     index.unavailable.includes("ghgrp") ||
@@ -300,8 +334,9 @@ function decide(
     /* --- Greenhouse gas: the agency's own facility list decides ------------ */
     case "epa-ghgrp":
       if (ghgrp) {
+        const how = ghgrp.name_matched === false ? "at the same site as" : "has this plant as";
         return applies(
-          `EPA's GHGRP facility list has this plant as facility ${ghgrp.facility_id} (${ghgrp.facility_name}), ${ghgrp.distance_mi} mi away` +
+          `EPA's GHGRP facility list ${how} facility ${ghgrp.facility_id} (${ghgrp.facility_name}), ${ghgrp.distance_mi} mi away` +
             (ghgrp.year && ghgrp.co2e_tons != null ? `, ${tons(ghgrp.co2e_tons)} reported for ${ghgrp.year}.` : "."),
           GHGRP_SOURCE,
         );
@@ -314,10 +349,28 @@ function decide(
             "EPA's GHGRP facility list could not be read in the last run, so the public record cannot settle it. The list covers facilities at 25,000 t CO2e or more.",
         });
       }
-      return doesNotApply(
-        "This plant is not in EPA's GHGRP facility list for the latest reporting year, so it does not report under 40 CFR part 98.",
-        GHGRP_SOURCE,
-      );
+      // A reporter nearby that we could not tie to this plant: the coordinates may be
+      // off, or the facility may trade under another name. That is not a "no".
+      {
+        const near = plantCode ? index?.ghgrp_near?.[plantCode] ?? null : null;
+        if (near) {
+          return needsFact({
+            id: "epa-ghgrp:nearby-facility",
+            question: "Does this plant report under EPA's greenhouse gas program?",
+            detail: `EPA lists a GHGRP facility ${near.distance_mi} mi away — ${near.facility_name} (facility ${near.facility_id}) — that we could not tie to this plant by name or exact location, so the list alone does not settle it.`,
+          });
+        }
+      }
+      {
+        const nearest = plantCode ? index?.ghgrp_nearest?.[plantCode] ?? null : null;
+        const where = nearest
+          ? ` The nearest listed facility is ${nearest.distance_mi} mi away (${nearest.facility_name}), which is a different site.`
+          : "";
+        return doesNotApply(
+          `No GHGRP facility sits within ${NEAR_MI} mi of this plant in EPA's ${f.county ?? "county"} County list, read ${listDate(index)}.${where}`,
+          GHGRP_SOURCE,
+        );
+      }
 
     case "carb-mrr-report":
       if (ghgrp && ghgrp.co2e_tons == null) {

@@ -21,6 +21,7 @@ import { atomicJson } from "../pipeline";
 import {
   APPLICABILITY_SCHEMA,
   type GhgrpFacility,
+  type GhgrpNearMiss,
   type ProgramIndex,
 } from "../../../lib/owner/applicability";
 
@@ -45,6 +46,10 @@ const GHGRP_EMISSIONS = (facilityId: string) =>
  */
 const SAME_SITE_MI = 0.25;
 const MATCH_MI = 1.5;
+/** Inside this radius an untied facility is a near miss (a question), not a "no". */
+const NEAR_MI = 1;
+/** Nearest-listed-facility distances are recorded up to here, for the "how far" note. */
+const NEAREST_MI = 50;
 /** Cap on emissions lookups per run; the rest keep a null figure rather than a wrong one. */
 const MAX_EMISSION_LOOKUPS = 200;
 
@@ -61,6 +66,7 @@ export interface ProgramsSummary {
   plants: number;
   ca_facilities: number;
   matched: number;
+  near_misses: number;
   with_emissions: number;
   unavailable: string[];
 }
@@ -178,6 +184,9 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
   const plants = await ourPlants(options.plantsPath ?? PLANTS_PATH);
   const unavailable: string[] = [];
   const ghgrp: Record<string, GhgrpFacility> = {};
+  const nearMisses: Record<string, GhgrpNearMiss> = {};
+  const nearestFacilities: Record<string, GhgrpNearMiss> = {};
+  const countiesRead: Record<string, { facilities: number }> = {};
   let caFacilities = 0;
 
   if (options.offline) {
@@ -203,6 +212,8 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
           unavailable.push(`ghgrp:${county}`);
           continue;
         }
+        const uniqueInCounty = new Set(rows.map((row) => str(row.facility_id)).filter(Boolean));
+        countiesRead[county] = { facilities: uniqueInCounty.size };
         for (const row of rows) {
           const id = str(row.facility_id);
           const lat = num(row.latitude);
@@ -215,16 +226,37 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
       caFacilities = facilities.length;
       if (facilities.length === 0) throw new Error("no facility rows read for any county");
 
-      const matches: { plant: OurPlant; facility: (typeof facilities)[number]; distance: number }[] = [];
+      const matches: {
+        plant: OurPlant;
+        facility: (typeof facilities)[number];
+        distance: number;
+        nameMatched: boolean;
+      }[] = [];
       for (const plant of plants) {
-        let best: { facility: (typeof facilities)[number]; distance: number } | null = null;
+        let best: { facility: (typeof facilities)[number]; distance: number; nameMatched: boolean } | null = null;
+        // Nearest facility of any kind, so a near-but-untied reporter is recorded rather
+        // than silently read as "this plant is not in the program".
+        let nearest: { facility: (typeof facilities)[number]; distance: number } | null = null;
         for (const facility of facilities) {
           const d = miles(plant.lat, plant.lon, facility.lat, facility.lon);
+          if (!nearest || d < nearest.distance) nearest = { facility, distance: d };
           if (d > MATCH_MI) continue;
-          if (d > SAME_SITE_MI && !sameName(plant.plant_name, facility.name)) continue;
-          if (!best || d < best.distance) best = { facility, distance: d };
+          const named = sameName(plant.plant_name, facility.name);
+          if (d > SAME_SITE_MI && !named) continue;
+          if (!best || d < best.distance) best = { facility, distance: d, nameMatched: named };
         }
-        if (best) matches.push({ plant, facility: best.facility, distance: best.distance });
+        if (best) {
+          matches.push({ plant, facility: best.facility, distance: best.distance, nameMatched: best.nameMatched });
+          continue;
+        }
+        if (!nearest || nearest.distance > NEAREST_MI) continue;
+        const entry = {
+          facility_id: nearest.facility.id,
+          facility_name: nearest.facility.name || `GHGRP facility ${nearest.facility.id}`,
+          distance_mi: Math.round(nearest.distance * 100) / 100,
+        };
+        nearestFacilities[String(plant.plant_code)] = entry;
+        if (nearest.distance <= NEAR_MI) nearMisses[String(plant.plant_code)] = entry;
       }
 
       // Reported emissions are a separate table and a request per facility. EPA rate
@@ -251,6 +283,7 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
           distance_mi: Math.round(m.distance * 100) / 100,
           year: reported?.year ?? null,
           co2e_tons: reported?.tons ?? null,
+          name_matched: m.nameMatched,
         };
       }
     } catch (error) {
@@ -265,6 +298,9 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
     schema: APPLICABILITY_SCHEMA,
     generated_at: new Date().toISOString(),
     ghgrp,
+    ghgrp_near: nearMisses,
+    ghgrp_nearest: nearestFacilities,
+    counties: countiesRead,
     unavailable,
   };
   await atomicJson(out, index);
@@ -274,6 +310,7 @@ export async function syncApplicability(options: ProgramsOptions = {}): Promise<
     plants: plants.length,
     ca_facilities: caFacilities,
     matched: Object.keys(ghgrp).length,
+    near_misses: Object.keys(nearMisses).length,
     with_emissions: Object.values(ghgrp).filter((g) => g.co2e_tons != null).length,
     unavailable,
   };
