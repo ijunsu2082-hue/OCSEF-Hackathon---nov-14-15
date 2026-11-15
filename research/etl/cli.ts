@@ -7,10 +7,27 @@ import { backfillWeather } from "./weather-history";
 import { collectAssets, replayAssets } from "./assets";
 import { auditSubstations } from "./substation-audit";
 import { loadLocationAssets } from "./load-assets";
+import { syncGrants, verifyGrants } from "./grants";
 
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";
+  if (command === "grants") {
+    const [action, out] = args;
+    if (action === "sync") {
+      const artifact = await syncGrants();
+      const destination = out ?? "data/grants.json";
+      await atomicJson(destination, artifact);
+      console.log(JSON.stringify({ wrote: destination, ...verifyGrants(artifact) }));
+      return;
+    }
+    if (action === "verify") {
+      if (!out) throw new Error("Expected grants verify <artifact>");
+      console.log(JSON.stringify(verifyGrants(JSON.parse(await readFile(out, "utf8")))));
+      return;
+    }
+    throw new Error("Expected grants sync [out] or grants verify <artifact>");
+  }
   if (command === "load-assets") {
     console.log(JSON.stringify(await loadLocationAssets(args)));
     return;

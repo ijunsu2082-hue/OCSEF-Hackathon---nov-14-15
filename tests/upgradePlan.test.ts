@@ -99,7 +99,9 @@ test("plan is deterministic, ranked, and the storage lever is sized from the sca
   assert.match(plan.improvements[0].headline, /120 MW/);
   assert.match(plan.improvements[0].finding, /400 MW/);
   assert.equal(plan.improvements[0].metrics.length, 3);
-  assert.deepEqual(plan.improvements.map((item) => item.rank), plan.improvements.map((_, index) => index + 1));
+  assert.equal(plan.state, "CA");
+  assert.ok(!("headline" in plan) && !("funding" in plan));
+  assert.ok(plan.improvements.every((item) => !("rank" in item) && !("fundingIds" in item)));
   for (let i = 1; i < plan.improvements.length; i++) {
     assert.ok(plan.improvements[i - 1].score >= plan.improvements[i].score);
   }
@@ -124,6 +126,29 @@ test("steps vary by lever: kinds, count, and named counterparties", () => {
   assert.match(retirement.finding, /Riverside Gas Unit/);
 });
 
+test("each lever's funding is matched from watched sources, not a shared list", () => {
+  const plan = buildUpgradePlan(fixture(), null, daily());
+  const storage = plan.improvements.find((item) => item.id === "sunset-storage")!;
+  const weather = plan.improvements.find((item) => item.id === "weather-rating")!;
+  const retirement = plan.improvements.find((item) => item.id === "retirement-gap")!;
+  const wildfire = plan.improvements.find((item) => item.id === "wildfire-hardening")!;
+
+  assert.deepEqual(storage.funding.map((match) => match.id), ["cec-deba", "doe-grip"]);
+  assert.ok(weather.funding.some((match) => match.id === "cec-cerri"));
+  assert.ok(!storage.funding.some((match) => match.id === "cec-cerri"));
+  assert.ok(retirement.funding.some((match) => match.id === "doe-formula"));
+  assert.ok(wildfire.funding.some((match) => match.id === "fema-bric"));
+  for (const item of plan.improvements) {
+    for (const match of item.funding) {
+      assert.match(match.url, /^https:\/\//);
+      assert.ok(match.checkedAt);
+      assert.match(match.next, /\S/);
+    }
+  }
+  assert.ok(plan.grants.watched <= plan.grants.total);
+  assert.ok(plan.grants.watched >= 4, "the watched artifact should carry its programme checks");
+});
+
 test("markdown exports the chosen lever with its own steps and funding only", () => {
   const plan = buildUpgradePlan(fixture(), null, daily());
   const storage = plan.improvements.find((item) => item.id === "sunset-storage")!;
@@ -132,6 +157,8 @@ test("markdown exports the chosen lever with its own steps and funding only", ()
   assert.match(text, /\(request\) Measure the sunset ramp/);
   assert.doesNotMatch(text, /Wildfire hardening/);
   assert.match(text, /CEC Distributed Electricity Backup Assets/);
+  assert.match(text, /Checked against \d+\/\d+ watched programmes/);
+  assert.doesNotMatch(text, /Community Energy Reliability/);
   assert.match(text, /Before you rely on it/);
   assert.doesNotMatch(text, /NaN|undefined/);
   assert.doesNotMatch(JSON.stringify(plan), /NaN|undefined/);
@@ -155,4 +182,5 @@ test("a circle with no mapped assets offers only the re-scan lever", () => {
   assert.equal(plan.improvements.length, 1);
   assert.equal(plan.improvements[0].id, "no-assets");
   assert.equal(plan.improvements[0].steps.length, 1);
+  assert.deepEqual(plan.improvements[0].funding, []);
 });

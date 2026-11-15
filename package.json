@@ -9,6 +9,8 @@
     "workflow-telemetry:worker": "tsx scripts/workflow-telemetry-worker.ts",
     "workflow-telemetry:calibration": "tsx scripts/workflow-telemetry-calibration.ts",
     "sync-layers": "node scripts/sync-layers.mjs",
+    "grants:sync": "tsx research/etl/cli.ts grants sync",
+    "grants:verify": "tsx research/etl/cli.ts grants verify data/grants.json",
     "predev": "node scripts/sync-layers.mjs",
     "prebuild": "node scripts/sync-layers.mjs",
     "test": "tsx --test tests/*.test.ts",

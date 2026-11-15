@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { GrantMatch } from "@/lib/scan/grants";
 import {
   upgradePlanMarkdown,
   type Improvement,
@@ -80,8 +81,22 @@ function LeverChooser({
   );
 }
 
-function LeverPlan({ item, funding }: { item: Improvement; funding: UpgradePlan["funding"] }) {
-  const matched = funding.filter((match) => item.fundingIds.includes(match.id));
+const FUNDING_STATUS: Record<GrantMatch["status"], string> = {
+  open: "Open listing",
+  forecasted: "Forecast",
+  program: "Programme page",
+};
+
+function LeverPlan({
+  item,
+  grants,
+  state,
+}: {
+  item: Improvement;
+  grants: UpgradePlan["grants"];
+  state: string | null;
+}) {
+  const matched = item.funding;
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -146,13 +161,14 @@ function LeverPlan({ item, funding }: { item: Improvement; funding: UpgradePlan[
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="text-[13px] font-semibold leading-snug text-[#1d2733]">{match.title}</p>
                   <span className="text-[11px] uppercase tracking-[0.06em] text-[#6b7583]">
-                    {match.status === "open" ? "Open solicitation" : "Check for a window"}
+                    {FUNDING_STATUS[match.status]}
+                    {match.deadline ? ` · closes ${match.deadline}` : ""}
                   </span>
                 </div>
                 <p className="text-[12px] leading-relaxed text-[#556070]">{match.why}</p>
                 <p className="text-[12px] leading-relaxed text-[#556070]">
                   <span className="font-medium text-[#1d2733]">Next: </span>
-                  {match.ask}
+                  {match.next}
                 </p>
                 <a
                   href={match.url}
@@ -160,12 +176,21 @@ function LeverPlan({ item, funding }: { item: Improvement; funding: UpgradePlan[
                   rel="noopener noreferrer"
                   className="text-[12px] text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
                 >
-                  Official program page
+                  {match.source === "opportunity" ? "Grants.gov listing" : "Official programme page"}
                 </a>
               </li>
             ))}
           </ul>
+          <Caption>
+            Matched from {grants.watched}/{grants.total} watched programmes and {grants.listings} live listing
+            {grants.listings === 1 ? "" : "s"}, last checked {grants.checkedAt.slice(0, 10)}.
+          </Caption>
         </div>
+      )}
+      {matched.length === 0 && (
+        <Caption>
+          No watched source covers this lever for {state ? `${state} yet` : "this area"}. Funding is left blank rather than guessed.
+        </Caption>
       )}
     </div>
   );
@@ -238,7 +263,7 @@ export function OptimizationTab({
         subtitle={`${active.steps.length} step${active.steps.length === 1 ? "" : "s"} · ${plan.operators[0]?.name ?? "operator not in the map data"}`}
         sources={["eia860", "osm", "era5_2025", "ieee738"]}
       >
-        <LeverPlan item={active} funding={plan.funding} />
+        <LeverPlan item={active} grants={plan.grants} state={plan.state} />
       </Section>
 
       <Section title="Before you rely on it">

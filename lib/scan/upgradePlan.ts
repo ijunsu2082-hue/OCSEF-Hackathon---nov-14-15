@@ -10,6 +10,8 @@
  * Pure and deterministic: the same scan always yields the same plan.
  */
 import { haversineMi } from "./geo";
+import { grantFeed, matchGrants, stateForArea } from "./grants";
+import type { GrantFeed, GrantMatch } from "./grants";
 import type { DailyRating, LineRatingNow, ScanResult } from "./types";
 
 export type ImprovementSeverity = "critical" | "high" | "medium" | "low";
@@ -28,7 +30,6 @@ export interface UpgradeStep {
 
 export interface Improvement {
   id: string;
-  rank: number;
   /** Chooser label, two or three words. */
   label: string;
   /** Short imperative headline for this lever. */
@@ -45,25 +46,22 @@ export interface Improvement {
   /** One sentence on what it costs you. */
   tradeoff: string;
   steps: UpgradeStep[];
-  fundingIds: string[];
+  /** Watched sources that cover this lever and this circle's state. */
+  funding: GrantMatch[];
 }
 
-export interface FundingMatch {
-  id: string;
-  title: string;
-  why: string;
-  ask: string;
-  status: "open" | "watch";
-  url: string;
-}
+/** A lever before its funding is matched against the watched artifact. */
+type Lever = Omit<Improvement, "funding">;
 
 export interface UpgradePlan {
-  headline: string;
   summary: string;
   facts: { label: string; value: string }[];
   operators: { name: string; basis: string }[];
   improvements: Improvement[];
-  funding: FundingMatch[];
+  /** State the funding filter used; null when the circle is outside every region. */
+  state: string | null;
+  /** Provenance of the watched grant artifact. */
+  grants: GrantFeed;
   /** Records the plan asks for, not things it assumes. */
   needData: string[];
   caveats: string[];
@@ -228,7 +226,7 @@ interface Ctx {
   circuits: string[];
 }
 
-function wildfireLever(ctx: Ctx): Improvement | null {
+function wildfireLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const fire = result.cases.filter((item) => item.category === "Wildfire");
   if (!fire.length) return null;
@@ -237,7 +235,6 @@ function wildfireLever(ctx: Ctx): Improvement | null {
   const score = 68 + Math.min(24, fire.length * 8) + (hvMiles > 20 ? 4 : 0);
   return {
     id: "wildfire-hardening",
-    rank: 0,
     label: "Wildfire hardening",
     headline: `Harden ${n1(result.totals.line_miles)} mi of line at ${nearest.location.name}`,
     severity: severityOf(score),
@@ -273,11 +270,11 @@ function wildfireLever(ctx: Ctx): Improvement | null {
         done: "An application receipt and an approved first-phase scope.",
       },
     ],
-    fundingIds: ["cec-cerri", "doe-formula"],
+
   };
 }
 
-function storageLever(ctx: Ctx): Improvement | null {
+function storageLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
   const solar = totals.mw_by_source.solar ?? 0;
@@ -291,7 +288,6 @@ function storageLever(ctx: Ctx): Improvement | null {
   const plant = namedSolarPlants(result)[0] ?? "the solar plants here";
   return {
     id: "sunset-storage",
-    rank: 0,
     label: "Evening storage",
     headline: `Add about ${n0(shortfall)} MW of 4-hour storage`,
     severity: severityOf(score),
@@ -327,11 +323,11 @@ function storageLever(ctx: Ctx): Improvement | null {
         done: "An award, an approved budget and a contract.",
       },
     ],
-    fundingIds: ["cec-deba", "doe-formula"],
+
   };
 }
 
-function weatherRatingLever(ctx: Ctx): Improvement | null {
+function weatherRatingLever(ctx: Ctx): Lever | null {
   const { result, live } = ctx;
   const totals = result.totals;
   const site = result.rating_site;
@@ -349,7 +345,6 @@ function weatherRatingLever(ctx: Ctx): Improvement | null {
   const liveLine = live ? ` Right now it is ${n1(live.ratio)}×.` : "";
   return {
     id: "weather-rating",
-    rank: 0,
     label: "Line ratings",
     headline: `Use the line capacity the weather allows`,
     severity: severityOf(score),
@@ -385,11 +380,11 @@ function weatherRatingLever(ctx: Ctx): Improvement | null {
         done: "An approved limit with a review date.",
       },
     ],
-    fundingIds: ["cec-cerri", "doe-formula"],
+
   };
 }
 
-function hotDayLever(ctx: Ctx): Improvement | null {
+function hotDayLever(ctx: Ctx): Lever | null {
   const { result, daily } = ctx;
   const totals = result.totals;
   const hvMiles = totals.line_miles_by_kv["200-499"] + totals.line_miles_by_kv["500+"];
@@ -400,7 +395,6 @@ function hotDayLever(ctx: Ctx): Improvement | null {
   const score = 44 + Math.min(34, short.pct * 0.5) + (hvMiles > 80 ? 6 : 0);
   return {
     id: "hot-day-capacity",
-    rank: 0,
     label: "Hot-day capacity",
     headline: `Restore capacity on ${pct0(short.pct)} of days`,
     severity: severityOf(score),
@@ -431,11 +425,11 @@ function hotDayLever(ctx: Ctx): Improvement | null {
         done: "An outage plan and a purchase order.",
       },
     ],
-    fundingIds: ["cec-cerri", "doe-formula"],
+
   };
 }
 
-function retirementLever(ctx: Ctx): Improvement | null {
+function retirementLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
   // A few megawatts of retirement does not justify a lever; it stays in the Area tab numbers.
@@ -448,7 +442,6 @@ function retirementLever(ctx: Ctx): Improvement | null {
   const score = 52 + Math.min(20, totals.planned_retirement_mw / 40) + (totals.proposed_mw > 0 ? 6 : 0);
   return {
     id: "retirement-gap",
-    rank: 0,
     label: "Planned retirement",
     headline: `Replace ${n0(totals.planned_retirement_mw)} MW before it retires`,
     severity: severityOf(score),
@@ -481,11 +474,11 @@ function retirementLever(ctx: Ctx): Improvement | null {
         done: "A funded scope and a contract with a margin.",
       },
     ],
-    fundingIds: ["doe-formula"],
+
   };
 }
 
-function agingLever(ctx: Ctx): Improvement | null {
+function agingLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
   const age = totals.cap_weighted_age;
@@ -494,7 +487,6 @@ function agingLever(ctx: Ctx): Improvement | null {
   const score = 34 + Math.min(26, (age - 30) * 1.6) + Math.min(14, totals.fossil_mw / 80);
   return {
     id: "aging-fossil",
-    rank: 0,
     label: "Aging gas",
     headline: `Decide the future of ${n0(totals.fossil_mw)} MW of gas`,
     severity: severityOf(score),
@@ -525,65 +517,16 @@ function agingLever(ctx: Ctx): Improvement | null {
         done: "A dated comparison for the chosen path.",
       },
     ],
-    fundingIds: ["doe-formula"],
+
   };
 }
 
-function cleanSupplyLever(ctx: Ctx): Improvement | null {
-  const { result } = ctx;
-  const totals = result.totals;
-  const share = totals.nameplate_mw > 0 ? (totals.fossil_mw / totals.nameplate_mw) * 100 : 0;
-  if (totals.fossil_mw < 50 || share < 40 || totals.renewable_pct >= 60) return null;
-  const gasPlants = result.plants
-    .filter((plant) => (plant.mw_by_source.natural_gas ?? 0) + (plant.mw_by_source.oil ?? 0) > 0)
-    .sort((a, b) => b.nameplate_mw - a.nameplate_mw)
-    .slice(0, 2)
-    .map((plant) => plant.plant_name);
-  const score = 38 + Math.min(22, share * 0.4) + (totals.renewable_pct < 25 ? 4 : 0);
-  return {
-    id: "clean-supply",
-    rank: 0,
-    label: "Clean supply",
-    headline: `Replace ${n0(totals.fossil_mw)} MW of gas supply`,
-    severity: severityOf(score),
-    score,
-    finding: `${pct0(share)} of the ${n0(totals.nameplate_mw)} MW here is gas (${n0(totals.fossil_mw)} MW)${gasPlants.length ? `, led by ${gasPlants.join(" and ")}` : ""}; renewables are ${pct0(totals.renewable_pct)}.`,
-    metrics: [
-      { label: "Gas", value: `${n0(totals.fossil_mw)} MW` },
-      { label: "Renewables", value: pct0(totals.renewable_pct) },
-      { label: "Storage", value: `${n0(totals.storage_mw)} MW` },
-    ],
-    target: `Contract about ${n0(totals.fossil_mw)} MW of renewable supply to displace the gas share.`,
-    how: `Contracted supply needs no new substation, unlike a local build in ${ctx.place}.`,
-    tradeoff: "A contract does not add local firm capacity or voltage support.",
-    steps: [
-      {
-        kind: "ask", title: "Get the tariff menu", who: ctx.utility, when: WHEN[0],
-        detail: `Ask which green tariff or renewable products can serve ${ctx.place}, with price and term.`,
-        done: "A product menu with price and term each.",
-      },
-      {
-        kind: "model", title: "Test it against storage", who: "Owner engineer", when: WHEN[1],
-        detail: `Compare ${n0(totals.fossil_mw)} MW of contracted supply with local storage on cost and firm evening MW.`,
-        done: "A side-by-side with term and firm capacity.",
-      },
-      {
-        kind: "fund", title: "Run the procurement", who: "Procurement", when: WHEN[2],
-        detail: "Solicit the chosen product, record the term, and tie delivery to the retirement calendar.",
-        done: "A signed supply contract with a start date.",
-      },
-    ],
-    fundingIds: ["doe-formula"],
-  };
-}
-
-function coverageLever(ctx: Ctx): Improvement | null {
+function coverageLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
   if (totals.line_miles >= 1 || totals.plant_count > 0 || totals.substation_count > 0) return null;
   return {
     id: "no-assets",
-    rank: 0,
     label: "Nothing mapped",
     headline: "Move the circle onto mapped grid",
     severity: "medium",
@@ -604,38 +547,7 @@ function coverageLever(ctx: Ctx): Improvement | null {
         done: "A circle with mapped assets.",
       },
     ],
-    fundingIds: [],
-  };
-}
 
-/* ------------------------------------------------------------ funding */
-
-function fundingCatalogue(): Record<string, FundingMatch> {
-  return {
-    "cec-deba": {
-      id: "cec-deba",
-      title: "CEC Distributed Electricity Backup Assets (GFO-26-503)",
-      why: "California money for distributed backup and storage assets.",
-      ask: "Register in the CEC portal and confirm applicant class and match.",
-      status: "open",
-      url: "https://www.energy.ca.gov/solicitations/2026-10/gfo-26-503-distributed-electricity-backup-assets-program-distributed-energy",
-    },
-    "cec-cerri": {
-      id: "cec-cerri",
-      title: "CEC Community Energy Reliability and Resilience Investment",
-      why: "Grid hardening and community resilience for California.",
-      ask: "Check the program page for a live solicitation before writing.",
-      status: "watch",
-      url: "https://www.energy.ca.gov/programs-and-topics/programs/community-energy-reliability-and-resilience-investment-cerri-program",
-    },
-    "doe-formula": {
-      id: "doe-formula",
-      title: "DOE Grid Resilience State and Tribal Formula Grants",
-      why: "Federal money that reaches local projects through the state allocation.",
-      ask: "Ask the state energy office which subaward cycle is open.",
-      status: "watch",
-      url: "https://www.energy.gov/oe/grid-resilience-state-and-tribal-formula-grants-program",
-    },
   };
 }
 
@@ -665,20 +577,18 @@ export function buildUpgradePlan(
     hotDayLever(ctx),
     retirementLever(ctx),
     agingLever(ctx),
-    cleanSupplyLever(ctx),
     coverageLever(ctx),
   ]
-    .filter((item): item is Improvement => item !== null)
+    .filter((item): item is Lever => item !== null)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map((item, index) => ({ ...item, rank: index + 1 }));
+    .slice(0, 5);
 
   const hvMiles = totals.line_miles_by_kv["200-499"] + totals.line_miles_by_kv["500+"];
-  const top = improvements[0];
-  const catalogue = fundingCatalogue();
-  const funding = [...new Set(improvements.flatMap((item) => item.fundingIds))]
-    .map((id) => catalogue[id])
-    .filter((item): item is FundingMatch => Boolean(item));
+  const state = stateForArea(result.area.lat, result.area.lon);
+  const levers: Improvement[] = improvements.map((item) => ({
+    ...item,
+    funding: matchGrants([item.id], state),
+  }));
 
   const needData: string[] = [];
   if (!daily?.length) needData.push("2025 daily ratings for this weather site");
@@ -687,9 +597,8 @@ export function buildUpgradePlan(
   needData.push("condition, conductor and loading records from the operator");
 
   return {
-    headline: top ? top.headline : "No lever in this circle",
-    summary: top
-      ? `${placeName(result)}: ${improvements.length} lever${improvements.length === 1 ? "" : "s"} from ${n0(totals.nameplate_mw)} MW of mapped generation and ${n1(totals.line_miles)} mi of line.`
+    summary: levers.length
+      ? `${placeName(result)}: ${levers.length} lever${levers.length === 1 ? "" : "s"} from ${n0(totals.nameplate_mw)} MW of mapped generation and ${n1(totals.line_miles)} mi of line.`
       : `${placeName(result)} has no mapped assets to plan against.`,
     facts: [
       { label: "Generation", value: `${n0(totals.nameplate_mw)} MW` },
@@ -697,8 +606,9 @@ export function buildUpgradePlan(
       { label: "Substations", value: n0(totals.substation_count) },
     ],
     operators,
-    improvements,
-    funding,
+    improvements: levers,
+    state,
+    grants: grantFeed(),
     needData: needData.slice(0, 3),
     caveats: [
       "Rankings are scan screening, not a study or an interconnection answer.",
@@ -740,12 +650,13 @@ export function upgradePlanMarkdown(
           `${index + 1}. (${entry.kind}) ${entry.title} — ${entry.who}, ${entry.when}.\n   ${entry.detail}\n   Done: ${entry.done}`,
       ),
     );
-    const funding = plan.funding.filter((match) => item.fundingIds.includes(match.id));
-    if (funding.length) {
+    if (item.funding.length) {
       lines.push("", "**Funding**");
-      for (const match of funding) {
-        lines.push(`- ${match.title} — ${match.why} Next: ${match.ask} ${match.url}`);
+      for (const match of item.funding) {
+        lines.push(`- ${match.title} — ${match.why} Next: ${match.next} ${match.url}`);
       }
+      const checked = item.funding.map((match) => match.checkedAt).sort().at(-1)?.slice(0, 10);
+      lines.push(`Checked against ${plan.grants.watched}/${plan.grants.total} watched programmes on ${checked ?? plan.grants.checkedAt.slice(0, 10)}.`);
     }
     lines.push("");
   }
