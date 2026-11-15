@@ -183,10 +183,15 @@ export function LiveGrid({ lat, lon, feed: given, bare = false }: { lat: number;
               )}
               {isNum(d.cleanSharePct) && (
                 <>
-              <Row label={`Clean share, ${hourLabel(d.fuelMixPeriod ?? d.latest.period)}`} value={<span className="text-[#0284c7]">{fmtPct(d.cleanSharePct, 0)}</span>} />
+              <Row label={`Clean share, ${hourLabel(d.cleanShareAsOf ?? d.fuelMixPeriod ?? d.latest.period)}`} value={<span className="text-[#0284c7]">{fmtPct(d.cleanSharePct, 0)}</span>} />
               <Caption className="mt-1">
                 Clean share = solar, wind, hydro, nuclear and battery discharge as a share of in-area generation
-                {d.fuelMixPeriod ? `, for the hour ending ${hourLabel(d.fuelMixPeriod)} (EIA's latest fuel data)` : ""}.
+                {d.cleanShareAsOf && d.cleanShareSource
+                  ? `, from the freshest fuel data available: ${d.cleanShareSource} ${d.cleanShareAsOf === d.fuelMixPeriod ? "for the hour ending" : "at"} ${hourLabel(d.cleanShareAsOf)}`
+                  : d.fuelMixPeriod
+                    ? `, for the hour ending ${hourLabel(d.fuelMixPeriod)} (EIA's latest fuel data)`
+                    : ""}
+                .
               </Caption>
                 </>
               )}

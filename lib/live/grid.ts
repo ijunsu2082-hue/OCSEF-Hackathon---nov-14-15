@@ -3,9 +3,14 @@
  *  1. discoverBA: which BA is this point in? HIFLD "Control Areas" polygons (ArcGIS Online mirror,
  *     no key); smallest containing polygon wins (e.g. Seattle City Light inside BPA). Fallback: majority
  *     BA code of the nearest EIA-860 plants in our bundled plants layer (Southern California only).
- *  2. fetchEia: EIA API v2 hourly region-data (D, DF, NG, TI) and fuel-type-data for the last ~48 h.
+ *  2. fetchEia: EIA-930 hourly region data (D, DF, NG, TI) and fuel-type data for the last ~48 h, from two
+ *     EIA endpoints queried IN PARALLEL: EIA API v2 (keyed; 9-13 s or worse on a cold query) and the
+ *     Hourly Electric Grid Monitor backend (/electricity/930-api, no key, ~1-3 s). v2 is used when it
+ *     answers within V2_TIMEOUT_MS, else the Grid Monitor; when both answer their demand is cross-checked.
  *     EIA hourly "period" is the UTC hour ENDING at that time (checked against CAISO's own day-ahead
- *     forecast, which EIA republishes: CAISO HE01 PT == EIA period T09 UTC in winter).
+ *     forecast, which EIA republishes: CAISO HE01 PT == EIA period T09 UTC in winter). The Grid Monitor
+ *     returns TIME_ZONE "UTC" dates (whatever its `timezone` param says) that equal the v2 period exactly
+ *     (checked 2026-11-15: all 49 ERCO demand hours and 240 fuel values identical for the same hours).
  *  3. fetchCaiso: CAISO Today's Outlook 5-minute CSVs (demand, fuel source), only when BA = CISO.
  *  4. Cross-checks between the providers, and an energy-balance sanity check inside EIA.
  */
@@ -29,9 +34,15 @@ export interface GridLive {
     interchangeMW: number | null; // EIA total interchange, positive = net export
   };
   fuelMix: GridFuel[];
-  /** ISO end of the hour the EIA fuel mix (and cleanSharePct) is for; it often lags demand by many hours. */
+  /** Which EIA endpoint the demand / forecast / series came from. */
+  eiaSource: string | null;
+  /** ISO end of the hour the EIA fuel mix is for; it often lags demand by many hours. */
   fuelMixPeriod: string | null;
+  fuelMixSource: string | null; // the fresher of the EIA endpoints' fuel data
+  /** From the freshest fuel source available (CAISO 5-minute when fresher than EIA's hourly mix). */
   cleanSharePct: number | null;
+  cleanShareAsOf: string | null; // ISO: CAISO reading time, or end of the EIA fuel hour
+  cleanShareSource: string | null;
   series: { period: string; demandMW: number | null; forecastMW: number | null }[];
   caiso?: {
     asOf: string; // ISO time of the latest 5-minute reading
@@ -51,6 +62,12 @@ const CACHE_MS = 60_000;
 const DISCOVERY_CACHE_MS = 24 * 3600_000;
 // Netlify functions stop at ~10 s, so each upstream call must give up well before that.
 const TIMEOUT_MS = 7_000;
+/** Whole-route budget: every upstream call is capped by what is left of it, so the route answers in < 8 s. */
+const ROUTE_BUDGET_MS = 7_500;
+const DISCOVERY_TIMEOUT_MS = 3_000; // HIFLD answers in ~0.2-0.4 s
+export const V2_TIMEOUT_MS = 6_000; // EIA API v2: use it only if it answers within this
+const GRID_MONITOR_TIMEOUT_MS = 7_000; // still capped by the route budget
+export const SOURCE_TOL_PCT = 1;
 // EIA updates hourly. DEMO_KEY allows ~10 calls an hour, so hold EIA results longer without a real key.
 const EIA_CACHE_MS = process.env.EIA_API_KEY ? 5 * 60_000 : 15 * 60_000;
 const UA = "GridSentinel (hackathon demo)";
@@ -61,17 +78,23 @@ export const FORECAST_TOL_PCT = 5;
 export const BALANCE_TOL_PCT = 5;
 
 const EIA_BASE = "https://api.eia.gov/v2/electricity/rto";
+const GRID_MONITOR_BASE = "https://www.eia.gov/electricity/930-api";
 const CAISO_BASE = "https://www.caiso.com/outlook";
 export const CONTROL_AREAS_URL =
   "https://services5.arcgis.com/HDRa0B57OVrv2E1q/arcgis/rest/services/Control_Areas/FeatureServer/0";
 
-const PROVIDERS: Record<"hifld" | "eia" | "caiso" | "eia860", ProviderRef> = {
+const PROVIDERS: Record<"hifld" | "eia" | "eiaGridMonitor" | "caiso" | "eia860", ProviderRef> = {
   hifld: {
     id: "hifld",
     name: "HIFLD Control Areas (ArcGIS Online mirror)",
     url: "https://www.arcgis.com/home/item.html?id=7ccbdeab387949c1a1fabc83e1e474f6",
   },
-  eia: { id: "eia", name: "U.S. EIA Hourly Electric Grid Monitor (EIA-930)", url: "https://www.eia.gov/electricity/gridmonitor/" },
+  eia: { id: "eia", name: "U.S. EIA API v2, hourly EIA-930 data", url: "https://www.eia.gov/opendata/browser/electricity/rto" },
+  eiaGridMonitor: {
+    id: "eia-gridmonitor",
+    name: "U.S. EIA Hourly Electric Grid Monitor (EIA-930)",
+    url: "https://www.eia.gov/electricity/gridmonitor/",
+  },
   caiso: { id: "caiso", name: "CAISO Today's Outlook", url: "https://www.caiso.com/todays-outlook" },
   eia860: { id: "eia860", name: "EIA-860 plant balancing authority codes", url: "https://www.eia.gov/electricity/data/eia860/" },
 };
@@ -228,14 +251,17 @@ export function baFromPlants(
   return { code, votes: n, of: near.length, nearestMi: r1(near[0].mi) };
 }
 
-async function getText(url: string, accept: string): Promise<{ status: number; text: string }> {
+/** Milliseconds a call may take: its own cap, cut to what is left before `deadline` (UTC ms). */
+const budget = (cap: number, deadline?: number) => (deadline == null ? cap : Math.max(0, Math.min(cap, deadline - Date.now())));
+
+async function getText(url: string, accept: string, timeoutMs = TIMEOUT_MS): Promise<{ status: number; text: string }> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { signal: ctrl.signal, cache: "no-store", headers: { "User-Agent": UA, Accept: accept } });
     return { status: res.status, text: await res.text() };
   } catch (e) {
-    throw new Error(ctrl.signal.aborted ? "timed out" : e instanceof Error ? e.message : "network error");
+    throw new Error(ctrl.signal.aborted ? `timed out after ${r1(timeoutMs / 1000)} s` : e instanceof Error ? e.message : "network error");
   } finally {
     clearTimeout(timer);
   }
@@ -251,7 +277,7 @@ export interface DiscoveredBA {
 const discoveryCache = new Map<string, { at: number; ba: DiscoveredBA }>();
 
 /** Find the EIA-930 balancing authority for a point. Throws with a plain message when none is found. */
-export async function discoverBA(lat: number, lon: number, opts: { origin?: string } = {}): Promise<DiscoveredBA> {
+export async function discoverBA(lat: number, lon: number, opts: { origin?: string; deadline?: number } = {}): Promise<DiscoveredBA> {
   const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
   const hit = discoveryCache.get(key);
   if (hit && Date.now() - hit.at < DISCOVERY_CACHE_MS) return hit.ba;
@@ -261,7 +287,7 @@ export async function discoverBA(lat: number, lon: number, opts: { origin?: stri
     const url =
       `${CONTROL_AREAS_URL}/query?geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326` +
       "&spatialRel=esriSpatialRelIntersects&outFields=ID,NAME,Shape__Area&returnGeometry=false&f=json";
-    const r = await getText(url, "application/json");
+    const r = await getText(url, "application/json", budget(DISCOVERY_TIMEOUT_MS, opts.deadline));
     if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
     const hits = parseControlAreaQuery(JSON.parse(r.text));
     const pick = pickControlArea(hits);
@@ -290,7 +316,7 @@ export async function discoverBA(lat: number, lon: number, opts: { origin?: stri
   // Fallback: nearest EIA-860 plants in our bundled layer.
   if (opts.origin) {
     try {
-      const r = await getText(`${opts.origin}/layers/plants.geojson`, "application/json");
+      const r = await getText(`${opts.origin}/layers/plants.geojson`, "application/json", budget(DISCOVERY_TIMEOUT_MS, opts.deadline));
       if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
       const fc = JSON.parse(r.text) as { features?: { geometry?: { coordinates?: number[] }; properties?: { balancing_authority?: string } }[] };
       const plants = (fc.features ?? [])
@@ -411,16 +437,137 @@ export function eiaUrl(kind: "region-data" | "fuel-type-data", code: string, sta
   return `${EIA_BASE}/${kind}/data/?${q.toString()}`;
 }
 
-export interface EiaResult {
-  region: EiaParsed;
-  fuel: Map<string, Record<string, number>>;
-  fetchedAt: number;
-  keyUsed: "EIA_API_KEY" | "DEMO_KEY";
-  fuelError?: string; // fuel-type request failed; region data still usable
+/* ------------------------------------------------------------------ EIA Hourly Electric Grid Monitor (no key) */
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** UTC ms -> Grid Monitor query time "MMDDYYYY HH:00:00" (the backend reads start/end as UTC). */
+export function toGridMonitorTime(ms: number): string {
+  const d = new Date(ms);
+  return `${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}${d.getUTCFullYear()} ${pad2(d.getUTCHours())}:00:00`;
 }
 
-async function eiaGet(url: string, what: string): Promise<unknown> {
-  const r = await getText(url, "application/json");
+/** Grid Monitor date "MM/DD/YYYY HH:00:00" (TIME_ZONE "UTC", hour ending) -> EIA v2 period "YYYY-MM-DDTHH". */
+export function gridMonitorDateToPeriod(s: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):00:00$/.exec(s);
+  return m ? `${m[3]}-${m[1]}-${m[2]}T${m[4]}` : null;
+}
+
+export function gridMonitorUrl(kind: "region_data" | "region_data_by_fuel_type", code: string, startMs: number, endMs: number): string {
+  const q = new URLSearchParams();
+  (kind === "region_data" ? ["D", "DF", "NG", "TI"] : ["NG"]).forEach((t, i) => q.append(`type[${i}]`, t));
+  q.append("respondent[0]", code);
+  q.set("start", toGridMonitorTime(startMs));
+  q.set("end", toGridMonitorTime(endMs));
+  q.set("frequency", "hourly");
+  // What the Grid Monitor page sends; series_data still returns UTC dates (checked: TIME_ZONE "UTC").
+  q.set("timezone", "Eastern");
+  q.set("limit", "10000");
+  q.set("offset", "0");
+  return `${GRID_MONITOR_BASE}/${kind}/series_data?${q.toString()}`;
+}
+
+interface GridMonitorSeries {
+  RESPONDENT_ID?: string;
+  RESPONDENT_NAME?: string;
+  TYPE_ID?: string;
+  FUEL_TYPE_ID?: string;
+  FUEL_TYPE_NAME?: string;
+  TIME_ZONE?: string;
+  VALUES?: { DATES?: unknown[]; DATA?: unknown[] };
+}
+
+function gridMonitorSeries(j: unknown, code: string, what: string): GridMonitorSeries[] {
+  const data = Array.isArray(j) ? (j[0] as { data?: unknown })?.data : undefined;
+  if (!Array.isArray(data)) throw new Error(`EIA Grid Monitor ${what}: unexpected response`);
+  for (const s of data as GridMonitorSeries[]) {
+    if (s.RESPONDENT_ID !== code) throw new Error(`EIA Grid Monitor ${what}: response not filtered to ${code} (got ${String(s.RESPONDENT_ID)})`);
+    // Hour alignment with v2 was verified for UTC dates only; refuse anything else rather than shift silently.
+    if (s.TIME_ZONE !== "UTC") throw new Error(`EIA Grid Monitor ${what}: dates in ${String(s.TIME_ZONE)}, expected UTC`);
+    const v = s.VALUES;
+    if (!Array.isArray(v?.DATES) || !Array.isArray(v?.DATA) || v.DATES.length !== v.DATA.length)
+      throw new Error(`EIA Grid Monitor ${what}: malformed series`);
+  }
+  return data as GridMonitorSeries[];
+}
+
+/** Grid Monitor region_data series -> the same shape as parseEiaRegion. */
+export function parseGridMonitorRegion(j: unknown, code: string): EiaParsed {
+  const hours = new Map<string, EiaHour>();
+  let respondentName: string | null = null;
+  for (const s of gridMonitorSeries(j, code, "region data")) {
+    const t = String(s.TYPE_ID ?? "");
+    if (!["D", "DF", "NG", "TI"].includes(t)) continue;
+    if (!respondentName && typeof s.RESPONDENT_NAME === "string") respondentName = s.RESPONDENT_NAME;
+    s.VALUES!.DATES!.forEach((d, i) => {
+      const p = gridMonitorDateToPeriod(String(d));
+      if (!p) return;
+      const h = hours.get(p) ?? { D: null, DF: null, NG: null, TI: null };
+      h[t as keyof EiaHour] = num(s.VALUES!.DATA![i]);
+      hours.set(p, h);
+    });
+  }
+  return { respondentName, hours };
+}
+
+/** Grid Monitor region_data_by_fuel_type series -> the same shape as parseEiaFuel. */
+export function parseGridMonitorFuel(j: unknown, code: string): Map<string, Record<string, number>> {
+  const out = new Map<string, Record<string, number>>();
+  for (const s of gridMonitorSeries(j, code, "fuel-type data")) {
+    const name = EIA_FUEL_NAMES[String(s.FUEL_TYPE_ID)] ?? String(s.FUEL_TYPE_NAME ?? s.FUEL_TYPE_ID ?? "Other");
+    s.VALUES!.DATES!.forEach((d, i) => {
+      const p = gridMonitorDateToPeriod(String(d));
+      const v = num(s.VALUES!.DATA![i]);
+      if (!p || v == null) return;
+      const rec = out.get(p) ?? {};
+      rec[name] = (rec[name] ?? 0) + v;
+      out.set(p, rec);
+    });
+  }
+  return out;
+}
+
+async function gridMonitorGet(url: string, what: string, timeoutMs: number): Promise<unknown> {
+  let r: { status: number; text: string };
+  try {
+    r = await getText(url, "application/json", timeoutMs);
+  } catch (e) {
+    throw new Error(`EIA Grid Monitor ${what}: ${e instanceof Error ? e.message : "failed"}`);
+  }
+  if (r.status !== 200) throw new Error(`EIA Grid Monitor ${what}: HTTP ${r.status}`);
+  try {
+    return JSON.parse(r.text);
+  } catch {
+    throw new Error(`EIA Grid Monitor ${what}: not JSON`);
+  }
+}
+
+/* ------------------------------------------------------------------ EIA: both sources */
+
+export type EiaSourceName = "EIA API v2" | "EIA Grid Monitor";
+
+export interface EiaResult {
+  region: EiaParsed; // from `source`
+  source: EiaSourceName; // v2 when it answered in time, else the Grid Monitor
+  fuel: Map<string, Record<string, number>>; // the fresher of the two sources' fuel data
+  fuelSource: EiaSourceName | null;
+  fetchedAt: number;
+  keyUsed: "EIA_API_KEY" | "DEMO_KEY";
+  fuelError?: string; // no source returned fuel-type data; region data still usable
+  /** Region data per source that answered, for the v2 vs Grid Monitor cross-check. */
+  bySource: Partial<Record<EiaSourceName, EiaParsed>>;
+  sourceErrors: { source: EiaSourceName; message: string }[]; // sources whose region data failed
+}
+
+const newestKey = (m: Map<string, unknown>) => [...m.keys()].sort().pop() ?? null;
+
+async function eiaGet(url: string, what: string, timeoutMs = TIMEOUT_MS): Promise<unknown> {
+  let r: { status: number; text: string };
+  try {
+    r = await getText(url, "application/json", timeoutMs);
+  } catch (e) {
+    throw new Error(`EIA ${what}: ${e instanceof Error ? e.message : "failed"}`);
+  }
   if (r.status === 429) throw new Error(`EIA ${what}: rate limit reached (HTTP 429)`);
   let j: unknown;
   try {
@@ -439,38 +586,82 @@ async function eiaGet(url: string, what: string): Promise<unknown> {
 
 const eiaCache = new Map<string, { at: number; value: EiaResult }>();
 
-/** EIA hourly operations for one BA, last ~50 h. Cached 5 min (15 min on DEMO_KEY); on failure returns the last good copy with `staleBecause`. */
-export async function fetchEia(code: string, nowMs = Date.now()): Promise<EiaResult & { staleBecause?: string }> {
+type FuelTry = { fuel: Map<string, Record<string, number>>; err?: string };
+const fuelTry = (p: Promise<Map<string, Record<string, number>>>): Promise<FuelTry> =>
+  p.then(
+    (fuel) => ({ fuel }),
+    (e: unknown) => ({ fuel: new Map(), err: e instanceof Error ? e.message : "failed" }),
+  );
+
+/**
+ * EIA hourly operations for one BA, last ~50 h. EIA API v2 and the Grid Monitor are fetched in parallel,
+ * each with its own timeout (v2 V2_TIMEOUT_MS, both capped by `deadline`); v2 is preferred when it answered.
+ * Cached 5 min (15 min on DEMO_KEY); on total failure returns the last good copy with `staleBecause`.
+ * A v2 request that timed out is simply dropped: nothing keeps running after the response (serverless).
+ */
+export async function fetchEia(code: string, nowMs = Date.now(), opts: { deadline?: number } = {}): Promise<EiaResult & { staleBecause?: string }> {
   const hit = eiaCache.get(code);
   if (hit && nowMs - hit.at < EIA_CACHE_MS) return hit.value;
   const envKey = process.env.EIA_API_KEY?.trim();
   const apiKey = envKey || "DEMO_KEY";
-  const start = toEiaPeriod(nowMs - 50 * 3600_000);
-  try {
-    // Fuel-type data is optional: a slow or failed fuel request must not sink demand/forecast.
-    const [rj, fr] = await Promise.all([
-      eiaGet(eiaUrl("region-data", code, start, apiKey), "region data"),
-      eiaGet(eiaUrl("fuel-type-data", code, start, apiKey), "fuel-type data").then(
-        (j) => ({ fuel: parseEiaFuel(j, code), err: undefined as string | undefined }),
-        (e: unknown) => ({ fuel: new Map<string, Record<string, number>>(), err: e instanceof Error ? e.message : "failed" }),
+  const hide = (s: string) => s.split(apiKey).join("***");
+  const startMs = nowMs - 50 * 3600_000;
+  const start = toEiaPeriod(startMs);
+  const v2Ms = budget(V2_TIMEOUT_MS, opts.deadline);
+  const gmMs = budget(GRID_MONITOR_TIMEOUT_MS, opts.deadline);
+  const gmEnd = nowMs + 24 * 3600_000; // the end is inclusive and caps the data; forecasts run ahead of now
+
+  // Fuel-type data is optional: a slow or failed fuel request must not sink demand/forecast.
+  const [v2, gm] = await Promise.allSettled([
+    Promise.all([
+      eiaGet(eiaUrl("region-data", code, start, apiKey), "region data", v2Ms).then((j) => parseEiaRegion(j, code)),
+      fuelTry(eiaGet(eiaUrl("fuel-type-data", code, start, apiKey), "fuel-type data", v2Ms).then((j) => parseEiaFuel(j, code))),
+    ]),
+    Promise.all([
+      gridMonitorGet(gridMonitorUrl("region_data", code, startMs, gmEnd), "region data", gmMs).then((j) => parseGridMonitorRegion(j, code)),
+      fuelTry(
+        gridMonitorGet(gridMonitorUrl("region_data_by_fuel_type", code, startMs, gmEnd), "fuel-type data", gmMs).then((j) =>
+          parseGridMonitorFuel(j, code),
+        ),
       ),
-    ]);
-    const value: EiaResult = {
-      region: parseEiaRegion(rj, code),
-      fuel: fr.fuel,
-      fetchedAt: nowMs,
-      keyUsed: envKey ? "EIA_API_KEY" : "DEMO_KEY",
-      ...(fr.err ? { fuelError: fr.err.replace(apiKey, "***") } : {}),
-    };
-    eiaCache.set(code, { at: nowMs, value });
-    return value;
-  } catch (e) {
-    const msg = (e instanceof Error ? e.message : "EIA request failed").replace(apiKey, "***");
+    ]),
+  ]);
+
+  const answered: { source: EiaSourceName; region: EiaParsed; fuel: FuelTry }[] = [];
+  const sourceErrors: EiaResult["sourceErrors"] = [];
+  const reason = (r: PromiseRejectedResult) => hide(r.reason instanceof Error ? r.reason.message : "request failed");
+  if (v2.status === "fulfilled") answered.push({ source: "EIA API v2", region: v2.value[0], fuel: v2.value[1] });
+  else sourceErrors.push({ source: "EIA API v2", message: reason(v2) });
+  if (gm.status === "fulfilled") answered.push({ source: "EIA Grid Monitor", region: gm.value[0], fuel: gm.value[1] });
+  else sourceErrors.push({ source: "EIA Grid Monitor", message: reason(gm) });
+
+  if (!answered.length) {
+    const msg = sourceErrors.map((s) => s.message).join("; ");
     if (hit) return { ...hit.value, staleBecause: msg };
     throw new Error(msg);
   }
-}
 
+  // Freshest fuel data wins; on a tie the earlier (v2) source is kept.
+  let fuelPick: (typeof answered)[number] | null = null;
+  for (const a of answered) {
+    const k = newestKey(a.fuel.fuel);
+    if (k && (!fuelPick || k > newestKey(fuelPick.fuel.fuel)!)) fuelPick = a;
+  }
+  const fuelErrs = answered.map((a) => a.fuel.err).filter((e): e is string => !!e);
+  const value: EiaResult = {
+    region: answered[0].region,
+    source: answered[0].source,
+    fuel: fuelPick?.fuel.fuel ?? new Map(),
+    fuelSource: fuelPick?.source ?? null,
+    fetchedAt: nowMs,
+    keyUsed: envKey ? "EIA_API_KEY" : "DEMO_KEY",
+    ...(!fuelPick && fuelErrs.length ? { fuelError: hide(fuelErrs.join("; ")) } : {}),
+    bySource: Object.fromEntries(answered.map((a) => [a.source, a.region])),
+    sourceErrors,
+  };
+  eiaCache.set(code, { at: nowMs, value });
+  return value;
+}
 /* ------------------------------------------------------------------ CAISO */
 
 export interface CaisoRow {
@@ -552,18 +743,18 @@ export interface CaisoDay {
 
 const caisoCache = new Map<string, { at: number; value: CaisoDay }>();
 
-async function caisoCsv(path: string): Promise<string> {
-  const r = await getText(`${CAISO_BASE}/${path}`, "text/csv");
+async function caisoCsv(path: string, deadline?: number): Promise<string> {
+  const r = await getText(`${CAISO_BASE}/${path}`, "text/csv", budget(TIMEOUT_MS, deadline));
   if (r.status !== 200) throw new Error(`CAISO ${path}: HTTP ${r.status}`);
   if (!r.text.startsWith("Time,")) throw new Error(`CAISO ${path}: not a CSV`);
   return r.text;
 }
 
 /** CAISO Today's Outlook, 5-minute demand and fuel source for today (Pacific), cached 60 s. */
-export async function fetchCaiso(nowMs = Date.now()): Promise<CaisoDay> {
+export async function fetchCaiso(nowMs = Date.now(), deadline?: number): Promise<CaisoDay> {
   const hit = caisoCache.get("current");
   if (hit && nowMs - hit.at < CACHE_MS) return hit.value;
-  const [dText, fText] = await Promise.all([caisoCsv("current/demand.csv"), caisoCsv("current/fuelsource.csv")]);
+  const [dText, fText] = await Promise.all([caisoCsv("current/demand.csv", deadline), caisoCsv("current/fuelsource.csv", deadline)]);
   let day = pacificDate(nowMs);
   let demand = parseCaisoCsv(dText, day);
   // Just after midnight the "current" files can still hold yesterday: actuals would then sit in the future.
@@ -578,11 +769,14 @@ export async function fetchCaiso(nowMs = Date.now()): Promise<CaisoDay> {
 }
 
 /** A past day from CAISO's Outlook history (same CSV format), cached 60 s. */
-export async function fetchCaisoHistory(day: { y: number; m: number; d: number }, nowMs = Date.now()): Promise<CaisoDay> {
+export async function fetchCaisoHistory(day: { y: number; m: number; d: number }, nowMs = Date.now(), deadline?: number): Promise<CaisoDay> {
   const key = ymd(day);
   const hit = caisoCache.get(key);
   if (hit && nowMs - hit.at < CACHE_MS) return hit.value;
-  const [dText, fText] = await Promise.all([caisoCsv(`history/${key}/demand.csv`), caisoCsv(`history/${key}/fuelsource.csv`)]);
+  const [dText, fText] = await Promise.all([
+    caisoCsv(`history/${key}/demand.csv`, deadline),
+    caisoCsv(`history/${key}/fuelsource.csv`, deadline),
+  ]);
   const value: CaisoDay = { day, demand: parseCaisoCsv(dText, day), fuel: parseCaisoCsv(fText, day) };
   caisoCache.set(key, { at: nowMs, value });
   return value;
@@ -621,6 +815,19 @@ export function demandCrossCheck(caisoAvgMW: number, eiaMW: number, hourLabel: s
     DEMAND_TOL_PCT,
     `within ${DEMAND_TOL_PCT}%`,
     `Hour ending ${hourLabel}. CAISO = mean of its 5-minute "Current demand" readings in that hour.`,
+  );
+}
+
+/** EIA API v2 vs EIA Grid Monitor demand for the same hour, within 1 %. Same EIA-930 data, two endpoints. */
+export function sourceCrossCheck(v2MW: number, gridMonitorMW: number, hourLabel: string): CrossCheck {
+  return pctCheck(
+    "EIA API v2 vs EIA Grid Monitor demand, same hour",
+    { provider: "EIA API v2", value: v2MW, unit: "MW" },
+    { provider: "EIA Grid Monitor", value: gridMonitorMW, unit: "MW" },
+    SOURCE_TOL_PCT,
+    `within ${SOURCE_TOL_PCT}%`,
+    `Hour ending ${hourLabel}. Both are EIA endpoints over the same EIA-930 submissions, so agreement confirms the ` +
+      "fallback serves the same numbers with the same hour alignment; it is not an independent measurement.",
   );
 }
 
@@ -707,25 +914,36 @@ export function gridErrorFeed(message: string): LiveFeed<GridLive> {
 
 export async function buildGridFeed(lat: number, lon: number, opts: { origin?: string } = {}): Promise<LiveFeed<GridLive>> {
   const nowMs = Date.now();
+  const deadline = nowMs + ROUTE_BUDGET_MS;
   let ba: DiscoveredBA;
   try {
-    ba = await discoverBA(lat, lon, opts);
+    ba = await discoverBA(lat, lon, { ...opts, deadline });
   } catch (e) {
     return errorFeed([e instanceof Error ? e.message : "Balancing authority lookup failed."], [PROVIDERS.hifld], EIA_REFRESH_SEC);
   }
 
   const isCiso = ba.code === "CISO";
-  const providers: ProviderRef[] = [ba.provider, PROVIDERS.eia, ...(isCiso ? [PROVIDERS.caiso] : [])];
   const refreshSec = isCiso ? CAISO_REFRESH_SEC : EIA_REFRESH_SEC;
   const errors: string[] = [];
   const crossChecks: CrossCheck[] = [];
 
-  const [eiaR, caisoR] = await Promise.allSettled([fetchEia(ba.code, nowMs), isCiso ? fetchCaiso(nowMs) : Promise.resolve(null)]);
+  const [eiaR, caisoR] = await Promise.allSettled([
+    fetchEia(ba.code, nowMs, { deadline }),
+    isCiso ? fetchCaiso(nowMs, deadline) : Promise.resolve(null),
+  ]);
   const eia = eiaR.status === "fulfilled" ? eiaR.value : null;
   const caiso = caisoR.status === "fulfilled" ? caisoR.value : null;
+  // List the EIA endpoints that supplied data (both when neither did, since both were tried).
+  const eiaProviders = eia
+    ? [...(eia.bySource["EIA API v2"] ? [PROVIDERS.eia] : []), ...(eia.bySource["EIA Grid Monitor"] ? [PROVIDERS.eiaGridMonitor] : [])]
+    : [PROVIDERS.eia, PROVIDERS.eiaGridMonitor];
+  const providers: ProviderRef[] = [ba.provider, ...eiaProviders, ...(isCiso ? [PROVIDERS.caiso] : [])];
   if (eiaR.status === "rejected") errors.push(`EIA hourly grid data unavailable: ${(eiaR.reason as Error).message}.`);
   else if (eia?.staleBecause)
     errors.push(`EIA refresh failed (${eia.staleBecause}); showing EIA data fetched ${Math.round((nowMs - eia.fetchedAt) / 60000)} min ago.`);
+  else if (eia)
+    for (const s of eia.sourceErrors)
+      errors.push(`${s.source} did not answer in time or failed (${s.message}); using ${eia.source}, so the EIA API v2 vs Grid Monitor cross-check is skipped.`);
   if (eia && eia.keyUsed === "DEMO_KEY")
     errors.push("EIA is queried with the shared DEMO_KEY (low hourly limit); set EIA_API_KEY for reliable refreshes.");
   if (isCiso && caisoR.status === "rejected") errors.push(`CAISO Today's Outlook unavailable: ${(caisoR.reason as Error).message}.`);
@@ -756,15 +974,18 @@ export async function buildGridFeed(lat: number, lon: number, opts: { origin?: s
   const fuelP = fuelPeriods[fuelPeriods.length - 1] ?? null;
   const fuelMix = fuelP ? fuelMixFrom(eia!.fuel.get(fuelP)!) : [];
   const fuelIso = fuelP ? eiaPeriodToIso(fuelP) : null;
+  const fuelSource = fuelP ? eia!.fuelSource : null;
   if (eia?.fuelError) errors.push(`EIA fuel mix unavailable (${eia.fuelError}).`);
   else if (eia && !fuelP) errors.push(`EIA has no recent fuel-mix data for ${ba.code}.`);
 
   // ---- CAISO latest
   let caisoOut: GridLive["caiso"];
   let caisoNewest: string | null = null;
+  let caisoFuelAt: string | null = null;
   if (caiso) {
     const dRow = latestWith(caiso.demand, "Current demand");
     const fRow = latestWith(caiso.fuel, "Solar");
+    if (fRow) caisoFuelAt = new Date(fRow.at).toISOString();
     const asOfMs = Math.max(dRow?.at ?? 0, fRow?.at ?? 0);
     if (asOfMs > 0) {
       caisoNewest = new Date(asOfMs).toISOString();
@@ -774,6 +995,20 @@ export async function buildGridFeed(lat: number, lon: number, opts: { origin?: s
   }
 
   // ---- Cross-checks
+  const v2Region = eia?.bySource["EIA API v2"];
+  const gmRegion = eia?.bySource["EIA Grid Monitor"];
+  if (v2Region && gmRegion) {
+    // Latest hour both endpoints have demand for (the Grid Monitor can lag v2 by an hour, or lead it).
+    const common = [...v2Region.hours.keys()]
+      .filter((p) => v2Region.hours.get(p)!.D != null && gmRegion.hours.get(p)?.D != null)
+      .sort();
+    const p = latestP && common.includes(latestP) ? latestP : common[common.length - 1];
+    if (p) {
+      const c = sourceCrossCheck(v2Region.hours.get(p)!.D!, gmRegion.hours.get(p)!.D!, hourLabelOf(eiaPeriodToIso(p)!));
+      if (p !== latestP) c.note += " Latest hour with demand from both endpoints.";
+      crossChecks.push(c);
+    } else errors.push("EIA API v2 vs Grid Monitor cross-check skipped: no hour with demand from both endpoints.");
+  }
   if (eia && caiso && latestIso && latestH?.D != null) {
     const endMs = Date.parse(latestIso);
     const avg = hourAverage(caiso.demand, "Current demand", endMs);
@@ -786,7 +1021,7 @@ export async function buildGridFeed(lat: number, lon: number, opts: { origin?: s
     if (!(rows.length && rows[0].at < endMs - 3600_000 + 5 * 60_000)) {
       // EIA's fuel mix often lags into a previous Pacific day: use CAISO's Outlook history for that day.
       try {
-        rows = (await fetchCaisoHistory(pacificDate(endMs - 1), nowMs)).fuel;
+        rows = (await fetchCaisoHistory(pacificDate(endMs - 1), nowMs, deadline)).fuel;
       } catch (e) {
         rows = [];
         errors.push(`Solar + wind cross-check skipped: CAISO history unavailable (${e instanceof Error ? e.message : "error"}).`);
@@ -823,6 +1058,17 @@ export async function buildGridFeed(lat: number, lon: number, opts: { origin?: s
   if (latestH && (latestH.NG == null || latestH.TI == null) && latestIso)
     errors.push(`EIA has not yet posted net generation / interchange for the hour ending ${hourLabelOf(latestIso)}.`);
 
+  // ---- Clean share from the freshest fuel source: CAISO's 5-minute mix or EIA's (lagging) hourly mix.
+  const cleanCands = [
+    fuelIso && fuelMix.length ? { asOf: fuelIso, pct: cleanShare(fuelMix), source: `${fuelSource ?? "EIA"} hourly fuel mix` } : null,
+    caisoFuelAt && caisoOut?.fuelMix.length
+      ? { asOf: caisoFuelAt, pct: cleanShare(caisoOut.fuelMix), source: "CAISO Today's Outlook 5-minute fuel mix" }
+      : null,
+  ]
+    .filter((c): c is { asOf: string; pct: number; source: string } => c != null && c.pct != null)
+    .sort((a, b) => Date.parse(b.asOf) - Date.parse(a.asOf));
+  const clean = cleanCands[0] ?? null;
+
   const newest = [latestIso, caisoNewest].filter((x): x is string => !!x).sort().pop() ?? null;
   const status = gridStatus(latestIso, caisoNewest, !!(latestIso || caisoNewest), nowMs);
 
@@ -840,9 +1086,13 @@ export async function buildGridFeed(lat: number, lon: number, opts: { origin?: s
     data: {
       ba: { code: ba.code, name: eia?.region.respondentName ?? ba.name, method: ba.method },
       latest,
+      eiaSource: eia?.source ?? null,
       fuelMix,
       fuelMixPeriod: fuelIso,
-      cleanSharePct: fuelMix.length ? cleanShare(fuelMix) : null,
+      fuelMixSource: fuelSource,
+      cleanSharePct: clean?.pct ?? null,
+      cleanShareAsOf: clean?.asOf ?? null,
+      cleanShareSource: clean?.source ?? null,
       series,
       ...(caisoOut ? { caiso: caisoOut } : {}),
     },

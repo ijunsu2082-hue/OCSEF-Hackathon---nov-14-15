@@ -11,6 +11,8 @@ import {
   eiaUrl,
   forecastCrossCheck,
   fuelMixFrom,
+  gridMonitorDateToPeriod,
+  gridMonitorUrl,
   gridStatus,
   hourAverage,
   latestWith,
@@ -19,9 +21,13 @@ import {
   parseControlAreaQuery,
   parseEiaFuel,
   parseEiaRegion,
+  parseGridMonitorFuel,
+  parseGridMonitorRegion,
   pickControlArea,
   shareCrossCheck,
   solarWindShare,
+  sourceCrossCheck,
+  toGridMonitorTime,
 } from "../lib/live/grid";
 
 // No network in these tests: every input below is a fixture string trimmed from real responses (2026-11-14/15).
@@ -74,6 +80,39 @@ const EIA_FUEL = JSON.stringify({
   },
 });
 
+// EIA Grid Monitor backend (/electricity/930-api/.../series_data), trimmed. Same hours and values as the
+// v2 fixtures above: the TIME_ZONE "UTC" dates equal the v2 period (hour ending, UTC).
+const gmSeries = (extra: Record<string, unknown>, dates: string[], data: (number | null)[]) => ({
+  RESPONDENT_ID: "CISO",
+  RESPONDENT_NAME: "California Independent System Operator",
+  TIME_ZONE: "UTC",
+  FREQUENCY: "hourly",
+  ...extra,
+  VALUES: { DATES: dates, DATA: data },
+});
+const GM_REGION = JSON.stringify([
+  {
+    data: [
+      gmSeries({ TYPE_ID: "D", TYPE_NAME: "Demand" }, ["11/14/2026 07:00:00", "11/15/2026 00:00:00"], [23467, 22816]),
+      gmSeries({ TYPE_ID: "DF", TYPE_NAME: "Day-ahead demand forecast" }, ["11/15/2026 00:00:00"], [20744]),
+      gmSeries({ TYPE_ID: "NG", TYPE_NAME: "Net generation" }, ["11/14/2026 07:00:00"], [18988]),
+      gmSeries({ TYPE_ID: "TI", TYPE_NAME: "Total interchange" }, ["11/14/2026 07:00:00"], [-4873]),
+    ],
+    recordCount: 5,
+    totalCount: 5,
+  },
+]);
+const GM_FUEL = JSON.stringify([
+  {
+    data: [
+      ["COL", "Coal", 3], ["GEO", "Geothermal", 734], ["NG", "Natural Gas", 8377], ["NUC", "Nuclear", 2208],
+      ["OIL", "Petroleum", 46], ["OTH", "Other", 2070], ["SUN", "Solar", -49], ["WAT", "Hydro", 1362], ["WND", "Wind", 4237],
+    ].map(([id, name, v]) =>
+      gmSeries({ TYPE_ID: "NG", FUEL_TYPE_ID: id, FUEL_TYPE_NAME: name }, ["11/14/2026 06:00:00", "11/14/2026 07:00:00"], [null, v as number]),
+    ),
+  },
+]);
+
 /* ---------------------------------------------------------------- tests */
 
 test("EIA period is the UTC hour ending; parse to ISO", () => {
@@ -104,6 +143,49 @@ test("parseEiaRegion rejects an unfiltered response and EIA errors", () => {
   assert.throws(() => parseEiaRegion(bad, "CISO"), /not filtered/);
   assert.throws(() => parseEiaRegion({ response: { total: 999999, data: [] } }, "CISO"), /expected a small/);
   assert.throws(() => parseEiaRegion({ error: "invalid api_key" }, "CISO"), /invalid api_key/);
+});
+
+test("Grid Monitor query times and dates are UTC and map onto the v2 period", () => {
+  assert.equal(toGridMonitorTime(Date.parse("2026-11-03T05:30:00Z")), "11032026 05:00:00");
+  assert.equal(gridMonitorDateToPeriod("11/15/2026 00:00:00"), "2026-11-15T00");
+  assert.equal(gridMonitorDateToPeriod("2026-11-15T00"), null);
+  const u = new URL(gridMonitorUrl("region_data", "ERCO", Date.parse("2026-11-13T00:00:00Z"), Date.parse("2026-11-16T05:00:00Z")));
+  assert.equal(u.pathname, "/electricity/930-api/region_data/series_data");
+  assert.deepEqual(["type[0]", "type[1]", "type[2]", "type[3]"].map((k) => u.searchParams.get(k)), ["D", "DF", "NG", "TI"]);
+  assert.equal(u.searchParams.get("respondent[0]"), "ERCO");
+  assert.equal(u.searchParams.get("start"), "11132026 00:00:00");
+  assert.equal(u.searchParams.get("end"), "11162026 05:00:00");
+  const f = new URL(gridMonitorUrl("region_data_by_fuel_type", "ERCO", 0, 0));
+  assert.equal(f.pathname, "/electricity/930-api/region_data_by_fuel_type/series_data");
+  assert.deepEqual(f.searchParams.getAll("type[0]"), ["NG"]);
+});
+
+test("parseGridMonitorRegion matches parseEiaRegion for the same hours", () => {
+  const gm = parseGridMonitorRegion(JSON.parse(GM_REGION), "CISO");
+  const v2 = parseEiaRegion(JSON.parse(EIA_REGION), "CISO");
+  assert.equal(gm.respondentName, "California Independent System Operator");
+  assert.deepEqual(gm.hours.get("2026-11-15T00"), v2.hours.get("2026-11-15T00"));
+  assert.deepEqual(gm.hours.get("2026-11-14T07"), v2.hours.get("2026-11-14T07"));
+});
+
+test("parseGridMonitorRegion rejects unfiltered, non-UTC and malformed responses", () => {
+  const wrongBa = JSON.parse(GM_REGION);
+  wrongBa[0].data[0].RESPONDENT_ID = "ERCO";
+  assert.throws(() => parseGridMonitorRegion(wrongBa, "CISO"), /not filtered/);
+  const local = JSON.parse(GM_REGION);
+  local[0].data[1].TIME_ZONE = "Eastern";
+  assert.throws(() => parseGridMonitorRegion(local, "CISO"), /expected UTC/);
+  const ragged = JSON.parse(GM_REGION);
+  ragged[0].data[0].VALUES.DATA.pop();
+  assert.throws(() => parseGridMonitorRegion(ragged, "CISO"), /malformed/);
+  assert.throws(() => parseGridMonitorRegion({ error: "x" }, "CISO"), /unexpected response/);
+  assert.equal(parseGridMonitorRegion([{ data: [] }], "CISO").hours.size, 0);
+});
+
+test("parseGridMonitorFuel matches parseEiaFuel; null hours are skipped", () => {
+  const gm = parseGridMonitorFuel(JSON.parse(GM_FUEL), "CISO");
+  assert.equal(gm.has("2026-11-14T06"), false, "all-null hour is not a fuel hour");
+  assert.deepEqual(gm.get("2026-11-14T07"), parseEiaFuel(JSON.parse(EIA_FUEL), "CISO").get("2026-11-14T07"));
 });
 
 test("fuel mix and clean share from EIA fuel-type data", () => {
@@ -159,6 +241,13 @@ test("cross-checks: agree/differ honestly at the tolerance", () => {
   assert.equal(d.diffPct, Math.round(((17055 - 24580) / 24580) * 1000) / 10);
   assert.equal(demandCrossCheck(1029, 1000, "h").agree, true);
   assert.equal(demandCrossCheck(1031, 1000, "h").agree, false);
+
+  const s = sourceCrossCheck(22816, 22816, "h");
+  assert.equal(s.agree, true);
+  assert.equal(s.diffPct, 0);
+  assert.match(s.note!, /not an independent measurement/);
+  assert.equal(sourceCrossCheck(1010, 1000, "h").agree, true);
+  assert.equal(sourceCrossCheck(1011, 1000, "h").agree, false);
 
   assert.equal(shareCrossCheck(30, 25, "h").agree, true);
   assert.equal(shareCrossCheck(30, 24.9, "h").agree, false);
