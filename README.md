@@ -1,6 +1,6 @@
-# GridSentinel
+# Mapergy
 
-GridSentinel is a regional energy infrastructure screening app. It combines an area scan, a regional grid workspace, facility-level simulations, physical grid models, and source-linked evidence. Current sample region centers on Westminster High School in Westminster, California.
+Mapergy is a regional energy infrastructure screening app. It combines an area scan, a regional grid workspace, facility-level simulations, physical grid models, and source-linked evidence. Current sample region centers on Westminster High School in Westminster, California.
 
 ## Run locally
 
