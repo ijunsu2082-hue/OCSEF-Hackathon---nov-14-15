@@ -39,6 +39,14 @@ export function etlStorageConfigured(): boolean {
   return serviceClient() !== null;
 }
 
+/**
+ * Test and restore drills run under `ETL_STATE_NAMESPACE` and must stay
+ * hermetic: they neither read the published revision nor overwrite it.
+ */
+function mirroring(): boolean {
+  return serviceClient() !== null && !process.env.ETL_STATE_NAMESPACE;
+}
+
 let ready: Promise<SupabaseClient | null> | null = null;
 
 /** Client with the bucket ensured to exist (created once per process on demand). */
@@ -65,6 +73,7 @@ function storageClient(): Promise<SupabaseClient | null> {
 
 /** Upload one document. Returns false (never throws) when Supabase is unset or fails. */
 export async function putJson(objectPath: string, value: unknown): Promise<boolean> {
+  if (!mirroring()) return false;
   const supabase = await storageClient();
   if (!supabase) return false;
   try {
@@ -85,6 +94,7 @@ export async function putJson(objectPath: string, value: unknown): Promise<boole
 
 /** Read one document back, or null when it is missing. */
 export async function getJson<T>(objectPath: string): Promise<T | null> {
+  if (!mirroring()) return null;
   const supabase = await storageClient();
   if (!supabase) return null;
   const { data, error } = await supabase.storage.from(ETL_BUCKET).download(objectPath);
@@ -99,6 +109,7 @@ export async function getJson<T>(objectPath: string): Promise<T | null> {
 
 /** Raw bytes, used to mirror capture blobs for replay on another host. */
 export async function putText(objectPath: string, body: string): Promise<boolean> {
+  if (!mirroring()) return false;
   const supabase = await storageClient();
   if (!supabase) return false;
   try {

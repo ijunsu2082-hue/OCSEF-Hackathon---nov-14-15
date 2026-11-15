@@ -189,9 +189,13 @@ export async function readLocationAssets(id: string, revision?: string) {
   if (!/^location-[a-f0-9]{24}$/.test(id) || (revision !== undefined && !/^[a-f0-9]{64}$/.test(revision))) return null;
   const directory = resolve(stateRoot(), "loaded-assets", id);
   try {
-    const pointer = revision ? { revision } :
-      await getJson<{ revision?: string }>(`loaded-assets/${id}/latest.json`);
-    const chosen = pointer?.revision;
+    // Latest may be published or local: the bucket is empty in a namespaced
+    // (test/restore) run, so read the on-disk pointer in that case.
+    let chosen: unknown = revision ??
+      (await getJson<{ revision?: string }>(`loaded-assets/${id}/latest.json`))?.revision;
+    if (chosen === undefined) {
+      chosen = JSON.parse(await readFile(resolve(directory, "latest.json"), "utf8"))?.revision;
+    }
     if (typeof chosen !== "string" || !/^[a-f0-9]{64}$/.test(chosen)) throw new Error("Invalid asset revision");
     const mirrored = await getJson<unknown>(`loaded-assets/${id}/${chosen}.json`);
     if (mirrored !== null) {
