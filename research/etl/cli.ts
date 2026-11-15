@@ -9,6 +9,8 @@ import { auditSubstations } from "./substation-audit";
 import { loadLocationAssets } from "./load-assets";
 import { syncComplianceForms } from "./compliance/sync";
 import { syncApplicability } from "./compliance/programs";
+import { syncLegalSources } from "./compliance/sources";
+import { syncAssetCompliance } from "./compliance/assets";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -146,6 +148,41 @@ async function main() {
       throw new Error(`Invalid argument: ${flag}`);
     }
     console.log(JSON.stringify(await syncApplicability({ offline, out, withEmissions })));
+    return;
+  }
+  if (command === "compliance-sources") {
+    let out: string | undefined;
+    for (let index = 0; index < args.length; index += 1) {
+      const flag = args[index];
+      if (flag === "--offline") continue;
+      if (flag === "--out" && args[index + 1] && !args[index + 1].startsWith("--")) {
+        out = args[++index];
+        continue;
+      }
+      throw new Error(`Invalid argument: ${flag}`);
+    }
+    console.log(JSON.stringify(await syncLegalSources({ out })));
+    return;
+  }
+  if (command === "compliance-assets") {
+    let outDir: string | undefined;
+    let limit: number | undefined;
+    for (let index = 0; index < args.length; index += 1) {
+      const flag = args[index];
+      const next = args[index + 1];
+      if (flag === "--out" && next && !next.startsWith("--")) {
+        outDir = next;
+        index += 1;
+        continue;
+      }
+      if (flag === "--limit" && next && /^\d+$/.test(next)) {
+        limit = Number(next);
+        index += 1;
+        continue;
+      }
+      throw new Error(`Invalid argument: ${flag}`);
+    }
+    console.log(JSON.stringify(await syncAssetCompliance({ outDir, limit }), null, 1));
     return;
   }
   if (command !== "location" && command !== "collect") throw new Error(`Unknown command: ${command}`);

@@ -14,6 +14,8 @@
     "test": "tsx --test tests/*.test.ts",
     "compliance:forms": "tsx research/etl/cli.ts compliance-forms",
     "compliance:applicability": "tsx research/etl/cli.ts compliance-applicability",
+    "compliance:sources": "tsx research/etl/cli.ts compliance-sources",
+    "compliance:assets": "tsx research/etl/cli.ts compliance-assets",
     "verify:physics": "tsx scripts/verify-physics.ts",
     "typecheck": "tsc --noEmit",
     "evidence:build": "tsx research/cli.ts build --profile westminster-100mi",

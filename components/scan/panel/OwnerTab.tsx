@@ -19,6 +19,14 @@ import {
   type ProgramIndex,
 } from "@/lib/owner/applicability";
 import {
+  determinationFromFiling,
+  keyForAsset,
+  loadAssetRecord,
+  type AssetComplianceRecord,
+  type AssetFiling,
+} from "@/lib/owner/assetCompliance";
+import { loadLegalSources, type LegalSourcesFile, type RuleSources } from "@/lib/owner/legalSources";
+import {
   assetFieldValue,
   loadFormCatalog,
   resolveWorksheets,
@@ -152,11 +160,40 @@ function StatusWord({ d }: { d: Determination }) {
 
 /* ------------------------------------------------------------- one filing */
 
+/** The instruments and the page the ETL read, for one rule. */
+function RuleSourcesBlock({ sources }: { sources: RuleSources | null }) {
+  if (!sources) return null;
+  return (
+    <div className="mt-2 rounded-[6px] border border-[#e6e9ee] px-3 py-2">
+      <p className="text-[13px] font-semibold text-[#1d2733]">Legal sources we read</p>
+      <ul className="mt-1 flex flex-col gap-1 text-[13px] leading-snug text-[#556070]">
+        {sources.instruments.map((inst) => (
+          <li key={inst.url}>
+            <a href={inst.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+              {inst.label}
+            </a>
+          </li>
+        ))}
+        {sources.pages.map((page) => (
+          <li key={page.url} className="text-[#6b7583]">
+            Form page: <a href={page.url} target="_blank" rel="noopener noreferrer" className={LINK}>{page.url}</a>
+            {page.retrieved_at ? ` · read ${page.retrieved_at.slice(0, 10)}` : " · not read"}
+            {` · ${page.status}`}
+            {page.fields > 0 ? ` · ${page.fields} field labels` : ""}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function FilingRow({
   w,
   d,
   next,
   today,
+  snapshot,
+  sources,
   onAnswer,
   onClear,
 }: {
@@ -164,12 +201,18 @@ function FilingRow({
   d: Determination;
   next: Deadline | null;
   today: string;
+  snapshot?: AssetFiling;
+  sources: RuleSources | null;
   onAnswer: (id: string, answer: FactAnswer) => void;
   onClear: (id: string) => void;
 }) {
   const o = w.obligation;
   const form = w.form;
-  const total = w.prefilled.length + w.awaiting.length;
+  const prefilled =
+    snapshot?.prefill ?? w.prefilled.flatMap((f) => (f.value == null ? [] : [{ label: f.label, value: f.value }]));
+  const prefilledSource = snapshot?.prefill_source ?? w.prefilled[0]?.source ?? null;
+  const awaiting = snapshot?.manual ?? w.awaiting;
+  const total = prefilled.length + awaiting.length;
   return (
     <details className="group border-b border-[#e6e9ee] py-3 last:border-b-0">
       <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -194,28 +237,25 @@ function FilingRow({
         <p className="text-[13px] text-[#556070]">
           {FREQUENCY_WORD[o.frequency]} ·{" "}
           {form?.action === "sign" ? "Signed by an authorized official" : "Filed by the owner"} ·{" "}
-          {w.prefilled.length} of {total} fields prefilled
+          {prefilled.length} of {total} fields prefilled
           {form ? ` · ${STATUS_WORD[form.status]}` : ""}
         </p>
         <DecisionLine d={d} />
         <AnswerButtons d={d} onAnswer={onAnswer} onClear={onClear} />
 
-        {w.prefilled.length > 0 && (
+        {prefilled.length > 0 && (
           <div className="mt-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[14px] font-semibold">Prefilled from public data</p>
-              <CopyButton
-                text={w.prefilled.map((f) => `${f.label}: ${f.value}`).join("\n")}
-                label="Copy values"
-              />
+              <CopyButton text={prefilled.map((f) => `${f.label}: ${f.value}`).join("\n")} label="Copy values" />
             </div>
             <table className="mt-1 w-full border-collapse text-left text-[13px]">
               <tbody>
-                {w.prefilled.map((f, i) => (
+                {prefilled.map((f, i) => (
                   <tr key={`${f.label}|${i}`} className="border-b border-[#e6e9ee] align-top last:border-b-0">
                     <td className="py-1 pr-3 text-[#556070]">{f.label}</td>
                     <td className="py-1 pr-3 font-semibold tabular-nums">{f.value}</td>
-                    <td className="py-1 text-[#6b7583]">{f.source}</td>
+                    <td className="py-1 text-[#6b7583]">{prefilledSource ?? "public data"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -223,12 +263,14 @@ function FilingRow({
           </div>
         )}
 
-        {w.awaiting.length > 0 && (
+        {awaiting.length > 0 && (
           <p className="mt-2 text-[13px] leading-snug text-[#556070]">
             <span className="font-semibold text-[#1d2733]">Only you can fill: </span>
-            {w.awaiting.join(" · ")}
+            {awaiting.join(" · ")}
           </p>
         )}
+
+        <RuleSourcesBlock sources={sources} />
 
         <p className="mt-2 text-[13px] leading-snug text-[#6b7583]">
           Rule: {o.appliesBecause} Due: {o.dueRule}
@@ -269,6 +311,7 @@ interface Row {
   worksheet: FormWorksheet;
   determination: Determination;
   next: Deadline | null;
+  snapshot: AssetFiling | undefined;
 }
 
 function Section({ id, title, hint, children }: { id: string; title: string; hint?: string; children: ReactNode }) {
@@ -287,6 +330,8 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   const asset = fromTarget(target);
   const [catalog, setCatalog] = useState<FormCatalog | null>(null);
   const [index, setIndex] = useState<ProgramIndex | null>(null);
+  const [record, setRecord] = useState<AssetComplianceRecord | null>(null);
+  const [legal, setLegal] = useState<LegalSourcesFile | null>(null);
   const [answers, setAnswers] = useState<FactAnswers>({});
   const today = todayIso();
 
@@ -294,11 +339,29 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
     let alive = true;
     loadFormCatalog().then((next) => alive && setCatalog(next));
     loadProgramIndex().then((next) => alive && setIndex(next));
+    loadLegalSources().then((next) => alive && setLegal(next));
     setAnswers(loadFactAnswers());
     return () => {
       alive = false;
     };
   }, []);
+
+  // The ETL's personalised record for this asset (a few KB), or null when it has none.
+  const recordKey = asset ? keyForAsset(asset) : null;
+  useEffect(() => {
+    if (!asset || !recordKey) {
+      setRecord(null);
+      return;
+    }
+    let alive = true;
+    setRecord(null);
+    loadAssetRecord(asset.kind, recordKey.split(":")[1]).then((next) => {
+      if (alive) setRecord(next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [asset, recordKey]);
 
   const answerFact = (id: string, answer: FactAnswer) => {
     setAnswers((prev) => {
@@ -318,10 +381,15 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   };
 
   const all = useMemo(() => (asset ? previewFor(asset) : []), [asset]);
-  const determinations = useMemo(
-    () => (asset ? determineAll(asset, all, index, answers) : {}),
-    [asset, all, index, answers],
-  );
+  const determinations = useMemo(() => {
+    if (!asset) return {};
+    // The ETL snapshot owns the decision; the live engine fills any asset it did not cover.
+    const live = determineAll(asset, all, index, answers);
+    if (!record) return live;
+    const merged = { ...live };
+    for (const filing of record.filings) merged[filing.id] = determinationFromFiling(filing, answers);
+    return merged;
+  }, [asset, all, index, answers, record]);
   const applicable = useMemo(() => applicableOnly(all, determinations), [all, determinations]);
   const setAside = useMemo(
     () => all.filter((o) => determinations[o.id]?.applicability === "does_not_apply"),
@@ -331,17 +399,18 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   const rows = useMemo<Row[]>(() => {
     if (!asset) return [];
     const worksheets = new Map(resolveWorksheets(asset, applicable, catalog).map((w) => [w.obligation.id, w]));
+    const snapshots = new Map((record?.filings ?? []).map((f) => [f.id, f]));
     return applicable
       .map((o) => {
         const worksheet = worksheets.get(o.id);
         const determination = determinations[o.id];
         const next = nextDeadline(o, today);
         if (!worksheet || !determination) return null;
-        return { obligation: o, worksheet, determination, next };
+        return { obligation: o, worksheet, determination, next, snapshot: snapshots.get(o.id) };
       })
       .filter((r): r is Row => r !== null)
       .sort((a, b) => (a.next?.due ?? "9999").localeCompare(b.next?.due ?? "9999") || a.obligation.title.localeCompare(b.obligation.title));
-  }, [asset, applicable, catalog, determinations, today]);
+  }, [asset, applicable, catalog, determinations, today, record]);
 
   const upcoming = rows.filter((r) => r.next).slice(0, 3);
   const openQuestions = rows.filter((r) => r.determination.applicability === "needs_fact");
@@ -414,8 +483,11 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
           .
         </p>
         <p className="mt-1 text-[13px] leading-snug text-[#6b7583]">
-          {covered} fields prefilled from public data. Forms and fields are read from the agencies&apos; own pages;
-          nothing here is filed for you.
+          {covered} fields prefilled from public data.{" "}
+          {record
+            ? `Decisions and prefills come from the ETL run of ${fmtDate((legal?.generated_at ?? "").slice(0, 10) || today)}.`
+            : "Decided in the browser from the same rules; the ETL snapshot has no record for this asset."}{" "}
+          Nothing here is filed for you.
         </p>
       </Section>
 
@@ -476,6 +548,8 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
                       d={r.determination}
                       next={r.next}
                       today={today}
+                      snapshot={r.snapshot}
+                      sources={legal?.rules[r.obligation.id] ?? null}
                       onAnswer={answerFact}
                       onClear={clearFact}
                     />
@@ -499,6 +573,57 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
           </dl>
           <CopyButton text={details.map((d) => `${d.label}: ${d.value}`).join("\n")} label="Copy all" />
         </div>
+      </Section>
+
+      <Section
+        id="compliance-sources"
+        title="Sources we read"
+        hint="Every filing above: the instrument it comes from, and the page the ETL read to learn its form and fields."
+      >
+        {!legal ? (
+          <p className="text-[14px] leading-relaxed text-[#556070]">
+            The source registry has not been generated yet. Run <code>npm run compliance:sources</code>.
+          </p>
+        ) : (
+          <>
+            <ul className="flex flex-col gap-3">
+              {rows.map((r) => {
+                const s = legal.rules[r.obligation.id];
+                if (!s) return null;
+                return (
+                  <li key={`src-${s.rule_id}`} className="text-[13px] leading-snug">
+                    <p className="font-semibold text-[#1d2733]">
+                      {s.form} <span className="font-normal text-[#556070]">· {s.agency}</span>
+                    </p>
+                    <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-5 text-[#556070]">
+                      {s.instruments.map((inst) => (
+                        <li key={inst.url}>
+                          <a href={inst.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                            {inst.label}
+                          </a>
+                        </li>
+                      ))}
+                      {s.pages.map((page) => (
+                        <li key={page.url} className="text-[#6b7583]">
+                          Form page read {page.retrieved_at ? page.retrieved_at.slice(0, 10) : "not"} ({page.status}
+                          {page.fields > 0 ? `, ${page.fields} field labels` : ""}):{" "}
+                          <a href={page.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                            {page.url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-3 text-[13px] leading-snug text-[#6b7583]">
+              Registry: {legal.summary.rules} rules, {legal.summary.instruments} instruments, {legal.summary.pages_read}{" "}
+              agency pages read, {legal.summary.pages_unread} that could not be read (PDFs or blocked pages are named,
+              never guessed).
+            </p>
+          </>
+        )}
       </Section>
 
       {setAside.length > 0 && (

@@ -98,6 +98,35 @@ npm run compliance:applicability -- --out public/compliance/applicability.json
 
 `tests/applicability.test.ts` covers the decisions, the unanswered question and the saved answer without any network.
 
+## Compliance records per asset (personalisation)
+
+`compliance-assets` is where "what must this owner file" is decided. It runs the obligations engine for every plant and substation in `public/layers`, applies the applicability index and the forms snapshot, and writes one small record per asset:
+
+```
+public/compliance/assets/plant-60698.json
+  { kind, id, name, owner,
+    filings: [ { id, status: applies | not_applicable | needs_fact,
+                 basis, source, question?, sources: [instrument urls],
+                 prefill: [{ label, value }], manual: [labels] } ] }
+```
+
+One file per asset keeps the download to a few kilobytes when an owner opens a plant (a single file for all 697 plants came to 6 MB). The Compliance tab reads the record for the selected asset, so the screen shows the ETL's personalised answer rather than recomputing a decision in the browser; an asset with no record falls back to the same engine, so nothing breaks. `assets/index.json` records the run: when it happened and which applicability index and forms snapshot it used. Lines are not written: their filings come from generic rules with no per-asset form.
+
+```powershell
+npm run compliance:assets                # write a record per plant and substation
+npm run compliance:assets -- --limit 20  # first twenty of each kind, for a quick check
+```
+
+## Legal sources
+
+`compliance-sources` writes `public/compliance/legal-sources.json`: for every rule in `lib/owner/rules.ts`, the instruments an owner can point at (statute, regulation, general order, program page) with their official URLs, and the agency page the form extraction actually read, when, whether the read succeeded, and how many field labels and quoted excerpts came back. The Compliance tab shows it as "Sources we read" under the filings and links each instrument beside its filing. This job reads no network.
+
+```powershell
+npm run compliance:sources
+```
+
+The current snapshot covers 48 rules, 70 instruments and 48 form pages: 40 read, 8 that could not be read (PDFs and blocked pages, named rather than guessed).
+
 ## Coverage
 
 `coverage` inventories fields in the shipped JSON artifacts and lists evidence predicates. Strict coverage intentionally fails until remaining gaps are closed. The working location adapter set covers Census, one NWS station, EIA Atlas plant counts, HIFLD counts, and optional hourly EIA demand and fuel. Full asset regeneration, historical bulk adapters, automated provider reconciliation, and operator imports remain pending.

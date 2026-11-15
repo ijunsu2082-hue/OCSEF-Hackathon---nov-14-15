@@ -41,7 +41,7 @@ const numOrNull = (x: unknown): number | null =>
   typeof x === "number" && Number.isFinite(x) ? x : null;
 const strOrNull = (x: unknown): string | null => (typeof x === "string" && x !== "" ? x : null);
 
-function toPlant(f: Feature<PointG, Record<string, unknown>>): Plant {
+export function toPlant(f: Feature<PointG, Record<string, unknown>>): Plant {
   const p = f.properties;
   const [lon, lat] = f.geometry.coordinates;
   return {
@@ -65,7 +65,7 @@ function toPlant(f: Feature<PointG, Record<string, unknown>>): Plant {
   };
 }
 
-function toLine(f: Feature<LineG, Record<string, unknown>>): Line {
+export function toLine(f: Feature<LineG, Record<string, unknown>>): Line {
   const p = f.properties;
   return {
     osm_id: Number(p.osm_id),
@@ -77,7 +77,7 @@ function toLine(f: Feature<LineG, Record<string, unknown>>): Line {
   };
 }
 
-function toSubstation(f: Feature<PointG, Record<string, unknown>>): Substation {
+export function toSubstation(f: Feature<PointG, Record<string, unknown>>): Substation {
   const p = f.properties;
   const [lon, lat] = f.geometry.coordinates;
   return {
