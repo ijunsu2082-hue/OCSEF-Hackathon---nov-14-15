@@ -18,7 +18,7 @@ import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LiveNow } from "./LiveNow";
 import type { HazardsPoll } from "./LiveHazards";
 import { LocalNews, groupLocalNews } from "./LocalNews";
-import { OptimizationTab, UpgradePlanTab } from "./OptimizationTab";
+import { OptimizationTab } from "./OptimizationTab";
 import OwnerTab from "./OwnerTab";
 import { Provenance } from "./Provenance";
 import ReportTab from "./ReportTab";
@@ -247,7 +247,6 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
 
         {tab === "optimization" && <OptimizationTab key={areaKey} result={result} live={live} daily={daily} />}
 
-        {tab === "upgrade" && <UpgradePlanTab key={areaKey} result={result} />}
 
         {tab === "report" && (
           <ReportTab

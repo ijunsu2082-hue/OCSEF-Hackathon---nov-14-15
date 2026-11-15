@@ -4,5 +4,5 @@ export type ReportTarget =
   | { kind: "substation"; substation: Substation }
   | { kind: "line"; line: Line }
   | { kind: "area" };
-export type PanelTab = "area" | "optimization" | "upgrade" | "news" | "report" | "owners";
+export type PanelTab = "area" | "optimization" | "news" | "report" | "owners";
 export interface NewsPin { lat: number; lon: number; nonce: number }
