@@ -169,6 +169,7 @@ export function OptimizationTab({ result, live, daily }: {
         )}
         <Caption className="mt-3">Screening rules for a first look, not an engineering study or a utility decision.</Caption>
       </Section>
+      <UpgradePlanSection result={result} />
       <Section title="Compare options" subtitle="Area screening only" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
         <p className="text-[14px] leading-relaxed text-[#556070]">
           Compare plausible directions using evidence for {result.area_label}. The scan does not calculate an optimum, rank by cost, or establish engineering feasibility.
@@ -244,13 +245,12 @@ export function OptimizationTab({ result, live, daily }: {
   );
 }
 
-export function UpgradePlanTab({ result }: { result: ScanResult }) {
+function UpgradePlanSection({ result }: { result: ScanResult }) {
   const t = result.totals;
   return (
-    <div className="px-6 py-6">
       <Section title="Upgrade plan" subtitle={`Working sequence · ${result.area_label}`}>
         <p className="text-[14px] leading-relaxed text-[#556070]">
-          Turn the area screen into a project candidate through evidence and review. This is a suggested workflow, not a project schedule or approval checklist.
+          Once a fix is on the shortlist above, these steps turn it into a real project through evidence and review. This is a suggested workflow, not a project schedule or approval checklist.
         </p>
         <ol className="mt-5 space-y-4">
           <li className="border-l-2 border-[#bae6fd] pl-4">
@@ -272,6 +272,5 @@ export function UpgradePlanTab({ result }: { result: ScanResult }) {
         </ol>
         <Caption className="mt-5">No step is marked complete. Area Scan does not establish ownership, utility agreement, funding, permit status or regulatory approval.</Caption>
       </Section>
-    </div>
   );
 }
