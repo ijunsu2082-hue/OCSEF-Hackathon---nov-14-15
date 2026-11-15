@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { broadcastWeatherSample } from "./weatherEvents";
+import { weatherCell } from "./weatherTopic";
 
 /**
  * Weather samples, stored in Supabase (`weather_locations` + `weather_samples`).
@@ -175,7 +177,8 @@ function active(): WeatherStore {
 export function weatherLocation(lat: number, lon: number): WeatherLocation {
   const cellLat = roundCell(lat);
   const cellLon = roundCell(lon);
-  return { key: `${cellLat},${cellLon}`, lat: cellLat, lon: cellLon };
+  // Same key the browser derives for the broadcast topic, see weatherTopic.ts.
+  return { key: weatherCell(lat, lon), lat: cellLat, lon: cellLon };
 }
 
 export async function rememberWeatherLocation(
@@ -210,7 +213,17 @@ export async function persistWeather(
   const nowUtc = now.toISOString().slice(0, 16);
   const accepted = samples.filter((sample) => validUtcTime(sample.time) && sample.time <= nowUtc);
   if (!accepted.length) return;
+  // Read the newest stored time first: a listener that refetches after a
+  // broadcast re-writes the same minute, and announcing that again would put
+  // the panel and the writer in a loop.
+  const stored = override ? null : await active().latest(location, now);
   await active().persist(location, accepted, refreshEqualTimestamp);
+  // Tests swap in a memory store and must stay off the network.
+  if (override) return;
+  let newest = accepted[0];
+  for (const sample of accepted) if (sample.time > newest.time) newest = sample;
+  if (stored && newest.time <= stored.time) return;
+  broadcastWeatherSample(location.key, newest.time);
 }
 
 // ---- Open-Meteo -------------------------------------------------------------
