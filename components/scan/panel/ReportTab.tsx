@@ -25,6 +25,7 @@ import {
   type EmergencyContact,
   type HazardId,
   type ReportSender,
+  type ReportEmail,
   type SavedReport,
   type Severity,
 } from "@/lib/scan/compliance";
@@ -35,15 +36,18 @@ import { UTILITIES, type UtilityInfo, type UtilityKey } from "@/lib/scan/legal";
  * short sentences. No AI, no network. Picking "Wire on the ground" or "Sparks or fire" stops
  * at a "call 911" screen. Who the report goes to is the utility that serves the reported spot (our guess from
  * nearby substations, or the person's pick), then CPUC for SCE / SDG&E / PG&E, the city, or a co-op's board.
- * The Email button opens a formal letter addressed to the utility when it publishes an email address.
- * Filing only saves on this device (localStorage); Email / Official site are how a report
- * actually reaches the utility.
+ * The letter goes to the utility's published email (its tree team for "Tree touching a wire" when it has one).
+ * When a utility takes reports only by phone or web form, the send button copies the letter and opens that form
+ * instead: it never opens an email with no recipient. Filing only saves on this device (localStorage).
  */
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]";
 const LINK = `text-[#0369a1] hover:underline ${FOCUS}`;
 const SMALL_BTN =
   `inline-flex h-9 items-center rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#1d2733] transition-colors hover:bg-[#f6f8fa] ${FOCUS}`;
+
+const PRIMARY_BTN =
+  `inline-flex h-11 w-full items-center justify-center rounded-[6px] bg-[#0ea5e9] px-4 text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`;
 
 const SEVERITY_COLOR: Record<Severity, string> = { info: "#556070", warn: "#b45309", danger: "#dc2626" };
 
@@ -129,6 +133,41 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+const letterText = (e: ReportEmail) => `Subject: ${e.subject}\n\n${e.body}`;
+
+/**
+ * How a filed letter is sent: an email addressed to the utility, or (when it publishes no email) copy the letter
+ * and open its report page. Old reports saved before letters existed have no send button.
+ */
+function SendLetter({ r, primary = false }: { r: SavedReport; primary?: boolean }) {
+  const [copied, setCopied] = useState<"idle" | "ok" | "fail">("idle");
+  const e = r.email;
+  if (!e) return null;
+  const who = e.recipient ?? "the utility";
+  const cls = primary ? PRIMARY_BTN : SMALL_BTN;
+  if (e.to) {
+    return (
+      <a href={mailtoHref(e.subject, e.body, e.to)} className={cls}>
+        Email {who.replace(/ customer service$/i, "")}
+      </a>
+    );
+  }
+  const url = e.formUrl ?? r.contact.url;
+  // A real link (not window.open) so pop-up blockers never stop the report page; the click also copies the letter.
+  const copy = () => void copyText(letterText(e)).then((ok) => setCopied(ok ? "ok" : "fail"));
+  return (
+    <>
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={copy} className={cls}>
+        Copy letter and open {who}&apos;s report page
+      </a>
+      <span aria-live="polite" className={primary ? "mt-2 block text-[14px] text-[#556070]" : "sr-only"}>
+        {copied === "ok" && "Letter copied. Paste it into the report page that just opened."}
+        {copied === "fail" && "Could not copy. Use Download, then paste the letter into the report page."}
+      </span>
+    </>
+  );
+}
+
 export default function ReportTab({
   result,
   live,
@@ -160,6 +199,7 @@ export default function ReportTab({
   const [status, setStatus] = useState<"idle" | "saved" | "memory">("idle");
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [lastId, setLastId] = useState<string | null>(null);
 
   const routing = useMemo(() => quickRouting(hazards, utility), [hazards, utility]);
   const emergencyId = hazardEmergency(hazards);
@@ -176,6 +216,7 @@ export default function ReportTab({
     setNote("");
     setBill(null);
     setStatus("idle");
+    setLastId(null);
   }, [target]);
 
   const toggle = (id: HazardId) =>
@@ -191,6 +232,7 @@ export default function ReportTab({
     const next = [r, ...reports];
     setReports(next);
     setStatus(saveReports(next) ? "saved" : "memory");
+    setLastId(r.id);
     setHazards([]);
     setNote("");
   };
@@ -202,12 +244,13 @@ export default function ReportTab({
   };
 
   const copy = async (r: SavedReport) => {
-    if (await copyText(r.email ? `Subject: ${r.email.subject}\n\n${r.email.body}` : r.text)) {
+    if (await copyText(r.email ? letterText(r.email) : r.text)) {
       setCopiedId(r.id);
       setTimeout(() => setCopiedId((c) => (c === r.id ? null : c)), 1500);
     }
   };
 
+  const lastReport = lastId ? reports.find((r) => r.id === lastId) ?? null : null;
   const picked = HAZARDS.filter((h) => hazards.includes(h.id) && h.emergency).map((h) => h.label);
 
   return (
@@ -368,18 +411,15 @@ export default function ReportTab({
             <p className="mt-4 text-[14px] text-[#556070]">
               It goes to: <span className="font-semibold text-[#1d2733]">{routing.contactName}</span>
             </p>
-            {routing.email ? (
+            {routing.delivery === "email" && (
               <p className="mt-1 text-[14px] text-[#556070]">
-                Email: <span className="font-medium text-[#1d2733]">{routing.email}</span>
+                By email to <span className="font-medium text-[#1d2733]">{routing.email}</span>
+                {routing.team !== "Customer Service" && ` (${routing.utility?.short}'s ${routing.team.toLowerCase()} team)`}
               </p>
-            ) : (
-              routing.utility && (
-                <p className="mt-1 text-[14px] text-[#556070]">
-                  {routing.utility.short} does not publish an email for reports.
-                  {routing.utility.emergency ? ` Call ${routing.utility.emergency.display}` : " Call the number on your bill"} or use its
-                  online form, and paste the letter (Copy letter).
-                </p>
-              )
+            )}
+            {routing.delivery === "form" && routing.note && <p className="mt-1 text-[14px] text-[#556070]">{routing.note}</p>}
+            {routing.delivery === "pick" && (
+              <p className="mt-1 text-[14px] font-medium text-[#b45309]">{routing.note}</p>
             )}
             {routing.steps[1] && /^If it is not fixed/i.test(routing.steps[1].title) && (
               <p className="mt-1 text-[14px] text-[#556070]">{routing.steps[1].title}</p>
@@ -450,26 +490,31 @@ export default function ReportTab({
             <button
               type="button"
               onClick={file}
-              className={`h-11 w-full rounded-[6px] bg-[#0ea5e9] text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`}
+              disabled={routing.delivery === "pick"}
+              className={`h-11 w-full rounded-[6px] bg-[#0ea5e9] text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] disabled:cursor-not-allowed disabled:bg-[#cbd5e1] ${FOCUS}`}
             >
-              File report
+              {routing.delivery === "pick" ? "Pick the utility first (top of this tab)" : "File report"}
             </button>
+            {routing.delivery === "pick" && <EmergencyNumbers contacts={contacts} className="mt-2" />}
             <div aria-live="polite">
-              {status === "saved" && (
-                <p className="mt-3 text-[15px] font-medium text-[#1d2733]">
-                  Report filed. Saved on this device. Press Email the utility (or Copy letter and use its official site) to send it.
-                </p>
-              )}
-              {status === "memory" && (
-                <p className="mt-3 text-[15px] font-medium text-[#1d2733]">
-                  Report filed, but this browser would not let us save it. It will be gone after a reload, so send it with
-                  Email, Download or the official site now.
-                </p>
+              {status !== "idle" && lastReport && (
+                <div className="mt-3">
+                  <p className="text-[15px] font-medium text-[#1d2733]">
+                    {status === "saved"
+                      ? "Report filed and saved on this device. Now send it:"
+                      : "Report filed, but this browser would not let us save it. Send it now:"}
+                  </p>
+                  <div className="mt-2">
+                    <SendLetter r={lastReport} primary />
+                  </div>
+                </div>
               )}
             </div>
-            {status === "idle" && (
+            {status === "idle" && routing.delivery !== "pick" && (
               <p className="mt-3 text-[14px] text-[#6b7583]">
-                Filing saves the report on this device only. To reach the utility, send it with Email or the official site.
+                {routing.delivery === "email"
+                  ? `Filing saves the report on this device. Then press Email to open the finished letter, addressed to ${routing.email}.`
+                  : `Filing saves the report on this device. Then we copy the letter and open ${routing.utility?.short}'s report page for you.`}
               </p>
             )}
           </Step>
@@ -488,15 +533,10 @@ export default function ReportTab({
                 <p className="mt-0.5 text-[14px] text-[#6b7583]">
                   {fmtWhen(r.createdAt)}
                   {r.contact.name ? ` · goes to ${r.contact.name}` : ""}
-                  {r.email?.to ? ` (${r.email.to})` : ""}
+                  {r.email?.to ? ` (${r.email.to})` : r.email ? " (report page)" : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <a
-                    href={r.email ? mailtoHref(r.email.subject, r.email.body, r.email.to) : mailtoHref(r.subject, r.text)}
-                    className={SMALL_BTN}
-                  >
-                    {r.email?.to ? "Email the utility" : "Email"}
-                  </a>
+                  <SendLetter r={r} />
                   <button
                     type="button"
                     onClick={() => downloadTxt(r.text, reportFileName(r.title, r.createdAt))}
