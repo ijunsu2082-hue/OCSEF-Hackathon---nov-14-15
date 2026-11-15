@@ -1,276 +1,303 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { DailyRating, LineRatingNow, ScanResult } from "@/lib/scan";
-import { buildWorkflow, OBJECTIVES, type Objective, type Verdict, type WorkflowStep } from "@/lib/scan/optimization";
-import { fmtNum, fmtPct, fmtRatio, isNum } from "./format";
+import { useEffect, useRef, useState } from "react";
+import type { GrantMatch } from "@/lib/scan/grants";
+import {
+  upgradePlanMarkdown,
+  type Improvement,
+  type UpgradePlan,
+} from "@/lib/scan/upgradePlan";
 import { Caption, Section } from "./ui";
 
-const OBJECTIVE_CHECKS: Record<Objective, string[]> = {
-  transfer: ["Utility-confirmed interconnection limit and network power-flow study.", "Line-specific loading, conductor, protection and operating limits."],
-  resilience: ["Reliability target, critical loads and acceptable outage duration.", "Outage history and whether each candidate remains available during the same hazard."],
-  emissions: ["Hourly facility load and generation profiles.", "Time-matched emissions factors and operating constraints for each candidate."],
-  cost: ["Comparable capital, operating, replacement and interconnection cost estimates.", "Financing assumptions, project life and cost uncertainty range."],
+/*
+ * Two steps and nothing else: pick the lever, then read its plan. The chooser
+ * is built from the scan, so the options and their numbers change with the
+ * circle. No forms, drafts, assignments or seeded scenarios on this screen.
+ */
+
+const LABEL = "text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6b7583]";
+
+const PRIORITY: Record<Improvement["severity"], { label: string; color: string; background: string }> = {
+  critical: { label: "Top priority", color: "#b91c1c", background: "#fef2f2" },
+  high: { label: "High priority", color: "#b45309", background: "#fffbeb" },
+  medium: { label: "Worth doing", color: "#0369a1", background: "#f0f9ff" },
+  low: { label: "Low priority", color: "#556070", background: "#f6f8fa" },
 };
 
-function value(value: number | null | undefined, unit = "") {
-  return isNum(value) ? `${fmtNum(value, 1)}${unit}` : "Unknown";
-}
-
-function Status({ children, tone = "neutral" }: { children: string; tone?: "signal" | "missing" | "neutral" }) {
-  const style = tone === "signal"
-    ? "border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]"
-    : tone === "missing"
-      ? "border-[#e6e9ee] bg-[#f8fafc] text-[#556070]"
-      : "border-[#e6e9ee] bg-white text-[#556070]";
-  return <span className={`inline-flex rounded-full border px-2 py-0.5 text-[12px] font-medium ${style}`}>{children}</span>;
-}
-
-function OptionCard({ title, status, evidence, missing, next }: {
-  title: string;
-  status: string;
-  evidence: string[];
-  missing: string[];
-  next: string;
-}) {
+function PriorityPill({ severity }: { severity: Improvement["severity"] }) {
+  const style = PRIORITY[severity];
   return (
-    <article className="rounded-lg border border-[#e6e9ee] bg-white p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-[15px] font-semibold text-[#1d2733]">{title}</h4>
-        <Status tone={evidence.length ? "signal" : "missing"}>{status}</Status>
-      </div>
-      <p className="mt-3 text-[12px] font-semibold uppercase tracking-wide text-[#6b7583]">Scan evidence</p>
-      <ul className="mt-1 list-disc space-y-1 pl-4 text-[14px] leading-snug text-[#1d2733]">
-        {evidence.length ? evidence.map((item) => <li key={item}>{item}</li>) : <li>No supporting signal in this scan.</li>}
-      </ul>
-      <p className="mt-3 text-[12px] font-semibold uppercase tracking-wide text-[#6b7583]">Still needed</p>
-      <ul className="mt-1 list-disc space-y-1 pl-4 text-[14px] leading-snug text-[#556070]">
-        {missing.map((item) => <li key={item}>{item}</li>)}
-      </ul>
-      <p className="mt-3 border-t border-[#eef1f4] pt-3 text-[14px] leading-snug text-[#1d2733]">
-        <span className="font-semibold">Next evidence:</span> {next}
-      </p>
-    </article>
+    <span
+      className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+      style={{ color: style.color, background: style.background }}
+    >
+      {style.label}
+    </span>
   );
 }
 
-const VERDICT_LABEL: Record<Verdict, string> = {
-  pass: "Pass",
-  candidate: "Candidate",
-  weak: "Weak case",
-  not_supported: "Not supported",
-  not_applicable: "Not applicable",
-  needs_data: "Needs data",
-  stop: "Stop",
-};
-
-function VerdictBadge({ verdict }: { verdict: Verdict }) {
-  const tone = verdict === "candidate" || verdict === "pass"
-    ? "border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]"
-    : verdict === "stop"
-      ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
-      : verdict === "weak" || verdict === "needs_data"
-        ? "border-[#fde68a] bg-[#fffbeb] text-[#92400e]"
-        : "border-[#e6e9ee] bg-[#f8fafc] text-[#556070]";
-  return <span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[12px] font-medium ${tone}`}>{VERDICT_LABEL[verdict]}</span>;
-}
-
-function StepCard({ step, index }: { step: WorkflowStep; index: number }) {
-  return (
-    <li className="border-l-2 border-[#bae6fd] pl-4" data-step={step.id}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <b className="text-[14px] text-[#1d2733]">{index + 1}. {step.title}</b>
-        <VerdictBadge verdict={step.verdict} />
-      </div>
-      <p className="mt-1 text-[14px] leading-snug text-[#556070]">{step.task}</p>
-      <p className="mt-2 text-[12px] font-semibold uppercase tracking-wide text-[#6b7583]">Rule</p>
-      <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">{step.rule}</p>
-      <dl className="mt-2 grid gap-1 text-[13px]">
-        {step.inputs.map((input) => (
-          <div key={input.label} className="flex justify-between gap-3 border-b border-[#eef1f4] py-1">
-            <dt className="text-[#556070]">{input.label}</dt>
-            <dd className="text-right font-medium tabular-nums text-[#1d2733]">{input.value}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-2 text-[14px] leading-snug text-[#1d2733]">{step.finding}</p>
-      <p className="mt-1 text-[14px] leading-snug text-[#1d2733]"><span className="font-semibold">Next:</span> {step.next}</p>
-    </li>
-  );
-}
-
-export function OptimizationTab({ result, live, daily }: {
-  result: ScanResult;
-  live: LineRatingNow | null;
-  daily: DailyRating[] | null;
+function LeverChooser({
+  plan,
+  activeId,
+  onSelect,
+}: {
+  plan: UpgradePlan;
+  activeId: string;
+  onSelect: (id: string) => void;
 }) {
-  const [objective, setObjective] = useState<Objective>("transfer");
-  const t = result.totals;
-  const lineSignal = t.line_miles > 0;
-  const dayRatios = useMemo(() => (daily ?? [])
-    .filter((day) => isNum(day.worst_A) && isNum(day.static_A) && day.static_A > 0)
-    .map((day) => day.worst_A / day.static_A)
-    .sort((a, b) => a - b), [daily]);
-  const range = dayRatios.length
-    ? `${fmtRatio(dayRatios[0])}–${fmtRatio(dayRatios[dayRatios.length - 1])}`
-    : "Not available";
-
-  const dlrEvidence = lineSignal
-    ? [
-        `${fmtNum(t.line_miles, 1)} mi of mapped lines in the circle; ${fmtNum(t.line_miles_by_kv["200-499"] + t.line_miles_by_kv["500+"], 1)} mi mapped at 200 kV or higher.`,
-        `Nearest weather rating site: ${result.rating_site.name}, ${fmtNum(result.rating_site.distance_mi, 1)} mi away; conservative modeled rating exceeded the fixed rating in ${fmtPct(result.rating_site.pct_hours_conservative_dlr_above_static, 0)} of 2025 hours.`,
-      ]
-    : [];
-
-  const workflow = useMemo(() => buildWorkflow(result, { live, daily, objective }), [result, live, daily, objective]);
   return (
-    <div className="px-6 py-6">
-      <Section title="Optimization workflow" subtitle="Fixed rules, same answer every time" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
-        <p className="text-[14px] leading-relaxed text-[#556070]">
-          Work through these steps in order. Each step applies one written rule to this scan&apos;s numbers and says what to do next.
-        </p>
-        <label className="mt-4 block text-[13px] font-semibold text-[#1d2733]" htmlFor="optimization-objective">
-          Planning objective
-        </label>
-        <select
-          id="optimization-objective"
-          className="mt-1 h-10 w-full rounded-md border border-[#d8dee6] bg-white px-3 text-[14px] text-[#1d2733] focus-visible:outline-2 focus-visible:outline-[#0ea5e9]"
-          value={objective}
-          onChange={(event) => setObjective(event.target.value as Objective)}
-        >
-          {Object.entries(OBJECTIVES).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-        </select>
-        <Caption className="mt-2">
-          The objective only sets the fixed order of the shortlist. It never changes a step&apos;s verdict.
-        </Caption>
-        <ol className="mt-5 space-y-5">
-          {workflow.steps.map((step, i) => <StepCard key={step.id} step={step} index={i} />)}
-        </ol>
-        {workflow.stopped && (
-          <Caption className="mt-4">The workflow stopped at step 1, so no options were screened.</Caption>
-        )}
-        {!workflow.stopped && (
-          <div className="mt-6 rounded-md bg-[#f6f8fa] p-4" data-testid="optimization-shortlist">
-            <p className="text-[14px] font-semibold text-[#1d2733]">Shortlist for this objective</p>
-            {workflow.shortlist.length ? (
-              <ol className="mt-2 list-decimal space-y-3 pl-4 text-[14px] leading-snug text-[#1d2733]">
-                {workflow.shortlist.map((item) => (
-                  <li key={item.option}>
-                    <span className="font-semibold">{item.title}</span> <VerdictBadge verdict={item.verdict} />
-                    <p className="mt-1 text-[#556070]">{item.why}</p>
-                    <p className="mt-1"><span className="font-semibold">First action:</span> {item.firstAction}</p>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-2 text-[14px] text-[#556070]">No option passed its screen here. Gather the data the steps above ask for, then rescan.</p>
-            )}
-          </div>
-        )}
-        <Caption className="mt-3">Screening rules for a first look, not an engineering study or a utility decision.</Caption>
-      </Section>
-      <UpgradePlanSection result={result} />
-      <Section title="Compare options" subtitle="Area screening only" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
-        <p className="text-[14px] leading-relaxed text-[#556070]">
-          Compare plausible directions using evidence for {result.area_label}. The scan does not calculate an optimum, rank by cost, or establish engineering feasibility.
-        </p>
-        <div className="mt-3 rounded-md bg-[#f6f8fa] p-3">
-          <p className="text-[13px] font-semibold text-[#1d2733]">Evidence to resolve first for this objective</p>
-          <ol className="mt-2 list-decimal space-y-1 pl-4 text-[14px] leading-snug text-[#556070]">
-            {OBJECTIVE_CHECKS[objective].map((check) => <li key={check}>{check}</li>)}
-          </ol>
-        </div>
-
-        <div className="mt-5 grid gap-3">
-          <OptionCard
-            title="Weather based line rating"
-            status={lineSignal ? "Signal present · proxy model" : "No mapped line signal"}
-            evidence={dlrEvidence}
-            missing={["Match the scan lines to operator asset IDs, conductor and condition.", "Obtain line loading, protection limits, validated local weather, telemetry and operator acceptance."]}
-            next="Request a line-specific operating study from the transmission owner; compare its validated rating with the fixed rating."
-          />
-          <OptionCard
-            title="Local storage or flexible demand"
-            status={t.storage_mw > 0 || t.renewable_mw > 0 ? "Area supply signal" : "Project evidence missing"}
-            evidence={[
-              `${fmtNum(t.renewable_mw, 1)} MW renewable nameplate and ${fmtNum(t.storage_mw, 1)} MW battery nameplate are mapped in the area.`,
-              t.evening_cover_pct === null ? "Solar-to-storage evening cover: unknown (no mapped solar)." : `Area storage is ${fmtNum(t.evening_cover_pct, 0)}% of solar nameplate; this is not a dispatch result.`,
-            ]}
-            missing={["Hourly facility load and generation profiles.", "Site, duration, dispatch limits, interconnection requirements and lifecycle cost."]}
-            next="Collect interval load and generation data, then test a site-specific dispatch scenario against the chosen objective."
-          />
-          <OptionCard
-            title="Grid reinforcement or reconductoring"
-            status={lineSignal || t.substation_count > 0 ? "Mapped assets · capacity unknown" : "Mapped asset evidence sparse"}
-            evidence={[
-              `${fmtNum(t.line_miles, 1)} mi of mapped line and ${t.substation_count} mapped substation${t.substation_count === 1 ? "" : "s"} in the circle.`,
-              `${t.hv_substation_count} mapped substation${t.hv_substation_count === 1 ? "" : "s"} at 200 kV or above.`,
-            ]}
-            missing={["Network topology, power flows, asset condition and available capacity.", "Feasible route/site, land rights, environmental review, outage plan and cost estimate."]}
-            next="Ask the system operator for a constraints study and confirm candidate routes with asset owners."
-          />
-        </div>
-      </Section>
-
-      <Section title="Weather sensitivity" subtitle="Modeled rating context" sources={["openmeteo_live", "era5_2025", "ieee738"]}>
-        <div className="grid gap-2 text-[14px] text-[#1d2733]">
-          <div className="flex justify-between gap-3 border-b border-[#eef1f4] py-2">
-            <span>Current weather screen</span>
-            <b className="tabular-nums">{live ? fmtRatio(live.ratio) : "Unavailable"}</b>
-          </div>
-          <div className="flex justify-between gap-3 border-b border-[#eef1f4] py-2">
-            <span>2025 daily worst-hour modeled range</span>
-            <b className="tabular-nums">{range}</b>
-          </div>
-          <div className="flex justify-between gap-3 py-2">
-            <span>2025 hottest-hour site ratio</span>
-            <b className="tabular-nums">{value(result.rating_site.hottest_hour_dlr_vs_static, "×")}</b>
-          </div>
-        </div>
-        <Caption className="mt-2">
-          Ratios use the PR #2 representative conductor and IEEE 738 screening assumptions at {result.rating_site.name}. The weather site is {fmtNum(result.rating_site.distance_mi, 1)} mi from the scan center. Results are sensitivity context, not a rating for any mapped line; verify site weather, conductor, clearance, protection and operating limits before use.
-        </Caption>
-      </Section>
-
-      <Section title="Constraints not resolved" subtitle="Required before alternatives can be ranked">
-        <ul className="space-y-2 text-[14px] text-[#556070]">
-          <li className="flex justify-between gap-3"><span>Interconnection and transfer limits</span><Status tone="missing">Unknown</Status></li>
-          <li className="flex justify-between gap-3"><span>Capital and operating cost</span><Status tone="missing">Not supplied</Status></li>
-          <li className="flex justify-between gap-3"><span>Site, route and land constraints</span><Status tone="missing">Not assessed</Status></li>
-          <li className="flex justify-between gap-3"><span>Reliability target and outage limits</span><Status tone="missing">Not supplied</Status></li>
-        </ul>
-        <Caption className="mt-3">No option is recommended or marked feasible from these unknowns. Missing inputs remain visible instead of being filled with assumptions.</Caption>
-      </Section>
+    <div role="radiogroup" aria-label="What do you want to improve?" className="grid gap-2 sm:grid-cols-2">
+      {plan.improvements.map((item) => {
+        const active = item.id === activeId;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onSelect(item.id)}
+            className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9] ${
+              active
+                ? "border-[#0ea5e9] bg-[#f0f9ff]"
+                : "border-[#e6e9ee] bg-white hover:border-[#cbd5e1] hover:bg-[#f6f8fa]"
+            }`}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold leading-snug text-[#1d2733]">{item.label}</span>
+              <span className="mt-0.5 block text-[12px] leading-snug text-[#556070]">{item.headline}</span>
+            </span>
+            <span className="shrink-0 text-right">
+              <span className="block text-[11px] leading-snug text-[#6b7583]">
+                {item.steps.length} step{item.steps.length === 1 ? "" : "s"}
+              </span>
+              <span className="mt-1 block text-[11px] font-semibold" style={{ color: PRIORITY[item.severity].color }}>
+                {PRIORITY[item.severity].label}
+              </span>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function UpgradePlanSection({ result }: { result: ScanResult }) {
-  const t = result.totals;
+const FUNDING_STATUS: Record<GrantMatch["status"], string> = {
+  open: "Open listing",
+  forecasted: "Forecast",
+  notice: "Funding notice",
+  program: "Programme page",
+};
+
+function LeverPlan({
+  item,
+  grants,
+  state,
+}: {
+  item: Improvement;
+  grants: UpgradePlan["grants"];
+  state: string | null;
+}) {
+  const matched = item.funding;
   return (
-      <Section title="Upgrade plan" subtitle={`Working sequence · ${result.area_label}`}>
-        <p className="text-[14px] leading-relaxed text-[#556070]">
-          Once a fix is on the shortlist above, these steps turn it into a real project through evidence and review. This is a suggested workflow, not a project schedule or approval checklist.
+    <div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="text-[15px] font-semibold leading-snug text-[#1d2733]">{item.target}</p>
+        <PriorityPill severity={item.severity} />
+      </div>
+      <p className="mt-2 text-[14px] leading-relaxed text-[#1d2733]">{item.finding}</p>
+
+      <dl className="mt-3 grid grid-cols-3 gap-x-4 border-y border-[#eef1f4] py-3">
+        {item.metrics.map((metric) => (
+          <div key={metric.label} className="min-w-0">
+            <dt className="text-[11px] leading-snug text-[#6b7583]">{metric.label}</dt>
+            <dd className="text-[15px] font-semibold tabular-nums leading-snug text-[#1d2733]">{metric.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-3">
+        <p className={LABEL}>In this circle</p>
+        <ul className="mt-1 flex flex-col gap-0.5">
+          {item.evidence.map((line, index) => (
+            <li key={`${item.id}-evidence-${index}`} className="text-[12px] leading-snug text-[#556070]">
+              · {line}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-1 text-[13px] leading-relaxed">
+        <p className="text-[#1d2733]">
+          <span className="font-semibold">How: </span>
+          {item.how}
         </p>
-        <ol className="mt-5 space-y-4">
-          <li className="border-l-2 border-[#bae6fd] pl-4">
-            <b className="text-[14px] text-[#1d2733]">1. Confirm the candidate area</b>
-            <p className="mt-1 text-[14px] leading-snug text-[#556070]">Check scan coverage and mapped assets with an owner representative. Record asset IDs, source, date and what remains unknown.</p>
+        <p className="text-[#556070]">
+          <span className="font-medium text-[#1d2733]">Tradeoff: </span>
+          {item.tradeoff}
+        </p>
+      </div>
+
+      <p className={`${LABEL} mt-5`}>Steps</p>
+      <ol className="mt-1">
+        {item.steps.map((step, index) => (
+          <li
+            key={`${item.id}-${index}`}
+            className="grid grid-cols-[1.25rem_1fr] gap-x-2 border-t border-[#eef1f4] py-2.5 first:border-t-0 first:pt-1"
+          >
+            <span aria-hidden className="mt-0.5 text-[12px] font-semibold tabular-nums text-[#0369a1]">
+              {index + 1}.
+            </span>
+            <div className="min-w-0">
+              <p className="text-[14px] font-medium leading-snug text-[#1d2733]">
+                {step.title}
+                <span className="ml-2 rounded-[3px] bg-[#f1f5f9] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#556070]">
+                  {step.kind}
+                </span>
+              </p>
+              <p className="text-[12px] text-[#6b7583]">
+                {step.who} · {step.when}
+              </p>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-[#556070]">{step.detail}</p>
+              <p className="text-[12px] leading-snug text-[#6b7583]">Done: {step.done}</p>
+            </div>
           </li>
-          <li className="border-l-2 border-[#bae6fd] pl-4">
-            <b className="text-[14px] text-[#1d2733]">2. Gather operational evidence</b>
-            <p className="mt-1 text-[14px] leading-snug text-[#556070]">Request interval load, interconnection limits and network studies. This screen currently finds {fmtNum(t.line_miles, 1)} mi of mapped line and {t.substation_count} substations; it does not establish available capacity.</p>
-          </li>
-          <li className="border-l-2 border-[#bae6fd] pl-4">
-            <b className="text-[14px] text-[#1d2733]">3. Compare feasible designs</b>
-            <p className="mt-1 text-[14px] leading-snug text-[#556070]">Use project-specific engineering, cost, siting and reliability constraints to compare line operations, storage/flexibility and reinforcement options.</p>
-          </li>
-          <li className="border-l-2 border-[#bae6fd] pl-4">
-            <b className="text-[14px] text-[#1d2733]">4. Plan delivery and approvals</b>
-            <p className="mt-1 text-[14px] leading-snug text-[#556070]">After a candidate design is supported, identify responsible owners, jurisdiction-specific permitting, funding sources and decision authority. Track each response as separate evidence.</p>
-          </li>
-        </ol>
-        <Caption className="mt-5">No step is marked complete. Area Scan does not establish ownership, utility agreement, funding, permit status or regulatory approval.</Caption>
+        ))}
+      </ol>
+
+      {matched.length > 0 && (
+        <div className="mt-4">
+          <p className={LABEL}>Funding for this lever</p>
+          <ul className="mt-1 flex flex-col gap-2">
+            {matched.map((match) => (
+              <li key={match.id} className="rounded-md border border-[#e6e9ee] px-3 py-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-[13px] font-semibold leading-snug text-[#1d2733]">{match.title}</p>
+                  <span className="text-[11px] uppercase tracking-[0.06em] text-[#6b7583]">
+                    {FUNDING_STATUS[match.status]}
+                    {match.deadline ? ` · closes ${match.deadline}` : ""}
+                  </span>
+                </div>
+                <p className="text-[12px] leading-relaxed text-[#556070]">{match.why}</p>
+                <p className="text-[12px] leading-relaxed text-[#556070]">
+                  <span className="font-medium text-[#1d2733]">Next: </span>
+                  {match.next}
+                </p>
+                <a
+                  href={match.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+                >
+                  {match.source === "opportunity" ? `${match.via} entry` : "Official programme page"}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <Caption>
+            Matched from {grants.watched}/{grants.total} watched programmes and {grants.listings} live listing
+            {grants.listings === 1 ? "" : "s"} across {grants.feedsWatched}/{grants.feeds} aggregators, last checked{" "}
+            {grants.checkedAt.slice(0, 10)}.
+          </Caption>
+        </div>
+      )}
+      {matched.length === 0 && (
+        <Caption>
+          No watched source covers this lever for {state ? `${state} yet` : "this area"}. Funding is left blank rather than guessed.
+        </Caption>
+      )}
+    </div>
+  );
+}
+
+export function OptimizationTab({
+  plan,
+  areaLabel,
+  radiusMi,
+  selectedId,
+  onSelect,
+}: {
+  plan: UpgradePlan;
+  areaLabel: string;
+  radiusMi: number;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const active = plan.improvements.find((item) => item.id === selectedId) ?? plan.improvements[0];
+  const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  if (!active) {
+    return (
+      <div className="px-6 py-6 text-[14px] text-[#556070]">
+        No lever can be ranked for this circle. Move the scan onto mapped lines or plants.
+      </div>
+    );
+  }
+
+  const copyPlan = async () => {
+    try {
+      await navigator.clipboard.writeText(upgradePlanMarkdown(plan, areaLabel, radiusMi, active.id));
+      setCopy("copied");
+    } catch {
+      setCopy("failed");
+    }
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopy("idle"), 2000);
+  };
+
+  return (
+    <div>
+      <header className="px-6 py-5">
+        <p className={LABEL}>Upgrade plan</p>
+        <h3 className="mt-1 text-[18px] font-semibold leading-snug text-[#1d2733]">{active.headline}</h3>
+        <p className="mt-1 text-[13px] leading-snug text-[#556070]">{plan.summary}</p>
+        <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
+          {plan.facts.map((fact) => (
+            <div key={fact.label} className="flex items-baseline gap-1.5">
+              <dt className="text-[12px] text-[#6b7583]">{fact.label}</dt>
+              <dd className="text-[13px] font-semibold tabular-nums text-[#1d2733]">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </header>
+
+      <Section title="What do you want to improve?" subtitle="Built from this circle. Reopen the tab after moving the scan.">
+        <LeverChooser plan={plan} activeId={active.id} onSelect={onSelect} />
       </Section>
+
+      <Section
+        title={active.label}
+        subtitle={`${active.steps.length} step${active.steps.length === 1 ? "" : "s"} · ${plan.operators[0]?.name ?? "operator not in the map data"}`}
+        sources={["eia860", "osm", "era5_2025", "ieee738"]}
+      >
+        <LeverPlan item={active} grants={plan.grants} state={plan.state} />
+      </Section>
+
+      <Section title="Before you rely on it">
+        <ul className="flex list-disc flex-col gap-1 pl-4 text-[12px] leading-relaxed text-[#556070]">
+          {plan.caveats.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+          <li>Not in this plan yet: {plan.needData.join("; ")}.</li>
+        </ul>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void copyPlan()}
+            aria-live="polite"
+            className="h-8 rounded-[6px] border border-[#d8dee6] bg-white px-3 text-[13px] font-medium text-[#1d2733] transition-colors hover:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
+          >
+            {copy === "copied" ? "Copied" : copy === "failed" ? "Copy failed" : "Copy these steps"}
+          </button>
+          <Caption>{plan.operators.length > 0 ? `Named here: ${plan.operators.map((operator) => operator.name).join(", ")}.` : ""}</Caption>
+        </div>
+      </Section>
+    </div>
   );
 }

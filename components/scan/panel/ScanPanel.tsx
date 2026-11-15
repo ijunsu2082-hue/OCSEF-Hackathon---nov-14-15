@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JSX } from "react";
 import { scanReportMarkdown } from "@/lib/scan";
+import { buildUpgradePlan } from "@/lib/scan/upgradePlan";
 import { RISK_COLORS } from "@/lib/scan/colors";
 import { reportUrl } from "@/lib/scan/reportLink";
 import type { DailyRating, LineRatingNow, NicheCase, RiskLevel, ScanResult } from "@/lib/scan";
@@ -165,12 +166,18 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
   const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
   const areaKey = result ? `${result.area.lat}:${result.area.lon}:${result.area.radius_mi}` : "loading";
   const previousArea = useRef(areaKey);
+  const [insightId, setInsightId] = useState<string | null>(null);
   useEffect(() => {
     if (previousArea.current === areaKey) return;
     previousArea.current = areaKey;
+    setInsightId(null);
     onTab("area");
   }, [areaKey, onTab]);
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
+  const upgrade = useMemo(
+    () => (result ? buildUpgradePlan(result, live, daily) : null),
+    [result, live, daily],
+  );
   const [briefOpen, setBriefOpen] = useState(false);
 
   if (!result || !news) {
@@ -208,7 +215,15 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
               hazardsFeed={p.hazards}
             />
             <AreaCharts result={result} />
-            <WhatsHere result={result} live={live} />
+            <WhatsHere
+              result={result}
+              live={live}
+              insights={upgrade?.improvements ?? []}
+              onOpenInsight={(id) => {
+                setInsightId(id);
+                onTab("optimization");
+              }}
+            />
             <RiskBreakdown factors={result.risk.factors} />
             <GridChain lat={result.area.lat} lon={result.area.lon} heatwave={heatwave} />
             <HeatStress result={result} heatwave={heatwave} />
@@ -245,7 +260,16 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
 
         {tab === "news" && <LocalNews result={result} groups={news} onShowOnMap={onShowOnMap} />}
 
-        {tab === "optimization" && <OptimizationTab key={areaKey} result={result} live={live} daily={daily} />}
+        {tab === "optimization" && upgrade && (
+          <OptimizationTab
+            key={areaKey}
+            plan={upgrade}
+            areaLabel={result.area_label}
+            radiusMi={result.area.radius_mi}
+            selectedId={insightId}
+            onSelect={setInsightId}
+          />
+        )}
 
 
         {tab === "report" && (

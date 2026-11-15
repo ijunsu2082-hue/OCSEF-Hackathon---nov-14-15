@@ -17,6 +17,26 @@ const nextConfig: NextConfig = {
   // the workspace root, so file tracing walks the whole home folder. Pin it to
   // this project: builds stay fast and the output stays reproducible.
   outputFileTracingRoot: process.cwd(),
+  outputFileTracingIncludes: {
+    "/api/owner/workflows/rank": [
+      "./public/layers/plants.geojson",
+      "./public/layers/transmission.geojson",
+      "./public/layers/substations.geojson",
+      "./public/layers/niche_cases.json",
+      "./public/layers/gen_events.json",
+      "./public/layers/line_ratings/summary.json",
+      "./public/layers/substation_names.json",
+    ],
+    "/api/owner/workflows/reason": [
+      "./public/layers/plants.geojson",
+      "./public/layers/transmission.geojson",
+      "./public/layers/substations.geojson",
+      "./public/layers/niche_cases.json",
+      "./public/layers/gen_events.json",
+      "./public/layers/line_ratings/summary.json",
+      "./public/layers/substation_names.json",
+    ],
+  },
 };
 
 export default nextConfig;

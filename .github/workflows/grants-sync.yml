@@ -1,0 +1,48 @@
+name: grants-sync
+
+# The funding screens read data/grants.json. It is only "watched" as of the run
+# recorded in it, so this refreshes the programme checks and Grants.gov searches
+# daily and refuses to commit if anything stopped answering.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grants-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Watch programme pages and Grants.gov
+        run: npm run grants:sync
+
+      - name: Fail on a stale artifact or an unreachable programme
+        run: npm run grants:verify
+
+      - name: Commit the refreshed artifact
+        run: |
+          if git diff --quiet -- data/grants.json; then
+            echo "data/grants.json is unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/grants.json
+          git commit -m "Refresh the watched grant sources"
+          git push

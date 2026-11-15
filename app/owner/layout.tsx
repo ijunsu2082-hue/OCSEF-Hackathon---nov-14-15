@@ -25,7 +25,7 @@ function Chrome({ children }: { children: ReactNode }) {
       <header className="border-b border-[#e6e9ee] bg-white">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-6">
           <div className="flex items-center gap-3">
-            <a href="/scan" className={`flex items-center gap-2 rounded-[6px] text-[15px] font-semibold ${FOCUS}`}>
+            <a href="/" className={`flex items-center gap-2 rounded-[6px] text-[15px] font-semibold ${FOCUS}`}>
               <span aria-hidden className="inline-block h-3 w-3 rounded-[3px] bg-[#0ea5e9]" />
               Mapergy
             </a>
@@ -33,7 +33,7 @@ function Chrome({ children }: { children: ReactNode }) {
               Owner portal
             </a>
           </div>
-          <a href="/scan" className={`rounded-[6px] text-[14px] text-[#0369a1] underline-offset-2 hover:underline ${FOCUS}`}>
+          <a href="/" className={`rounded-[6px] text-[14px] text-[#0369a1] underline-offset-2 hover:underline ${FOCUS}`}>
             Back to the map
           </a>
         </div>

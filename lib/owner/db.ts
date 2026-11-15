@@ -69,6 +69,11 @@ function serviceClient(): SupabaseClient | null {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
+/** Server-only client for writes that cannot be trusted to a browser session (for example ranking impressions). */
+export function ownerServiceClient(): SupabaseClient | null {
+  return serviceClient();
+}
+
 export interface OwnerContext {
   userId: string;
   db: SupabaseClient;

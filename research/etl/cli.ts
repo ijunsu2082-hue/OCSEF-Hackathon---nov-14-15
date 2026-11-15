@@ -13,6 +13,7 @@ import { runReconcileCommand } from "./reconcile-report";
 import { runCrosswalkCandidatesCommand } from "./crosswalk-candidates";
 import { runRatingsCommand } from "./ratings";
 import { runOperatorImportCommand } from "./operator-import";
+import { syncGrants, verifyGrants } from "./grants";
 
 const RESULT_SENTINEL = "@@MAPERGY_RESULT@@";
 
@@ -28,6 +29,40 @@ async function main() {
   }
   const args = process.argv.slice(2);
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";
+  if (command === "grants") {
+    const [action] = args;
+    if (action === "sync") {
+      const destination = args[1] ?? "data/grants.json";
+      const artifact = await syncGrants();
+      await atomicJson(destination, artifact);
+      const report = verifyGrants(artifact);
+      console.log(JSON.stringify({ wrote: destination, ...report }));
+      // Write the artifact even with a gap so the failure is inspectable, but make
+      // a total outage fail the run instead of reporting a healthy empty watch.
+      if (report.watched === 0) process.exitCode = 1;
+      return;
+    }
+    if (action === "verify") {
+      let artifactPath = "data/grants.json";
+      let maxAgeDays: number | undefined;
+      for (let index = 1; index < args.length; index += 1) {
+        const flag = args[index];
+        if (flag === "--max-age-days") {
+          const raw = args[++index];
+          maxAgeDays = Number(raw);
+          if (!raw || !Number.isFinite(maxAgeDays) || maxAgeDays <= 0) throw new Error("Expected --max-age-days <positive number>");
+          continue;
+        }
+        if (flag.startsWith("--")) throw new Error(`Unknown flag: ${flag}`);
+        artifactPath = flag;
+      }
+      const report = verifyGrants(JSON.parse(await readFile(artifactPath, "utf8")), { maxAgeDays });
+      console.log(JSON.stringify({ artifact: artifactPath, ...report }));
+      if (report.problems.length) process.exitCode = 1;
+      return;
+    }
+    throw new Error("Expected grants sync [out] or grants verify [artifact] [--max-age-days n]");
+  }
   if (command === "load-assets") {
     console.log(JSON.stringify(await loadLocationAssets(args)));
     return;
