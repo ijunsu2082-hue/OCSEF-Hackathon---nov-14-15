@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { Panel } from "@/components/ui/kit";
+import { loadLineRatingCsv } from "@/lib/gridLayers";
 import type { NicheCase } from "@/lib/niche";
 
 interface RatingPoint {
@@ -67,11 +68,7 @@ function RatingChart({ url }: { url: string }) {
     let alive = true;
     setPoints(null);
     setFailed(false);
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`rating series ${res.status}`);
-        return res.text();
-      })
+    loadLineRatingCsv(url)
       .then((text) => {
         if (alive) setPoints(dailyRatingSeries(text));
       })

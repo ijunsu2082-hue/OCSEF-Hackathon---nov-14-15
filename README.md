@@ -601,8 +601,37 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` |
 | `AUDIT_FROM_EMAIL` | `GridSentinel Audits <audits@resend.dev>` |
 | `DEMO_INBOX_EMAIL` | Recipient field starts empty with a placeholder |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Datasets are read from `data/` and `public/layers/` instead of Supabase |
 
 Secrets stay server-side and out of git.
+
+### Data (Supabase)
+
+The datasets live in Supabase Postgres (schema: `supabase/migrations/20261114000000_datasets.sql`;
+every table is RLS public-read for `anon`):
+
+| Table | Source | Read by |
+| --- | --- | --- |
+| `regions`, `nodes`, `node_flows` | `data/regions.json`, `data/nodes.json` | `lib/region.ts` async `load*` (page + API routes) |
+| `plants`, `substations`, `transmission_lines`, `layer_metadata` | `public/layers/*.geojson` | `lib/gridLayers.ts` map layers |
+| `niche_cases` | `public/layers/niche_cases.json` | `lib/gridLayers.ts` `loadNicheCases` |
+| `line_ratings` (`dataset = 'westminster_hs_2024'`) | `public/layers/line_rating_2024_westminster_hs.csv` | `lib/gridLayers.ts` `loadLineRatingCsv` (niche-case chart) |
+
+Reload after editing a source file (applies `supabase/migrations/`, replaces every table, checks row counts, re-runnable):
+
+```bash
+# with the database password (one transaction)
+SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@<host>:5432/postgres" node scripts/seed-supabase.mjs
+# or with a Supabase personal access token (Management API, no DB password)
+SUPABASE_ACCESS_TOKEN="sbp_..." node scripts/seed-supabase.mjs
+```
+
+Nested objects are stored as `json` (not `jsonb`) so key order, e.g. `mw_by_source`, matches the source files.
+
+Fallback: each loader tries Supabase first and rebuilds the exact shape of the local file (ordered by
+`sort_order`, line ratings by `time`, paged past the 1000-row REST cap). If the two `NEXT_PUBLIC_SUPABASE_*`
+vars are unset, a query errors, or a table is empty, it reads the local file instead, so `data/` and
+`public/layers/` must stay in the repo — they are also the seed source.
 
 ---
 

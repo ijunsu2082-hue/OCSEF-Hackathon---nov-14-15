@@ -1,13 +1,16 @@
 /**
  * Real-grid layers — README §4.6.
  *
- * plants / transmission / substations / niche cases are static files copied from
- * `research/layers/` into `public/layers/` at integration. They are fetched
- * client-side, never travel through `RegionPayload`, and never touch
- * `lib/types.ts`. Rebuild them with the scripts in `research/scripts/`.
+ * plants / transmission / substations / niche cases are read client-side from
+ * Supabase (seeded by scripts/seed-supabase.mjs), falling back to the static
+ * files in `public/layers/` (copied from `research/layers/`; rebuild them with
+ * the scripts in `research/scripts/`). They never travel through
+ * `RegionPayload` and never touch `lib/types.ts`.
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NicheCase } from "./niche";
+import { getSupabase, selectAll } from "./supabase";
 
 // ---- Shapes -----------------------------------------------------------------
 
@@ -58,6 +61,8 @@ export interface SubstationProperties {
 
 interface Collection<P> {
   type: "FeatureCollection";
+  /** Source / license / radius block carried by each static file. */
+  metadata?: Record<string, unknown>;
   features: { type: "Feature"; geometry: { type: string; coordinates: unknown }; properties: P }[];
 }
 
@@ -159,37 +164,287 @@ export function escapeHtml(value: string): string {
 }
 
 // ---- Loaders (cached; every layer is fetched at most once) ------------------
+//
+// Each loader reads Supabase first (lib/supabase.ts) and rebuilds the exact
+// shape of the static file; on a missing client, an error or an empty table it
+// falls back to the file in public/layers/.
 
 const cache = new Map<string, Promise<unknown>>();
 
-function loadJson<T>(url: string): Promise<T> {
-  const hit = cache.get(url);
+function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
   if (hit) return hit as Promise<T>;
-  const pending = fetch(url).then((res) => {
-    if (!res.ok) throw new Error(`${url} → ${res.status}`);
-    return res.json() as Promise<T>;
-  });
-  // A failed fetch is not cached, so the next toggle retries instead of
+  const pending = load();
+  // A failed load is not cached, so the next toggle retries instead of
   // pinning an empty layer for the rest of the session.
-  pending.catch(() => cache.delete(url));
-  cache.set(url, pending);
+  pending.catch(() => cache.delete(key));
+  cache.set(key, pending);
   return pending;
 }
 
+function fetchJson<T>(url: string): Promise<T> {
+  return fetch(url).then((res) => {
+    if (!res.ok) throw new Error(`${url} → ${res.status}`);
+    return res.json() as Promise<T>;
+  });
+}
+
+function fetchText(url: string): Promise<string> {
+  return fetch(url).then((res) => {
+    if (!res.ok) throw new Error(`${url} → ${res.status}`);
+    return res.text();
+  });
+}
+
+/** Supabase first; any failure or empty result → the local loader. */
+async function withFallback<T>(
+  label: string,
+  remote: (supabase: SupabaseClient) => Promise<T | null>,
+  local: () => Promise<T>,
+): Promise<T> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const value = await remote(supabase);
+      if (value !== null) return value;
+    } catch (err) {
+      console.warn(`[gridLayers] ${label}: Supabase failed, using local file`, err);
+    }
+  }
+  return local();
+}
+
+type LayerName = "plants" | "transmission" | "substations";
+
+async function layerMetadata(
+  supabase: SupabaseClient,
+  layer: LayerName,
+): Promise<Record<string, unknown> | undefined> {
+  const { data, error } = await supabase
+    .from("layer_metadata")
+    .select("metadata")
+    .eq("layer", layer)
+    .maybeSingle();
+  if (error) throw new Error(`supabase layer_metadata: ${error.message}`);
+  return (data?.metadata as Record<string, unknown> | undefined) ?? undefined;
+}
+
+type PointRow<P> = P & { lon: number; lat: number };
+
+async function pointCollection<P>(
+  supabase: SupabaseClient,
+  layer: LayerName,
+  table: string,
+  columns: readonly string[],
+): Promise<Collection<P> | null> {
+  const [rows, metadata] = await Promise.all([
+    selectAll<PointRow<Record<string, unknown>>>(
+      supabase,
+      table,
+      [...columns, "lon", "lat"].join(","),
+      "sort_order",
+    ),
+    layerMetadata(supabase, layer),
+  ]);
+  if (rows.length === 0) return null;
+  return {
+    type: "FeatureCollection",
+    ...(metadata !== undefined ? { metadata } : {}),
+    features: rows.map((row) => {
+      const properties: Record<string, unknown> = {};
+      for (const c of columns) properties[c] = row[c];
+      return {
+        type: "Feature" as const,
+        geometry: { type: "Point", coordinates: [row.lon, row.lat] },
+        properties: properties as P,
+      };
+    }),
+  };
+}
+
+const PLANT_COLUMNS = [
+  "plant_code",
+  "plant_name",
+  "utility_name",
+  "distance_mi",
+  "county",
+  "city",
+  "balancing_authority",
+  "sector",
+  "grid_voltage_kv",
+  "nameplate_mw",
+  "mw_by_source",
+  "oldest_year",
+  "newest_year",
+  "planned_retirement_mw",
+  "generator_count",
+  "primary_source",
+  "technologies",
+  "capacity_weighted_year",
+  "capacity_weighted_age_years",
+] as const;
+
+const SUBSTATION_COLUMNS = ["osm_id", "name", "operator", "voltage_kv", "substation"] as const;
+
+const TRANSMISSION_COLUMNS = [
+  "osm_id",
+  "voltage_kv",
+  "operator",
+  "name",
+  "cables",
+  "circuits",
+  "line",
+] as const;
+
 export function loadPlants(): Promise<Collection<PlantProperties>> {
-  return loadJson<Collection<PlantProperties>>("/layers/plants.geojson");
+  return cached("plants", () =>
+    withFallback(
+      "plants",
+      (sb) => pointCollection<PlantProperties>(sb, "plants", "plants", PLANT_COLUMNS),
+      () => fetchJson<Collection<PlantProperties>>("/layers/plants.geojson"),
+    ),
+  );
 }
 
 export function loadTransmission(): Promise<Collection<TransmissionProperties>> {
-  return loadJson<Collection<TransmissionProperties>>("/layers/transmission.geojson");
+  return cached("transmission", () =>
+    withFallback(
+      "transmission",
+      async (sb) => {
+        const [rows, metadata] = await Promise.all([
+          selectAll<Record<string, unknown> & { geometry: Collection<unknown>["features"][number]["geometry"] }>(
+            sb,
+            "transmission_lines",
+            [...TRANSMISSION_COLUMNS, "geometry"].join(","),
+            "sort_order",
+          ),
+          layerMetadata(sb, "transmission"),
+        ]);
+        if (rows.length === 0) return null;
+        return {
+          type: "FeatureCollection" as const,
+          ...(metadata !== undefined ? { metadata } : {}),
+          features: rows.map((row) => {
+            const properties: Record<string, unknown> = {};
+            for (const c of TRANSMISSION_COLUMNS) properties[c] = row[c];
+            return {
+              type: "Feature" as const,
+              geometry: row.geometry,
+              properties: properties as unknown as TransmissionProperties,
+            };
+          }),
+        };
+      },
+      () => fetchJson<Collection<TransmissionProperties>>("/layers/transmission.geojson"),
+    ),
+  );
 }
 
 export function loadSubstations(): Promise<Collection<SubstationProperties>> {
-  return loadJson<Collection<SubstationProperties>>("/layers/substations.geojson");
+  return cached("substations", () =>
+    withFallback(
+      "substations",
+      (sb) =>
+        pointCollection<SubstationProperties>(sb, "substations", "substations", SUBSTATION_COLUMNS),
+      () => fetchJson<Collection<SubstationProperties>>("/layers/substations.geojson"),
+    ),
+  );
 }
 
+const NICHE_COLUMNS = [
+  "id",
+  "title",
+  "category",
+  "location",
+  "one_liner",
+  "problem",
+  "fix",
+  "shock_line",
+  "stats",
+  "team_bullets",
+  "chart",
+] as const;
+
 export function loadNicheCases(): Promise<NicheCase[]> {
-  return loadJson<NicheCase[]>("/layers/niche_cases.json");
+  return cached("niche_cases", () =>
+    withFallback(
+      "niche_cases",
+      async (sb) => {
+        const rows = await selectAll<Record<string, unknown>>(
+          sb,
+          "niche_cases",
+          NICHE_COLUMNS.join(","),
+          "sort_order",
+        );
+        if (rows.length === 0) return null;
+        return rows.map((row) => {
+          const { chart, ...rest } = row;
+          // The source file omits `chart` on cases without one.
+          return (chart == null ? rest : { ...rest, chart }) as unknown as NicheCase;
+        });
+      },
+      () => fetchJson<NicheCase[]>("/layers/niche_cases.json"),
+    ),
+  );
+}
+
+// ---- Hourly line-rating series (niche-case chart) ---------------------------
+
+/** Static CSV url → `line_ratings.dataset` it was seeded into. */
+const LINE_RATING_DATASETS: Record<string, string> = {
+  "/layers/line_rating_2024_westminster_hs.csv": "westminster_hs_2024",
+};
+
+/** Source CSV header; the table stores these names lowercased. */
+const LINE_RATING_HEADER = [
+  "time",
+  "temp_c",
+  "wind_ms",
+  "sun_wm2",
+  "static_A",
+  "aar_A",
+  "dlr_A",
+  "dlr_conservative_A",
+  "dlr_vs_static",
+  "dlr_conservative_vs_static",
+] as const;
+
+/**
+ * CSV text for a niche-case `chart.data_url`. Known urls are rebuilt from the
+ * `line_ratings` table (same header, ordered by time); anything else, or any
+ * Supabase failure, is fetched from the url as before.
+ */
+export function loadLineRatingCsv(url: string): Promise<string> {
+  const dataset = LINE_RATING_DATASETS[url];
+  return cached(`csv:${url}`, () =>
+    withFallback(
+      `line_ratings ${url}`,
+      async (sb) => {
+        if (!dataset) return null;
+        const columns = LINE_RATING_HEADER.map((c) => c.toLowerCase());
+        const rows = await selectAll<Record<string, string | number | null>>(
+          sb,
+          "line_ratings",
+          columns.join(","),
+          "time",
+          { column: "dataset", value: dataset },
+        );
+        if (rows.length === 0) return null;
+        const lines = rows.map((row) =>
+          columns
+            .map((c) => {
+              const v = row[c];
+              if (v == null) return "";
+              // Postgres returns "2024-01-01T00:00:00"; the source has no seconds.
+              return c === "time" ? String(v).replace(/^(\d{4}-\d\d-\d\dT\d\d:\d\d):00$/, "$1") : String(v);
+            })
+            .join(","),
+        );
+        return [LINE_RATING_HEADER.join(","), ...lines].join("\n") + "\n";
+      },
+      () => fetchText(url),
+    ),
+  );
 }
 
 /** Headline totals for the intro beat, recomputed from the file — never quoted from memory. */
