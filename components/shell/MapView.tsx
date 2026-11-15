@@ -10,7 +10,8 @@ import type { RiskEntry } from "@/lib/risk";
 import type { NicheCase } from "@/lib/niche";
 import { basemapById, type BasemapId } from "@/lib/basemaps";
 import type { SurfaceMode } from "@/lib/basemaps";
-import { loadPlants, loadSubstations, loadTransmission, type LayerVisibility, type PlantFeature, type SubstationFeature, type TransmissionFeature } from "@/lib/gridLayers";
+import { loadPlants, loadSubstations, loadTransmission, plantRadius, type LayerVisibility, type PlantFeature, type SubstationFeature, type TransmissionFeature } from "@/lib/gridLayers";
+import { plantTooltipHtml } from "@/lib/scan/sourceLabel";
 import { substationSourceCard } from "@/lib/substationSource";
 import type { CorridorSelection, MapController } from "./mapTypes";
 import LeafletMapView from "./LeafletMapView";
@@ -114,7 +115,7 @@ function NativeMap(props: PropsWithFallback) {
     const context = circle(props.center[1], props.center[0], props.radiusMiles);
     const scanFeature = props.scan ? circle(props.scan.lon, props.scan.lat, props.scan.radius_mi) : null;
     const scanFeatures: Feature[] = scanFeature && props.scan ? [scanFeature, point(props.scan.lon, props.scan.lat, { label: "Scan center" })] : [];
-    const plantFeatures = plants.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], { color: sourceColor(f.properties.primary_source), radius: Math.max(2.5, Math.min(14, Math.sqrt(f.properties.nameplate_mw) * 0.42)), name: f.properties.plant_name, mw: f.properties.nameplate_mw }));
+    const plantFeatures = plants.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], { color: sourceColor(f.properties.primary_source), radius: plantRadius(f.properties.nameplate_mw ?? Number.NaN), name: f.properties.plant_name, tooltip: plantTooltipHtml(f) }));
     const subFeatures = substations.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], {
       name: f.properties.name ?? "", osm_id: f.properties.osm_id ?? "",
       operator: f.properties.operator ?? "", voltage_kv: f.properties.voltage_kv ?? 0,
@@ -200,10 +201,14 @@ function NativeMap(props: PropsWithFallback) {
     map.on("click", (event) => {
       if (scanModeRef.current) { scanPointRef.current(event.lngLat.lat, event.lngLat.lng); return; }
       if (!map.getLayer("gs-substations")) return;
-      const features = map.queryRenderedFeatures(event.point, { layers: ["gs-niches", "gs-facilities", "gs-substations", "gs-transmission-line"] });
+      const features = map.queryRenderedFeatures(event.point, { layers: ["gs-niches", "gs-facilities", "gs-plants", "gs-substations", "gs-transmission-line"] });
       const hit = features[0];
       if (hit?.layer.id === "gs-niches" && typeof hit.properties?.id === "string") props.onSelectNiche(hit.properties.id);
       else if (hit?.layer.id === "gs-facilities" && typeof hit.properties?.id === "string") props.onSelect(hit.properties.id);
+      else if (hit?.layer.id === "gs-plants" && typeof hit.properties?.tooltip === "string") {
+        // plantTooltipHtml escapes names and reads a null field as "not reported by source".
+        new maplibregl.Popup().setLngLat(event.lngLat).setHTML(hit.properties.tooltip).addTo(map);
+      }
       else if (hit?.layer.id === "gs-substations") {
         new maplibregl.Popup().setLngLat(event.lngLat)
           .setDOMContent(substationSourceCard(hit.properties ?? {})).addTo(map);

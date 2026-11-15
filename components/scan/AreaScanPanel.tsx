@@ -22,6 +22,8 @@ import {
   weatherSampleAgeLabel,
   weatherSourceLabel,
 } from "@/lib/scan/useWeatherSample";
+import OwnerPlanView, { useOwnerPlan } from "@/components/scan/OwnerPlanView";
+import LifecycleGatesView from "@/components/scan/LifecycleGatesView";
 
 interface Props {
   result: ScanResult | null;
@@ -137,7 +139,7 @@ export default function AreaScanPanel({
   onTopPlant,
   corridor = null,
 }: Props) {
-  const [view, setView] = useState<"scan" | "optimization" | "upgrade">("scan");
+  const [view, setView] = useState<"scan" | "plan" | "gates">("scan");
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "failure">("idle");
   const corridorPoint = useMemo(
     () => corridor ? pointOnCorridor(corridor.coordinates) : null,
@@ -149,6 +151,7 @@ export default function AreaScanPanel({
       ? { lat: result.point.lat, lon: result.point.lon }
       : null;
   const { weather, pending: weatherPending, error: weatherError } = useWeatherSample(weatherTarget);
+  const ownerPlan = useOwnerPlan(result, heatwave);
 
   useEffect(() => {
     setView("scan");
@@ -282,11 +285,11 @@ export default function AreaScanPanel({
         <button type="button" role="tab" aria-selected={view === "scan"} data-active={view === "scan"} onClick={() => setView("scan")}>
           Area scan
         </button>
-        <button type="button" role="tab" aria-selected={view === "optimization"} data-active={view === "optimization"} onClick={() => setView("optimization")}>
-          Optimization
+        <button type="button" role="tab" aria-selected={view === "plan"} data-active={view === "plan"} onClick={() => setView("plan")}>
+          Owner plan
         </button>
-        <button type="button" role="tab" aria-selected={view === "upgrade"} data-active={view === "upgrade"} onClick={() => setView("upgrade")}>
-          Upgrade plan
+        <button type="button" role="tab" aria-selected={view === "gates"} data-active={view === "gates"} onClick={() => setView("gates")}>
+          Gates &amp; sources
         </button>
       </div>
 
@@ -305,8 +308,11 @@ export default function AreaScanPanel({
         </p>
       ) : null}
 
-      {result && view === "optimization" ? (
-        <div className="scan-body" role="tabpanel" aria-label="Optimization">
+      {result && view === "plan" ? (
+        <div className="scan-body" role="tabpanel" aria-label="Owner plan">
+          {ownerPlan.state ? <OwnerPlanView owner={ownerPlan.state} /> : null}
+          {ownerPlan.error ? <p className="scan-error">Owner plan unavailable: {ownerPlan.error}</p> : null}
+          {!ownerPlan.state && !ownerPlan.error ? <p className="scan-note">Building the owner plan…</p> : null}
           <section className="scan-section">
             <h3>Compare opportunities</h3>
             <p className="scan-caption">For {result.label} · {radius} mi circle</p>
@@ -337,19 +343,11 @@ export default function AreaScanPanel({
         </div>
       ) : null}
 
-      {result && view === "upgrade" ? (
-        <div className="scan-body" role="tabpanel" aria-label="Upgrade plan">
-          <section className="scan-section">
-            <h3>Next steps for this area</h3>
-            <p className="scan-caption">A working sequence for {result.label}; each step needs project-specific review.</p>
-            <ol className="scan-ideas">
-              <li><b>Confirm the need.</b> Check interval demand, site constraints, and the scan data with the facility and utility teams.</li>
-              <li><b>Validate grid options.</b> Ask the utility or system operator to confirm interconnection capacity, line limits, and substation alternatives.</li>
-              <li><b>Develop a design and cost range.</b> Compare feasible supply, storage, and grid options using engineering and operating data.</li>
-              <li><b>Plan delivery.</b> With a feasible option identified, determine ownership, permitting, funding sources, and required approvals.</li>
-            </ol>
-            <p className="scan-caption scan-source">This sequence tracks work to do; it does not indicate that any party has approved, funded, or committed to a project.</p>
-          </section>
+      {result && view === "gates" ? (
+        <div className="scan-body" role="tabpanel" aria-label="Gates and sources">
+          {ownerPlan.state ? <LifecycleGatesView plan={ownerPlan.state.plan} asOf={ownerPlan.state.asOf} /> : null}
+          {ownerPlan.error ? <p className="scan-error">Owner plan unavailable: {ownerPlan.error}</p> : null}
+          {!ownerPlan.state && !ownerPlan.error ? <p className="scan-note">Building the owner plan…</p> : null}
         </div>
       ) : null}
 

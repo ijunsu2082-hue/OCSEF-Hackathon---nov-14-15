@@ -20,6 +20,8 @@ interface Props {
   onLayers: (next: LayerVisibility) => void;
   surface: SurfaceMode;
   onSurface: (value: SurfaceMode) => void;
+  /** Where the grid layers come from (lib/scan/sourceLabel). */
+  layerSource?: string;
 }
 
 const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
@@ -29,7 +31,7 @@ const RAMP: RiskBucket[] = ["LOW", "WATCH", "HIGH", "CRITICAL"];
  * map details. Replaces the flat row of layer chips so the map keeps its
  * corners clear. Dark-token styling to match the shell.
  */
-export default function LayerPicker({ basemap, onBasemap, layers, onLayers, surface, onSurface }: Props) {
+export default function LayerPicker({ basemap, onBasemap, layers, onLayers, surface, onSurface, layerSource }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const preview = basemapById(basemap === "dark" ? "satellite" : basemap);
@@ -113,6 +115,13 @@ export default function LayerPicker({ basemap, onBasemap, layers, onLayers, surf
             <span><i data-band="69" aria-hidden />Under 100 kV</span>
             <span><i data-band="unknown" aria-hidden />Voltage unknown</span>
           </div>
+
+          {layerSource ? (
+            <>
+              <p className="layer-pop-title layer-pop-divider">Grid data source</p>
+              <p className="layer-note" data-testid="layer-source">{layerSource}</p>
+            </>
+          ) : null}
 
           <p className="layer-note">
             <span className="layer-note-ring" aria-hidden />

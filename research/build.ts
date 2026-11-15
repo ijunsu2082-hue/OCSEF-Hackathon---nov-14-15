@@ -142,7 +142,8 @@ export async function loadProfile(profileArg: string): Promise<{ profile: Region
     ? resolve(REPO_ROOT, profileArg)
     : resolve(REPO_ROOT, "research/profiles", `${profileArg}.json`);
   const profile = JSON.parse(await readFile(path, "utf8")) as RegionProfile;
-  if (profile.schema !== "gridsentinel.region-profile/1") {
+  // Profiles authored before the rename keep the legacy id.
+  if (profile.schema !== "mapergy.region-profile/1" && profile.schema !== "gridsentinel.region-profile/1") {
     throw new Error(`${path}: unsupported profile schema ${profile.schema}`);
   }
   return { profile, path };

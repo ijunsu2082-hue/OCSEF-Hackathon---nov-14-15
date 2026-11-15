@@ -22,6 +22,7 @@ import {
 import { getPredicate } from "./predicates";
 import {
   EVIDENCE_SCHEMA,
+  EVIDENCE_SCHEMAS,
   type Claim,
   type Confidence,
   type EvidenceBundle,
@@ -126,7 +127,7 @@ export function verifyBundle(bundle: EvidenceBundle, options: VerifyOptions = {}
   };
 
   // ---- schema ---------------------------------------------------------------
-  if (bundle.schema !== EVIDENCE_SCHEMA) {
+  if (!EVIDENCE_SCHEMAS.includes(bundle.schema)) {
     errors.push(issue("SCHEMA", `expected ${EVIDENCE_SCHEMA}, got ${String(bundle.schema)}`));
   }
   if (!bundle.region?.id) errors.push(issue("REGION", "region.id is missing"));
@@ -489,6 +490,7 @@ export function verifyBundle(bundle: EvidenceBundle, options: VerifyOptions = {}
 
   // ---- bundle identity + stats ---------------------------------------------
   const expectedBundle = computeBundleId({
+    schema: bundle.schema,
     region: bundle.region,
     sources: bundle.sources ?? [],
     snapshots: bundle.snapshots ?? [],

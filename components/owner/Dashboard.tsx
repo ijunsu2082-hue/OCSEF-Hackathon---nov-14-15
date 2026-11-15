@@ -129,6 +129,7 @@ export function Dashboard() {
     if (!plan) return;
     const ics = buildIcs(
       plan.dated.map((e) => ({
+        // Pre-rename UID domain kept so re-imported events update instead of duplicating.
         uid: `${e.claim.id}-${e.obligation.id}-${e.deadline.due}@gridsentinel`,
         date: e.deadline.due,
         summary: `${e.obligation.form} due: ${e.assetName}`,

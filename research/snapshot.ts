@@ -225,7 +225,7 @@ export async function fetchLive(options: LiveFetchOptions): Promise<LoadedSnapsh
       const response = await fetch(options.url, {
         method: options.method ?? "GET",
         headers: {
-          "user-agent": "GridSentinel-Research/0.1 (evidence capture)",
+          "user-agent": "Mapergy-Research/0.1 (evidence capture)",
           ...(options.headers ?? {}),
         },
         body: options.body ? (options.body as unknown as BodyInit) : undefined,

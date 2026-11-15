@@ -298,7 +298,7 @@ export function AreaBrief({
           </ul>
           <p className="mt-3 text-[12px] leading-snug text-[#6b7583] print:text-[8.5pt]">
             Line ratings are a screening estimate for one common wire type (ACSR 795 kcmil Drake at 75 °C), not a
-            utility rating. Made with GridSentinel.
+            utility rating. Made with Mapergy.
           </p>
         </section>
       </article>

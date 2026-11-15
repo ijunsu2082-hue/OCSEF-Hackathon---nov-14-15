@@ -1,0 +1,14 @@
+{
+  "kind": "equipment_condition",
+  "issuer": { "name": "Lee Park", "organization": "Example Municipal Utility", "contact": "asset-health@utility.example" },
+  "issued_at": "2026-10-03T08:00:00Z",
+  "scope": { "location_id": "location-29a410dca3e4c0191458bdbc", "assets": ["xfmr-sub-12-t1", "bess-yard-1"] },
+  "visibility": "public",
+  "effective": { "start": "2026-10-03T00:00:00Z" },
+  "payload": {
+    "assessments": [
+      { "asset_id": "xfmr-sub-12-t1", "assessed_at": "2026-09-20T14:00:00-07:00", "condition": "fair", "inspection": "DGA + thermography", "derated_capacity": { "value": 25, "unit": "MVA" }, "notes": "Elevated acetylene trend; derated pending retest." },
+      { "asset_id": "bess-yard-1", "assessed_at": "2026-09-22T09:15:00-07:00", "condition": "good" }
+    ]
+  }
+}

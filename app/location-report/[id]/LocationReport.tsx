@@ -6,7 +6,13 @@ import "./location-report.css";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { fetchWeatherNow, loadGridData, rateLine, scanArea } from "@/lib/scan";
-import type { FuelKey, GridData, LineRatingNow, RiskLevel, ScanArea, WeatherNow } from "@/lib/scan";
+import type { FuelKey, LineRatingNow, RiskLevel, ScanArea, WeatherNow } from "@/lib/scan";
+import type { LoadedGridData } from "@/lib/scan/data";
+import { gridDataSourceLabel, layerSourceLabel } from "@/lib/scan/sourceLabel";
+import {
+  fetchBoundReport, fetchReconciliation, reconciliationSideText, type BoundReport, type ReconciliationResult,
+} from "@/lib/scan/locationEvidence";
+import { ReconciliationBadge } from "@/components/evidence/ReconciliationBadge";
 import { aarRatio, conductorRange, ratioRange, windSentence } from "@/lib/scan/rating";
 import { riskRange } from "@/lib/scan/risk";
 import {
@@ -68,21 +74,23 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function InvalidReport({ id }: { id: string }) {
   return (
     <Shell>
-      <p className="lr-kicker">GridSentinel location report</p>
+      <p className="lr-kicker">Mapergy location report</p>
       <h1 className="lr-h1">This report link is not valid</h1>
       <p className="lr-deck">
         The link <span className="lr-code">{id}</span> does not describe a scan area. Report links look like{" "}
         <span className="lr-code">area_33.7538_-118.0111_5</span> (latitude, longitude, radius in miles).
       </p>
       <p className="lr-actions">
-        <a className="lr-button" href="/scan">Open GridSentinel</a>
+        <a className="lr-button" href="/scan">Open Mapergy</a>
       </p>
     </Shell>
   );
 }
 
 export default function LocationReport({ area }: { area: ScanArea }) {
-  const [data, setData] = useState<GridData | null>(null);
+  const [data, setData] = useState<LoadedGridData | null>(null);
+  const [bound, setBound] = useState<BoundReport>({ status: "loading" });
+  const [reconciliation, setReconciliation] = useState<(ReconciliationResult & { revision: string }) | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [live, setLive] = useState<LineRatingNow | null>(null);
   const [liveLoading, setLiveLoading] = useState(true);
@@ -94,10 +102,32 @@ export default function LocationReport({ area }: { area: ScanArea }) {
     setOrigin(window.location.origin);
   }, []);
 
+  // The ETL location report for this area, if one has been collected. Its
+  // revision selects the asset inventory bound to it for the scan layers.
   useEffect(() => {
+    const controller = new AbortController();
+    setBound({ status: "loading" });
+    fetchBoundReport(area, controller.signal).then(setBound, () => {});
+    return () => controller.abort();
+  }, [area.lat, area.lon, area.radius_mi]);
+
+  const selectorLocation = bound.status === "ready" ? bound.locationId : undefined;
+  const selectorRevision = bound.status === "ready" ? bound.revision : undefined;
+
+  // Persisted provider reconciliation for exactly the bound report revision.
+  useEffect(() => {
+    if (!selectorLocation || !selectorRevision) return;
+    const controller = new AbortController();
+    fetchReconciliation(selectorLocation, selectorRevision, controller.signal)
+      .then((next) => setReconciliation({ ...next, revision: selectorRevision }), () => {});
+    return () => controller.abort();
+  }, [selectorLocation, selectorRevision]);
+
+  useEffect(() => {
+    if (bound.status === "loading") return;
     let cancelled = false;
     setLiveLoading(true);
-    loadGridData()
+    loadGridData(selectorLocation ? { locationId: selectorLocation, reportRevision: selectorRevision } : undefined)
       .then((d) => {
         if (cancelled) return;
         setData(d);
@@ -114,19 +144,26 @@ export default function LocationReport({ area }: { area: ScanArea }) {
     return () => {
       cancelled = true;
     };
-  }, [area.lat, area.lon]);
+  }, [area.lat, area.lon, bound.status, selectorLocation, selectorRevision]);
 
   const result = useMemo(() => (data ? scanArea(data, area) : null), [data, area]);
+  const layerLabel = useMemo(() => {
+    if (!data) return "";
+    if (bound.status === "missing" && data.source === "bundled") {
+      return layerSourceLabel({ source: "bundled", fallbackReasons: [bound.reason, ...data.fallback_reasons] });
+    }
+    return gridDataSourceLabel(data);
+  }, [data, bound]);
 
   if (loadError) {
     return (
       <Shell>
-        <p className="lr-kicker">GridSentinel location report</p>
+        <p className="lr-kicker">Mapergy location report</p>
         <h1 className="lr-h1">Map data failed to load</h1>
         <p className="lr-deck">{loadError}</p>
         <p className="lr-actions">
           <button type="button" className="lr-button" onClick={() => window.location.reload()}>Retry</button>
-          <a className="lr-button" href="/scan">Open GridSentinel</a>
+          <a className="lr-button" href="/scan">Open Mapergy</a>
         </p>
       </Shell>
     );
@@ -135,7 +172,7 @@ export default function LocationReport({ area }: { area: ScanArea }) {
   if (!result) {
     return (
       <Shell>
-        <p className="lr-kicker">GridSentinel location report</p>
+        <p className="lr-kicker">Mapergy location report</p>
         <p className="lr-deck" aria-busy="true">Loading…</p>
       </Shell>
     );
@@ -159,20 +196,20 @@ export default function LocationReport({ area }: { area: ScanArea }) {
   return (
     <Shell>
       <header className="lr-header">
-        <p className="lr-kicker">GridSentinel location report</p>
+        <p className="lr-kicker">Mapergy location report</p>
         <h1 className="lr-h1">{result.area_label}</h1>
         <p className="lr-deck lr-num">
           {fmtCoord(area.lat, area.lon)} · {area.radius_mi} mi radius
         </p>
         <p className="lr-meta">Generated {generated ? fmtGenerated(generated) : DASH}</p>
         {!result.inside_coverage && (
-          <p className="lr-note">This point is outside GridSentinel&apos;s 100-mile coverage area, so counts may be incomplete.</p>
+          <p className="lr-note">This point is outside Mapergy&apos;s 100-mile coverage area, so counts may be incomplete.</p>
         )}
         <div className="lr-actions lr-noprint">
           <button type="button" className="lr-button lr-button-primary" onClick={() => window.print()}>
             Print / Save PDF
           </button>
-          <a className="lr-button" href={`/scan?lat=${area.lat}&lon=${area.lon}&r=${area.radius_mi}`}>Open in GridSentinel</a>
+          <a className="lr-button" href={`/scan?lat=${area.lat}&lon=${area.lon}&r=${area.radius_mi}`}>Open in Mapergy</a>
         </div>
       </header>
 
@@ -203,11 +240,18 @@ export default function LocationReport({ area }: { area: ScanArea }) {
             {isNum(aar) && isNum(dlr) && <p className="lr-text-dim">{windSentence(aar, dlr)}</p>}
           </>
         )}
-        <p className="lr-caption lr-num">
-          2025 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): with wind halved, the rating beat the fixed rating in{" "}
-          {fmtPct(site.pct_hours_conservative_dlr_above_static, 0)} of hours. Modeled with IEEE 738. Screening estimate for a
-          typical wire; a utility must confirm real limits.
-        </p>
+        {result.rating_unavailable ? (
+          <p className="lr-caption">
+            2025 rating summary at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): unavailable ({result.rating_unavailable}).
+            Modeled with IEEE 738. Screening estimate for a typical wire; a utility must confirm real limits.
+          </p>
+        ) : (
+          <p className="lr-caption lr-num">
+            2025 at {site.name} ({fmtNum(site.distance_mi, 1)} mi away): with wind halved, the rating beat the fixed rating in{" "}
+            {fmtPct(site.pct_hours_conservative_dlr_above_static, 0)} of hours. Modeled with IEEE 738. Screening estimate for a
+            typical wire; a utility must confirm real limits.
+          </p>
+        )}
       </Section>
 
       <Section title="What is inside the circle">
@@ -221,6 +265,7 @@ export default function LocationReport({ area }: { area: ScanArea }) {
           />
           <Stat label="Local stories" value={fmtNum(result.cases.length, 0)} sub="inside the circle" />
         </div>
+        <p className="lr-caption" data-testid="grid-layer-source">Grid layers: {layerLabel}</p>
       </Section>
 
       <Section title="Energy mix">
@@ -276,14 +321,16 @@ export default function LocationReport({ area }: { area: ScanArea }) {
             {result.risk.factors.map((f) => (
               <tr key={f.key}>
                 <td>{f.label}</td>
-                <td className="lr-r lr-num lr-sky">{isNum(f.score) ? fmtNum(f.score, 0) : DASH}</td>
+                <td className="lr-r lr-num lr-sky">
+                  {result.unscored_factors.includes(f.key) ? "not scored" : isNum(f.score) ? fmtNum(f.score, 0) : DASH}
+                </td>
                 <td className="lr-r lr-num">{fmtPct(f.weight * 100, 0)}</td>
                 <td className="lr-text-dim">{f.detail}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="lr-caption">GridSentinel&apos;s own composite score (0 to 100), not an official rating.</p>
+        <p className="lr-caption">Mapergy&apos;s own composite score (0 to 100), not an official rating.</p>
       </Section>
 
       <Section title="Top plants">
@@ -339,6 +386,12 @@ export default function LocationReport({ area }: { area: ScanArea }) {
         )}
       </Section>
 
+      {bound.status === "ready" && (
+        <Section title="Provider reconciliation">
+          {currentReconciliation(reconciliation, bound.revision)}
+        </Section>
+      )}
+
       <Section title="Data sources">
         <ul className="lr-list lr-sources">
           {SOURCE_IDS.map((sid) => {
@@ -365,11 +418,54 @@ export default function LocationReport({ area }: { area: ScanArea }) {
           Report link: <a className="lr-link lr-break" href={link}>{link}</a>
         </p>
         <p className="lr-text-dim">
-          Generated by GridSentinel {generated ? `on ${fmtGenerated(generated)}` : ""} from public data. Numbers are
+          Generated by Mapergy {generated ? `on ${fmtGenerated(generated)}` : ""} from public data. Numbers are
           screening estimates.
         </p>
       </footer>
     </Shell>
+  );
+}
+
+/** Reviewed provider comparisons for the bound report revision; a record for any other revision is not shown. */
+function currentReconciliation(state: (ReconciliationResult & { revision: string }) | null, revision: string): ReactNode {
+  const current = state?.revision === revision ? state : null;
+  if (!current) return <p className="lr-text-dim">Reconciliation not loaded.</p>;
+  if (!current.record) return <p className="lr-text-dim">Reconciliation unavailable: {current.error}</p>;
+  return (
+    <>
+      <p className="lr-text">
+        Disagreeing provider values are never averaged; a value is selected only by a policy authority.
+      </p>
+      <ul className="lr-list">
+        {current.record.comparisons.map((comparison) => (
+          <li key={comparison.policy} data-status={comparison.status}>
+            <p>
+              <span className="lr-code">{comparison.policy}</span>
+              <ReconciliationBadge status={comparison.status} policy={comparison.policy} reason={comparison.reason} />
+              {comparison.independent && <span className="lr-text-dim"> · independent publishers</span>}
+            </p>
+            <dl className="lr-rows">
+              {(["left", "right"] as const).map((key) => {
+                const side = reconciliationSideText(comparison[key]);
+                return (
+                  <div className="lr-row" key={key} data-side={key}>
+                    <dt>
+                      <span className="lr-code">{comparison[key].source}</span>
+                      {comparison.selected === key && <span className="lr-text-dim"> · selected</span>}
+                    </dt>
+                    <dd className={side.missing ? "lr-text-dim" : "lr-num"}>{side.value}</dd>
+                  </div>
+                );
+              })}
+            </dl>
+            {comparison.status === "conflict" && comparison.selected === null && (
+              <p className="lr-text-dim">Both candidate values are retained; no value is selected.</p>
+            )}
+            {comparison.reason && <p className="lr-text-dim">{comparison.reason}</p>}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

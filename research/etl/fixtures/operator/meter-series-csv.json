@@ -1,0 +1,16 @@
+{
+  "kind": "meter_series",
+  "issuer": { "name": "Lee Park", "organization": "Example Municipal Utility" },
+  "issued_at": "2026-11-03T06:00:00-08:00",
+  "scope": { "location_id": "location-29a410dca3e4c0191458bdbc", "assets": ["bus-f1-a"] },
+  "visibility": "shared",
+  "effective": { "start": "2026-11-01T00:00:00-07:00", "end": "2026-11-02T00:00:00-08:00" },
+  "payload": {
+    "meter_id": "mtr-4470",
+    "asset_id": "bus-f1-a",
+    "quantity": "demand",
+    "unit": "MW",
+    "interval_minutes": 60,
+    "timezone": "America/Los_Angeles"
+  }
+}

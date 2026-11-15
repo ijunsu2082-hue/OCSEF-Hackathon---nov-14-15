@@ -1,0 +1,15 @@
+{
+  "kind": "equipment_rating",
+  "issuer": { "name": "Dana Ortiz", "organization": "Example Municipal Utility" },
+  "issued_at": "2026-10-02T10:30:00-07:00",
+  "scope": { "location_id": "location-29a410dca3e4c0191458bdbc", "assets": ["xfmr-sub-12-t1", "br-f1-01"] },
+  "visibility": "shared",
+  "effective": { "start": "2026-10-01T00:00:00-07:00", "end": "2027-10-01T00:00:00-07:00" },
+  "payload": {
+    "ratings": [
+      { "asset_id": "xfmr-sub-12-t1", "basis": "nameplate", "voltage": { "value": 69, "unit": "kV" }, "apparent_power": { "value": 28, "unit": "MVA" } },
+      { "asset_id": "xfmr-sub-12-t1", "basis": "emergency", "apparent_power": { "value": 33.6, "unit": "MVA" } },
+      { "asset_id": "br-f1-01", "basis": "normal", "current": { "value": 500, "unit": "A" }, "real_power": { "value": 9.7, "unit": "MW" } }
+    ]
+  }
+}

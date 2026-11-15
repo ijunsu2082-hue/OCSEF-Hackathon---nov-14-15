@@ -8,7 +8,8 @@ import { modeledClaim, observedClaim } from "../claims";
 import { buildSnapshot, replaySnapshot, type LoadedSnapshot } from "../snapshot";
 import { verifyEvidenceFiles } from "../verify-files";
 import { feedsFor, nwsObservationUrl, type Feed, type LocationQuery } from "./sources";
-import { requestBytes } from "./http";
+import { requestBytes, type RedirectPolicy } from "./http";
+import { validOasisNode } from "./oasis";
 
 export function stateRoot(): string {
   const suffix = process.env.ETL_STATE_NAMESPACE;
@@ -18,16 +19,20 @@ export function stateRoot(): string {
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export function locationQuery(
-  lat: number, lon: number, radius: number, respondent?: string, caiso = false,
+  lat: number, lon: number, radius: number, respondent?: string, caiso = false, oasisNode?: string,
 ): LocationQuery {
   if (!Number.isFinite(lat) || Math.abs(lat) > 90 || !Number.isFinite(lon) || Math.abs(lon) > 180 ||
       !Number.isFinite(radius) || radius < 1 || radius > 500 ||
-      (respondent !== undefined && !/^[A-Z0-9]{2,8}$/.test(respondent)) || typeof caiso !== "boolean") {
-    throw new Error("Expected latitude [-90,90], longitude [-180,180], radius [1,500] miles and optional EIA respondent code");
+      (respondent !== undefined && !/^[A-Z0-9]{2,8}$/.test(respondent)) || typeof caiso !== "boolean" ||
+      (oasisNode !== undefined && !validOasisNode(oasisNode))) {
+    throw new Error("Expected latitude [-90,90], longitude [-180,180], radius [1,500] miles, optional EIA respondent code and optional OASIS node id");
   }
+  // `oasis_node` joins the query (and so the location id digest) only when set,
+  // so existing location ids are unchanged.
   return {
     center: [lat, lon], radius_miles: radius,
     ...(respondent ? { respondent } : {}), ...(caiso ? { caiso: true as const } : {}),
+    ...(oasisNode !== undefined ? { oasis_node: oasisNode } : {}),
   };
 }
 
@@ -52,7 +57,7 @@ export async function atomicJson(path: string, value: unknown): Promise<void> {
  * backoff and revalidates with the provider's ETag.
  */
 export async function request(
-  url: URL, accept = "application/json",
+  url: URL, accept = "application/json", redirect?: RedirectPolicy,
 ): Promise<{ bytes: Uint8Array; headers: Headers }> {
   const target = new URL(url);
   if (target.hostname === "api.eia.gov") {
@@ -62,21 +67,24 @@ export async function request(
   }
   const { bytes, headers } = await requestBytes(target, {
     accept,
-    userAgent: process.env.NWS_USER_AGENT || "GridSentinel/1.0",
+    userAgent: process.env.NWS_USER_AGENT || "Mapergy/1.0",
     maxBytes: MAX_BYTES,
     timeoutMs: 15000,
+    ...(redirect ? { redirect } : {}),
   });
   return { bytes, headers };
 }
 
 async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
-  let url = feed.url;
+  // A time-windowed feed derives its URL from the capture instant; the snapshot
+  // stores that URL, and replay reads stored bytes without rebuilding it.
+  let url = feed.urlAt ? feed.urlAt(now) : feed.url;
   if (feed.follow) {
     const point = await request(url);
     const stations = await request(feed.follow(JSON.parse(Buffer.from(point.bytes).toString("utf8"))));
     url = nwsObservationUrl(JSON.parse(Buffer.from(stations.bytes).toString("utf8")));
   }
-  const { bytes, headers } = await request(url, feed.accept);
+  const { bytes, headers } = await request(url, feed.accept, feed.redirect);
   const { hash, cachePath } = await storeCapture(bytes);
   try {
     const loaded = buildSnapshot({
@@ -86,7 +94,9 @@ async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
       contentType: headers.get("content-type"),
       etag: headers.get("etag"), lastModified: headers.get("last-modified"),
     });
-    if (!feed.extract(loaded.data).length) throw new Error("No usable observations for this scope");
+    if (!feed.extract(loaded.data, loaded.snapshot.retrieved_at, loaded.snapshot.url).length) {
+      throw new Error("No usable observations for this scope");
+    }
     return loaded;
   } catch (error) {
     await atomicJson(resolve(stateRoot(), "quarantine", `${digest([feed.source.id, url.href, hash])}.json`), {
@@ -117,9 +127,26 @@ export async function storeCapture(bytes: Uint8Array) {
   return { hash, cachePath };
 }
 
+/**
+ * Marker on every report this code writes. Reports without it predate the
+ * marker; only those can be in the legacy (pre-observation-time) shape.
+ */
+export const LOCATION_REPORT_SCHEMA = "mapergy.location-report/2" as const;
+/** Pre-rename marker. Same rules as the current one; replays keep it so revisions stay deterministic. */
+export const LEGACY_LOCATION_REPORT_SCHEMA = "gridsentinel.location-report/2" as const;
+const LOCATION_REPORT_SCHEMAS: readonly string[] = [LOCATION_REPORT_SCHEMA, LEGACY_LOCATION_REPORT_SCHEMA];
+
 interface FeedState {
   attempted_at: string;
   status: "fresh" | "stale" | "unknown" | "fallback" | "unavailable";
+  /**
+   * Measured freshness of the replayed prior capture. Set only on `fallback`
+   * feeds of versioned reports, so a failed refresh never hides whether the
+   * data still in use is fresh or stale.
+   */
+  freshness?: "fresh" | "stale" | "unknown";
+  /** `fetch_failed` when this attempt's live fetch failed (status `fallback` or `unavailable`). */
+  issue_code?: "fetch_failed";
   observation_at?: string;
   observation_time_basis?: "utc" | "local-unknown";
   source_age_seconds?: number | null;
@@ -137,7 +164,7 @@ function observedState(feed: Feed, loaded: LoadedSnapshot, now: Date, attempted_
       snapshot: loaded.snapshot,
     };
   }
-  const observation = feed.observationTime(loaded.data, loaded.snapshot.retrieved_at);
+  const observation = feed.observationTime(loaded.data, loaded.snapshot.retrieved_at, loaded.snapshot.url);
   if (!observation) return {
     attempted_at, status: "unknown", source_age_seconds: null,
     issue: "Observation time is unavailable or has no verified timezone.", snapshot: loaded.snapshot,
@@ -156,10 +183,18 @@ function observedState(feed: Feed, loaded: LoadedSnapshot, now: Date, attempted_
 }
 
 export interface LocationReport {
+  /** Absent only on reports written before the marker existed. */
+  schema?: typeof LOCATION_REPORT_SCHEMA | typeof LEGACY_LOCATION_REPORT_SCHEMA;
   query: LocationQuery;
   state_hash: string;
   feeds: Record<string, FeedState>;
   evidence: EvidenceBundle;
+  /**
+   * Loaded asset inventory this report was built against (inventory id omits
+   * respondent/caiso, matching how asset manifests are keyed). `null` when no
+   * loaded inventory existed. Absent only on revisions written before binding.
+   */
+  assets?: { location: string; revision: string } | null;
 }
 
 export function reportRevision(report: LocationReport): string {
@@ -187,7 +222,21 @@ export async function runLocation(
 ): Promise<LocationReport> {
   const id = locationId(query);
   const previous = pinned ?? await readReport(id);
-  const legacyReplay = !!pinned && Object.values(pinned.feeds).every((state) =>
+  if (pinned?.schema !== undefined && !LOCATION_REPORT_SCHEMAS.includes(pinned.schema)) {
+    throw new Error(`Unsupported location report schema ${String(pinned.schema)}`);
+  }
+  // New reports, and replays of reports carrying the marker, use the current
+  // rules. Unversioned reports replay under the rules they were written with.
+  const versioned = !pinned || pinned.schema !== undefined;
+  // A replay rebuilds under the ids the pinned report was written with: the
+  // bundle id hashes the evidence schema id, so a legacy (pre-rename) report
+  // only reproduces under its legacy ids. New reports get the current ids.
+  const reportSchema = pinned?.schema ?? LOCATION_REPORT_SCHEMA;
+  const evidenceSchema = pinned?.evidence.schema ?? EVIDENCE_SCHEMA;
+  // Legacy reports recorded no observation-time fields on any feed. An
+  // all-unavailable report has the same shape, so only an unversioned report
+  // can be legacy (see the state_hash tuple choice below).
+  const legacyReplay = !!pinned && !versioned && Object.values(pinned.feeds).every((state) =>
     state.observation_at === undefined && state.observation_time_basis === undefined && state.source_age_seconds === undefined);
   const feeds = feedsFor(query).filter((feed) => !pinned || Object.hasOwn(pinned.feeds, feed.source.id));
   const entries = await Promise.all(feeds.map(async (feed): Promise<[string, FeedState, LoadedSnapshot | null]> => {
@@ -206,6 +255,7 @@ export async function runLocation(
           status: prior?.snapshot ? "fallback" : "unavailable",
           snapshot: prior?.snapshot,
           issue: error instanceof Error ? error.message : "Source fetch failed",
+          issue_code: "fetch_failed",
         };
       }
     }
@@ -214,7 +264,13 @@ export async function runLocation(
       const loaded = await replaySnapshot(state.snapshot);
       if (legacyReplay) return [source, state, loaded];
       const measured = observedState(feed, loaded, now, state.attempted_at);
-      return [source, state.status === "fallback" ? { ...measured, status: "fallback", issue: state.issue } : measured, loaded];
+      if (state.status !== "fallback") return [source, measured, loaded];
+      // The failed fetch is the status; the replayed capture's measured status
+      // is kept beside it instead of being overwritten.
+      return [source, versioned
+        ? { ...measured, status: "fallback", freshness: measured.status as "fresh" | "stale" | "unknown",
+          issue_code: "fetch_failed", issue: state.issue }
+        : { ...measured, status: "fallback", issue: state.issue }, loaded];
     } catch {
       return [source, { attempted_at: state.attempted_at, status: "unavailable", issue: "Snapshot failed replay" }, null];
     }
@@ -238,7 +294,17 @@ export async function runLocation(
     const legacyAged = legacyReplay && loaded && now.getTime() - Date.parse(loaded.snapshot.retrieved_at) >
       feed.source.freshness.max_age_days * 86400000;
     const aged = state.status === "stale" || legacyAged;
-    if (state.status !== "fresh" || aged) unresolved.push({
+    if (versioned && state.status === "fallback") {
+      // Reason follows the replayed capture's measured freshness; the failed
+      // fetch is named by its code. A still-fresh fallback is not "stale".
+      unresolved.push({
+        subject, predicate: source, reason: state.freshness === "fresh" ? "requires_review" : "stale",
+        detail: `fetch_failed: ${state.issue ?? "Source fetch failed"}. Replayed prior capture ` + (
+          state.freshness === "fresh" ? "is still within the source freshness window." :
+          state.freshness === "stale" ? "exceeds source freshness window." : "has an unknown observation age."),
+        candidate_claim_ids: [], escalated: false,
+      });
+    } else if (state.status !== "fresh" || aged) unresolved.push({
       subject, predicate: source, reason: loaded ? "stale" : "no_source",
       detail: state.issue ?? (aged ? "Latest observation exceeds source freshness window" :
         state.status === "unknown" ? "Latest observation age is unknown" : "Source unavailable"),
@@ -246,7 +312,7 @@ export async function runLocation(
     });
     if (!loaded) continue;
     snapshots.push(loaded.snapshot);
-    const metrics = feed.extract(loaded.data);
+    const metrics = feed.extract(loaded.data, loaded.snapshot.retrieved_at, loaded.snapshot.url);
     measurements.push([source, metrics.map(({ predicate, value }) => [predicate, value]).sort()]);
     for (const item of metrics) {
       claims.push(observedClaim({
@@ -270,7 +336,7 @@ export async function runLocation(
     Math.asin(Math.sin(radiusDegrees * Math.PI / 180) / Math.cos(lat * Math.PI / 180)) * 180 / Math.PI;
   const globalLongitude = lon - lonDelta < -180 || lon + lonDelta > 180;
   const evidence: EvidenceBundle = {
-    schema: EVIDENCE_SCHEMA, bundle_id: "",
+    schema: evidenceSchema, bundle_id: "",
     region: {
       id, name: `Location ${lat}, ${lon}`,
       state: "", center: query.center, radius_miles: query.radius_miles,
@@ -293,20 +359,74 @@ export async function runLocation(
   const files = await verifyEvidenceFiles(evidence);
   const errors = [...evidence.verification.errors, ...files.issues];
   if (errors.length) throw new Error(errors.map(({ code, detail }) => `${code}: ${detail}`).join("\n"));
-  const state_hash = digest({
+  const hashState = (legacy: boolean) => digest({
     measurements,
-    coverage: Object.entries(states).map(([source, state]) => legacyReplay
+    coverage: Object.entries(states).map(([source, state]) => legacy
       ? [source, state.status, state.issue ?? null]
       : [source, state.status, state.observation_at ?? null, state.issue ?? null]),
     gaps: unresolved.map(({ predicate, reason }) => [predicate, reason]),
   });
-  const report = { query, state_hash, feeds: states, evidence };
-  if (live && (!previous || state_hash !== previous.state_hash || entries.some(([source, state]) =>
+  // An unversioned report in the legacy shape is either a true legacy report or
+  // an all-unavailable one written before the marker; nothing was loaded in the
+  // latter, so the bundle is identical and only the coverage tuple differs.
+  let state_hash = hashState(legacyReplay);
+  if (legacyReplay && entries.every(([, , loaded]) => !loaded) && pinned!.state_hash !== state_hash &&
+      pinned!.state_hash === hashState(false)) state_hash = hashState(false);
+  // Live builds bind the verified latest loaded inventory; replays reuse the
+  // binding recorded on the report being replayed so revisions stay deterministic.
+  let assets: LocationReport["assets"];
+  if (live) {
+    const { readLocationAssets } = await import("./load-assets");
+    const inventory = locationId({ center: query.center, radius_miles: query.radius_miles });
+    try {
+      const loadedAssets = await readLocationAssets(inventory);
+      assets = loadedAssets ? { location: inventory, revision: loadedAssets.revision } : null;
+    } catch (error) {
+      // A corrupt or mismatched inventory must not block live builds: bind
+      // nothing, quarantine the failure and rebind on a later live run. One
+      // record per (inventory, revision, issue): a persisting failure bumps
+      // its count and lastSeen instead of writing a new file every run.
+      const issue = error instanceof Error ? error.message : "Asset inventory rejected";
+      const directory = `${stateRoot()}/loaded-assets/${inventory}`;
+      let revision: string | null = null;
+      try {
+        const pointer = JSON.parse(await readFile(resolve(directory, "latest.json"), "utf8"))?.revision;
+        if (typeof pointer === "string" && /^[a-f0-9]{64}$/.test(pointer)) revision = pointer;
+      } catch {
+        // An unreadable pointer is itself the issue; the record carries no revision.
+      }
+      const recordPath = resolve(stateRoot(), "quarantine", "assets", inventory,
+        `${digest([inventory, revision, issue]).slice(0, 32)}.json`);
+      let existing: { detectedAt?: unknown; count?: unknown } | null = null;
+      try {
+        existing = JSON.parse(await readFile(recordPath, "utf8"));
+      } catch (readError) {
+        if ((readError as NodeJS.ErrnoException).code !== "ENOENT" && !(readError instanceof SyntaxError)) throw readError;
+      }
+      const priorCount = typeof existing?.count === "number" && Number.isSafeInteger(existing.count) ? existing.count : 0;
+      await atomicJson(recordPath, {
+        inventory, revision, path: directory,
+        detectedAt: typeof existing?.detectedAt === "string" ? existing.detectedAt : now.toISOString(),
+        lastSeen: now.toISOString(), count: priorCount + 1, issue,
+      });
+      console.warn(`Mapergy: asset inventory ${inventory} rejected (${issue}); report bound to no inventory`);
+      assets = null;
+    }
+  } else {
+    assets = previous?.assets;
+  }
+  const report: LocationReport = {
+    ...(versioned ? { schema: reportSchema } : {}),
+    query, state_hash, feeds: states, evidence, ...(assets === undefined ? {} : { assets }),
+  };
+  const rebound = !!previous && ((previous.assets?.location ?? null) !== (assets?.location ?? null) ||
+    (previous.assets?.revision ?? null) !== (assets?.revision ?? null));
+  if (live && (!previous || rebound || state_hash !== previous.state_hash || entries.some(([source, state]) =>
     state.attempted_at !== previous.feeds[source]?.attempted_at))) {
     await atomicJson(resolve(stateRoot(), "revisions", id, `${reportRevision(report)}.json`), report);
     await atomicJson(resolve(stateRoot(), "reports", `${id}.json`), report);
   }
-  if (live && previous && state_hash === previous.state_hash && entries.every(([source, state]) =>
+  if (live && previous && !rebound && state_hash === previous.state_hash && entries.every(([source, state]) =>
     state.attempted_at === previous.feeds[source]?.attempted_at)) {
     const revisionPath = resolve(stateRoot(), "revisions", id, `${reportRevision(previous)}.json`);
     try {

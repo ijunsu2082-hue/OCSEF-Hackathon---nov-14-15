@@ -1,4 +1,4 @@
-# GridSentinel infrastructure lifecycle workflows
+# Mapergy infrastructure lifecycle workflows
 
 **Purpose.** Product specification for a universal owner lifecycle workspace. Track an infrastructure initiative from first intake through retirement, with accountable people, evidence, decisions, dates, and linked records. This is a workflow/product model; each owner must configure its own governing requirements and approvals.
 
@@ -158,7 +158,7 @@ Common actors: project sponsor; lifecycle/case manager; asset owner; planning/en
 
 **Trigger / actors.** Accepted asset enters service; recurring inspections, events, performance, contract/warranty expiry, or renewal horizon. Operations owner, maintenance planner, control/dispatch roles as configured, asset manager, finance, vendors, case manager.
 
-**Implement.** Asset hierarchy and operational baseline; operating limits/procedures linked from owner sources; telemetry/inspection/event links; maintenance plan/work orders; outage/degradation and incident cases; performance/reliability/cost trends; warranty/service agreement obligations; risk and condition reviews; renewal forecast; change control for upgrades. Templates: operations handover checklist, inspection/maintenance plan, event review, condition assessment, renewal business case, warranty claim, operating procedure review. Integrate existing work-management/SCADA systems through links or APIs; GridSentinel is not a control command surface by default.
+**Implement.** Asset hierarchy and operational baseline; operating limits/procedures linked from owner sources; telemetry/inspection/event links; maintenance plan/work orders; outage/degradation and incident cases; performance/reliability/cost trends; warranty/service agreement obligations; risk and condition reviews; renewal forecast; change control for upgrades. Templates: operations handover checklist, inspection/maintenance plan, event review, condition assessment, renewal business case, warranty claim, operating procedure review. Integrate existing work-management/SCADA systems through links or APIs; Mapergy is not a control command surface by default.
 
 **Decision rights / evidence.** Operations authority manages operation under its procedures; asset manager recommends renewal; funding/investment authority approves replacement/upgrade. Evidence: inspections/work orders, performance records, event review, renewal assessment/decision, completed upgrades and updated baseline.
 

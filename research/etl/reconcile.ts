@@ -66,3 +66,17 @@ export function reconcile(left: Observation, right: Observation, policy?: Metric
     selected: authoritative.length === 1 ? authoritative[0] : status === "agreement" ? left : null,
   };
 }
+
+export type ReconcileStatus = "agreement" | "within_tolerance" | "conflict" | "incomparable";
+
+/**
+ * Scope fields that differ between two observations, after the same offset
+ * normalisation `reconcile` applies. Throws on offset-less times exactly as
+ * `reconcile` does. An empty list means the scopes are identical.
+ */
+export function scopeDifferences(left: ComparisonScope, right: ComparisonScope): (keyof ComparisonScope)[] {
+  const a = JSON.parse(scopeKey(left)) as ComparisonScope;
+  const b = JSON.parse(scopeKey(right)) as ComparisonScope;
+  return (["metric", "entity", "unit", "start", "end", "statistic", "basis"] as const)
+    .filter((field) => a[field] !== b[field]);
+}

@@ -174,7 +174,7 @@ function buildStyle(basemap: BasemapId): StyleSpecification {
 
   return {
     version: 8,
-    name: "GridSentinel 3D",
+    name: "Mapergy 3D",
     sources,
     layers,
     terrain: { source: "dem", exaggeration: TERRAIN_EXAGGERATION },

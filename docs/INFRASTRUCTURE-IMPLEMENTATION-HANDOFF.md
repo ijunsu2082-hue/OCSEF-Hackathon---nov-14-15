@@ -1,4 +1,4 @@
-# GridSentinel PR #2 owner workflow handoff
+# Mapergy PR #2 owner workflow handoff
 
 ## Objective and state
 

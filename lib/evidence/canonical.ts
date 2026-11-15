@@ -101,8 +101,13 @@ export function computeSnapshotId(input: {
   })}`;
 }
 
-/** Bundle identity excludes `generated_at` and the embedded verification report. */
+/**
+ * Bundle identity excludes `generated_at` and the embedded verification report.
+ * It hashes the bundle's own schema id, so legacy `gridsentinel.evidence/1`
+ * bundles keep their committed ids and new `mapergy.evidence/1` bundles get new ones.
+ */
 export function computeBundleId(bundle: {
+  schema: EvidenceBundle["schema"];
   region: EvidenceBundle["region"];
   sources: SourceDefinition[];
   snapshots: SourceSnapshot[];
@@ -110,7 +115,7 @@ export function computeBundleId(bundle: {
   resolutions: EvidenceBundle["resolutions"];
 }): string {
   return `bnd_${shortDigest({
-    schema: "gridsentinel.evidence/1",
+    schema: bundle.schema,
     region: bundle.region,
     sources: [...bundle.sources]
       .map((source) => source.id)

@@ -163,7 +163,7 @@ async function commandDiscover() {
     .sort((a, b) => a.distance_mi - b.distance_mi || a.osm.localeCompare(b.osm));
 
   const report = {
-    schema: "gridsentinel.discovery/1",
+    schema: "mapergy.discovery/1",
     center: [lat, lon],
     radius_miles: radiusMiles,
     query,

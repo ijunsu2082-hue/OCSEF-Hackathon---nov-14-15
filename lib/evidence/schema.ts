@@ -1,5 +1,5 @@
 /**
- * GridSentinel evidence contract — `gridsentinel.evidence/1`.
+ * Mapergy evidence contract — `mapergy.evidence/1` (legacy `gridsentinel.evidence/1` still verifies).
  *
  * This file is the single source of truth for how a displayed number becomes
  * traceable. Every number the UI shows must resolve to one `Claim`. A claim is
@@ -19,7 +19,11 @@
  *  - `generated_at` is metadata; it is excluded from every id.
  */
 
-export const EVIDENCE_SCHEMA = "gridsentinel.evidence/1" as const;
+export const EVIDENCE_SCHEMA = "mapergy.evidence/1" as const;
+/** Pre-rename id. Bundles carrying it still verify; their bundle_id was hashed over it. */
+export const LEGACY_EVIDENCE_SCHEMA = "gridsentinel.evidence/1" as const;
+export type EvidenceSchema = typeof EVIDENCE_SCHEMA | typeof LEGACY_EVIDENCE_SCHEMA;
+export const EVIDENCE_SCHEMAS: readonly string[] = [EVIDENCE_SCHEMA, LEGACY_EVIDENCE_SCHEMA];
 
 export type ClaimMethod = "observed" | "derived" | "modeled" | "inferred";
 
@@ -207,7 +211,7 @@ export interface VerificationReport {
 }
 
 export interface EvidenceBundle {
-  schema: typeof EVIDENCE_SCHEMA;
+  schema: EvidenceSchema;
   bundle_id: string;
   region: {
     id: string;

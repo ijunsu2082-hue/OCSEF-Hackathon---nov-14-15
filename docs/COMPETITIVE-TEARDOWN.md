@@ -1,4 +1,4 @@
-# GridSentinel competitive teardown — Part 1
+# Mapergy competitive teardown — Part 1
 
 **What the multi-billion-dollar grid platforms actually sell, and what we should rip.**
 

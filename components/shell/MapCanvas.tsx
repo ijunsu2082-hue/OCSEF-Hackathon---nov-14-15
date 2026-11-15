@@ -20,10 +20,15 @@ import {
 import { loadSurfaceMode, saveSurfaceMode, type SurfaceMode } from "@/lib/basemaps";
 import { scanArea, type ScanInput, type ScanResult } from "@/lib/scan/areaScan";
 import { RATING_CSV_URL, RATING_FALLBACK_CSV_URL, summarizeWire } from "@/lib/scan/wire";
+import { layerSourceLabel } from "@/lib/scan/sourceLabel";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
 import AreaScanPanel from "@/components/scan/AreaScanPanel";
 import LayerPicker from "./LayerPicker";
 import CorridorWeatherCallout from "@/components/scan/CorridorWeatherCallout";
+
+// No location report id reaches this map, so its loaders run without a selector
+// and always draw the bundled layers.
+const LAYER_SOURCE = layerSourceLabel({ source: "bundled" });
 
 const MapView = dynamic(() => import("./MapView"), {
   ssr: false,
@@ -340,6 +345,7 @@ export default function MapCanvas({
         onLayers={setLayers}
         surface={surface}
         onSurface={chooseSurface}
+        layerSource={LAYER_SOURCE}
       />
 
       {selectedCorridor && !scanMode ? (

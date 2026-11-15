@@ -454,8 +454,8 @@ export function assetInfo(target: ReportTarget, result: ScanResult): AssetInfo {
 
   const a = result.area;
   const label = `Area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label}`;
-  add("Area", label, "GridSentinel scan");
-  add("Center", fmtCoord(a.lat, a.lon), "GridSentinel scan");
+  add("Area", label, "Mapergy scan");
+  add("Center", fmtCoord(a.lat, a.lon), "Mapergy scan");
   add("Power lines (69 kV and up)", fmtNum(result.lines.length, 0), OSM);
   add("Substations", fmtNum(result.substations.length, 0), OSM);
   add("Power plants", fmtNum(result.totals.plant_count, 0), EIA);
@@ -809,7 +809,7 @@ export function reportFileName(title: string, createdAt: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
-  return `gridsentinel-report-${slug || "report"}-${createdAt.slice(0, 10)}.txt`;
+  return `mapergy-report-${slug || "report"}-${createdAt.slice(0, 10)}.txt`;
 }
 
 /* ------------------------------------------------------------- saved reports */
@@ -901,7 +901,7 @@ function legacyText(r: LegacyReport): string {
     `Who to contact: ${r.contact.name} - ${r.contact.url}`,
     "",
     "If a wire is down or anyone is in danger, call 911 first.",
-    "Made with GridSentinel.",
+    "Made with Mapergy.",
   );
   return L.join("\n");
 }
@@ -1132,7 +1132,7 @@ export function buildDraft(
     issues.push({
       severity: lvl === "CRITICAL" ? "danger" : "warn",
       text:
-        `GridSentinel's own risk index rated this area ${lvl === "CRITICAL" ? "critical" : "high"}: ${fmtNum(result.risk.score, 0)} out of 100.` +
+        `Mapergy's own risk index rated this area ${lvl === "CRITICAL" ? "critical" : "high"}: ${fmtNum(result.risk.score, 0)} out of 100.` +
         (top ? ` The biggest reason: ${top.label.toLowerCase()}.` : ""),
     });
   }
@@ -1219,7 +1219,7 @@ export function quickReportText(
     if (st.phone) L.push(`   Phone: ${st.phone.display}`);
     if (st.url) L.push(`   ${st.url}`);
   });
-  L.push("", SAFETY_LINE, DISCLAIMER, "Made with GridSentinel.");
+  L.push("", SAFETY_LINE, DISCLAIMER, "Made with Mapergy.");
   return L.join("\n");
 }
 
