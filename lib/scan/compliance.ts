@@ -797,9 +797,12 @@ export function mailBody(text: string): string {
   return chars.slice(0, lo).join("") + MAIL_TAIL;
 }
 
-/** mailto: with an empty recipient so the person's own email app opens and they choose who gets it. */
-export function mailtoHref(subject: string, text: string): string {
-  return `mailto:?subject=${encodeURIComponent(wellFormed(subject))}&body=${encodeURIComponent(mailBody(text))}`;
+const SIMPLE_EMAIL = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+/** mailto: link. With a recipient the person's email app opens addressed to it; without one they choose who gets it. */
+export function mailtoHref(subject: string, text: string, to?: string | null): string {
+  const addr = to && SIMPLE_EMAIL.test(to) ? to : "";
+  return `mailto:${addr}?subject=${encodeURIComponent(wellFormed(subject))}&body=${encodeURIComponent(mailBody(text))}`;
 }
 
 export function reportFileName(title: string, createdAt: string): string {
@@ -826,6 +829,16 @@ export interface SavedReport {
   contact: { name: string; url: string };
   text: string;
   situationId?: SituationId;
+  /** The formal letter to send (quick reports). `to` is null when the utility publishes no email address. */
+  email?: ReportEmail;
+}
+
+export interface ReportEmail { to: string | null; subject: string; body: string }
+
+function isReportEmail(x: unknown): x is ReportEmail {
+  if (!x || typeof x !== "object") return false;
+  const e = x as Record<string, unknown>;
+  return (e.to === null || typeof e.to === "string") && typeof e.subject === "string" && typeof e.body === "string";
 }
 
 export function toSaved(doc: ComplianceDoc, now = new Date()): SavedReport {
@@ -925,6 +938,7 @@ function normalize(x: unknown): SavedReport | null {
       contact: { name: typeof contact.name === "string" ? contact.name : "", url: contact.url },
       text: r.text,
       ...(typeof r.situationId === "string" ? { situationId: r.situationId as SituationId } : {}),
+      ...(isReportEmail(r.email) ? { email: { to: r.email.to, subject: r.email.subject, body: r.email.body } } : {}),
     };
   }
   if (isLegacy(r)) {
@@ -1161,6 +1175,10 @@ export const severityWord = (s: Severity) => SEVERITY_WORD[s];
 export interface QuickRouting {
   /** Who gets the report first. */
   contactName: string;
+  /** The utility, when we know it (null = the person must check their bill). */
+  utility: UtilityInfo | null;
+  /** Published customer-service email for that utility, or null (report by phone or web form instead). */
+  email: string | null;
   /** Best page to open first (the utility's report page, else the CPUC / city route). */
   url: string;
   /** Where to send it, in order: the utility, then the CPUC (SCE, SDG&E, PG&E...), the city, or the co-op board. */
@@ -1176,6 +1194,8 @@ export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting
   const { steps, filingUrl } = stepsFor({ route: hazardRoute(hazards) }, u);
   return {
     contactName: u.known ? u.utility.name : "Your local electric utility (its name is on your electric bill)",
+    utility: u.known ? u.utility : null,
+    email: u.known ? u.utility.email ?? null : null,
     url: filingUrl,
     steps,
   };
@@ -1223,6 +1243,102 @@ export function quickReportText(
   return L.join("\n");
 }
 
+/** Who is sending the letter. Both optional; blanks become placeholders the person fills in their email app. */
+export interface ReportSender { name: string; contact: string }
+
+export const EMPTY_SENDER: ReportSender = { name: "", contact: "" };
+
+const OBSERVED: Record<HazardId, string> = {
+  tree: "A tree or branch appears to be touching a power line.",
+  old_broken: "The equipment appears to be old, damaged or broken.",
+  outage: "The power is out at this location.",
+  other: "There is a problem with the equipment here (details below).",
+  wire_down: "A power line is down or hanging low.",
+  sparks: "There are sparks or fire at the equipment.",
+};
+
+const SUBJECT_PHRASE: Record<HazardId, string> = {
+  tree: "tree touching a power line",
+  old_broken: "damaged equipment",
+  outage: "power outage",
+  other: "equipment concern",
+  wire_down: "power line down",
+  sparks: "sparks or fire at equipment",
+};
+
+/** The asset's short name: the draft title without its "Problem report:" prefix. */
+function shortName(draft: ReportDraft): string {
+  const raw = (draft.title.replace(/^(problem|compliance) report:\s*/i, "").trim() || draft.assetLabel)
+    .replace(/\s*\((area|plant|substation|line)\)$/i, "");
+  // Area labels look like "Anaheim · near AT&T Anaheim": say "AT&T Anaheim, Anaheim".
+  const m = raw.match(/^(.+?)\s*·\s*near\s+(.+)$/i);
+  return m ? `${m[2]}, ${m[1]}` : raw.replace(/\s*·\s*/g, ", ");
+}
+
+/** "Anaheim, Orange County (33.8° N, ...)" as is; "Center: 33.8° N, ..." without the prefix, in parentheses. */
+function placePhrase(text: string): string {
+  const t = text.replace(/^center:\s*/i, "").trim();
+  return /^-?\d/.test(t) ? ` (${t})` : `, ${t}`;
+}
+
+/**
+ * The formal letter a person sends to the utility: greeting, location, what they observed, what they ask for,
+ * relevant public-record facts and a signature. Instructions meant for the person (who to call next, disclaimers)
+ * stay out of it; they live in the app and in the downloadable report.
+ */
+export function quickReportLetter(
+  draft: ReportDraft,
+  hazards: HazardId[],
+  note: string,
+  routing: QuickRouting,
+  sender: ReportSender = EMPTY_SENDER,
+): ReportEmail {
+  const service = hazardRoute(hazards) === "service";
+  const name = shortName(draft);
+  const phrases = hazards.map((h) => SUBJECT_PHRASE[h]);
+  const topic = phrases.length ? phrases.join(" and ") : "request for inspection";
+  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} near ${name}`;
+
+  const util = routing.utility;
+  const asks: string[] = [];
+  if (!service || hazards.length === 0) asks.push("Send a crew to inspect the equipment and make it safe.");
+  if (hazards.includes("tree")) asks.push("Trim the vegetation back to the clearances required by CPUC General Order 95.");
+  if (hazards.includes("old_broken")) asks.push("Repair or replace any damaged equipment.");
+  if (hazards.includes("outage")) asks.push("Restore service, and let me know the cause and the expected restoration time.");
+  if (hazards.includes("other") && asks.length === 0) asks.push("Look into the problem described below.");
+  asks.push("Reply with a reference number and the expected date of the work.");
+
+  const observed = hazards.length ? hazards.map((h) => `- ${OBSERVED[h]}`) : ["- I would like the equipment at this location inspected."];
+  const facts = draft.issues.filter((i) => i.severity !== "info").map((i) => `- ${i.text}`);
+
+  const L: string[] = [
+    util ? `Dear ${util.name} Customer Service Team,` : "Dear Customer Service Team,",
+    "",
+    `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} involving electrical equipment near ${name}${placePhrase(draft.location.text)}. I would appreciate it if your team could look into it as soon as possible.`,
+    "",
+    "Location",
+    `- ${draft.assetLabel}`,
+    `- ${draft.location.text}`,
+    `- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
+    "",
+    "What I observed",
+    ...observed,
+  ];
+  const extra = note.trim().replace(/\s+/g, " ");
+  if (extra) L.push(`- Additional details: ${extra[0].toUpperCase()}${extra.slice(1)}${/[.!?]$/.test(extra) ? "" : "."}`);
+  L.push("", "What I am requesting", ...asks.map((a, i) => `${i + 1}. ${a}`));
+  if (facts.length) L.push("", "For reference, public records show", ...facts);
+  L.push(
+    "",
+    "Thank you for your attention to this matter. Please contact me if you need any more information.",
+    "",
+    "Sincerely,",
+    sender.name.trim() || "[Your name]",
+    sender.contact.trim() || "[Your phone number or email]",
+  );
+  return { to: routing.email, subject, body: L.join("\n") };
+}
+
 /** A filed quick report, saved in the same list (gs-reports-v1) as every other report. */
 export function fileQuickReport(
   draft: ReportDraft,
@@ -1230,6 +1346,7 @@ export function fileQuickReport(
   note: string,
   routing: QuickRouting,
   now = new Date(),
+  sender: ReportSender = EMPTY_SENDER,
 ): SavedReport {
   const createdAt = now.toISOString();
   return {
@@ -1241,5 +1358,6 @@ export function fileQuickReport(
     location: { ...draft.location },
     contact: { name: routing.contactName, url: routing.url },
     text: quickReportText(draft, hazards, note, routing, createdAt),
+    email: quickReportLetter(draft, hazards, note, routing, sender),
   };
 }

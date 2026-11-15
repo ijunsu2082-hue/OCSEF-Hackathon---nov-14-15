@@ -6,24 +6,25 @@ import type { ReportTarget } from "@/lib/scan/target";
 import {
   HAZARDS,
   SAFETY_LINE,
+  EMPTY_SENDER,
   buildDraft,
+  detectUtility,
   emergencyContacts,
   emergencyInfo,
   fileQuickReport,
   hazardEmergency,
   isBillChoice,
-  loadBillChoice,
   loadReports,
   mailtoHref,
   quickRouting,
   reportFileName,
   resolveUtility,
-  saveBillChoice,
   saveReports,
   severityWord,
   type BillChoice,
   type EmergencyContact,
   type HazardId,
+  type ReportSender,
   type SavedReport,
   type Severity,
 } from "@/lib/scan/compliance";
@@ -32,8 +33,9 @@ import { UTILITIES, type UtilityInfo, type UtilityKey } from "@/lib/scan/legal";
 /*
  * "Report a problem" tab. Written for a 10-year-old: three numbered steps, big text,
  * short sentences. No AI, no network. Picking "Wire on the ground" or "Sparks or fire" stops
- * at a "call 911" screen. Who the report goes to follows the person's electric bill company
- * (utility, then CPUC for SCE / SDG&E / PG&E, the city for a city utility, or a co-op's board).
+ * at a "call 911" screen. Who the report goes to is the utility that serves the reported spot (our guess from
+ * nearby substations, or the person's pick), then CPUC for SCE / SDG&E / PG&E, the city, or a co-op's board.
+ * The Email button opens a formal letter addressed to the utility when it publishes an email address.
  * Filing only saves on this device (localStorage); Email / Official site are how a report
  * actually reaches the utility.
  */
@@ -144,13 +146,17 @@ export default function ReportTab({
 }) {
   const draft = useMemo(() => buildDraft(target, result, live, heatwave), [target, result, live, heatwave]);
 
-  // The person's answer to "Who sends your electric bill?" (null = our guess). Kept on this device.
+  // The person's answer to "Which utility serves this spot?" (null = our guess). Reset for every new spot,
+  // so a pick made for one place never routes a report about another place.
   const [bill, setBill] = useState<BillChoice | null>(null);
   const utility = useMemo(() => resolveUtility(target, result, bill), [target, result, bill]);
+  const detected = useMemo(() => detectUtility(target, result), [target, result]);
+  const mismatch = utility.source === "bill" && detected.known && detected.utility.key !== utility.utility.key;
   const contacts = useMemo(() => emergencyContacts(target, result), [target, result]);
 
   const [hazards, setHazards] = useState<HazardId[]>([]);
   const [note, setNote] = useState("");
+  const [sender, setSender] = useState<ReportSender>(EMPTY_SENDER);
   const [status, setStatus] = useState<"idle" | "saved" | "memory">("idle");
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -159,16 +165,16 @@ export default function ReportTab({
   const emergencyId = hazardEmergency(hazards);
   const emergency = emergencyId ? emergencyInfo(emergencyId, target, result, bill) : null;
 
-  // Load saved reports and the bill pick after mount (never during render) to avoid hydration mismatches.
+  // Load saved reports after mount (never during render) to avoid hydration mismatches.
   useEffect(() => {
     setReports(loadReports());
-    setBill(loadBillChoice());
   }, []);
 
-  // A new target starts a fresh report.
+  // A new target starts a fresh report, with the utility guessed for that spot.
   useEffect(() => {
     setHazards([]);
     setNote("");
+    setBill(null);
     setStatus("idle");
   }, [target]);
 
@@ -178,11 +184,10 @@ export default function ReportTab({
   const pickBill = (v: string) => {
     if (!isBillChoice(v)) return;
     setBill(v);
-    saveBillChoice(v);
   };
 
   const file = () => {
-    const r = fileQuickReport(draft, hazards, note, routing);
+    const r = fileQuickReport(draft, hazards, note, routing, new Date(), sender);
     const next = [r, ...reports];
     setReports(next);
     setStatus(saveReports(next) ? "saved" : "memory");
@@ -197,7 +202,7 @@ export default function ReportTab({
   };
 
   const copy = async (r: SavedReport) => {
-    if (await copyText(r.text)) {
+    if (await copyText(r.email ? `Subject: ${r.email.subject}\n\n${r.email.body}` : r.text)) {
       setCopiedId(r.id);
       setTimeout(() => setCopiedId((c) => (c === r.id ? null : c)), 1500);
     }
@@ -239,7 +244,7 @@ export default function ReportTab({
 
         <div className="mt-4">
           <label htmlFor="gs-bill-utility" className="block text-[15px] font-medium text-[#1d2733]">
-            Who sends your electric bill?
+            Which utility serves this spot?
           </label>
           <select
             id="gs-bill-utility"
@@ -256,7 +261,13 @@ export default function ReportTab({
             <option value="notsure">Not sure</option>
           </select>
           <div id="gs-bill-utility-note" className="mt-1.5 text-[14px] leading-snug text-[#556070]">
-            {utility.source === "bill" && <p>Who to contact uses {utility.utility.short}.</p>}
+            {utility.source === "bill" && !mismatch && <p>Who to contact uses {utility.utility.short}.</p>}
+            {mismatch && (
+              <p className="text-[#b45309]">
+                Check this: {detected.basis.replace(/ Check your electric bill to be sure\.$/, "")}. You picked{" "}
+                {utility.utility.short}. Pick the company that serves this spot, not the one that bills you somewhere else.
+              </p>
+            )}
             {utility.source === "likely" && <p>{utility.basis} If your bill says a different company, pick it above.</p>}
             {utility.source === "unsure" && (
               <>
@@ -357,6 +368,19 @@ export default function ReportTab({
             <p className="mt-4 text-[14px] text-[#556070]">
               It goes to: <span className="font-semibold text-[#1d2733]">{routing.contactName}</span>
             </p>
+            {routing.email ? (
+              <p className="mt-1 text-[14px] text-[#556070]">
+                Email: <span className="font-medium text-[#1d2733]">{routing.email}</span>
+              </p>
+            ) : (
+              routing.utility && (
+                <p className="mt-1 text-[14px] text-[#556070]">
+                  {routing.utility.short} does not publish an email for reports.
+                  {routing.utility.emergency ? ` Call ${routing.utility.emergency.display}` : " Call the number on your bill"} or use its
+                  online form, and paste the letter (Copy letter).
+                </p>
+              )
+            )}
             {routing.steps[1] && /^If it is not fixed/i.test(routing.steps[1].title) && (
               <p className="mt-1 text-[14px] text-[#556070]">{routing.steps[1].title}</p>
             )}
@@ -399,6 +423,27 @@ export default function ReportTab({
               placeholder="Example: The wire is hanging low over the sidewalk."
               className="mt-2 w-full resize-y rounded-[6px] border border-[#e6e9ee] bg-white px-3 py-2 text-[15px] text-[#1d2733] placeholder:text-[#6b7583] focus-visible:border-[#0ea5e9] focus-visible:outline-none"
             />
+            <p className="mt-4 text-[15px] font-medium text-[#1d2733]">Sign the letter (optional)</p>
+            <p className="mt-0.5 text-[14px] text-[#556070]">So the utility can reply. Stays on this device.</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <input
+                aria-label="Your name"
+                value={sender.name}
+                onChange={(e) => setSender((v) => ({ ...v, name: e.target.value }))}
+                maxLength={80}
+                placeholder="Your name"
+                autoComplete="name"
+                className="h-11 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[15px] text-[#1d2733] placeholder:text-[#6b7583] focus-visible:border-[#0ea5e9] focus-visible:outline-none"
+              />
+              <input
+                aria-label="Your phone or email"
+                value={sender.contact}
+                onChange={(e) => setSender((v) => ({ ...v, contact: e.target.value }))}
+                maxLength={120}
+                placeholder="Your phone or email"
+                className="h-11 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[15px] text-[#1d2733] placeholder:text-[#6b7583] focus-visible:border-[#0ea5e9] focus-visible:outline-none"
+              />
+            </div>
           </Step>
 
           <Step n={3} title="File it">
@@ -412,7 +457,7 @@ export default function ReportTab({
             <div aria-live="polite">
               {status === "saved" && (
                 <p className="mt-3 text-[15px] font-medium text-[#1d2733]">
-                  Report filed. Saved on this device. Send it with Email or the official site to reach the utility.
+                  Report filed. Saved on this device. Press Email the utility (or Copy letter and use its official site) to send it.
                 </p>
               )}
               {status === "memory" && (
@@ -443,10 +488,14 @@ export default function ReportTab({
                 <p className="mt-0.5 text-[14px] text-[#6b7583]">
                   {fmtWhen(r.createdAt)}
                   {r.contact.name ? ` · goes to ${r.contact.name}` : ""}
+                  {r.email?.to ? ` (${r.email.to})` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <a href={mailtoHref(r.subject, r.text)} className={SMALL_BTN}>
-                    Email
+                  <a
+                    href={r.email ? mailtoHref(r.email.subject, r.email.body, r.email.to) : mailtoHref(r.subject, r.text)}
+                    className={SMALL_BTN}
+                  >
+                    {r.email?.to ? "Email the utility" : "Email"}
                   </a>
                   <button
                     type="button"
@@ -456,7 +505,7 @@ export default function ReportTab({
                     Download
                   </button>
                   <button type="button" onClick={() => copy(r)} className={SMALL_BTN} aria-live="polite">
-                    {copiedId === r.id ? "Copied" : "Copy"}
+                    {copiedId === r.id ? "Copied" : r.email ? "Copy letter" : "Copy"}
                   </button>
                   <a href={r.contact.url} target="_blank" rel="noopener noreferrer" className={SMALL_BTN}>
                     Official site
