@@ -9,6 +9,7 @@
     "sync-layers": "node scripts/sync-layers.mjs",
     "predev": "node scripts/sync-layers.mjs",
     "prebuild": "node scripts/sync-layers.mjs",
+    "pretest": "node scripts/sync-layers.mjs",
     "test": "tsx --test tests/*.test.ts",
     "verify:physics": "tsx scripts/verify-physics.ts",
     "verify:owner": "for script in scripts/verify-owner-*.ts; do tsx \"$script\" || exit 1; done",
