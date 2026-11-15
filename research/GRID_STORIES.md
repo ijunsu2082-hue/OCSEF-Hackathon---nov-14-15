@@ -1,4 +1,4 @@
-# Niche Cases: real, local, sourced
+# Grid Stories: real, local, sourced
 
 Real energy-infrastructure stories inside **100 miles of Westminster High School** (33.7538, -118.0111), found by 10 parallel research agents on 14 Nov 2026 and checked against web sources. Every fact carries its source and a confidence tag:
 

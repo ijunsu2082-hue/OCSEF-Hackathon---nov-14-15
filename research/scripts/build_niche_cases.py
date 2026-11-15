@@ -1,4 +1,4 @@
-"""Render research-agent output (cases.json) into research/NICHE_CASES.md and research/layers/niche_cases.json.
+"""Render research-agent output (cases.json) into research/GRID_STORIES.md and research/layers/niche_cases.json.
 
 Usage (from repo root): python3 research/scripts/build_niche_cases.py <cases.json>
 cases.json = {"cases": [...], "datasets": [...]} where every case carries research_agent and dist_westminster (miles).
@@ -60,14 +60,14 @@ def main(path):
         items.append({"id": slug(c['title']), "title": c['title'], "category": CAT[c['research_agent']],
                       "location": {"name": c['asset_or_event'][:140], "lat": c['lat'], "lon": c['lon'], "distance_mi": c['dist_westminster']},
                       "one_liner": c['shock_line'], "problem": c['summary'],
-                      "fix": "See research/NICHE_CASES.md (map node values and upgrade potential).",
+                      "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
                       "shock_line": c['shock_line'],
                       "stats": [{"label": f['fact'], "value": "", "kind": "measured", "source": f['source_url']}
                                 for f in c['key_facts'] if f['confidence'] == 'verified'],
                       "team_bullets": tb})
     json.dump(items, open('research/layers/niche_cases.json', 'w'), indent=1)
 
-    L = ["# Niche Cases: real, local, sourced", "",
+    L = ["# Grid Stories: real, local, sourced", "",
          "Real energy-infrastructure stories inside **100 miles of Westminster High School** (33.7538, -118.0111), found by 10 parallel research agents on 14 Nov 2026 and checked against web sources. Every fact carries its source and a confidence tag:", "",
          "- **verified**: the agent confirmed it in the cited source",
          "- **likely**: consistent with sources but not confirmed word for word",
@@ -97,7 +97,7 @@ def main(path):
             continue
         seen.add(key)
         L.append(f"| [{cell(x['name'])}]({x['url']}) | {cell(x['access'])} | {cell(x['format'])} | {cell(x['key_fields'])} | {cell(x['gotchas'])} |")
-    open('research/NICHE_CASES.md', 'w').write("\n".join(L) + "\n")
+    open('research/GRID_STORIES.md', 'w').write("\n".join(L) + "\n")
     print(f"{len(items)} map cases (incl. Wire That Breathes), {sum(c['dist_westminster'] > 100 for c in allc)} outside radius, {len(seen)} datasets")
 
 
