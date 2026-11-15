@@ -2,17 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { DailyRating, LineRatingNow, ScanResult } from "@/lib/scan";
+import { buildWorkflow, OBJECTIVES, type Objective, type Verdict, type WorkflowStep } from "@/lib/scan/optimization";
 import { fmtNum, fmtPct, fmtRatio, isNum } from "./format";
 import { Caption, Section } from "./ui";
-
-type Objective = "transfer" | "resilience" | "emissions" | "cost";
-
-const OBJECTIVES: Record<Objective, string> = {
-  transfer: "Increase transfer capability",
-  resilience: "Improve reliability and resilience",
-  emissions: "Reduce operating emissions",
-  cost: "Minimize lifecycle cost",
-};
 
 const OBJECTIVE_CHECKS: Record<Objective, string[]> = {
   transfer: ["Utility-confirmed interconnection limit and network power-flow study.", "Line-specific loading, conductor, protection and operating limits."],
@@ -62,6 +54,51 @@ function OptionCard({ title, status, evidence, missing, next }: {
   );
 }
 
+const VERDICT_LABEL: Record<Verdict, string> = {
+  pass: "Pass",
+  candidate: "Candidate",
+  weak: "Weak case",
+  not_supported: "Not supported",
+  not_applicable: "Not applicable",
+  needs_data: "Needs data",
+  stop: "Stop",
+};
+
+function VerdictBadge({ verdict }: { verdict: Verdict }) {
+  const tone = verdict === "candidate" || verdict === "pass"
+    ? "border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]"
+    : verdict === "stop"
+      ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
+      : verdict === "weak" || verdict === "needs_data"
+        ? "border-[#fde68a] bg-[#fffbeb] text-[#92400e]"
+        : "border-[#e6e9ee] bg-[#f8fafc] text-[#556070]";
+  return <span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[12px] font-medium ${tone}`}>{VERDICT_LABEL[verdict]}</span>;
+}
+
+function StepCard({ step, index }: { step: WorkflowStep; index: number }) {
+  return (
+    <li className="border-l-2 border-[#bae6fd] pl-4" data-step={step.id}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <b className="text-[14px] text-[#1d2733]">{index + 1}. {step.title}</b>
+        <VerdictBadge verdict={step.verdict} />
+      </div>
+      <p className="mt-1 text-[14px] leading-snug text-[#556070]">{step.task}</p>
+      <p className="mt-2 text-[12px] font-semibold uppercase tracking-wide text-[#6b7583]">Rule</p>
+      <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">{step.rule}</p>
+      <dl className="mt-2 grid gap-1 text-[13px]">
+        {step.inputs.map((input) => (
+          <div key={input.label} className="flex justify-between gap-3 border-b border-[#eef1f4] py-1">
+            <dt className="text-[#556070]">{input.label}</dt>
+            <dd className="text-right font-medium tabular-nums text-[#1d2733]">{input.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-[14px] leading-snug text-[#1d2733]">{step.finding}</p>
+      <p className="mt-1 text-[14px] leading-snug text-[#1d2733]"><span className="font-semibold">Next:</span> {step.next}</p>
+    </li>
+  );
+}
+
 export function OptimizationTab({ result, live, daily }: {
   result: ScanResult;
   live: LineRatingNow | null;
@@ -85,11 +122,12 @@ export function OptimizationTab({ result, live, daily }: {
       ]
     : [];
 
+  const workflow = useMemo(() => buildWorkflow(result, { live, daily, objective }), [result, live, daily, objective]);
   return (
     <div className="px-6 py-6">
-      <Section title="Compare options" subtitle="Area screening only" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
+      <Section title="Optimization workflow" subtitle="Fixed rules, same answer every time" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
         <p className="text-[14px] leading-relaxed text-[#556070]">
-          Compare plausible directions using evidence for {result.area_label}. The scan does not calculate an optimum, rank by cost, or establish engineering feasibility.
+          Work through these steps in order. Each step applies one written rule to this scan&apos;s numbers and says what to do next.
         </p>
         <label className="mt-4 block text-[13px] font-semibold text-[#1d2733]" htmlFor="optimization-objective">
           Planning objective
@@ -103,8 +141,38 @@ export function OptimizationTab({ result, live, daily }: {
           {Object.entries(OBJECTIVES).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
         </select>
         <Caption className="mt-2">
-          The selected objective only changes which evidence requests appear first. It does not change modeled results or rank options.
+          The objective only sets the fixed order of the shortlist. It never changes a step&apos;s verdict.
         </Caption>
+        <ol className="mt-5 space-y-5">
+          {workflow.steps.map((step, i) => <StepCard key={step.id} step={step} index={i} />)}
+        </ol>
+        {workflow.stopped && (
+          <Caption className="mt-4">The workflow stopped at step 1, so no options were screened.</Caption>
+        )}
+        {!workflow.stopped && (
+          <div className="mt-6 rounded-md bg-[#f6f8fa] p-4" data-testid="optimization-shortlist">
+            <p className="text-[14px] font-semibold text-[#1d2733]">Shortlist for this objective</p>
+            {workflow.shortlist.length ? (
+              <ol className="mt-2 list-decimal space-y-3 pl-4 text-[14px] leading-snug text-[#1d2733]">
+                {workflow.shortlist.map((item) => (
+                  <li key={item.option}>
+                    <span className="font-semibold">{item.title}</span> <VerdictBadge verdict={item.verdict} />
+                    <p className="mt-1 text-[#556070]">{item.why}</p>
+                    <p className="mt-1"><span className="font-semibold">First action:</span> {item.firstAction}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-2 text-[14px] text-[#556070]">No option passed its screen here. Gather the data the steps above ask for, then rescan.</p>
+            )}
+          </div>
+        )}
+        <Caption className="mt-3">Screening rules for a first look, not an engineering study or a utility decision.</Caption>
+      </Section>
+      <Section title="Compare options" subtitle="Area screening only" sources={["osm", "eia860", "era5_2025", "ieee738"]}>
+        <p className="text-[14px] leading-relaxed text-[#556070]">
+          Compare plausible directions using evidence for {result.area_label}. The scan does not calculate an optimum, rank by cost, or establish engineering feasibility.
+        </p>
         <div className="mt-3 rounded-md bg-[#f6f8fa] p-3">
           <p className="text-[13px] font-semibold text-[#1d2733]">Evidence to resolve first for this objective</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4 text-[14px] leading-snug text-[#556070]">
