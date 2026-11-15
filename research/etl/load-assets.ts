@@ -4,6 +4,7 @@ import { digest } from "../../lib/evidence/canonical";
 import { replayAssets, type AssetManifest } from "./assets";
 import { clipFeature, polylineMiles, voltageBand, type Position } from "./geometry";
 import { atomicJson, locationId, stateRoot } from "./pipeline";
+import { getJson, putJson } from "./store";
 import { hifldSubstationName } from "./substation-audit";
 
 /**
@@ -178,6 +179,9 @@ export async function loadLocationAssets(manifestFiles: string[]) {
   const directory = resolve(stateRoot(), "loaded-assets", id);
   await atomicJson(resolve(directory, `${revision}.json`), data);
   await atomicJson(resolve(directory, "latest.json"), { revision });
+  // Mirror: the deployed app reads inventories from Supabase, not from disk.
+  await putJson(`loaded-assets/${id}/${revision}.json`, data);
+  await putJson(`loaded-assets/${id}/latest.json`, { revision });
   return { location: id, revision, counts: datasets.map(({ source, counts }) => ({ source, ...counts })) };
 }
 
@@ -185,8 +189,15 @@ export async function readLocationAssets(id: string, revision?: string) {
   if (!/^location-[a-f0-9]{24}$/.test(id) || (revision !== undefined && !/^[a-f0-9]{64}$/.test(revision))) return null;
   const directory = resolve(stateRoot(), "loaded-assets", id);
   try {
-    const chosen = revision ?? JSON.parse(await readFile(resolve(directory, "latest.json"), "utf8")).revision;
+    const pointer = revision ? { revision } :
+      await getJson<{ revision?: string }>(`loaded-assets/${id}/latest.json`);
+    const chosen = pointer?.revision;
     if (typeof chosen !== "string" || !/^[a-f0-9]{64}$/.test(chosen)) throw new Error("Invalid asset revision");
+    const mirrored = await getJson<unknown>(`loaded-assets/${id}/${chosen}.json`);
+    if (mirrored !== null) {
+      if (digest(mirrored) !== chosen) throw new Error("Asset revision checksum mismatch");
+      return { revision: chosen, data: mirrored };
+    }
     const data: unknown = JSON.parse(await readFile(resolve(directory, `${chosen}.json`), "utf8"));
     if (digest(data) !== chosen) throw new Error("Asset revision checksum mismatch");
     return { revision: chosen, data };
