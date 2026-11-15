@@ -188,17 +188,26 @@ test("a circle with no mapped assets offers only the re-scan lever", () => {
 
 test("wind and queue levers appear only when their own measurement does", () => {
   const windy = fixture();
-  windy.rating_site = { ...windy.rating_site, summer_4to8pm_median_wind_gain_over_aar: 1.19 };
+  windy.rating_site = { ...windy.rating_site, summer_4to8pm_median_wind_gain_over_aar: 1.22 };
   const plan = buildUpgradePlan(windy, null, daily());
 
   const wind = plan.improvements.find((item) => item.id === "wind-rating");
-  assert.ok(wind, "wind lever missing on a site with a 19% evening gain");
+  assert.ok(wind, "wind lever missing on a site with a 22% evening gain");
   assert.deepEqual(wind.steps.map((step) => step.kind), ["ask", "model", "test", "file"]);
-  assert.match(wind.finding, /\+?19%/);
+  assert.match(wind.finding, /\+?22%/);
   assert.ok(wind.evidence.some((line) => line.includes("Riverside")));
 
   const calm = buildUpgradePlan(fixture(), null, daily());
   assert.ok(!calm.improvements.some((item) => item.id === "wind-rating"));
+  assert.equal(calm.improvements.find((item) => item.id === "weather-rating")!.steps.length, 4);
+
+  const folded = fixture();
+  folded.rating_site = { ...folded.rating_site, summer_4to8pm_median_wind_gain_over_aar: 1.15 };
+  const foldedPlan = buildUpgradePlan(folded, null, daily());
+  assert.ok(!foldedPlan.improvements.some((item) => item.id === "wind-rating"), "15% must fold into line ratings");
+  const line = foldedPlan.improvements.find((item) => item.id === "weather-rating")!;
+  assert.equal(line.steps.length, 5);
+  assert.ok(line.steps.some((step) => /wind-cooled/.test(step.title)));
 
   const queue = plan.improvements.find((item) => item.id === "queue-conversion");
   assert.ok(queue, "queue lever missing with 120 MW proposed");

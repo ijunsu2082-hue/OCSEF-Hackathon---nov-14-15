@@ -351,6 +351,11 @@ function weatherRatingLever(ctx: Ctx): Lever | null {
   if (!isNum(pctHours)) return null;
   const gain = isNum(aar) ? Math.round((aar - 1) * 100) : null;
   if ((gain === null || gain < 2) && pctHours < 20) return null;
+  const wind = site.summer_4to8pm_median_wind_gain_over_aar;
+  // A modest evening gain belongs inside this lever as one more pilot step; it is
+  // not a separate decision until it is big enough to change the answer.
+  const windGain = isNum(wind) ? Math.round((wind - 1) * 100) : null;
+  const foldedWind = windGain !== null && windGain >= 10 && windGain < 20;
   const score = 42 + Math.min(38, pctHours * 0.4) + Math.min(10, hvMiles / 8);
   const liveLine = live ? ` Right now it is ${n1(live.ratio)}×.` : "";
   return {
@@ -384,6 +389,13 @@ function weatherRatingLever(ctx: Ctx): Lever | null {
         detail: "Ask for the ambient-adjusted ratings and the binding constraint on each circuit.",
         done: "Current ratings plus the constraint in writing.",
       },
+      ...(foldedWind
+        ? [{
+            kind: "model" as const, title: "Add the wind-cooled span", who: "Owner engineer", when: WHEN[2],
+            detail: `The site measured +${windGain}% at 4-8 pm; model that span before the pilot picks its sensor.`,
+            done: "One span chosen with its modelled evening gain.",
+          }]
+        : []),
       {
         kind: "test", title: "Run a 90-day pilot", who: "Owner engineer", when: WHEN[2],
         detail: `Instrument the span nearest ${site.name}; the hottest 2025 hour was ${site.hottest_hour.slice(0, 10) || "not supplied"}.`,
@@ -568,7 +580,9 @@ function windRatingLever(ctx: Ctx): Lever | null {
   const wind = site.summer_4to8pm_median_wind_gain_over_aar;
   if (!isNum(wind) || !isNum(site.distance_mi) || site.distance_mi > 25 || hvMiles < 1) return null;
   const gain = Math.round((wind - 1) * 100);
-  if (gain < 10) return null;
+  // Below 20% a wind rating does not change the choice, so it stays a step inside
+  // the line-ratings lever rather than a lever of its own.
+  if (gain < 20) return null;
   const circuit = namedCircuits(result, 1)[0];
   const score = 40 + Math.min(30, gain * 0.9) + Math.min(8, hvMiles / 12);
   return {
