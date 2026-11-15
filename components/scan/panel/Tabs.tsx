@@ -28,7 +28,7 @@ export function Tabs({
   });
   const labels: Record<PanelTab, string> = {
     area: "Area",
-    optimization: "Optimization",
+    optimization: "Optimize & upgrade",
     news: `Local news (${newsCount})`,
     report: "Report a problem",
     owners: "Owners",
