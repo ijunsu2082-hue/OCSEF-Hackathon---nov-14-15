@@ -526,6 +526,7 @@ interface NicheCase {
 - **Physical demo (optional):** a 1 m nichrome "line" over an LED city sags into a "tree" under load and lifts when a fan blows on it. The sag goes from about 10 mm to about 40 mm, enough to see.
 
 More cases with sources are in `research/GRID_STORIES.md`; promote the best 2–3 into `niche_cases.json`.
+
 ### 4.8 Six-phase grid chain — `lib/grid.ts`
 
 The spec models the grid end to end; the load centers are only phase 5 of that chain. `lib/grid.ts` (pure, no I/O) derives all six phases for any load center from data the app already has — the simulated operating point, the modelled ties in `nodes.json`, and the inspected age. Nothing is fetched, nothing is stored, and `lib/types.ts` is untouched.
