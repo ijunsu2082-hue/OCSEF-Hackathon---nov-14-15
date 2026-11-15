@@ -6,7 +6,7 @@
  */
 import { buildOwnerPlan, planKey, reforecastMilestones } from "../lib/owner/ownerPlan";
 import { evaluateCase, FIXTURE_AS_OF, ownerCases, type CheckRow } from "../lib/owner/fixtures";
-import type { DraftEdits } from "../lib/owner/types";
+import type { DraftEdits } from "../lib/owner/planTypes";
 
 function reverseKeys<T>(v: T): T {
   if (Array.isArray(v)) return v.map(reverseKeys) as T;

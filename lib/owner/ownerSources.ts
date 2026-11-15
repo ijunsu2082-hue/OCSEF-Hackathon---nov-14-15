@@ -7,7 +7,7 @@
 // Detail strings state what was looked up and what came back. They never assert
 // fit, approval, or permit applicability; those are owner/reviewer decisions.
 
-import type { Sector } from "./types";
+import type { Sector } from "./planTypes";
 
 export type OwnerSourceStatus = "open" | "closed" | "forecasted" | "informational" | "unresolved";
 export type OwnerSourceKind = "funding" | "jurisdiction" | "permit_input";

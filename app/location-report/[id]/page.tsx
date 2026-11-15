@@ -1,19 +1,12 @@
-import { notFound } from "next/navigation";
-import LocationReport from "./LocationReport";
-import { parseLocationReportId } from "@/lib/scan/locationReport";
+import type { Metadata } from "next";
+import { parseReportId } from "@/lib/scan/reportLink";
+import LocationReport, { InvalidReport } from "./LocationReport";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "GridSentinel · Location report" };
 
-export default async function LocationReportPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function LocationReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const area = parseLocationReportId(id);
-  if (!area) notFound();
-  return <LocationReport
-    area={area}
-    socketOrigin={process.env.LOCATION_REPORT_SOCKET_ORIGIN ?? process.env.ETL_WS_ORIGIN ?? ""}
-  />;
+  const area = parseReportId(id);
+  if (!area) return <InvalidReport id={id} />;
+  return <LocationReport area={area} />;
 }

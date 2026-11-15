@@ -1,5 +1,5 @@
 import { dispatchAudit, EMAIL_RE } from "@/lib/email/dispatch";
-import { getFacility } from "@/lib/region";
+import { loadFacility } from "@/lib/region";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const facility = getFacility(body.node_id);
+  const facility = await loadFacility(body.node_id);
   if (!facility) {
     return Response.json(
       { error: { code: "NODE_NOT_FOUND", message: `Unknown facility "${body.node_id}".` } },

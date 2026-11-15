@@ -4,7 +4,7 @@ import { test } from "node:test";
 import type { LocationReport } from "../../research/etl/pipeline";
 import { CAISO_SUBJECT, evidenceFromReport, evidenceIndex, factsFromAssets, type LoadedAssetInventory } from "./etlEvidence";
 import type { Claim } from "../evidence/schema";
-import { isUnknown } from "./types";
+import { isUnknown } from "./planTypes";
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8"));
 const report = (): LocationReport => fixture("location-report.json");

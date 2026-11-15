@@ -7,6 +7,7 @@ import {
   fetchEtlAssets, type EtlProvenance, type EtlSourceSelector,
   type EtlSubstationFeature, type EtlTransmissionFeature,
 } from "../etlAssets";
+import { enrichGrid, type SubstationNames } from "./enrich";
 
 export const LAYERS_BASE = "/layers";
 
@@ -106,6 +107,8 @@ function toSites(summary: SummaryJson): RatingSiteSummary[] {
       hottest_hour: j.hottest_hour ?? "",
       hottest_temp_c: j.hottest_temp_c ?? 0,
       hottest_hour_dlr_vs_static: j.hottest_hour_dlr_vs_static ?? 1,
+      median_aar_vs_static: j.median_aar_vs_static,
+      median_wind_gain_over_aar: j.median_wind_gain_over_aar,
     };
   });
 }
@@ -164,13 +167,15 @@ const gridCache = new Map<string, Promise<LoadedGridData>>();
 const BUNDLED_KEY = "bundled";
 
 async function buildGridData(selector: EtlSourceSelector | undefined): Promise<LoadedGridData> {
-  const [plants, lines, subs, cases, events, summary, loaded] = await Promise.all([
+  const [plants, lines, subs, cases, events, summary, subNames, loaded] = await Promise.all([
     getJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
     getJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
     getJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
     getJson<NicheCase[]>("niche_cases.json"),
     getJsonIfPresent<GenEvent[]>("gen_events.json"),
     getJsonIfPresent<SummaryJson>("line_ratings/summary.json"),
+    // Optional: a missing or broken names file just leaves OSM names as they are.
+    getJson<SubstationNames>("substation_names.json").catch(() => null),
     selector ? fetchEtlAssets(selector) : Promise.resolve(null),
   ]);
   const unavailable: string[] = [];
@@ -189,6 +194,9 @@ async function buildGridData(selector: EtlSourceSelector | undefined): Promise<L
     fallback_reasons: [],
     etl: null,
   };
+  // Fill missing voltages / names in the bundled OSM layers, once per load. It runs
+  // before the ETL swap so provider (HIFLD) nulls stay null instead of being inferred.
+  enrichGrid(data, subNames);
   if (loaded && !loaded.ok) data.fallback_reasons.push(loaded.reason);
   if (loaded?.ok) {
     const { assets } = loaded;
@@ -250,24 +258,37 @@ export interface RatingRow {
 }
 
 /**
- * The one place the hourly line-rating archive URL is built. Files ship flat in
- * `public/layers/` (`line_rating_<year>_<site>.csv`); only `westminster_hs`
- * exists on this branch, so other sites 404.
+ * The one place the committed hourly line-rating archive URL is built. Files
+ * ship flat in `public/layers/` (`line_rating_<year>_<site>.csv`); only
+ * `westminster_hs` is committed, so other sites 404 here.
  */
 export function ratingCsvUrl(siteKey: string, year: 2024 | 2025 = 2025): string {
   return `${LAYERS_BASE}/line_rating_${year}_${siteKey}.csv`;
 }
 
+/** Per-site 2025 archive that scripts/sync-layers.mjs copies into `public/layers/line_ratings/` (gitignored). */
+function syncedRatingCsvUrl(siteKey: string): string {
+  return `${LAYERS_BASE}/line_ratings/line_rating_2025_${siteKey}.csv`;
+}
+
 const csvCache = new Map<string, Promise<RatingRow[]>>();
+
+/** Committed flat file first; on a 404, the synced per-site copy (every rating site once sync-layers has run). */
+async function getRatingCsvText(siteKey: string): Promise<string> {
+  const url = ratingCsvUrl(siteKey);
+  const res = await fetch(url);
+  if (res.ok) return res.text();
+  if (res.status !== 404) throw new Error(`GET ${url} -> ${res.status}`);
+  const synced = syncedRatingCsvUrl(siteKey);
+  const res2 = await fetch(synced);
+  if (!res2.ok) throw new Error(`GET ${synced} -> ${res2.status}`);
+  return res2.text();
+}
 
 export function loadRatingCsv(siteKey: string): Promise<RatingRow[]> {
   let p = csvCache.get(siteKey);
   if (!p) {
-    const url = ratingCsvUrl(siteKey);
-    p = fetch(url).then((res) => {
-      if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
-      return res.text();
-    }).then((text) => {
+    p = getRatingCsvText(siteKey).then((text) => {
       const out: RatingRow[] = [];
       const lines = text.split(/\r?\n/);
       for (let i = 1; i < lines.length; i++) {

@@ -292,20 +292,20 @@ test("scan report labels lines and substations with the layer's real provider", 
   assert.equal(etlRows.length, 2);
   for (const row of etlRows) assert.ok(row.endsWith("(HIFLD)") && !row.includes("OSM"), row);
   assert.match(etlMd, /; HIFLD \(lines, substations\);/);
-  assert.match(etlMd, /Lines\/substations: HIFLD\./);
   assert.doesNotMatch(etlMd, /OpenStreetMap/);
 
   assetsResponse = () => json({ error: "Location report unavailable" }, 404);
   const bundled = await loadGridData();
   assert.deepEqual(bundled.layers, { plants: "bundled", lines: "bundled", substations: "bundled" });
   const bundledMd = scanReportMarkdown(scanArea(bundled, area), null, bundled.layers);
-  for (const row of rows(bundledMd)) assert.ok(row.endsWith("(OSM)"), row);
+  // area-scan's enrichGrid may fill bundled OSM voltages, which the Lines row notes after the provider.
+  for (const row of rows(bundledMd)) assert.match(row, /\(OSM(; some voltages filled in from connected lines)?\)$/, row);
   assert.match(bundledMd, /OpenStreetMap contributors, ODbL \(lines, substations\)/);
   assert.doesNotMatch(bundledMd, /HIFLD/);
   assert.equal(scanReportMarkdown(scanArea(bundled, area), null), bundledMd, "no layers argument reads as bundled OSM");
 
   const mixed = scanReportMarkdown(scanArea(bundled, area), null, { lines: "etl", substations: "bundled" });
-  assert.ok(rows(mixed)[0].endsWith("(HIFLD)") && rows(mixed)[1].endsWith("(OSM)"), rows(mixed).join(" | "));
+  assert.ok(/\(HIFLD(; some voltages filled in from connected lines)?\)$/.test(rows(mixed)[0]) && rows(mixed)[1].endsWith("(OSM)"), rows(mixed).join(" | "));
   assert.match(mixed, /HIFLD \(lines\); OpenStreetMap contributors, ODbL \(substations\)/);
 });
 
@@ -313,8 +313,9 @@ test("HIFLD owner is carried as owner and rendered 'owned by', never as the oper
   const adapted = adaptLocationAssets(SYNTHETIC);
   // A substation source that does publish an owner (HIFLD Substations itself has no OWNER field).
   const ownedSub: SubstationFeature & { properties: { owner: string | null } } = {
+    type: "Feature",
     geometry: { type: "Point", coordinates: [-117.95, 33.75] },
-    properties: { name: "Owned Station", operator: null, owner: "Utility S", voltage_kv: 230, substation: null },
+    properties: { osm_id: "node/1", name: "Owned Station", operator: null, owner: "Utility S", voltage_kv: 230, substation: null },
   };
   const index = buildAssetIndex([], adapted.transmission!.features, [...adapted.substations!.features, ownedSub]);
   const assets = summarizeAssets(index, [-117.95, 33.75]);

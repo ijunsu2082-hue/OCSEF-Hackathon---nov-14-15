@@ -8,7 +8,7 @@
 
 import { readFileSync } from "node:fs";
 import { evidenceFromReport, evidenceIndex, factsFromAssets } from "../lib/owner/etlEvidence";
-import { isUnknown } from "../lib/owner/types";
+import { isUnknown } from "../lib/owner/planTypes";
 
 const load = (name: string) =>
   JSON.parse(readFileSync(new URL(`../lib/owner/__fixtures__/${name}`, import.meta.url), "utf8"));

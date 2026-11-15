@@ -8,7 +8,7 @@ import { FIXTURE_AS_OF, ownerCases } from "../../lib/owner/fixtures";
 import { emptyDraft, memoryStorage, setTaskEdit, draftKey } from "../../lib/owner/draftStore";
 import { evaluateAllGates } from "../../lib/owner/lifecycle";
 import { PROCEDURES, TRIGGER_IDS } from "../../lib/owner/procedures";
-import type { DraftEdits } from "../../lib/owner/types";
+import type { DraftEdits } from "../../lib/owner/planTypes";
 import {
   deadlinesIcs,
   draftLocation,

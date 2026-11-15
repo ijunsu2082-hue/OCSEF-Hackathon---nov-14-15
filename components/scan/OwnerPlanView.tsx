@@ -15,7 +15,7 @@ import {
   type TaskEdit as DraftTaskEdit,
 } from "@/lib/owner/draftStore";
 import { STAGE_ORDER } from "@/lib/owner/procedures";
-import type { Evidence, Finding, OptionKind, OwnerTaskWithNotes, PlanTarget, TaskStatus } from "@/lib/owner/types";
+import type { Evidence, Finding, OptionKind, OwnerTaskWithNotes, PlanTarget, TaskStatus } from "@/lib/owner/planTypes";
 import {
   deadlineKindLabel,
   deadlinesIcs,

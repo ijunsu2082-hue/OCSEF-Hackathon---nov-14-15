@@ -27,6 +27,8 @@ function withoutSummary(site: RatingSiteSummary & { distance_mi: number }): Rati
     median_conservative_dlr_vs_static: Number.NaN,
     pct_hours_conservative_dlr_above_static: Number.NaN,
     summer_4to8pm_median_wind_gain_over_aar: Number.NaN,
+    median_aar_vs_static: Number.NaN,
+    median_wind_gain_over_aar: Number.NaN,
     hottest_hour: "",
     hottest_temp_c: Number.NaN,
     hottest_hour_dlr_vs_static: Number.NaN,
@@ -218,6 +220,26 @@ function fossilOf(p: Plant): number {
 
 const n0 = (x: number) => Math.round(x).toLocaleString("en-US");
 
+/**
+ * Honest split from the nearest rating site's 2025 summary: temperature-adjusted rating
+ * (AAR as FERC Order 881 defines it) does most of the work; real wind and sun (dynamic line rating)
+ * add a smaller extra, mostly on summer evenings. The AAR gain is against a 40 C worst-case rating,
+ * so it is an upper end. Parts with no data are left out.
+ */
+function lineRatingIdea(s: ScanResult["rating_site"], what: string | null): string | null {
+  if (!what) return null;
+  const aar = s.median_aar_vs_static;
+  const aarPct = typeof aar === "number" && Number.isFinite(aar) ? Math.round((aar - 1) * 100) : null;
+  const wind = s.summer_4to8pm_median_wind_gain_over_aar;
+  const windPct = Number.isFinite(wind) ? Math.round((wind - 1) * 100) : null;
+  if (aarPct === null || aarPct <= 0) return null;
+  let text = `Rate the ${what} here by real air temperature (FERC Order 881): in a typical 2025 hour, up to ~${aarPct}% more thermal headroom than a 40 °C worst-case rating (less than this against the utility's seasonal ratings, and nothing where equipment or stability sets the limit).`;
+  if (windPct !== null && windPct > 0) {
+    text += ` Adding real wind and sun gives about ${windPct}% more on summer evenings (4-8 pm), when demand peaks.`;
+  }
+  return text;
+}
+
 function upgradeIdeas(a: {
   totals: ScanResult["totals"]; rating_site: ScanResult["rating_site"]; rating_unavailable: string | null;
   cases: NicheCase[]; radius: number; hvLineMiles: number; fossilAge: number | null;
@@ -225,22 +247,21 @@ function upgradeIdeas(a: {
   const { totals: t, rating_site: s, cases } = a;
   const ideas: string[] = [];
   const solar = t.mw_by_source.solar;
-  const headroom = a.rating_unavailable
-    ? `capacity headroom unavailable (${a.rating_unavailable})`
-    : `about ${Math.round((s.median_conservative_dlr_vs_static - 1) * 100)}% more capacity on a typical hour`;
 
   if (solar > 50 && (t.evening_cover_pct ?? 0) < 50) {
     const add = Math.max(1, solar * 0.5 - t.storage_mw);
-    ideas.push(`Add about ${n0(add)} MW of 4-hour storage so solar covers the evening peak. Storage is only ${n0(t.evening_cover_pct ?? 0)}% of solar here.`);
+    ideas.push(`Add about ${n0(add)} MW of 4-hour storage so solar covers the evening peak (rough rule of thumb, not from a study: storage equal to half the solar). Storage is only ${n0(t.evening_cover_pct ?? 0)}% of solar here.`);
   }
   if ((t.cap_weighted_age ?? 0) > 30 && t.fossil_mw > 200) {
     const z = a.fossilAge ?? t.cap_weighted_age ?? 0;
     ideas.push(`Repower ${n0(t.fossil_mw)} MW of gas averaging ${n0(z)} years old.`);
   }
-  if (a.hvLineMiles > 0) {
-    ideas.push(`Dynamic line rating on the ${n0(a.hvLineMiles)} mi of ≥200 kV lines here: ${headroom}.`);
-  } else if (t.line_miles > 0) {
-    ideas.push(`Dynamic line rating on the ${t.line_miles.toFixed(1)} mi of mapped lines here: ${headroom}.`);
+  const rateWhat = a.hvLineMiles > 0 ? `${n0(a.hvLineMiles)} mi of 200 kV+ lines` : t.line_miles > 0 ? `${t.line_miles.toFixed(1)} mi of mapped lines` : null;
+  if (a.rating_unavailable) {
+    if (rateWhat) ideas.push(`Rate the ${rateWhat} here by real air temperature (FERC Order 881): capacity headroom unavailable (${a.rating_unavailable}).`);
+  } else {
+    const rateIdea = lineRatingIdea(s, rateWhat);
+    if (rateIdea) ideas.push(rateIdea);
   }
   if (t.proposed_mw > 0) {
     const st = t.proposed_storage_mw > 0 ? `, ${n0(t.proposed_storage_mw)} MW of it storage` : "";
@@ -260,8 +281,8 @@ function upgradeIdeas(a: {
   }
   if (ideas.length < 2) {
     ideas.push(a.rating_unavailable
-      ? `Pilot dynamic line rating using ${s.name} weather (${s.distance_mi} mi away). Its 2025 rating summary is unavailable (${a.rating_unavailable}).`
-      : `Pilot dynamic line rating using ${s.name} weather (${s.distance_mi} mi away). The conservative rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2025 hours.`);
+      ? `Pilot wind-based ratings (dynamic line rating) using ${s.name} weather (${s.distance_mi} mi away). Its 2025 rating summary is unavailable (${a.rating_unavailable}).`
+      : `Pilot wind-based ratings (dynamic line rating) using ${s.name} weather (${s.distance_mi} mi away). With wind halved for safety, the rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2025 hours.`);
   }
   if (ideas.length < 2 && !a.rating_unavailable) {
     ideas.push(`Add sensors at the hottest-hour bottleneck. On ${s.hottest_hour.slice(0, 10) || "the hottest 2025 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}× the fixed rating.`);

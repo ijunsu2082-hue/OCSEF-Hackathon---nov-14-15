@@ -12,6 +12,11 @@ import { systemInertia, type GeneratorType } from "./physics/dynamics";
 import { CONDUCTORS, type ConductorSpec } from "./physics/network";
 import { conductorHeatBalance, conductorSagRisk, lineRatingMva } from "./physics/thermal";
 import type { PlantFeature, SubstationFeature, TransmissionFeature } from "./gridLayers";
+import type { EtlSubstationFeature, EtlTransmissionFeature } from "./etlAssets";
+
+/** Bundled (OSM) or loaded-ETL (HIFLD, no OSM id) feature; the index reads only what both carry. */
+type AnyTransmissionFeature = TransmissionFeature | EtlTransmissionFeature;
+type AnySubstationFeature = SubstationFeature | EtlSubstationFeature;
 
 /** Longitude/latitude pair, GeoJSON order. */
 export type LonLat = [number, number];
@@ -94,7 +99,7 @@ function bboxDistanceMi(point: LonLat, bbox: [number, number, number, number]): 
 // ---- Index ------------------------------------------------------------------
 
 export interface IndexedLine {
-  feature: TransmissionFeature;
+  feature: AnyTransmissionFeature;
   bbox: [number, number, number, number];
 }
 
@@ -105,15 +110,15 @@ export type ConfirmedLayers = Partial<Record<"plants" | "lines" | "substations",
 export interface AssetIndex {
   plants: PlantFeature[];
   lines: IndexedLine[];
-  substations: SubstationFeature[];
+  substations: AnySubstationFeature[];
   /** Absent or false: an empty layer is unavailable, not confirmed empty. */
   confirmed?: ConfirmedLayers;
 }
 
 export function buildAssetIndex(
   plants: PlantFeature[],
-  transmission: TransmissionFeature[],
-  substations: SubstationFeature[],
+  transmission: AnyTransmissionFeature[],
+  substations: AnySubstationFeature[],
   confirmed?: ConfirmedLayers,
 ): AssetIndex {
   return {
@@ -460,7 +465,7 @@ export interface SubstationAssets {
   nearest_distribution_mi: number | null;
 }
 
-function substationKind(feature: SubstationFeature): { kind: string | null; isDistribution: boolean; isTransmission: boolean } {
+function substationKind(feature: AnySubstationFeature): { kind: string | null; isDistribution: boolean; isTransmission: boolean } {
   const tag = feature.properties.substation;
   const kv = feature.properties.voltage_kv;
   const isDistribution = tag === "distribution" || tag === "minor_distribution";

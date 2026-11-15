@@ -343,3 +343,43 @@ Not re-checked in this pass; left as found.
   earlier handoff and has not been re-run.
 - A successful fetch of an old observation stays stale; an empty successful
   inventory query and a failed query are different outcomes and must not collapse.
+
+## Stack merge into PR #2 (this branch)
+
+This branch is PR #2 (`app/area-scan`) after merging `feat/app-verified` (PR #4).
+Fifteen files conflicted. Resolution policy and what it means:
+
+- **PR #2's UI wins.** `app/location-report/[id]/page.tsx`, `LocationReport.tsx`,
+  `lib/scan/{colors,data,rating,report,risk,scan,sources,types}.ts`, `lib/grid.ts`
+  and the line-rating CSV are PR #2's versions. PR #2's report is the newer
+  implementation (scan.css, risk ranges, source categories, `lib/scan/reportLink`);
+  PR #4's copy was forked from `.merge-wt` at `6726835`, so taking it would have
+  been a UI regression.
+- **PR #4's additive work landed.** `research/etl/**`, `lib/evidence/**`,
+  `app/api/{location-report,weather}/**`, `components/evidence/**`,
+  `components/scan/{AreaScanPanel,CorridorWeatherCallout}.tsx` (both used by
+  `components/shell/MapCanvas.tsx`), and the MapLibre/Leaflet map work.
+- **No PR #2 component was overwritten.** PR #2 never modified
+  `components/shell/*`, `components/energy/*`, `components/grid/*`,
+  `components/method/*`, `components/ui/kit.tsx`, `app/page.tsx` or
+  `app/globals.css`, so every change there is PR #4's forward work on top of main.
+  PR #2's new routes (`/scan`, `/owner/**`, `/location-report/[id]`) all survive.
+- **Deleted:** `app/location-report/[id]/LocationClaims.tsx` and
+  `location-report.module.css`. They were PR #4's report view, orphaned once PR #2's
+  view won. The live WebSocket client therefore exists only on
+  `feat/app-verified`; wiring live updates into PR #2's report is open work.
+- **Docs split:** `research/README.md` is PR #2's dataset provenance page and
+  `research/EVIDENCE-FRAMEWORK.md` is PR #4's 672-line evidence spec, cross-linked.
+- **Dependencies:** `maplibre-gl` resolved to `^6.18.0` to match the installed
+  package and PR #4's map code; PR #4's `evidence:*`/`typecheck` scripts were kept
+  alongside PR #2's `sync-layers`/`predev`/`prebuild`/`test`. `package-lock.json`
+  is PR #2's with a fresh install.
+
+Verified on the merged tree: `tsc --noEmit` clean, 14/14 ETL tests pass, and
+`next build` (with `NEXT_DIST_DIR=build-verify`) completes with every route
+including `/scan` (59.3 kB) and `/location-report/[id]`.
+
+Not verified: no browser pass over `/scan`, `/location-report/<id>` or the owner
+routes, so layout, contrast and interaction are unconfirmed. `prebuild` regenerates
+`public/layers` via `scripts/sync-layers.mjs`; compare those files before assuming
+the shipped layers match the merged sources.

@@ -8,7 +8,7 @@
  */
 
 import { planInputFromPr2Scan, type OptionInput, type PlanInput, type PlanMilestone, type Pr2ScanResultLike } from "./planInput";
-import type { Evidence, Fact, FactValue, OptionKind, PlanTarget, Sector, StageId, GateId } from "./types";
+import type { Evidence, Fact, FactValue, OptionKind, PlanTarget, Sector, StageId, GateId } from "./planTypes";
 import { createLifecycle, type LifecycleConfig, type LifecycleEvent, type LifecycleState } from "./lifecycle";
 import { PROCEDURES, RULE_IDS, gatingOf, preconditionCodes, procedureByCode, topologicalOrder } from "./procedures";
 

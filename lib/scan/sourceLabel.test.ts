@@ -46,9 +46,11 @@ test("ETL plant with null fields reads 'not reported by source', never 0 or NaN"
 
 test("bundled plant tooltip is unchanged", () => {
   const plant: PlantFeature = {
+    type: "Feature",
     geometry: { type: "Point", coordinates: [-118, 33.7] },
     properties: {
-      plant_name: "Haynes", utility_name: "LADWP", nameplate_mw: 1730.2, mw_by_source: { natural_gas: 1730.2 },
+      plant_code: 400, plant_name: "Haynes", utility_name: "LADWP", distance_mi: 12, generator_count: 1,
+      nameplate_mw: 1730.2, mw_by_source: { natural_gas: 1730.2 },
       oldest_year: 1962, newest_year: 2013, planned_retirement_mw: 0, primary_source: "natural_gas",
       technologies: [], capacity_weighted_age_years: 20,
     },

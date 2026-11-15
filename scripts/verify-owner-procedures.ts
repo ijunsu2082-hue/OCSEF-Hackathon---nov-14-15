@@ -21,7 +21,7 @@ import {
   procedureGraph,
   topologicalOrder,
 } from "../lib/owner/procedures";
-import type { GateId } from "../lib/owner/types";
+import type { GateId } from "../lib/owner/planTypes";
 
 const CODE_RE = /\b[A-Z]{2,5}-\d{2}/g;
 

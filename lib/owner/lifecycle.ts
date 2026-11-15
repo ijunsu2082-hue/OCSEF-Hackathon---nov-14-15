@@ -8,8 +8,8 @@
 // `applyEvent` returns a new state with an appended revision. A gate "pass" is
 // an internal evidence-readiness result, never an approval, permit, or clearance.
 
-import type { Evidence, Fact, GateId, ProcedureStep, Sector, StageId, Unknown } from "./types";
-import { evaluationKey, type RuleEvaluation } from "./rules";
+import type { Evidence, Fact, GateId, ProcedureStep, Sector, StageId, Unknown } from "./planTypes";
+import { evaluationKey, type RuleEvaluation } from "./rulePacks";
 import { RULE_IDS, STAGE_GATE, STAGE_ORDER, gatingOf } from "./procedures";
 
 // ---------------------------------------------------------------------------

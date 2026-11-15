@@ -29,8 +29,8 @@ import type {
   StageId,
   TaskEdit,
   Unknown,
-} from "./types";
-import { isUnknown } from "./types";
+} from "./planTypes";
+import { isUnknown } from "./planTypes";
 
 export type Scenario = "baseline" | "heatwave";
 

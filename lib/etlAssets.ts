@@ -71,14 +71,16 @@ export interface EtlPlantFeature {
  * carries it; `operator` is always null for HIFLD so owner is never shown as
  * the operator.
  */
-export interface EtlTransmissionFeature extends TransmissionFeature {
-  properties: TransmissionFeature["properties"] & { status: string | null; owner: string | null };
+export interface EtlTransmissionFeature extends Omit<TransmissionFeature, "type" | "properties"> {
+  /** HIFLD carries no OSM id, so `osm_id` is absent rather than invented (and no GeoJSON `type` is added). */
+  properties: Omit<TransmissionFeature["properties"], "osm_id"> & { osm_id?: number; status: string | null; owner: string | null };
   etl: EtlProvenance;
 }
 
 /** HIFLD Substations has no OWNER or OPERATOR field: `owner` and `operator` are null. */
-export interface EtlSubstationFeature extends SubstationFeature {
-  properties: SubstationFeature["properties"] & { owner: string | null };
+export interface EtlSubstationFeature extends Omit<SubstationFeature, "type" | "properties"> {
+  /** HIFLD carries no OSM id, so `osm_id` is absent rather than invented (and no GeoJSON `type` is added). */
+  properties: Omit<SubstationFeature["properties"], "osm_id"> & { osm_id?: string; owner: string | null };
   etl: EtlProvenance;
 }
 

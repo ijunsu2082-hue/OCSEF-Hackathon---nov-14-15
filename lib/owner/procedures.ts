@@ -15,7 +15,7 @@
 //
 // This module is pure: no I/O, no clock, no randomness.
 
-import type { GateId, OwnerTask, ProcedureStep, StageId } from "./types";
+import type { GateId, OwnerTask, ProcedureStep, StageId } from "./planTypes";
 
 const DEV_DOC = "docs/INFRASTRUCTURE-PROCEDURES-DEVELOPMENT.md";
 const AUTH_DOC = "docs/INFRASTRUCTURE-PROCEDURES-AUTHORIZATIONS.md";

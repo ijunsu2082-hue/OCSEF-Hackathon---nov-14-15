@@ -4,7 +4,7 @@
 
 import type { LocationReport } from "../../research/etl/pipeline";
 import type { Claim, SourceDefinition, SourceSnapshot } from "../evidence/schema";
-import type { Evidence, Fact, Provenance, Unknown } from "./types";
+import type { Evidence, Fact, Provenance, Unknown } from "./planTypes";
 
 type FeedState = LocationReport["feeds"][string];
 

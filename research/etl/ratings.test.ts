@@ -53,8 +53,9 @@ test("small synthetic archive: verified, deterministic, UTC relabelled to fixed 
     assert.equal(lines[0], "time,temp_c,wind_ms,sun_wm2,static_A,aar_A,dlr_A,dlr_conservative_A,dlr_vs_static,dlr_conservative_vs_static");
     assert.deepEqual(lines.slice(1).map((l) => l.split(",")[0]),
       ["2025-07-01T10:00", "2025-07-01T11:00", "2025-07-01T12:00", "2025-07-01T13:00", "2025-07-01T14:00", "2025-07-01T15:00"]);
-    // Row 1 inputs are the committed CSV's 2025-07-01T16:00 hour, so the rated columns must match it exactly.
-    assert.equal(lines[1], "2025-07-01T10:00,24.1,3.37,630.0,723,976,1398,1159,1.933,1.602");
+    // Row 1 inputs are the committed CSV's 2025-07-01T16:00 hour, so the rated columns must match it exactly
+    // (aar_A 925: FERC 881 AAR takes worst-case sun by day, as regenerated in area-scan 5b1489f).
+    assert.equal(lines[1], "2025-07-01T10:00,24.1,3.37,630.0,723,925,1398,1159,1.933,1.602");
     // Integer-valued inputs are written the way the committed (Python) CSVs write them.
     assert.equal(lines[4].split(",").slice(1, 4).join(","), "10.0,0.0,0.0");
     // Null weather keeps its hour but no rating is invented.
@@ -111,8 +112,9 @@ test("engine parity on 24 committed rows (hottest July day + a winter night)", a
     assert.ok(parity.columns[key].max_abs !== null && parity.columns[key].max_abs <= 0.001, `${key} max ${parity.columns[key].max_abs}`);
   }
   assert.deepEqual(Object.values(parity.mismatched_rows), [0, 0, 0, 0, 0, 0], "observed: exact on all 24 rows");
-  // Engine output for those inputs, serialised by ratingCsv, is byte-identical to the committed lines.
-  const text = (await readFile(COMMITTED, "utf8")).split("\n");
+  // Engine output for those inputs, serialised by ratingCsv, is identical to the committed lines
+  // (the committed file is CRLF, so lines are compared without their terminators).
+  const text = (await readFile(COMMITTED, "utf8")).split(/\r?\n/);
   const expected = [...text.filter((l) => l.startsWith("2025-07-15")).slice(0, 18),
     ...text.filter((l) => l.startsWith("2025-01-23")).slice(0, 6)];
   const recomputed = sample.map((row) => ({ ...row, ...rateHour(row.temp_c!, row.wind_ms!, row.sun_wm2!) }));

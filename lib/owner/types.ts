@@ -1,59 +1,110 @@
-// Shared owner-plan contract. Other modules depend on these names; add fields
-// or types freely, but do not rename or remove any.
+/**
+ * Owner portal shared contract (frozen). Owners of infrastructure sign in (Clerk),
+ * claim an asset, get verified, and then see the filings they must make, with due dates
+ * and fields prefilled from public data. Data lives in Supabase.
+ *
+ * Writers:
+ *   lib/owner/obligations.ts  (engine: what must be filed, when, with what prefill)
+ *   lib/owner/db.ts, lib/owner/verify.ts, app/api/owner/**  (auth, storage, verification)
+ *   components/owner/**, app/owner/**  (screens)
+ */
+import type { Line, Plant, Substation } from "@/lib/scan/types";
 
-export type Sector = "electric" | "water" | "wastewater" | "transport" | "telecom";
-export type Provenance = "model" | "public_source" | "user_assertion" | "owner_verified" | "operator";
-export interface Unknown { state: "unknown" | "not_assessed" | "not_applicable"; reason: string }
-export type FactValue = number | string | boolean | Unknown;
-export interface Fact { id: string; subject: string; predicate: string; value: FactValue; unit?: string; provenance: Provenance; evidence: string[]; asOf: string; supersedes?: string }
-export interface EvidenceRef { publisher: string; url?: string; snapshot?: string; locator?: string; sha256?: string }
-export interface Evidence { id: string; kind: "snapshot" | "document" | "observation" | "model_run" | "attestation"; title: string; source: EvidenceRef; retrievedAt: string; observedAt?: string; freshness: "fresh" | "stale" | "unknown"; provenance: Provenance }
-export type StageId = "intake" | "feasibility" | "site_control" | "capital" | "grants" | "permits" | "engineering" | "procurement" | "construction" | "commissioning" | "operations" | "decommissioning";
-export type GateId = "M0" | "M1" | "M2" | "M3" | "M4" | "M5" | "M6" | "M7" | "M8" | "M9";
-export interface Finding { id: string; kind: "risk" | "sustainability" | "gap"; title: string; score?: number; factors?: Record<string, number>; evidence: string[]; detail: string }
-export type OptionKind = "repair" | "operating_change" | "replacement" | "defer" | "do_nothing";
-export interface PlanOption { id: string; kind: OptionKind; title: string; assumptions: Fact[]; addresses: string[]; tradeoffs: string }
-export type TaskStatus = "not_started" | "in_progress" | "waiting" | "done" | "blocked";
-export interface OwnerTask { id: string; code?: string; title: string; role: string; stage: StageId; gate?: GateId; dependsOn: string[]; offsetDays: number; durationDays: number; inputs: string[]; output: string; evidence: string[]; recovery: string; owner?: string; due?: string; status: TaskStatus }
-export interface ProcedureStep {
-  code: string; stage: StageId; gate?: GateId; title: string; role: string; inputs: string[]; preconditions: string[]; outputs: string[]; acceptance: string[]; recovery: string; blocksGateOn?: string[]; sourceDoc: string;
-  /**
-   * How the step affects its gate (absent = "required").
-   * required: incomplete -> blocker (blocksGateOn) or missing input.
-   * conditional: counts only while `trigger` is recorded active, then behaves as required.
-   * non_gating: never affects a gate (lifelong/portfolio/post-gate work); listed separately.
-   */
-  gating?: "required" | "conditional" | "non_gating";
-  /** Trigger rule id (lib/owner/procedures.ts RULE_IDS, kind "trigger"). Present iff gating is "conditional". */
-  trigger?: string;
-  /** Gate assigned by doc text instead of the stage default; `gate` equals this when set. */
-  gateOverride?: GateId;
-  /** Preconditions that apply only when `when` (a RULE_IDS trigger/branch id) holds. Not part of `preconditions`. */
-  conditionalPreconditions?: { when: string; preconditions: string[] }[];
-  /** Acceptance for later execution of the same procedure; recorded for traceability, never consulted by gates. */
-  followUpAcceptance?: string[];
+/* ---- assets -------------------------------------------------------------- */
+
+export type AssetKind = "plant" | "substation" | "line";
+
+/** Stable id: plant -> String(plant_code) (EIA plant code); substation -> osm_id; line -> String(osm_id). */
+export type AssetRef = { kind: AssetKind; id: string };
+
+export type OwnedAsset =
+  | { kind: "plant"; plant: Plant }
+  | { kind: "substation"; substation: Substation }
+  | { kind: "line"; line: Line };
+
+/* ---- obligations (pure engine) -------------------------------------------- */
+
+export type Frequency = "monthly" | "quarterly" | "semiannual" | "annual" | "event" | "once";
+
+export interface Citation {
+  label: string; // e.g. "CARB Mandatory GHG Reporting, 17 CCR 95103"
+  url: string; // official source
 }
-export interface PlanTarget { lat: number; lon: number; radius_miles: number; sector: Sector; label?: string }
-export interface OwnerPlan { schema: "gridsentinel.owner-plan/1"; target: PlanTarget; scenario: "baseline" | "heatwave"; findings: Finding[]; options: PlanOption[]; selectedOption: string | null; tasks: OwnerTask[]; nextAction: string | null; waitingOn: string[]; deadlines: { taskId: string; due: string; kind: string }[]; facts: Fact[]; evidence: Evidence[]; inputsHash: string; outputHash: string }
 
-// ---- Additive types (not part of the frozen names above) ----
-
-/** Owner edits to one generated task, keyed by task id. Present fields override the generated value. */
-export interface TaskEdit { title?: string; owner?: string; due?: string; status?: TaskStatus; evidence?: string[]; notes?: string }
-
-/** A local draft for one plan. `planKey` scopes it to one target (see planKey() in ownerPlan.ts). */
-export interface DraftEdits { planKey: string; tasks?: Record<string, TaskEdit>; selectedOption?: string | null; facts?: Fact[] }
-
-/** How the draft was merged. Orphaned edits target tasks the current scenario/option did not generate; they are kept, not dropped. */
-export interface DraftReport { planKey: string; applied: string[]; orphaned: { taskId: string; edit: TaskEdit }[]; rejected: string | null }
-
-/** OwnerTask plus optional owner notes carried from a TaskEdit. */
-export type OwnerTaskWithNotes = OwnerTask & { notes?: string };
-
-/** OwnerPlan plus additive planner metadata. */
-export interface OwnerPlanExtras { draft: DraftReport; nextTaskId: string | null; scheduleAnchor: string | null; scheduleMode: "back" | "forward" }
-
-/** Helper: is a FactValue an explicit Unknown marker? */
-export function isUnknown(v: FactValue | undefined | null): v is Unknown {
-  return typeof v === "object" && v !== null && "state" in v && "reason" in v;
+export interface PrefillField {
+  label: string; // e.g. "EIA plant code"
+  value: string; // e.g. "335"
+  source: string; // e.g. "EIA-860 2025"
 }
+
+export interface Obligation {
+  id: string; // stable, e.g. "eia-923-annual"
+  title: string; // plain words, e.g. "Annual power plant operations report"
+  agency: string; // e.g. "U.S. Energy Information Administration (EIA)"
+  form: string; // e.g. "Form EIA-923"
+  formUrl: string; // official form / filing portal page
+  appliesBecause: string; // why this owner must file, from the asset's real data
+  frequency: Frequency;
+  dueRule: string; // plain-language rule, e.g. "By the last day of February for the prior year"
+  citations: Citation[];
+  prefill: PrefillField[];
+  confidence: "verified" | "check"; // "check" = depends on facts we can't see (size thresholds, permits)
+  notes?: string;
+}
+
+export interface Deadline {
+  obligationId: string;
+  due: string; // ISO date YYYY-MM-DD
+  periodLabel: string; // e.g. "Q3 2026" or "Calendar year 2026"
+}
+
+/* ---- claims and verification (Supabase) ----------------------------------- */
+
+export type ClaimStatus = "pending" | "verified" | "rejected";
+
+/** email_domain: Clerk-verified work email on the owner's official domain (auto).
+ *  document: owner uploads proof (e.g. EIA filing confirmation, interconnection agreement,
+ *  letterhead authorization) and an admin reviews it. */
+export type VerifyMethod = "email_domain" | "document";
+
+export interface Claim {
+  id: string;
+  user_id: string; // Clerk user id
+  asset_kind: AssetKind;
+  asset_id: string;
+  asset_name: string;
+  owner_name: string; // organization the claimant says owns it (e.g. EIA utility_name / OSM operator)
+  method: VerifyMethod;
+  status: ClaimStatus;
+  evidence_path: string | null; // Supabase Storage path for documents
+  note: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  reason: string | null;
+  created_at: string;
+}
+
+export type TaskStatus = "not_started" | "in_progress" | "filed";
+
+export interface Task {
+  id: string;
+  claim_id: string;
+  obligation_id: string;
+  due: string; // ISO date
+  status: TaskStatus;
+  filed_at: string | null;
+  confirmation: string | null; // filing confirmation number
+  note: string | null;
+  updated_at: string;
+}
+
+/* ---- API (Next route handlers under app/api/owner) ------------------------ */
+// GET    /api/owner/claims                       -> { claims: Claim[] }            (signed-in user's claims)
+// POST   /api/owner/claims                       body { asset: AssetRef; asset_name; owner_name; method: VerifyMethod; note? }
+//                                                -> { claim: Claim }               (email_domain may come back already "verified")
+// POST   /api/owner/claims/:id/evidence          multipart file "file"             -> { claim: Claim }
+// GET    /api/owner/tasks?claim_id=              -> { tasks: Task[] }
+// PUT    /api/owner/tasks                        body { claim_id; obligation_id; due; status; confirmation?; note? } -> { task: Task }
+// GET    /api/owner/admin/claims?status=pending  -> { claims: Claim[] }            (admins only)
+// POST   /api/owner/admin/claims/:id             body { decision: "verified" | "rejected"; reason? } -> { claim: Claim }
+// GET    /api/owner/config                       -> { clerk: boolean; supabase: boolean } (what is configured; no secrets)

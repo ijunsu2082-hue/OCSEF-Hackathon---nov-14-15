@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { BuiltOwnerPlan } from "@/lib/owner/ownerPlan";
 import { current, evaluateGate, GATE_STAGE, GATES, triggerStatus, type GateEvaluation, type LifecycleState, type TriggerState } from "@/lib/owner/lifecycle";
 import { gatingOf, PROCEDURES, RULE_IDS } from "@/lib/owner/procedures";
-import type { ProcedureStep } from "@/lib/owner/types";
+import type { ProcedureStep } from "@/lib/owner/planTypes";
 import type { OwnerSourceItem, OwnerSourcesResponse } from "@/lib/owner/ownerSources";
-import type { GateId, PlanTarget } from "@/lib/owner/types";
+import type { GateId, PlanTarget } from "@/lib/owner/planTypes";
 import { lifecycleFromPlan, STAGE_LABEL } from "./ownerPlanExport";
 import s from "./owner-plan.module.css";
 

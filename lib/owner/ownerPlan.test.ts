@@ -7,7 +7,7 @@ import { computeRisk } from "../scan/risk";
 import { buildOwnerPlan, planKey, reforecastMilestones } from "./ownerPlan";
 import { planInputFromHeadScan, planInputFromPr2Scan, type Pr2ScanResultLike } from "./planInput";
 import { evaluateCase, FIXTURE_AS_OF, heatFindingsCheck, ownerCases } from "./fixtures";
-import type { DraftEdits, Sector } from "./types";
+import type { DraftEdits, Sector } from "./planTypes";
 
 // Compile-time: PR #2's ScanResult (identical file on HEAD) satisfies the local structural type.
 const _pr2Compat: (r: Pr2ScanResult) => Pr2ScanResultLike = (r) => r;

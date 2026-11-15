@@ -25,7 +25,7 @@ import type {
   Sector,
   StageId,
   Unknown,
-} from "./types";
+} from "./planTypes";
 
 type RiskArgs = Parameters<typeof computeRisk>;
 type RiskTotals = RiskArgs[0];

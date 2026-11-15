@@ -6,7 +6,7 @@
 // orphans (never silently dropped). Pure apart from the storage adapter; all
 // times are passed in.
 
-import type { OwnerTask, Sector, TaskStatus } from "./types";
+import type { OwnerTask, Sector, TaskStatus } from "./planTypes";
 import { stableHash } from "./lifecycle";
 
 export const DRAFT_SCHEMA = "gridsentinel.owner-draft/1" as const;

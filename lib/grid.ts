@@ -18,7 +18,7 @@ import { dailyProfile } from "./simulation";
 import { inertiaBand } from "./physics/dynamics";
 import { DEFAULT_ECONOMICS, capacityValue, carbonCost, simplePayback } from "./physics/economics";
 import { reconductorScreen, thermalScreen, type RealGridAssets } from "./gridAssets";
-import type { FacilityProperties, SimResult } from "./types";
+import type { FacilityProperties, PowerFlow, SimResult } from "./types";
 
 export type Severity = "ok" | "watch" | "high" | "critical";
 
@@ -115,7 +115,10 @@ export interface PhaseExposure {
 
 export interface GridContext {
   /** Summaries of the real layers around this load center; null until loaded. */
-  assets: RealGridAssets | null;
+  assets?: RealGridAssets | null;
+  /** Facility-graph inputs the workspace passes; the chain itself does not read them. */
+  flows?: PowerFlow[];
+  sims?: Record<string, SimResult>;
 }
 
 // ---- helpers ----------------------------------------------------------------
@@ -676,7 +679,7 @@ export function gridChain(
   sim: SimResult,
   ctx: GridContext,
 ): PhaseState[] {
-  const assets = ctx.assets;
+  const assets = ctx.assets ?? null;
   const states = [
     phaseGeneration(sim, assets),
     phaseTransmission(sim, assets),
@@ -749,4 +752,56 @@ export function phaseExposure(
     ...row,
     share_pct: Math.round((row.at_risk_mw / maxRisk) * 100),
   }));
+}
+
+// ---- workspace compatibility ------------------------------------------------
+// The `/` workspace still renders per-corridor loading from the facility graph.
+// The chain above does not use these: tie MVA loading was cut deliberately, so
+// these exports exist only so one engine can serve both screens.
+
+/** 105 °F: conductors sag, so a line's thermal rating falls ~12 %. */
+export const HEATWAVE_LINE_DERATE = 0.88;
+
+export interface CorridorLoading {
+  id: string;
+  label: string;
+  from: string;
+  to: string;
+  mva: number;
+  capacity_mva: number;
+  throughput_mw: number;
+  loading_pct: number;
+  loss_pct: number;
+  severity: Severity;
+}
+
+/** I²R on a short tie: ~1 % at half rating, ~4 % at full. */
+function lineLossPct(loading: number): number {
+  return 0.5 + (loading / 100) ** 2 * 3.5;
+}
+
+export function corridorLoadings(
+  flows: PowerFlow[],
+  sims: Record<string, SimResult>,
+  heatwave: boolean,
+): CorridorLoading[] {
+  return flows.map((flow) => {
+    const a = sims[flow.from]?.effective_draw_mw ?? 0;
+    const b = sims[flow.to]?.effective_draw_mw ?? 0;
+    const throughput = Math.max(a, b);
+    const capacity = flow.mva * (heatwave ? HEATWAVE_LINE_DERATE : 1);
+    const loading = capacity > 0 ? (throughput / capacity) * 100 : 0;
+    return {
+      id: flow.id,
+      label: flow.label,
+      from: flow.from,
+      to: flow.to,
+      mva: flow.mva,
+      capacity_mva: nf(capacity, 1),
+      throughput_mw: nf(throughput, 2),
+      loading_pct: nf(loading, 1),
+      loss_pct: nf(lineLossPct(loading), 2),
+      severity: band(loading, 55, 70, 85),
+    };
+  });
 }

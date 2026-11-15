@@ -6,7 +6,7 @@
 // (24 h), no work calendar or holidays. Dates are forecasts, not promised
 // authority timelines (INFRASTRUCTURE-LIFECYCLE §5).
 
-import type { OwnerTask } from "./types";
+import type { OwnerTask } from "./planTypes";
 import { parseTime, stableHash } from "./lifecycle";
 
 const DAY_MS = 86_400_000;

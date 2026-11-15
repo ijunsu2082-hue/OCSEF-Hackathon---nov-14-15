@@ -8,7 +8,7 @@ import {
   createDraftStore, draftKey, emptyDraft, localStorageAdapter, memoryStorage, mergeDraft, setSelectedOption, setTaskEdit,
 } from "./draftStore";
 import { stableHash } from "./lifecycle";
-import type { OwnerTask } from "./types";
+import type { OwnerTask } from "./planTypes";
 
 const T = (day: string) => `${day}T12:00:00Z`;
 const day = (iso: string) => isoDay(iso);

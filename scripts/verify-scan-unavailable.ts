@@ -4,7 +4,10 @@
  * absent, and that the hourly rating CSV URL resolves to a shipped file.
  *
  * `fetch` is stubbed to serve `public/` from disk (404 for anything missing),
- * so loadGridData() runs its real path against the files on this branch.
+ * so loadGridData() runs its real path against the committed files. The
+ * gitignored outputs of scripts/sync-layers.mjs (`layers/line_ratings/`,
+ * `layers/gen_events.json`, written by predev/prebuild) are served as 404 so
+ * the unavailable path is exercised whether or not sync-layers has run.
  *
  *   node node_modules/tsx/dist/cli.mjs scripts/verify-scan-unavailable.ts
  */
@@ -20,12 +23,16 @@ import { RATING_CSV_URL, RATING_FALLBACK_CSV_URL } from "../lib/scan/wire";
 import type { GridData, RatingSiteSummary } from "../lib/scan/types";
 
 const PUBLIC = resolve(process.cwd(), "public");
+/** Generated, gitignored by scripts/sync-layers.mjs; never committed. */
+const SYNCED = ["/layers/line_ratings/", "/layers/gen_events.json"];
 const requested: string[] = [];
 
 globalThis.fetch = (async (input: string | URL | Request) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.pathname : new URL(input.url).pathname;
   requested.push(url);
-  const file = resolve(PUBLIC, `.${url.split("?")[0]}`);
+  const path = url.split("?")[0];
+  if (SYNCED.some((prefix) => path.startsWith(prefix))) return new Response("not found", { status: 404 });
+  const file = resolve(PUBLIC, `.${path}`);
   if (!file.startsWith(PUBLIC) || !existsSync(file)) return new Response("not found", { status: 404 });
   return new Response(readFileSync(file));
 }) as typeof fetch;
@@ -59,7 +66,6 @@ async function main() {
 
   check("summary.json is reported unavailable", () => {
     assert.ok(data.unavailable.includes(SUMMARY), `unavailable = ${JSON.stringify(data.unavailable)}`);
-    assert.ok(!existsSync(resolve(PUBLIC, "layers/line_ratings/summary.json")), "summary.json exists; this check is moot");
   });
 
   let reports = 0;
@@ -115,7 +121,8 @@ async function main() {
     const md = scanReportMarkdown(result, null);
     assert.equal(result.rating_unavailable, null);
     assert.deepEqual(result.unscored_factors, []);
-    assert.ok(md.includes("beat static in 56.7% of hours, median 1.234x; hottest hour 2025-09-06T15:00 (41.2 C) only 0.91x"), md);
+    assert.ok(md.includes("typical hour 1.234x with wind halved"), md);
+    assert.ok(md.includes("With wind halved the rating beat static in 56.7% of hours; hottest hour 2025-09-06T15:00 (41.2 C) only 0.91x"), md);
     assert.ok(!md.includes("unavailable ("), md);
     assert.ok(md.includes("the safe rating was 0.91× the fixed rating"), md);
   });

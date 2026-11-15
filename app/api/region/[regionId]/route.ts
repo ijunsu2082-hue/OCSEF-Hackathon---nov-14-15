@@ -1,4 +1,4 @@
-import { getRegion } from "@/lib/region";
+import { loadRegion } from "@/lib/region";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ regionId: string }> },
 ) {
   const { regionId } = await params;
-  const payload = getRegion(regionId);
+  const payload = await loadRegion(regionId);
 
   if (!payload) {
     return Response.json(

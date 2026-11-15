@@ -5,10 +5,10 @@ import {
   current, evaluateGate, replay, stateHash, submissionPackageHash, triggerStatus, GATE_STAGE, GATES,
   type GateEvaluation, type LifecycleConfig, type LifecycleEvent, type LifecycleState,
 } from "./lifecycle";
-import { evaluateRules, segmentRouteByJurisdiction, type JurisdictionArea, type RulePack } from "./rules";
+import { evaluateRules, segmentRouteByJurisdiction, type JurisdictionArea, type RulePack } from "./rulePacks";
 import { PROCEDURES, RULE_IDS, STAGE_GATE, TRIGGER_IDS, gatingOf, preconditionCodes, procedureByCode } from "./procedures";
 import { LIVENESS_CASE_IDS, completedLifecycleCase, type LivenessCase } from "./fixtures";
-import type { Evidence, Fact, GateId } from "./types";
+import type { Evidence, Fact, GateId } from "./planTypes";
 
 // ---------------------------------------------------------------------------
 // Fixture harness.

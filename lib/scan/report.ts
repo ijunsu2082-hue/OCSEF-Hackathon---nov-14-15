@@ -1,5 +1,6 @@
 import type { LineRatingNow, ScanResult } from "./types";
 import { FUEL_KEYS, FUEL_LABELS } from "./colors";
+import { aarRatio, conductorRange, ratioRange, windSentence } from "./rating";
 import { gridLayerProvider } from "./sourceLabel";
 
 type LayerOrigin = "etl" | "bundled";
@@ -50,7 +51,8 @@ export function scanReportMarkdown(
   if (r.plants.length) {
     for (const p of r.plants.slice(0, 5)) L.push(`- ${p.plant_name} (${p.city || p.county}): ${n1(p.nameplate_mw)} MW, ${FUEL_LABELS[p.primary_source] ?? p.primary_source}`);
   } else L.push("- No EIA-860 plants in this circle");
-  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, unknown ${n1(t.line_miles_by_kv.unknown)}) (${gridLayerProvider(layers.lines)})`);
+  const inferred = r.lines.some((l) => l.kv_inferred) ? "; some voltages filled in from connected lines" : "";
+  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, no voltage listed ${n1(t.line_miles_by_kv.unknown)}) (${gridLayerProvider(layers.lines)}${inferred})`);
   L.push(`- Substations: ${t.substation_count} (${t.hv_substation_count} at >=200 kV) (${gridLayerProvider(layers.substations)})`);
   L.push("");
   L.push("## Energy cycle");
@@ -62,15 +64,35 @@ export function scanReportMarkdown(
   L.push(`- Capacity-weighted age: ${t.cap_weighted_age === null ? "n/a" : `${n1(t.cap_weighted_age)} yr`}${t.oldest ? ` · oldest unit: ${t.oldest.name} (${t.oldest.year})` : ""}`);
   L.push(`- Planned retirements ${n1(t.planned_retirement_mw)} MW · already retired ${n1(t.retired_mw)} MW · proposed ${n1(t.proposed_mw)} MW (${n1(t.proposed_storage_mw)} MW storage) (EIA-860)`);
   L.push("");
-  L.push(`## The Wire That Breathes (MODELED, ACSR Drake 75 C, nearest weather site ${s.name}, ${n1(s.distance_mi)} mi)`);
+  L.push(`## Line capacity (MODELED, IEEE 738, 75 C wire limit, nearest weather site ${s.name}, ${n1(s.distance_mi)} mi)`);
   if (live) {
     const w = live.weather;
+    const aar = aarRatio(live);
+    const range = conductorRange(w);
+    const pct = (x: number) => `${x >= 1 ? "+" : "-"}${Math.round(Math.abs(x - 1) * 100)}%`;
     L.push(`- Weather (${w.source}, ${w.time}): ${n1(w.temp_c)} C, wind ${n1(w.wind_ms)} m/s, sun ${n0(w.sun_wm2)} W/m2`);
-    L.push(`- Static ${n0(live.static_A)} A · AAR ${n0(live.aar_A)} A · DLR ${n0(live.dlr_A)} A · conservative DLR ${n0(live.dlr_conservative_A)} A → ${live.ratio.toFixed(2)}x static (${live.extra_pct >= 0 ? "+" : ""}${n1(live.extra_pct)}%) (MODELED)`);
+    L.push(`- Fixed worst-case rating (static, 40 C, 0.61 m/s wind, full sun), ACSR Drake 795 kcmil: ${n0(live.static_A)} A`);
+    if (aar !== null) {
+      L.push(`- Temperature-adjusted rating (ambient-adjusted rating, AAR, as FERC Order 881 defines it; real temperature, worst-case sun by day and none at night, fixed wind): ${n0(live.aar_A)} A = ${aar.toFixed(2)}x static (${pct(aar)}; versus the 40 C worst case, so less versus seasonal ratings and none where equipment or stability sets the limit)`);
+    }
+    L.push(`- With today's wind too (dynamic line rating, DLR, wind halved for safety): ${n0(live.dlr_conservative_A)} A = ${live.ratio.toFixed(2)}x static (${pct(live.ratio)})`);
+    if (aar !== null && aar > 0 && live.ratio > 0) L.push(`- ${windSentence(aar, live.ratio)}`);
+    L.push(`- Across common wire types (${range.rows.map((x) => x.name).join(", ")}), each against its own fixed rating: temperature-adjusted ${ratioRange(range.aar_min, range.aar_max)}, with wind ${ratioRange(range.dlr_min, range.dlr_max)}`);
   }
-  L.push(r.rating_unavailable
-    ? `- 2025 rating summary: unavailable (${r.rating_unavailable})`
-    : `- 2025: conservative DLR beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours, median ${s.median_conservative_dlr_vs_static}x; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x (MODELED)`);
+  if (r.rating_unavailable) {
+    L.push(`- 2025 rating summary: unavailable (${r.rating_unavailable})`);
+  } else {
+    const yr: string[] = [];
+    if (typeof s.median_aar_vs_static === "number") yr.push(`typical hour ${s.median_aar_vs_static}x from temperature alone`);
+    yr.push(`typical hour ${s.median_conservative_dlr_vs_static}x with wind halved`);
+    if (Number.isFinite(s.summer_4to8pm_median_wind_gain_over_aar)) {
+      const g = Math.round((s.summer_4to8pm_median_wind_gain_over_aar - 1) * 100);
+      yr.push(g >= 1 ? `wind adds about ${g}% over temperature alone on summer evenings (4-8 pm)` : "wind adds nothing over temperature alone on summer evenings (4-8 pm)");
+    }
+    L.push(`- 2025 at ${s.name}: ${yr.join("; ")}. With wind halved the rating beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x`);
+  }
+  L.push("- Rules: FERC Order 881 requires US transmission providers to use temperature-adjusted ratings (general deadline July 2025; FERC extended CAISO to Dec 17, 2026, and the utilities that own lines in its grid (e.g., SCE, SDG&E, PG&E) have up to Oct 15, 2027). Applies only to FERC-regulated utilities. Wind-based ratings are not required.");
+  L.push("- Screening estimate for a typical wire. Real limits also depend on the exact wire, its worst span, and equipment like breakers, so a utility must confirm.");
   L.push("");
   if (r.cases.length) {
     L.push("## Cases in this area");
@@ -81,7 +103,7 @@ export function scanReportMarkdown(
   for (const u of r.upgrade_ideas) L.push(`- ${u}`);
   L.push("");
   L.push("---");
-  L.push(`Sources: EIA-860 2025 (plants, retired & proposed generators); ${gridAttribution(layers.lines, layers.substations, true)}; Open-Meteo (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings.`);
-  L.push(`Plants: EIA-860 final 2025 (released Sep 2026). ${gridAttribution(layers.lines, layers.substations, false)} Weather: Open-Meteo live + 2025 reanalysis. Line ratings modeled with IEEE 738 for one typical conductor.`);
+  L.push(`Sources: EIA-860 final 2025, released Sep 2026 (plants, retired & proposed generators); ${gridAttribution(layers.lines, layers.substations, true)}; Open-Meteo live + 2025 reanalysis (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings; wire sizes from the Prysmian TransPowr ACSR data sheet.`);
+  L.push("FERC Order 881: https://www.federalregister.gov/documents/2022/01/13/2021-27735/managing-transmission-line-ratings ; CAISO extension: https://www.caiso.com/documents/apr-30-2025-order-accepting-motion-for-extension-order-no-881-er22-2362.pdf");
   return L.join("\n");
 }
