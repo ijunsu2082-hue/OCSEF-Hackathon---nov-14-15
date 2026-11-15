@@ -1,4 +1,4 @@
-import { getFacility } from "@/lib/region";
+import { loadFacility } from "@/lib/region";
 import { simulate } from "@/lib/simulation";
 import { energyRisk } from "@/lib/risk";
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const facility = getFacility(body.node_id);
+  const facility = await loadFacility(body.node_id);
   if (!facility) {
     return Response.json(
       { error: { code: "NODE_NOT_FOUND", message: `Unknown facility "${body.node_id}".` } },

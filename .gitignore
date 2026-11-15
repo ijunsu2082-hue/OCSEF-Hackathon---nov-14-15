@@ -13,3 +13,6 @@ next-env.d.ts
 build-out
 buildtest
 *.log
+
+# Supabase CLI cache
+supabase/.temp/
