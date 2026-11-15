@@ -217,6 +217,10 @@ export interface UtilityInfo {
   claimsTiming?: string;
   /** Plain words about who oversees a public utility. */
   oversight?: string;
+  /** Public customer-service email, only when published by the utility, its city or the state. */
+  email?: string;
+  /** Where the email was published (checked Nov 15, 2026). */
+  emailSource?: string;
 }
 
 const CITY_OVERSIGHT = "It is run by its city, so the city council (or the utility's board) oversees it, not the CPUC.";
@@ -282,6 +286,8 @@ export const UTILITIES = {
     emergency: { display: "714-765-3300", tel: "+17147653300", note: "24 hours" },
     emergencyUrl: "https://www.anaheim.net/4754/Power-Outage-Safety",
     reportUrl: "https://www.anaheim.net/3146/Outage-Center",
+    email: "CustomerService@anaheim.net",
+    emailSource: "California Department of Community Services and Development, CAPP utility customer service contact list",
     oversight: CITY_OVERSIGHT,
   },
   burbank: {
@@ -292,6 +298,8 @@ export const UTILITIES = {
     emergency: { display: "(818) 238-3778", tel: "+18182383778", note: "after hours, weekends and holidays; (818) 238-3700 during business hours" },
     emergencyUrl: "https://www.burbankwaterandpower.com/about-us/contact-us",
     reportUrl: "https://www.burbankwaterandpower.com/about-us/contact-us",
+    email: "bwpcustomerservice@burbankca.gov",
+    emailSource: "https://www.burbankwaterandpower.com/about-us/contact-us",
     oversight: CITY_OVERSIGHT,
   },
   glendale: {
@@ -304,6 +312,8 @@ export const UTILITIES = {
       "https://www.glendaleca.gov/government/departments/glendale-water-and-power/safety-security/power-outages/power-outage-frequently-asked-questions",
     reportUrl:
       "https://www.glendaleca.gov/government/departments/glendale-water-and-power/safety-security/power-outages/power-outage-frequently-asked-questions",
+    email: "GWPCustomerService@GlendaleCA.gov",
+    emailSource: "https://www.glendaleca.gov/government/departments/glendale-water-and-power",
     oversight: CITY_OVERSIGHT,
   },
   riverside: {
@@ -324,6 +334,8 @@ export const UTILITIES = {
     emergency: { display: "(626) 744-4673", tel: "+16267444673", note: "power emergencies" },
     emergencyUrl: "https://pwp.cityofpasadena.net/contactus/",
     reportUrl: "https://pwp.cityofpasadena.net/contactus/",
+    email: "WPD_Answerline@cityofpasadena.net",
+    emailSource: "https://pwp.cityofpasadena.net/contactus/",
     oversight: CITY_OVERSIGHT,
   },
   azusa: { key: "azusa", name: "Azusa Light & Power", short: "Azusa Light & Power", kind: "public", oversight: CITY_OVERSIGHT },
