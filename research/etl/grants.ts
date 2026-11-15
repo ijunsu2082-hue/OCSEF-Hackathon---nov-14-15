@@ -344,16 +344,30 @@ export async function syncGrants(deps: GrantsDeps = {}): Promise<GrantsArtifact>
   };
 }
 
+/** A daily sync means anything older than this is not "watched" any more. */
+export const DEFAULT_MAX_AGE_DAYS = 3;
+
+export interface GrantsVerifyOptions {
+  now?: Date;
+  maxAgeDays?: number;
+}
+
 export interface GrantsVerification {
   programs: number;
   watched: number;
   unreachable: string[];
   opportunities: number;
   leversWithFunding: LeverId[];
+  generatedAt: string;
+  ageDays: number;
+  maxAgeDays: number;
+  stale: boolean;
+  /** Failures that must stop a scheduled run; empty means the artifact passes. */
+  problems: string[];
 }
 
-/** Structural check used after a sync and by `grants verify`. Throws on a broken artifact. */
-export function verifyGrants(value: unknown): GrantsVerification {
+/** Structural and freshness check used after a sync and by `grants verify`. Throws on a broken artifact. */
+export function verifyGrants(value: unknown, options: GrantsVerifyOptions = {}): GrantsVerification {
   if (!isObj(value) || value.schema !== "mapergy.grants/1") throw new Error("Not a mapergy.grants/1 artifact");
   if (!Array.isArray(value.programs) || !Array.isArray(value.opportunities) || !Array.isArray(value.searches)) {
     throw new Error("Artifact is missing programs, opportunities or searches");
@@ -393,11 +407,40 @@ export function verifyGrants(value: unknown): GrantsVerification {
   for (const opportunity of value.opportunities as { levers: LeverId[] }[]) {
     for (const lever of opportunity.levers) funded.add(lever);
   }
+
+  const generatedRaw = typeof value.generatedAt === "string" ? value.generatedAt : "";
+  const generated = new Date(generatedRaw);
+  if (!generatedRaw || !Number.isFinite(generated.getTime())) {
+    throw new Error("Artifact has no readable generatedAt");
+  }
+  const now = options.now ?? new Date();
+  const maxAgeDays = options.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS;
+  if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0) throw new Error(`Invalid max age: ${maxAgeDays}`);
+  const ageDays = Math.max(0, (now.getTime() - generated.getTime()) / 86_400_000);
+  const stale = ageDays > maxAgeDays;
+
+  const problems: string[] = [];
+  if (stale) {
+    problems.push(
+      `Artifact is stale: watched ${ageDays.toFixed(1)} days ago (${generatedRaw}), limit ${maxAgeDays}. Run grants sync.`,
+    );
+  }
+  if (unreachable.length) {
+    problems.push(
+      `${unreachable.length} programme${unreachable.length === 1 ? "" : "s"} did not answer the watch: ${unreachable.join(", ")}.`,
+    );
+  }
+
   return {
     programs: value.programs.length,
     watched,
     unreachable,
     opportunities: value.opportunities.length,
     leversWithFunding: [...funded].sort(),
+    generatedAt: generatedRaw,
+    ageDays: Number(ageDays.toFixed(2)),
+    maxAgeDays,
+    stale,
+    problems,
   };
 }

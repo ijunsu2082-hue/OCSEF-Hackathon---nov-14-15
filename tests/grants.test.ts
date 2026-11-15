@@ -78,6 +78,31 @@ test("searchOpportunities keeps only topic-matching titles and maps dates", asyn
   assert.ok(result.searches.every((search) => search.kept <= search.hitCount));
 });
 
+test("verifyGrants fails an artifact that outlived its watch, and honours the age limit", () => {
+  const base = artifact();
+  const fresh: GrantsArtifact = { ...base, programs: base.programs.filter((program) => program.id !== "dead-programme") };
+  const at = (iso: string) => verifyGrants(fresh, { now: new Date(iso) });
+
+  const today = at("2026-11-15T12:00:00Z");
+  assert.equal(today.stale, false);
+  assert.deepEqual(today.problems, []);
+  assert.equal(today.maxAgeDays, 3);
+
+  const late = at("2026-11-19T12:00:00Z");
+  assert.equal(late.stale, true);
+  assert.ok(late.ageDays > 4 && late.ageDays < 5);
+  assert.match(late.problems[0], /Artifact is stale/);
+  assert.match(late.problems[0], /Run grants sync/);
+
+  const strict = verifyGrants(fresh, { now: new Date("2026-11-17T00:00:00Z"), maxAgeDays: 1 });
+  assert.equal(strict.stale, true);
+  assert.equal(strict.maxAgeDays, 1);
+
+  assert.equal(verifyGrants(fresh, { now: new Date("2026-11-16T00:00:00Z"), maxAgeDays: 1 }).stale, false);
+  assert.throws(() => verifyGrants({ ...fresh, generatedAt: "not a date" }), /generatedAt/);
+  assert.throws(() => verifyGrants(fresh, { maxAgeDays: 0 }), /Invalid max age/);
+});
+
 test("verifyGrants reports unwatched programmes and rejects an ok watch without a fingerprint", () => {
   const artifact = {
     schema: "mapergy.grants/1",
@@ -103,6 +128,7 @@ test("verifyGrants reports unwatched programmes and rejects an ok watch without 
   assert.equal(report.watched, 1);
   assert.deepEqual(report.unreachable, ["p2"]);
   assert.deepEqual(report.leversWithFunding, ["weather-rating"]);
+  assert.match(report.problems.join(" "), /p2/);
   assert.throws(() => verifyGrants({ schema: "other" }), /mapergy\.grants\/1/);
 });
 
