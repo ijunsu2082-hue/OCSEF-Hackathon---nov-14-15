@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { ReportTarget } from "@/lib/scan/target";
 import { KIND_WORD, assetName, claimHref, fromTarget } from "@/components/owner/assets";
 import { daysBetween, fmtDate, todayIso } from "@/components/owner/calendar";
@@ -187,11 +188,10 @@ function RuleSourcesBlock({ sources }: { sources: RuleSources | null }) {
   );
 }
 
-function FilingRow({
+/** The form itself, shown inside the dialog: decision, prefills, blanks, sources. */
+function FilingDetail({
   w,
   d,
-  next,
-  today,
   snapshot,
   sources,
   onAnswer,
@@ -199,8 +199,6 @@ function FilingRow({
 }: {
   w: FormWorksheet;
   d: Determination;
-  next: Deadline | null;
-  today: string;
   snapshot?: AssetFiling;
   sources: RuleSources | null;
   onAnswer: (id: string, answer: FactAnswer) => void;
@@ -214,26 +212,7 @@ function FilingRow({
   const awaiting = snapshot?.manual ?? w.awaiting;
   const total = prefilled.length + awaiting.length;
   return (
-    <details className="group border-b border-[#e6e9ee] py-3 last:border-b-0">
-      <summary className="flex cursor-pointer flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="min-w-0">
-          <span className="block text-[15px] font-semibold leading-snug">{o.title}</span>
-          <span className="mt-0.5 block text-[13px] leading-snug text-[#556070]">
-            {form?.form ?? o.form} · {form?.agency ?? o.agency}
-            {next ? ` · next ${fmtDate(next.due)}` : " · no fixed date"}
-          </span>
-        </span>
-        <span className="flex items-baseline gap-3 whitespace-nowrap">
-          <StatusWord d={d} />
-          {next && (
-            <span className="text-[13px]">
-              <DueTag due={next.due} today={today} />
-            </span>
-          )}
-        </span>
-      </summary>
-
-      <div className="mt-2">
+    <div>
         <p className="text-[13px] text-[#556070]">
           {FREQUENCY_WORD[o.frequency]} ·{" "}
           {form?.action === "sign" ? "Signed by an authorized official" : "Filed by the owner"} ·{" "}
@@ -299,8 +278,112 @@ function FilingRow({
             Open the official form
           </a>
         </p>
+    </div>
+  );
+}
+
+/** One compact row. The form opens in a dialog, not inline. */
+function FilingRow({
+  w,
+  d,
+  next,
+  today,
+  onOpen,
+}: {
+  w: FormWorksheet;
+  d: Determination;
+  next: Deadline | null;
+  today: string;
+  onOpen: () => void;
+}) {
+  const o = w.obligation;
+  const form = w.form;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-haspopup="dialog"
+      className={`flex w-full flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[#e6e9ee] py-3 text-left last:border-b-0 hover:bg-[#f6f8fa] ${FOCUS}`}
+    >
+      <span className="min-w-0">
+        <span className="block text-[15px] font-semibold leading-snug">{o.title}</span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-[#556070]">
+          {form?.form ?? o.form} · {form?.agency ?? o.agency}
+          {next ? ` · next ${fmtDate(next.due)}` : " · no fixed date"}
+        </span>
+      </span>
+      <span className="flex items-baseline gap-3 whitespace-nowrap text-[13px]">
+        <StatusWord d={d} />
+        {next && <DueTag due={next.due} today={today} />}
+        <span className="font-medium text-[#0369a1]">Open form</span>
+      </span>
+    </button>
+  );
+}
+
+/** Expanded form: a dialog over the page, closable with Escape, backdrop or Close. */
+function FilingDialog({
+  title,
+  formLabel,
+  agency,
+  onClose,
+  children,
+}: {
+  title: string;
+  formLabel: string;
+  agency: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto bg-[#1d2733]/45 px-3 py-6 sm:px-6 sm:py-10"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="filing-dialog-title"
+        className="w-full max-w-2xl rounded-[10px] bg-white shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#e6e9ee] px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[13px] leading-snug text-[#556070]">
+              {formLabel} · {agency}
+            </p>
+            <h2 id="filing-dialog-title" className="text-[17px] font-semibold leading-snug">
+              {title}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`h-8 shrink-0 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[13px] font-medium text-[#1d2733] hover:bg-[#f6f8fa] ${FOCUS}`}
+          >
+            Close
+          </button>
+        </div>
+        <div className="px-5 py-4">{children}</div>
       </div>
-    </details>
+    </div>,
+    document.body,
   );
 }
 
@@ -333,6 +416,7 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   const [record, setRecord] = useState<AssetComplianceRecord | null>(null);
   const [legal, setLegal] = useState<LegalSourcesFile | null>(null);
   const [answers, setAnswers] = useState<FactAnswers>({});
+  const [openId, setOpenId] = useState<string | null>(null);
   const today = todayIso();
 
   useEffect(() => {
@@ -413,6 +497,7 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
   }, [asset, applicable, catalog, determinations, today, record]);
 
   const upcoming = rows.filter((r) => r.next).slice(0, 3);
+  const openRow = rows.find((r) => r.obligation.id === openId) ?? null;
   const openQuestions = rows.filter((r) => r.determination.applicability === "needs_fact");
   const covered = rows.reduce((n, r) => n + r.worksheet.prefilled.length, 0);
   const details = useMemo(() => {
@@ -513,6 +598,14 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
                 {r.determination.applicability === "needs_fact" && (
                   <AnswerButtons d={r.determination} onAnswer={answerFact} onClear={clearFact} />
                 )}
+                <button
+                  type="button"
+                  onClick={() => setOpenId(r.obligation.id)}
+                  aria-haspopup="dialog"
+                  className={`mt-1 text-[13px] font-medium ${LINK}`}
+                >
+                  Open the form
+                </button>
               </li>
             ))}
           </ol>
@@ -525,7 +618,7 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
         hint={
           rows.length === 0
             ? undefined
-            : `One row per filing. ${rows.length} apply to this asset; open a row for the prefilled fields, the fields only you can fill, and the agency's own words.`
+            : `One row per filing. ${rows.length} apply to this asset; click a row to open the form with the prefilled fields, the fields only you can fill, and the agency's own words.`
         }
       >
         {rows.length === 0 ? (
@@ -548,10 +641,7 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
                       d={r.determination}
                       next={r.next}
                       today={today}
-                      snapshot={r.snapshot}
-                      sources={legal?.rules[r.obligation.id] ?? null}
-                      onAnswer={answerFact}
-                      onClear={clearFact}
+                      onOpen={() => setOpenId(r.obligation.id)}
                     />
                   ))}
                 </div>
@@ -656,6 +746,24 @@ export default function OwnerTab({ target }: { target: ReportTarget | null }) {
           I own this — sign in to keep these filings on file
         </a>
       </section>
+
+      {openRow && (
+        <FilingDialog
+          title={openRow.obligation.title}
+          formLabel={openRow.worksheet.form?.form ?? openRow.obligation.form}
+          agency={openRow.worksheet.form?.agency ?? openRow.obligation.agency}
+          onClose={() => setOpenId(null)}
+        >
+          <FilingDetail
+            w={openRow.worksheet}
+            d={openRow.determination}
+            snapshot={openRow.snapshot}
+            sources={legal?.rules[openRow.obligation.id] ?? null}
+            onAnswer={answerFact}
+            onClear={clearFact}
+          />
+        </FilingDialog>
+      )}
     </div>
   );
 }
