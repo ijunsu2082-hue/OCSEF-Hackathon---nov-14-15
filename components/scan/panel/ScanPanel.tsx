@@ -13,7 +13,9 @@ import { GridImpact } from "./GridImpact";
 import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { LocalNews, groupLocalNews } from "./LocalNews";
+import { OptimizationTab, UpgradePlanTab } from "./OptimizationTab";
 import OwnerTab from "./OwnerTab";
+import ReportTab from "./ReportTab";
 import { SelectedAsset } from "./SelectedAsset";
 import { Tabs, tabId, tabPanelId } from "./Tabs";
 import { WhatsHere } from "./WhatsHere";
@@ -35,7 +37,7 @@ export interface ScanPanelProps {
   onReportArea: () => void; // target = this area, switch to the report tab
   selected: ReportTarget | null; // asset clicked on the map / picked in Top plants
   onSelectAsset: (t: ReportTarget | null) => void;
-  onReport: (t: ReportTarget) => void; // "Owner filings" on the selected asset
+  onReport: (t: ReportTarget) => void; // "Report a problem" on the selected asset: target = it, switch to the report tab
 }
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
@@ -71,7 +73,7 @@ function Header({ result }: { result: ScanResult }) {
 /** One-sentence takeaway plus the one main action: a printable brief for the city council. */
 function Takeaway({ result, live, onBrief }: { result: ScanResult; live: LineRatingNow | null; onBrief: () => void }) {
   return (
-    <section className="px-6 py-6">
+    <section className="border-t border-[#e6e9ee] px-6 py-6">
       <p className="text-[15px] leading-snug text-[#1d2733]">{areaTakeaway(result, live)}</p>
       <button
         type="button"
@@ -118,8 +120,15 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 }
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
-  const { result, live, liveLoading, daily, onFocus, tab, onTab, cases } = p;
-  const { reportTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
+  const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
+  const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
+  const areaKey = result ? `${result.area.lat}:${result.area.lon}:${result.area.radius_mi}` : "loading";
+  const previousArea = useRef(areaKey);
+  useEffect(() => {
+    if (previousArea.current === areaKey) return;
+    previousArea.current = areaKey;
+    onTab("area");
+  }, [areaKey, onTab]);
   const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
   const [briefOpen, setBriefOpen] = useState(false);
 
@@ -137,22 +146,20 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
     <div className="h-full overflow-y-auto bg-white text-[#1d2733]">
       <Header result={result} />
       <Tabs tab={tab} onTab={onTab} newsCount={news.within.length} />
-      <Explainer />
 
       <div role="tabpanel" id={tabPanelId(tab)} aria-labelledby={tabId(tab)}>
         {tab === "area" && (
           <>
-            <Takeaway result={result} live={live} onBrief={() => setBriefOpen(true)} />
             {selected && (
               <SelectedAsset
                 target={selected}
                 result={result}
                 onReport={onReport}
+                onOwners={() => onTab("owners")}
                 onClear={() => onSelectAsset(null)}
               />
             )}
             <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
-            <GridImpact result={result} live={live} />
             <AreaCharts result={result} />
             <WhatsHere result={result} live={live} />
             <RiskBreakdown factors={result.risk.factors} />
@@ -162,6 +169,9 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
               onSelect={(plant) => onSelectAsset({ kind: "plant", plant })}
             />
             <GenEvents result={result} />
+            <GridImpact result={result} live={live} />
+            <Takeaway result={result} live={live} onBrief={() => setBriefOpen(true)} />
+            <Explainer />
 
             <footer className="border-t border-[#e6e9ee] px-6 py-6">
               <div className="flex flex-wrap gap-2">
@@ -184,9 +194,22 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
 
         {tab === "news" && <LocalNews result={result} groups={news} onShowOnMap={onShowOnMap} />}
 
+        {tab === "optimization" && <OptimizationTab key={areaKey} result={result} live={live} daily={daily} />}
+
+        {tab === "upgrade" && <UpgradePlanTab key={areaKey} result={result} />}
+
         {tab === "report" && (
-          <OwnerTab target={reportTarget.kind !== "area" ? reportTarget : selected} />
+          <ReportTab
+            result={result}
+            live={live}
+            heatwave={heatwave}
+            target={reportTarget}
+            onClearTarget={onClearTarget}
+            onFocus={onFocus}
+          />
         )}
+
+        {tab === "owners" && <OwnerTab target={selected ?? (reportTarget.kind !== "area" ? reportTarget : null)} />}
       </div>
     </div>
   );

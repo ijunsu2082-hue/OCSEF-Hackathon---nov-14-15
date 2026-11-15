@@ -1,10 +1,11 @@
 // Compliance report generator. Pure functions, no AI, no network.
 // A person picks what happened, adds details, and gets a formal report built from a fixed
 // template per situation, with verified rules from ./legal and facts from public data.
-import type { ScanResult } from "./types";
+import type { LineRatingNow, ScanResult } from "./types";
 import type { ReportTarget } from "./target";
-import { FUEL_LABELS } from "./colors";
+import { FUEL_CATEGORY, FUEL_LABELS } from "./colors";
 import { haversineMi } from "./geo";
+import { heatwaveWeather, rateLine } from "./rating";
 import { kvLabel, lineMiles, lineName, substationName } from "./labels";
 import {
   CPUC,
@@ -19,7 +20,7 @@ import {
   type UtilityInfo,
   type UtilityKey,
 } from "./legal";
-import { fmtCoord, fmtNum, fmtPowerText, isNum } from "@/components/scan/panel/format";
+import { cToF, fmtCoord, fmtNum, fmtPowerText, isNum } from "@/components/scan/panel/format";
 
 /* ------------------------------------------------------------- situations */
 
@@ -545,7 +546,7 @@ function rulesFor(s: Situation, u: UtilityMatch): LegalRule[] {
   return ids.map((id) => LAWS[id]);
 }
 
-function stepsFor(s: Situation, u: UtilityMatch): { steps: SendStep[]; deadlines: string[]; filingUrl: string } {
+function stepsFor(s: Pick<Situation, "route">, u: UtilityMatch): { steps: SendStep[]; deadlines: string[]; filingUrl: string } {
   const util = u.utility;
   const steps: SendStep[] = [];
   const deadlines: string[] = [];
@@ -965,4 +966,280 @@ export function saveReports(reports: SavedReport[]): boolean {
   } catch {
     return false;
   }
+}
+
+/* ------------------------------------------------------------- quick report ("Report a problem" tab) */
+/*
+ * The simple three-step report from the Report a problem tab: pick what's wrong, see what public data
+ * says about the spot, file it. Every auto-issue is built only from real fields on the asset or the scan.
+ * Who it goes to comes from the utility routing above (bill picker, CPUC / city / co-op board).
+ */
+
+export type Severity = "info" | "warn" | "danger";
+
+export interface ReportIssue { text: string; severity: Severity }
+
+export type HazardId = "tree" | "wire_down" | "sparks" | "outage" | "old_broken" | "other";
+
+/** emergency: picking it shows the "call 911" stop screen instead of the report form. */
+export const HAZARDS: { id: HazardId; label: string; emergency?: SituationId }[] = [
+  { id: "tree", label: "Tree touching a wire" },
+  { id: "wire_down", label: "Wire on the ground", emergency: "wire_down" },
+  { id: "sparks", label: "Sparks or fire", emergency: "sparks" },
+  { id: "outage", label: "Power is out" },
+  { id: "old_broken", label: "Looks old or broken" },
+  { id: "other", label: "Something else" },
+];
+
+export const SAFETY_LINE = "If a wire is down or anyone is in danger, call 911 first.";
+
+/** The emergency situation for the picked hazards (wire down first), or null when none is an emergency. */
+export function hazardEmergency(hazards: HazardId[]): SituationId | null {
+  for (const h of HAZARDS) if (h.emergency && hazards.includes(h.id)) return h.emergency;
+  return null;
+}
+
+export interface ReportDraft {
+  title: string;
+  assetLabel: string;
+  location: { lat: number; lon: number; text: string };
+  issues: ReportIssue[];
+}
+
+const pctOf = (ratio: number) => fmtNum(ratio * 100, 0);
+
+/** Heat-wave screening check (105 °F, almost no wind, full sun; typical ACSR "Drake" wire). */
+function heatwaveIssue(heatwave: boolean, subject: string, plural = false): ReportIssue | null {
+  const hw = rateLine(heatwaveWeather());
+  if (!isNum(hw.ratio) || hw.ratio >= 1) return null;
+  const tempF = fmtNum(cToF(hw.weather.temp_c), 0);
+  return {
+    severity: heatwave ? "warn" : "info",
+    text:
+      `${subject} would overheat on a ${tempF} °F day with almost no wind if ${plural ? "they" : "it"} carried ` +
+      `${plural ? "their" : "its"} normal load. ${plural ? "They" : "It"} could safely carry only about ` +
+      `${pctOf(hw.ratio)}% of normal. (Computer estimate for a typical wire.)`,
+  };
+}
+
+/** Live weather check, only when the weather really is live (not the 2025 fallback or the heat-wave scenario). */
+function liveIssue(live: LineRatingNow | null, heatwave: boolean, subject: string): ReportIssue | null {
+  if (heatwave || !live || live.weather.source !== "open-meteo-live") return null;
+  if (!isNum(live.ratio) || live.ratio >= 1) return null;
+  return {
+    severity: "warn",
+    text:
+      `Right now it is ${fmtNum(cToF(live.weather.temp_c), 0)} °F here. ${subject} can safely carry only about ` +
+      `${pctOf(live.ratio)}% of normal in this weather. (Computer estimate for a typical wire.)`,
+  };
+}
+
+function missingIssue(kind: string, missing: string[]): ReportIssue | null {
+  if (missing.length === 0) return null;
+  const what = missing.join(" and ");
+  return { severity: "info", text: `This ${kind}'s ${what} ${missing.length > 1 ? "are" : "is"} missing from public records.` };
+}
+
+function finish(issues: (ReportIssue | null)[]): ReportIssue[] {
+  const out = issues.filter((x): x is ReportIssue => x !== null);
+  if (!out.some((i) => i.severity !== "info")) {
+    out.push({ severity: "info", text: "Nothing serious found in the public data we checked." });
+  }
+  return out;
+}
+
+export function buildDraft(
+  target: ReportTarget,
+  result: ScanResult,
+  live: LineRatingNow | null,
+  heatwave: boolean,
+): ReportDraft {
+  if (target.kind === "plant") {
+    const p = target.plant;
+    const fuel = FUEL_LABELS[p.primary_source] ?? "Other";
+    const name = p.plant_name.trim() || `${fuel} power plant${p.city ? ` in ${p.city}` : ""}`;
+    const age = p.capacity_weighted_age_years;
+    const issues: (ReportIssue | null)[] = [];
+    if (isNum(age) && age >= 40) {
+      issues.push({
+        severity: age >= 60 ? "danger" : "warn",
+        text: `Most of this plant's machines are about ${fmtNum(age, 0)} years old. That is ${age >= 60 ? "very old" : "old"} for a power plant.`,
+      });
+    }
+    if (isNum(p.planned_retirement_mw) && p.planned_retirement_mw > 0) {
+      issues.push({ severity: "info", text: `The owner plans to shut down ${fmtPowerText(p.planned_retirement_mw)} here.` });
+    }
+    if (FUEL_CATEGORY[p.primary_source] === "fossil") {
+      issues.push({ severity: "info", text: `It mostly burns ${fuel.toLowerCase()}, which puts pollution and CO2 into the air.` });
+    }
+    const missing: string[] = [];
+    if (!p.plant_name.trim()) missing.push("name");
+    if (p.grid_voltage_kv === null) missing.push("grid voltage");
+    issues.push(missingIssue("plant", missing));
+    const place = [p.city, p.county ? `${p.county} County` : ""].filter(Boolean).join(", ");
+    const owner = p.utility_name?.trim() ? `, owner: ${p.utility_name.trim()}` : "";
+    return {
+      title: `Problem report: ${name}`,
+      assetLabel: `${name} (${fmtPowerText(p.nameplate_mw)} ${fuel.toLowerCase()} power plant${owner})`,
+      location: { lat: p.lat, lon: p.lon, text: place ? `${place} (${fmtCoord(p.lat, p.lon)})` : fmtCoord(p.lat, p.lon) },
+      issues: finish(issues),
+    };
+  }
+
+  if (target.kind === "substation") {
+    const s = target.substation;
+    const name = substationName(s);
+    const missing: string[] = [];
+    if (!s.name) missing.push("name");
+    if (s.voltage_kv === null) missing.push("voltage");
+    const kv = kvLabel(s.voltage_kv, s.kv_inferred);
+    const op = s.operator ? `, operator: ${s.operator}` : "";
+    return {
+      title: `Problem report: ${name}`,
+      assetLabel: `${name} (${kv ? `${kv} ` : ""}substation${op})`,
+      location: { lat: s.lat, lon: s.lon, text: fmtCoord(s.lat, s.lon) },
+      issues: finish([missingIssue("substation", missing)]),
+    };
+  }
+
+  if (target.kind === "line") {
+    const l = target.line;
+    const name = lineName(l);
+    const mid = l.coords[Math.floor(l.coords.length / 2)] ?? [result.area.lat, result.area.lon];
+    const missing: string[] = [];
+    if (!l.name) missing.push("name");
+    if (l.voltage_kv === null) missing.push("voltage");
+    const kv = kvLabel(l.voltage_kv, l.kv_inferred);
+    const op = l.operator ? `, operator: ${l.operator}` : "";
+    return {
+      title: `Problem report: ${name}`,
+      assetLabel: `${name} (${kv ? `${kv} ` : ""}power line, ${fmtNum(lineMiles(l), 1)} mi long${op})`,
+      location: { lat: mid[0], lon: mid[1], text: `Middle of the line: ${fmtCoord(mid[0], mid[1])}` },
+      issues: finish([
+        heatwaveIssue(heatwave, "This power line"),
+        liveIssue(live, heatwave, "This power line"),
+        missingIssue("power line", missing),
+      ]),
+    };
+  }
+
+  // area
+  const a = result.area;
+  const issues: (ReportIssue | null)[] = [];
+  const lvl = result.risk.level;
+  if (lvl === "HIGH" || lvl === "CRITICAL") {
+    const top = [...result.risk.factors].sort((x, y) => y.score * y.weight - x.score * x.weight)[0];
+    issues.push({
+      severity: lvl === "CRITICAL" ? "danger" : "warn",
+      text:
+        `GridSentinel's own risk index rated this area ${lvl === "CRITICAL" ? "critical" : "high"}: ${fmtNum(result.risk.score, 0)} out of 100.` +
+        (top ? ` The biggest reason: ${top.label.toLowerCase()}.` : ""),
+    });
+  }
+  if (result.lines.length > 0) {
+    const n = result.lines.length;
+    issues.push(n === 1 ? heatwaveIssue(heatwave, "The power line here") : heatwaveIssue(heatwave, `The ${fmtNum(n, 0)} power lines here`, true));
+    issues.push(liveIssue(live, heatwave, "Power lines here"));
+  }
+  if (isNum(result.totals.planned_retirement_mw) && result.totals.planned_retirement_mw > 0) {
+    issues.push({
+      severity: "info",
+      text: `Power plant owners here plan to shut down ${fmtPowerText(result.totals.planned_retirement_mw)} of power.`,
+    });
+  }
+  return {
+    title: `Problem report: ${result.area_label} (area)`,
+    assetLabel: `The area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label}`,
+    location: { lat: a.lat, lon: a.lon, text: `Center: ${fmtCoord(a.lat, a.lon)}` },
+    issues: finish(issues),
+  };
+}
+
+const SEVERITY_WORD: Record<Severity, string> = { info: "Note", warn: "Watch", danger: "Serious" };
+export const severityWord = (s: Severity) => SEVERITY_WORD[s];
+
+export interface QuickRouting {
+  /** Who gets the report first. */
+  contactName: string;
+  /** Best page to open first (the utility's report page, else the CPUC / city route). */
+  url: string;
+  /** Where to send it, in order: the utility, then the CPUC (SCE, SDG&E, PG&E...), the city, or the co-op board. */
+  steps: SendStep[];
+}
+
+/** Picked hazards that are only about service (outage, something else) go the service route; the rest are safety. */
+function hazardRoute(hazards: HazardId[]): Route {
+  return hazards.length > 0 && hazards.every((h) => h === "outage" || h === "other") ? "service" : "safety";
+}
+
+export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting {
+  const { steps, filingUrl } = stepsFor({ route: hazardRoute(hazards) }, u);
+  return {
+    contactName: u.known ? u.utility.name : "Your local electric utility (its name is on your electric bill)",
+    url: filingUrl,
+    steps,
+  };
+}
+
+function fmtFiled(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+
+export function quickReportText(
+  draft: ReportDraft,
+  hazards: HazardId[],
+  note: string,
+  routing: QuickRouting,
+  createdAt: string,
+): string {
+  const picked = hazards.map((id) => HAZARDS.find((h) => h.id === id)?.label).filter((x): x is string => !!x);
+  const L: string[] = [
+    draft.title,
+    `Filed: ${fmtFiled(createdAt)}`,
+    "",
+    `What: ${draft.assetLabel}`,
+    `Where: ${draft.location.text}`,
+    `Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
+    "",
+    "What's wrong:",
+    ...(picked.length ? picked.map((h) => `- ${h}`) : ["- (nothing picked)"]),
+  ];
+  if (note.trim()) L.push("", `Note: ${note.trim()}`);
+  L.push(
+    "",
+    "What we checked (from public data):",
+    ...draft.issues.map((i) => `- [${SEVERITY_WORD[i.severity]}] ${i.text}`),
+    "",
+    `Who to contact: ${routing.contactName} - ${routing.url}`,
+    "Where to send it, in order:",
+  );
+  routing.steps.forEach((st, i) => {
+    L.push(`${i + 1}. ${st.title}`, `   ${st.detail}`);
+    if (st.phone) L.push(`   Phone: ${st.phone.display}`);
+    if (st.url) L.push(`   ${st.url}`);
+  });
+  L.push("", SAFETY_LINE, DISCLAIMER, "Made with GridSentinel.");
+  return L.join("\n");
+}
+
+/** A filed quick report, saved in the same list (gs-reports-v1) as every other report. */
+export function fileQuickReport(
+  draft: ReportDraft,
+  hazards: HazardId[],
+  note: string,
+  routing: QuickRouting,
+  now = new Date(),
+): SavedReport {
+  const createdAt = now.toISOString();
+  return {
+    id: `${createdAt}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt,
+    title: draft.title,
+    subject: draft.title,
+    assetLabel: draft.assetLabel,
+    location: { ...draft.location },
+    contact: { name: routing.contactName, url: routing.url },
+    text: quickReportText(draft, hazards, note, routing, createdAt),
+  };
 }

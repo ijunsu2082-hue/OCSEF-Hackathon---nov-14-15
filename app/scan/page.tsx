@@ -150,7 +150,7 @@ export default function Page() {
 
   // ---- render -----------------------------------------------------------------
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white text-ink">
+    <div className="gs-scan-app flex h-screen flex-col overflow-hidden bg-white text-ink">
       <TopBar
         data={data}
         area={area}

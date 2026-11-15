@@ -54,7 +54,7 @@ export function Explainer() {
   const id = useId();
 
   return (
-    <div className="px-6 pt-3">
+    <div className="border-t border-[#e6e9ee] px-6 py-6">
       <button
         type="button"
         aria-expanded={open}
@@ -64,7 +64,7 @@ export function Explainer() {
       >
         {open ? "Hide the guide" : "What am I looking at?"}
       </button>
-      <div id={id} hidden={!open} className="mt-3 border-b border-[#e6e9ee] pb-4">
+      <div id={id} hidden={!open} className="mt-3">
         <dl className="space-y-2">
           {ITEMS.map((it) => (
             <div key={it.title}>

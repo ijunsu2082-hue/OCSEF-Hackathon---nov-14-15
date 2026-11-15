@@ -9,7 +9,7 @@
   --panel: #ffffff;
   --panel-raised: #f6f8fa;
   --border: #e6e9ee;
-  --border-strong: #e6e9ee;
+  --border-strong: #d5dae1;
 
   --text: #1d2733;
   --text-dim: #556070;
@@ -47,6 +47,24 @@ body {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/* app/globals.css (the team app at /) resets button, p, ul, h1-h4 outside any @layer.
+   Unlayered rules beat every Tailwind utility (those live in @layer utilities), so on /scan
+   classes like text-[#0369a1], mt-2 or px-6 on those elements were ignored: sky links turned
+   grey/black and spacing collapsed. Hand these properties back to the layered cascade here
+   (Tailwind preflight gives the same defaults). Scoped with :has() so only the scan app is
+   affected, including its portals (council brief, print copy). */
+body:has(.gs-scan-app) :is(button, input, select, textarea) {
+  font: revert-layer;
+  color: revert-layer;
+}
+body:has(.gs-scan-app) :is(h1, h2, h3, h4, p, ul, ol, figure) {
+  margin: revert-layer;
+  padding: revert-layer;
+}
+body:has(.gs-scan-app) :is(ul, ol) {
+  list-style: revert-layer;
 }
 
 /* Numbers: same UI font, tabular figures (no monospace). */

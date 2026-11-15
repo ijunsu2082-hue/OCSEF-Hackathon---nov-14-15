@@ -59,7 +59,7 @@ export function RiskBreakdown({
                   </span>
                 </div>
                 <div
-                  className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-[#e6e9ee]"
+                  className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-[#eef1f4]"
                   role="meter"
                   aria-label={f.label}
                   aria-valuemin={0}

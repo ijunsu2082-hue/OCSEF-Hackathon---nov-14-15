@@ -56,7 +56,7 @@ export function TopBar({ area, heatwave, onJump, onRadius, onHeatwave }: TopBarP
               if (spot) onJump(spot);
             }}
             className="h-8 appearance-none rounded-[6px] border bg-white py-0 pl-2.5 pr-7 text-[13px] text-[#1d2733] outline-none focus-visible:border-[#0ea5e9]"
-            style={{ borderColor: "#e6e9ee" }}
+            style={{ borderColor: "#d5dae1" }}
           >
             <option value="" disabled>
               Jump to a place
@@ -103,7 +103,7 @@ export function TopBar({ area, heatwave, onJump, onRadius, onHeatwave }: TopBarP
           style={
             heatwave
               ? { borderColor: "#0ea5e9", background: "#e0f2fe", color: "#0369a1" }
-              : { borderColor: "#e6e9ee", background: "#ffffff", color: "#1d2733" }
+              : { borderColor: "#d5dae1", background: "#ffffff", color: "#1d2733" }
           }
           title="Replace live weather with a modeled 105 °F, near-calm, full-sun afternoon"
         >

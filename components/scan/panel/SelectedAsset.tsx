@@ -91,11 +91,13 @@ export function SelectedAsset({
   target,
   result,
   onReport,
+  onOwners,
   onClear,
 }: {
   target: ReportTarget;
   result: ScanResult;
   onReport: (t: ReportTarget) => void;
+  onOwners: () => void;
   onClear: () => void;
 }) {
   if (target.kind === "area") return null;
@@ -124,6 +126,13 @@ export function SelectedAsset({
             type="button"
             onClick={() => onReport(target)}
             className={`h-8 rounded-[6px] bg-[#0ea5e9] px-3 text-[14px] font-semibold text-[#1d2733] transition-colors hover:bg-[#38bdf8] ${FOCUS}`}
+          >
+            Report a problem
+          </button>
+          <button
+            type="button"
+            onClick={onOwners}
+            className={`h-8 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#1d2733] transition-colors hover:bg-[#f6f8fa] ${FOCUS}`}
           >
             Owner filings
           </button>
