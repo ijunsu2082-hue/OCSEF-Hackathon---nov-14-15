@@ -1,10 +1,13 @@
 "use client";
 
 import { Segmented, Stat } from "@/components/ui/kit";
+import { Cite, ScenarioTag } from "@/components/evidence/Citations";
+import { regionSubject } from "@/lib/evidence/citation";
 import { compact, fmtNumber } from "@/lib/format";
 
 type Props = {
   regionName: string;
+  regionId: string;
   kpis: { draw: number; ci: number; co2: number; overloads: number };
   heatwave: boolean;
   onHeatwave: (next: boolean) => void;
@@ -14,12 +17,21 @@ type Props = {
 
 export default function ControlBar({
   regionName,
+  regionId,
   kpis,
   heatwave,
   onHeatwave,
   view3d,
   onView3d,
 }: Props) {
+  const region = regionSubject(regionId);
+  const cite = (predicate: string) =>
+    heatwave ? (
+      <ScenarioTag />
+    ) : (
+      <Cite subject={region} predicate={predicate} quiet />
+    );
+
   return (
     <header className="topbar">
       <div className="brand">
@@ -39,7 +51,7 @@ export default function ControlBar({
           </svg>
         </span>
         <div className="brand-text">
-          <strong>GridSentinel</strong>
+          <strong>Mapergy</strong>
           <span>Infrastructure energy intelligence</span>
         </div>
       </div>
@@ -56,13 +68,20 @@ export default function ControlBar({
           label="Total grid draw"
           value={fmtNumber(kpis.draw, 1)}
           unit="MW"
+          cite={cite("region.kpi_total_draw_mw")}
         />
         <Stat
           label="Grid carbon intensity"
           value={fmtNumber(kpis.ci, 0)}
           unit="gCO₂/kWh"
+          cite={cite("region.kpi_carbon_intensity_gco2_kwh")}
         />
-        <Stat label="Annual CO₂" value={compact(kpis.co2)} unit="t" />
+        <Stat
+          label="Annual CO₂"
+          value={compact(kpis.co2)}
+          unit="t"
+          cite={cite("region.kpi_total_annual_co2_tons")}
+        />
       </div>
 
       <div className="topbar-actions">

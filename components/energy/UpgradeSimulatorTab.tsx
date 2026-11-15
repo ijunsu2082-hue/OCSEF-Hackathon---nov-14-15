@@ -14,6 +14,11 @@ import {
 import type { DrawerTab } from "@/components/shell/AnalyzerDrawer";
 import { Panel } from "@/components/ui/kit";
 import { compact, compactUSD, fmtNumber, fmtPercent, fmtYears } from "@/lib/format";
+import {
+  assessRisk,
+  riskRemovedPerMillion,
+  type RiskEntry,
+} from "@/lib/risk";
 import { paybackCurve } from "@/lib/simulation";
 import type { FacilityProperties, SimResult } from "@/lib/types";
 import type { Plan } from "@/components/shell/Workspace";
@@ -21,6 +26,7 @@ import type { Plan } from "@/components/shell/Workspace";
 interface Props {
   properties: FacilityProperties;
   sim: SimResult;
+  risk: RiskEntry;
   plan: Plan;
   onPlan: (plan: Plan) => void;
   onNavigate: (tab: DrawerTab) => void;
@@ -29,6 +35,7 @@ interface Props {
 export default function UpgradeSimulatorTab({
   properties,
   sim,
+  risk,
   plan,
   onPlan,
   onNavigate,
@@ -43,6 +50,42 @@ export default function UpgradeSimulatorTab({
 
   const curve = useMemo(() => paybackCurve(sim), [sim]);
   const up = sim.upgraded;
+
+  const afterRisk = useMemo(() => {
+    const afterEfficiency = plan.vfd
+      ? Math.min(
+          0.95,
+          properties.infrastructure.motor_efficiency_rating +
+            upgrade.efficiency_gain_pct / 100,
+        )
+      : properties.infrastructure.motor_efficiency_rating;
+    const afterProperties = plan.vfd
+      ? {
+          ...properties,
+          infrastructure: {
+            ...properties.infrastructure,
+            motor_efficiency_rating: afterEfficiency,
+          },
+        }
+      : properties;
+    return assessRisk(afterProperties, {
+      heatwave: sim.heatwave_active,
+      overload: false,
+      criticality: {
+        value: risk.criticality,
+        assumed: risk.criticality_assumed,
+        basis: risk.criticality_basis,
+      },
+    });
+  }, [
+    plan.vfd,
+    properties,
+    upgrade.efficiency_gain_pct,
+    sim.heatwave_active,
+    risk.criticality,
+    risk.criticality_assumed,
+    risk.criticality_basis,
+  ]);
 
   const isRecommended =
     Math.abs(plan.solar - recommendedSolar) < 0.001 && plan.vfd === true;
@@ -154,7 +197,27 @@ export default function UpgradeSimulatorTab({
                 <b className="is-accent">{fmtYears(up.payback_years)}</b>
                 <span>Simple payback</span>
               </div>
+              <div className="readout">
+                <b className={risk.score > afterRisk.score ? "is-good" : undefined}>
+                  {fmtNumber(Math.max(0, risk.score - afterRisk.score), 1)}
+                </b>
+                <span>Risk points removed*</span>
+              </div>
+              <div className="readout">
+                <b>
+                  {riskRemovedPerMillion(risk.score, afterRisk.score, up.capex_usd) === null
+                    ? "n/a"
+                    : fmtNumber(
+                        riskRemovedPerMillion(risk.score, afterRisk.score, up.capex_usd) ?? 0,
+                        1,
+                      )}
+                </b>
+                <span>ΔR per $M capex*</span>
+              </div>
             </div>
+            <p className="risk-note">
+              *Motor-efficiency and overload effects only; solar carbon reduction is not scored yet.
+            </p>
           </Panel>
 
           <Panel title="Payback curve" hint="cumulative cash">

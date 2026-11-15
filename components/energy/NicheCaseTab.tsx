@@ -21,7 +21,7 @@ interface RatingPoint {
 }
 
 /** Daily summary of the hourly `dlr_conservative_vs_static` column. */
-export function dailyRatingSeries(csv: string): RatingPoint[] {
+function dailyRatingSeries(csv: string): RatingPoint[] {
   const rows = csv.split(/\r?\n/);
   if (rows.length < 2) return [];
   const header = rows[0].split(",");
@@ -137,7 +137,6 @@ function RatingChart({ url }: { url: string }) {
               fontSize: 10,
               color: "var(--text)",
             }}
-            labelFormatter={(label) => String(label)}
             formatter={(value) => `${Number(value).toFixed(2)}×`}
           />
           <Line
@@ -212,7 +211,9 @@ export default function NicheCaseTab({ nicheCase }: Props) {
           {nicheCase.stats.map((stat) => (
             <li className="niche-stat" key={stat.label}>
               <div className="niche-stat-head">
-                <b>{stat.value}</b>
+                {/* Most research cards carry the number inside the label; only
+                    render a headline value when one exists. */}
+                {stat.value ? <b>{stat.value}</b> : null}
                 <span className={`tag tag-${stat.kind}`}>{stat.kind}</span>
               </div>
               <span className="niche-stat-label">{stat.label}</span>
@@ -221,6 +222,43 @@ export default function NicheCaseTab({ nicheCase }: Props) {
           ))}
         </ul>
       </Panel>
+
+      {(() => {
+        const seen = new Set<string>();
+        const links: { url: string; host: string; path: string }[] = [];
+        for (const stat of nicheCase.stats) {
+          const url = stat.source.trim();
+          if (!/^https?:\/\//i.test(url)) continue;
+          const parsed = new URL(url);
+          const key = `${parsed.hostname}${parsed.pathname}`.replace(/\/$/, "").toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          links.push({
+            url,
+            host: parsed.hostname.replace(/^www\./, ""),
+            path: `${parsed.pathname}${parsed.search}`,
+          });
+        }
+        if (links.length === 0) return null;
+        return (
+          <Panel title="In the news" hint="reporting links">
+            <p className="facility-note">
+              Where these figures come from. Reporting and documents only — these links are
+              not generation assets and add nothing to the energy mix.
+            </p>
+            <ul className="news-list">
+              {links.map((link) => (
+                <li key={link.url}>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.host}
+                  </a>
+                  <span>{link.path.slice(0, 72)}</span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        );
+      })()}
 
       {nicheCase.chart?.kind === "line_rating" ? (
         <Panel title="Safe rating vs fixed rating, 2024" hint="modeled · hourly">

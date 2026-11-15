@@ -1,0 +1,424 @@
+/* Owner plan + lifecycle gates inside the Area Scan panel. Tokens: design/tokens.css. */
+
+.root {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.root h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.root code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text);
+}
+
+.root em {
+  font-style: normal;
+  color: var(--muted);
+}
+
+.root :is(button, input, select, textarea, summary, a, [tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.section,
+.mywork {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mywork {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.scenario {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 10.5px;
+}
+
+.scenario[data-heat="true"] {
+  border-color: color-mix(in srgb, var(--high) 70%, transparent);
+  background: color-mix(in srgb, var(--high) 16%, transparent);
+}
+
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kicker {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.detail {
+  margin: 0;
+}
+
+.unknown {
+  margin: 0;
+  color: var(--warn);
+}
+
+.overdue {
+  color: var(--critical);
+}
+
+.next,
+.block {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 4px;
+}
+
+.subhead {
+  margin: 6px 0 2px;
+  color: var(--text);
+  font-size: 11.5px;
+}
+
+.subhead span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.card {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+}
+
+.card[data-kind="risk"] { border-left: 3px solid var(--high); }
+.card[data-kind="sustainability"] { border-left: 3px solid var(--ok); }
+.card[data-kind="gap"] { border-left: 3px solid var(--warn); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 100%;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 10.5px;
+  text-align: left;
+}
+
+button.chip { cursor: pointer; }
+.chip b { color: var(--text); font-weight: 600; }
+.chip[data-prov="model"] { border-color: color-mix(in srgb, var(--accent-2) 60%, transparent); }
+.chip[data-prov="public_source"] { border-color: color-mix(in srgb, var(--ok) 60%, transparent); }
+.chip[data-prov="user_assertion"] { border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
+.chip[data-prov="owner_verified"] { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.chip[data-prov="operator"] { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+.chip[data-prov="missing"] { border-color: var(--critical); color: var(--critical); }
+.chip[data-prov="next"] { border-color: var(--accent); color: var(--accent); }
+.chip[data-src="open"] { border-color: var(--ok); color: var(--ok); }
+.chip[data-src="forecasted"] { border-color: var(--accent); color: var(--accent); }
+.chip[data-src="closed"] { color: var(--muted); }
+.chip[data-src="unresolved"] { border-color: var(--warn); color: var(--warn); }
+.chip[data-src="keyword"] { border-style: dashed; }
+
+.banner {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--warn) 60%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--text);
+}
+
+.banner ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+.banner p { margin: 0; }
+
+.options {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.options legend {
+  padding: 0;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.option {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.option[data-selected="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.radio {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.radio input {
+  flex: none;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.stage { display: grid; gap: 6px; min-width: 0; }
+
+.tasks {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--panel) 50%, transparent);
+  scroll-margin-top: 8px;
+}
+
+.task[data-next="true"] { border-color: var(--accent); }
+.task[data-status="done"] { opacity: 0.8; }
+.task[data-status="blocked"] { border-left: 3px solid var(--warn); }
+
+.taskHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rank {
+  flex: none;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.taskGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.field {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.field :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  color-scheme: dark;
+}
+
+.field textarea { resize: vertical; }
+
+.handoff {
+  margin: 0;
+  color: var(--warn);
+  font-size: 10.5px;
+}
+
+.handoff[data-ack="true"] { color: var(--ok); }
+
+.btn,
+.btnSmall,
+.link {
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn {
+  justify-self: start;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.btnSmall {
+  min-height: 26px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-size: 10.5px;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.exports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.details {
+  min-width: 0;
+}
+
+.details summary {
+  cursor: pointer;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.details[open] > summary { margin-bottom: 6px; }
+
+.gateStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.gateBtn {
+  display: grid;
+  gap: 1px;
+  min-height: 40px;
+  padding: 4px 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 9.5px;
+  cursor: pointer;
+}
+
+.gateBtn b { color: var(--text); font-size: 12px; }
+.gateBtn[data-status="pass"] { border-color: var(--ok); }
+.gateBtn[data-status="blocked"] { border-color: var(--critical); }
+.gateBtn[data-status="not_ready"] { border-style: dashed; }
+.gateBtn[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: var(--accent); }
+
+.source {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .root * {
+    scroll-behavior: auto;
+    transition: none;
+    animation: none;
+  }
+}

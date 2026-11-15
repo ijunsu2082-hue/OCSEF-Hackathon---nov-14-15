@@ -1,6 +1,8 @@
 "use client";
 
 import { Panel } from "@/components/ui/kit";
+import { Cite, ScenarioTag } from "@/components/evidence/Citations";
+import { facilitySubject } from "@/lib/evidence/citation";
 import { compact, compactUSD, fmtNumber, fmtYears } from "@/lib/format";
 import type { RiskEntry } from "@/lib/risk";
 import type { FacilityProperties, SimResult } from "@/lib/types";
@@ -129,9 +131,25 @@ export default function ProcessTab({ entries, flowCount, heatwave }: Props) {
                   <td>
                     <span style={{ color: entry.risk.color, fontWeight: 600 }}>
                       {entry.risk.score.toFixed(1)}
-                    </span>
+                    </span>{" "}
+                    {heatwave ? (
+                      <ScenarioTag />
+                    ) : (
+                      <Cite
+                        subject={facilitySubject(entry.properties.id)}
+                        predicate="facility.risk_score"
+                        quiet
+                      />
+                    )}
                   </td>
-                  <td>{fmtNumber(entry.properties.upgrade_potential.solar_capacity_add_mw, 1)} MW</td>
+                  <td>
+                    {fmtNumber(entry.properties.upgrade_potential.solar_capacity_add_mw, 1)} MW{" "}
+                    <Cite
+                      subject={facilitySubject(entry.properties.id)}
+                      predicate="facility.upgrade.solar_capacity_add_mw"
+                      quiet
+                    />
+                  </td>
                   <td className="num-cell">
                     {compactUSD(entry.sim.upgraded?.capex_usd ?? 0)}
                   </td>

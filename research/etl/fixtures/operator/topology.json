@@ -1,0 +1,20 @@
+{
+  "kind": "topology",
+  "issuer": { "name": "Dana Ortiz", "organization": "Example Municipal Utility", "contact": "planning@utility.example" },
+  "issued_at": "2026-10-01T09:00:00-07:00",
+  "scope": { "center": [33.75, -117.99], "radius_miles": 25, "assets": ["bus-sub-12", "bus-f1-a", "bus-f1-b", "br-f1-01", "br-f1-02"] },
+  "visibility": "private",
+  "effective": { "start": "2026-10-01T00:00:00-07:00" },
+  "payload": {
+    "feeder_id": "feeder-f1",
+    "buses": [
+      { "id": "bus-sub-12", "name": "Substation 12 LV", "base_voltage": { "value": 12.47, "unit": "kV" } },
+      { "id": "bus-f1-a", "base_voltage": { "value": 12.47, "unit": "kV" } },
+      { "id": "bus-f1-b", "base_voltage": { "value": 12.47, "unit": "kV" } }
+    ],
+    "branches": [
+      { "id": "br-f1-01", "from_bus": "bus-sub-12", "to_bus": "bus-f1-a", "voltage": { "value": 12.47, "unit": "kV" }, "length": { "value": 1.8, "unit": "mi" }, "rating": { "value": 10.8, "unit": "MVA" } },
+      { "id": "br-f1-02", "from_bus": "bus-f1-a", "to_bus": "bus-f1-b", "voltage": { "value": 12.47, "unit": "kV" }, "length": { "value": 0.9, "unit": "mi" } }
+    ]
+  }
+}

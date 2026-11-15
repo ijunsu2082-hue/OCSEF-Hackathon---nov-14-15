@@ -47,8 +47,9 @@ export default function GridChainTab({ properties, sim, ctx, exposure }: Props) 
           ))}
         </div>
         <p className="table-note">
-          Every figure is derived from the modelled operating point, the serving corridor and the
-          site&apos;s inspected age — screening estimates, not operator telemetry.
+          Grid figures come from the EIA-860 plant layer and the OSM circuit and substation layers,
+          or from the IEEE 738 and inertia physics in <code>lib/physics</code>. Site load is the
+          modelled operating point. Pathway costs are screening estimates, not operator telemetry.
         </p>
       </Panel>
 
@@ -101,6 +102,7 @@ export default function GridChainTab({ properties, sim, ctx, exposure }: Props) 
         <Panel
           key={phase.id}
           title={`${phase.phase} · ${phase.name}`}
+          hint={phase.provenance}
           action={<SeverityPill severity={phase.severity} />}
         >
           <div className="chain-chips">
@@ -150,8 +152,8 @@ export default function GridChainTab({ properties, sim, ctx, exposure }: Props) 
       <Panel title="Why the chain matters">
         <p className="facility-note">
           A load center is only as reliable as its weakest phase. Solar and a drive retrofit fix the
-          meter and the motor; the corridor, the transformer bank, the feeder and the nodal price
-          decide whether the site can actually use them.
+          meter and the motor; the plants in the ring, the circuits, the transformer bank and the
+          local feeder decide whether the site can actually use them.
         </p>
       </Panel>
     </>

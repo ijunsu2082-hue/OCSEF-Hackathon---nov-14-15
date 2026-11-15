@@ -1,0 +1,296 @@
+
+/* ---- Light theme -------------------------------------------------------------
+   tokens.css ships a dark palette plus a [data-stress] retheme. Both are overridden
+   here with one light palette so heatwave mode never re-colors the page. */
+:root,
+[data-stress="true"] {
+  --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --panel: #ffffff;
+  --panel-raised: #f6f8fa;
+  --border: #e6e9ee;
+  --border-strong: #d5dae1;
+
+  --text: #1d2733;
+  --text-dim: #556070;
+  --muted: #6b7583;
+
+  --accent: #0ea5e9;
+  --accent-2: #0284c7;
+  --accent-soft: #e0f2fe;
+  --ok: #556070;
+  --warn: #d97706;
+  --high: #dc2626;
+  --critical: #dc2626;
+
+  --grid-line: transparent;
+  --flow: #0ea5e9;
+
+  --shadow-panel: 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-pop: 0 1px 3px rgba(16, 24, 40, 0.08);
+
+  --bar-h: 56px;
+
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* app/globals.css (the team app at /) resets button, p, ul, h1-h4 outside any @layer.
+   Unlayered rules beat every Tailwind utility (those live in @layer utilities), so on /scan
+   classes like text-[#0369a1], mt-2 or px-6 on those elements were ignored: sky links turned
+   grey/black and spacing collapsed. Hand these properties back to the layered cascade here
+   (Tailwind preflight gives the same defaults). Scoped with :has() so only the scan app is
+   affected, including its portals (council brief, print copy). */
+body:has(.gs-scan-app) :is(button, input, select, textarea) {
+  font: revert-layer;
+  color: revert-layer;
+}
+body:has(.gs-scan-app) :is(h1, h2, h3, h4, p, ul, ol, figure) {
+  margin: revert-layer;
+  padding: revert-layer;
+}
+body:has(.gs-scan-app) :is(ul, ol) {
+  list-style: revert-layer;
+}
+
+/* Numbers: same UI font, tabular figures (no monospace). */
+.num,
+.tabular {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Legacy pill classes: render as plain colored text, no chip. */
+.pill {
+  display: inline;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.pill::before {
+  content: none;
+}
+.pill-low,
+.pill-ok,
+.pill-watch,
+.pill-high,
+.pill-critical,
+.pill-neutral {
+  background: none;
+  border-color: transparent;
+}
+
+/* tokens.css grid backdrop: not used in the light theme. */
+.grid-texture {
+  background-image: none;
+}
+
+/* Thin, quiet scrollbars for the drawer (the only scroll region). */
+.gs-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.gs-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.gs-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+/* ---- Range slider (radius control) ---------------------------------------- */
+.gs-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+.gs-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.gs-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  border: 2px solid #ffffff;
+}
+.gs-range:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* ---- Leaflet ----------------------------------------------------------------
+   Prefixed with :root because leaflet.css is imported later (by the map chunk)
+   and would otherwise win every equal-specificity tie. */
+:root .leaflet-container {
+  background: #f6f8fa;
+  font-family: var(--font-ui);
+  cursor: crosshair;
+}
+:root .leaflet-container.leaflet-grab {
+  cursor: crosshair;
+}
+:root .leaflet-container.leaflet-dragging .leaflet-grab {
+  cursor: grabbing;
+}
+
+:root .leaflet-tooltip {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-pop);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+:root .leaflet-tooltip-top::before {
+  border-top-color: var(--border);
+}
+:root .leaflet-tooltip-bottom::before {
+  border-bottom-color: var(--border);
+}
+:root .leaflet-tooltip-left::before {
+  border-left-color: var(--border);
+}
+:root .leaflet-tooltip-right::before {
+  border-right-color: var(--border);
+}
+:root .leaflet-tooltip.gs-tip-wrap {
+  white-space: normal;
+  width: 280px;
+}
+.gs-tip-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.gs-tip-row {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.gs-tip-src {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+:root .leaflet-popup-content-wrapper,
+:root .leaflet-popup-tip {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+}
+:root .leaflet-popup-content-wrapper {
+  border-radius: 6px;
+}
+:root .leaflet-container a.leaflet-popup-close-button {
+  color: var(--muted);
+}
+
+:root .leaflet-container .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  font-size: 11px;
+}
+:root .leaflet-container .leaflet-control-attribution a {
+  color: var(--text-dim);
+}
+
+:root .leaflet-bar {
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-pop) !important;
+  overflow: hidden;
+}
+:root .leaflet-bar a,
+:root .leaflet-bar a:hover {
+  background: #ffffff;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+:root .leaflet-bar a:hover {
+  background: #f6f8fa;
+}
+:root .leaflet-bar a:last-child {
+  border-bottom: none;
+}
+:root .leaflet-bar a.leaflet-disabled {
+  background: #ffffff;
+  color: var(--border-strong);
+}
+
+/* Leaflet divIcons default to a white box; ours are transparent. */
+:root .leaflet-div-icon.gs-icon {
+  background: transparent;
+  border: none;
+}
+
+/* ---- Map markers ----------------------------------------------------------- */
+.gs-home {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--accent-2);
+  background: #ffffff;
+}
+
+/* A story's spot from the Local news tab: plain sky dot, white ring. */
+.gs-news-pin {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 3px solid #ffffff;
+  background: var(--accent);
+  box-shadow: var(--shadow-pop);
+}
+
+.gs-scan-label {
+  display: inline-block;
+  transform: translate(8px, -50%);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* "100-mile study area": centered on the ring's top edge. */
+.gs-scan-label.gs-ring-label {
+  transform: translate(-50%, -50%);
+}
