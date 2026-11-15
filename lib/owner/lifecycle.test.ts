@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   APPLICABILITY_STATES, EVENT_TYPES, EXTERNAL_STATES, LifecycleError, applyEvent, caseRecord, createLifecycle,
-  current, evaluateGate, replay, stateHash, submissionPackageHash,
+  current, evaluateGate, replay, stateHash, submissionPackageHash, triggerStatus, GATE_STAGE, GATES,
   type GateEvaluation, type LifecycleConfig, type LifecycleEvent, type LifecycleState,
 } from "./lifecycle";
 import { evaluateRules, segmentRouteByJurisdiction, type JurisdictionArea, type RulePack } from "./rules";
-import { PROCEDURES } from "./procedures";
+import { PROCEDURES, RULE_IDS, STAGE_GATE, TRIGGER_IDS, gatingOf, preconditionCodes, procedureByCode } from "./procedures";
+import { LIVENESS_CASE_IDS, completedLifecycleCase, type LivenessCase } from "./fixtures";
 import type { Evidence, Fact, GateId } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -566,19 +567,186 @@ test("reducer: duplicate event id, out-of-order time, and offset-less timestamps
   assert.equal(w.err("analyst", T("2027-01-04"), { type: "fact_recorded", fact: { id: "f2", subject: "case-mg", predicate: "peak_kw", value: 1, provenance: "model", evidence: [], asOf: T("2027-01-04") } }).code, "DUPLICATE_RECORD");
 });
 
-test("procedures: catalogue steps are consumed generically; incomplete gate-blocking steps block, completion clears them", () => {
+test("procedures: required steps at a gate are consumed generically; non-required steps never count; completion clears them", () => {
   const w = m0(new W());
   const steps = PROCEDURES.filter((p) => p.gate === "M0");
+  const required = steps.filter((st) => gatingOf(st) === "required");
+  assert.ok(required.length > 0);
   const g = w.gate("M0", T("2026-12-03"), true);
-  if (steps.length === 0) { assert.equal(g.status, "pass"); return; }
-  assert.equal(g.status, "blocked");
-  const blocking = steps.filter((st) => st.blocksGateOn && st.blocksGateOn.length).map((st) => st.code).sort();
-  assert.deepEqual(g.blockers.filter((b) => b.code === "PROCEDURE_INCOMPLETE").map((b) => b.recordId), blocking);
-  const nonBlocking = steps.filter((st) => !st.blocksGateOn || !st.blocksGateOn.length);
-  assert.equal(g.missingInputs.filter((m) => m.startsWith("procedure ")).length, nonBlocking.length);
+  assert.notEqual(g.status, "pass");
+  assert.deepEqual(g.blockers.filter((b) => b.code === "PROCEDURE_INCOMPLETE").map((b) => b.recordId), required.filter((st) => st.blocksGateOn?.length).map((st) => st.code).sort());
+  assert.deepEqual(g.missingInputs.filter((m) => m.startsWith("procedure ")).map((m) => m.split(" ")[1]).sort(), required.filter((st) => !st.blocksGateOn?.length).map((st) => st.code).sort());
+  for (const st of steps.filter((x) => gatingOf(x) !== "required")) assert.ok(!JSON.stringify(g).includes(st.code), `${st.code} (${gatingOf(st)}) must not affect M0`);
   w.evidence("ev-proc", T("2026-12-03"));
-  for (const st of steps) w.do("triage", T("2026-12-03"), { type: "procedure_step_completed", code: st.code, evidence: ["ev-proc"] });
+  for (const st of required) w.do("triage", T("2026-12-03"), { type: "procedure_step_completed", code: st.code, evidence: ["ev-proc"] });
   assert.equal(w.gate("M0", T("2026-12-04"), true).status, "pass");
+});
+
+// ---------------------------------------------------------------------------
+// Gating modes, triggers, liveness.
+
+test("stage<->gate mapping has one source: GATE_STAGE derives from STAGE_GATE; grants reach no gate", () => {
+  for (const g of GATES) assert.deepEqual(GATE_STAGE[g], Object.keys(STAGE_GATE).filter((st) => STAGE_GATE[st as keyof typeof STAGE_GATE] === g));
+  assert.deepEqual(GATE_STAGE.M3, ["capital"]);
+  assert.ok(!Object.values(GATE_STAGE).flat().includes("grants"));
+  for (const st of PROCEDURES.filter((p) => p.stage === "grants")) assert.ok(st.gate === undefined || st.gateOverride, `${st.code} grants step reaches a gate only by doc override`);
+});
+
+test("trigger_evaluated: only allowlisted triggers, basis required; revisions append; status reflects the latest", () => {
+  const w = m0(new W());
+  assert.equal(w.err("triage", T("2026-12-03"), { type: "trigger_evaluated", trigger: "trigger.nope", active: true, basis: "x", evidence: [] }).code, "UNKNOWN_TRIGGER");
+  assert.equal(w.err("triage", T("2026-12-03"), { type: "trigger_evaluated", trigger: "gate.M5", active: true, basis: "x", evidence: [] }).code, "UNKNOWN_TRIGGER", "gate rules are not triggers");
+  assert.equal(w.err("triage", T("2026-12-03"), { type: "trigger_evaluated", trigger: "trigger.emergency", active: false, basis: " ", evidence: [] }).code, "MISSING_FIELD");
+  assert.equal(triggerStatus(w.s, "trigger.emergency"), "not_evaluated");
+  w.do("triage", T("2026-12-03"), { type: "trigger_evaluated", trigger: "trigger.emergency", active: false, basis: "routine urgency", evidence: ["ev-intake"] });
+  assert.equal(triggerStatus(w.s, "trigger.emergency"), "not_active");
+  w.do("triage", T("2026-12-04"), { type: "trigger_evaluated", trigger: "trigger.emergency", active: true, basis: "re-triaged: hazard", evidence: ["ev-intake"] });
+  assert.equal(triggerStatus(w.s, "trigger.emergency"), "active");
+  assert.equal(w.s.triggers["trigger.emergency"].length, 2, "evaluations are appended, not overwritten");
+});
+
+test("evaluation-required trigger: an unevaluated emergency trigger is a missing M1 input; other unevaluated triggers are not", () => {
+  const c = completedLifecycleCase("microgrid");
+  const strip = (b: LivenessCase["batches"][number]) => b.events.filter((e) => e.type !== "trigger_evaluated");
+  let s = c.initial;
+  for (const b of c.batches.slice(0, 2)) s = replay(s, strip(b));
+  const g = evaluateGate(s, "M1", c.batches[1].asOf, { procedures: [...PROCEDURES] });
+  assert.equal(g.status, "not_ready");
+  assert.deepEqual(g.missingInputs, ["trigger trigger.emergency not evaluated (decides whether DEV-02 Emergency coordination and stabilization record applies)"]);
+  assert.equal(RULE_IDS["trigger.assurance_configured"].evaluationRequired, undefined);
+  assert.ok(!g.missingInputs.some((m) => m.includes("DEV-16")), "assurance trigger is owner-configured; unevaluated means not active");
+});
+
+function replayTo(c: LivenessCase, gate: GateId): { s: LifecycleState; asOf: string } {
+  let s = c.initial;
+  for (const b of c.batches) {
+    s = replay(s, b.events);
+    if (b.gate === gate) return { s, asOf: b.asOf };
+  }
+  throw new Error(gate);
+}
+
+for (const id of LIVENESS_CASE_IDS) {
+  test(`liveness (${id}): a fully completed log passes M0..M9 in order; completions follow catalog preconditions and gate rules`, () => {
+    const c = completedLifecycleCase(id);
+    assert.deepEqual(c.batches.map((b) => b.gate), [...GATES]);
+    let s = c.initial;
+    const procs = [...PROCEDURES];
+    for (const b of c.batches) {
+      for (const ev of b.events) {
+        if (ev.type === "procedure_step_completed") {
+          const step = procedureByCode(ev.code)!;
+          assert.equal(gatingOf(step) === "non_gating", false, `${ev.code} is non-gating and must not be needed`);
+          for (const pre of preconditionCodes(step, false)) assert.ok(current(s.procedures[pre]), `${ev.code} completed before its precondition ${pre}`);
+          for (const rule of step.preconditions.filter((x) => x.startsWith("gate."))) {
+            assert.equal(evaluateGate(s, rule.slice(5) as GateId, ev.at, { procedures: procs }).status, "pass", `${ev.code} needs ${rule} passed first`);
+          }
+        }
+        s = applyEvent(s, ev);
+      }
+      const g = evaluateGate(s, b.gate, b.asOf, { procedures: procs });
+      assert.equal(g.status, "pass", `${id} ${b.gate}: ${JSON.stringify({ blockers: g.blockers, missing: g.missingInputs })}`);
+    }
+    // No trigger was active and no non-gating step was completed.
+    for (const t of TRIGGER_IDS) assert.notEqual(triggerStatus(s, t), "active", t);
+    for (const st of PROCEDURES.filter((p) => gatingOf(p) === "non_gating")) assert.equal(current(s.procedures[st.code]), undefined, st.code);
+    // Deterministic: replaying the whole log twice gives the same state.
+    const all = c.batches.flatMap((b) => b.events);
+    assert.equal(stateHash(replay(c.initial, all)), stateHash(replay(c.initial, JSON.parse(JSON.stringify(all)) as LifecycleEvent[])));
+    assert.equal(stateHash(replay(c.initial, all)), stateHash(s));
+  });
+
+  test(`liveness (${id}): partial cases stay blocked/not ready with their missing inputs listed`, () => {
+    const c = completedLifecycleCase(id);
+    const procs = [...PROCEDURES];
+    let before = c.initial;
+    for (const b of c.batches) {
+      // (a) nothing recorded for this gate yet
+      const g0 = evaluateGate(before, b.gate, b.asOf, { procedures: procs });
+      assert.notEqual(g0.status, "pass", `${b.gate} passed with none of its records`);
+      assert.ok(g0.blockers.length + g0.missingInputs.length > 0, `${b.gate} gave no reason`);
+      // (b) domain records present, catalog completions withheld: every required step is named
+      const partial = replay(before, b.events.filter((e) => e.type !== "procedure_step_completed"));
+      const g1 = evaluateGate(partial, b.gate, b.asOf, { procedures: procs });
+      const required = PROCEDURES.filter((p) => p.gate === b.gate && gatingOf(p) === "required" && !current(before.procedures[p.code]));
+      assert.ok(required.length > 0, b.gate);
+      assert.notEqual(g1.status, "pass", `${b.gate} passed without its required procedures`);
+      for (const st of required) {
+        const named = g1.blockers.some((x) => x.recordId === st.code) || g1.missingInputs.some((m) => m.startsWith(`procedure ${st.code} `));
+        assert.ok(named, `${b.gate}: ${st.code} not listed as blocker or missing input`);
+      }
+      before = replay(before, b.events);
+    }
+  });
+}
+
+test("conditional steps: activating each trigger holds its gate until that procedure completes (after the activation)", () => {
+  const c = completedLifecycleCase("microgrid");
+  const procs = [...PROCEDURES];
+  const conditional = PROCEDURES.filter((p) => gatingOf(p) === "conditional");
+  assert.equal(conditional.length, 12);
+  for (const st of conditional) {
+    const { s, asOf } = replayTo(c, st.gate!);
+    let n = 0;
+    const ev = (body: Payload): LifecycleEvent => ({ ...(body as object), id: `cond.${st.code}.${++n}`, at: asOf, actor: "ownerRep" } as LifecycleEvent);
+    assert.equal(evaluateGate(s, st.gate!, asOf, { procedures: procs }).status, "pass", `${st.code}: baseline ${st.gate}`);
+    let t = applyEvent(s, ev({ type: "trigger_evaluated", trigger: st.trigger!, active: true, basis: `${st.trigger} recorded`, evidence: [] }));
+    const held = evaluateGate(t, st.gate!, asOf, { procedures: procs });
+    assert.equal(held.status, st.blocksGateOn?.length ? "blocked" : "not_ready", `${st.code} active trigger must hold ${st.gate}`);
+    assert.ok(held.blockers.some((b) => b.recordId === st.code) || held.missingInputs.some((m) => m.startsWith(`procedure ${st.code} `)), `${st.code} not named`);
+    t = applyEvent(t, ev({ type: "evidence_recorded", evidence: { id: `ev.cond.${st.code}`, kind: "document", title: st.code, source: { publisher: "synthetic" }, retrievedAt: asOf, freshness: "fresh", provenance: "owner_verified" } }));
+    t = applyEvent(t, ev({ type: "procedure_step_completed", code: st.code, evidence: [`ev.cond.${st.code}`] }));
+    assert.equal(evaluateGate(t, st.gate!, asOf, { procedures: procs }).status, "pass", `${st.code} completion must clear ${st.gate}`);
+    // A later re-activation (new trigger event) requires a new completion.
+    t = applyEvent(t, ev({ type: "trigger_evaluated", trigger: st.trigger!, active: true, basis: "second occurrence", evidence: [] }));
+    const again = evaluateGate(t, st.gate!, asOf, { procedures: procs });
+    assert.notEqual(again.status, "pass", `${st.code}: completion before re-activation must not count`);
+    assert.ok(JSON.stringify(again).includes("predates it"));
+    // Evaluated not active -> ignored again.
+    t = applyEvent(t, ev({ type: "trigger_evaluated", trigger: st.trigger!, active: false, basis: "closed", evidence: [] }));
+    assert.equal(evaluateGate(t, st.gate!, asOf, { procedures: procs }).status, "pass");
+  }
+});
+
+test("DEV-17 utility conflicts: with the trigger active M2 passes without DEV-17; M4 is held until DEV-17 completes", () => {
+  const c = completedLifecycleCase("microgrid");
+  const procs = [...PROCEDURES];
+  assert.equal(procedureByCode("DEV-17")!.gate, "M4");
+  let s = c.initial;
+  for (const b of c.batches.slice(0, 3)) s = replay(s, b.events); // M0..M2
+  const m2At = c.batches[2].asOf;
+  s = applyEvent(s, { id: "uc.1", at: m2At, actor: "ownerRep", type: "trigger_evaluated", trigger: "trigger.utility_conflict", active: true, basis: "Feeder trench crosses a gas main (synthetic)", evidence: [] });
+  const m2 = evaluateGate(s, "M2", m2At, { procedures: procs });
+  assert.equal(m2.status, "pass", JSON.stringify(m2));
+  assert.ok(!JSON.stringify(m2).includes("DEV-17"));
+  for (const b of c.batches.slice(3, 5)) s = replay(s, b.events); // M3, M4 (DEV-17 not completed)
+  const m4At = c.batches[4].asOf;
+  const held = evaluateGate(s, "M4", m4At, { procedures: procs });
+  assert.equal(held.status, "not_ready");
+  assert.deepEqual(held.blockers, []);
+  assert.ok(held.missingInputs.some((m) => m.startsWith("procedure DEV-17 ") && m.includes("trigger.utility_conflict is active")), JSON.stringify(held.missingInputs));
+  s = applyEvent(s, { id: "uc.2", at: m4At, actor: "analyst", type: "evidence_recorded", evidence: { id: "ev.uc", kind: "document", title: "Conflict register with dispositions", source: { publisher: "synthetic" }, retrievedAt: m4At, freshness: "fresh", provenance: "owner_verified" } });
+  s = applyEvent(s, { id: "uc.3", at: m4At, actor: "ownerRep", type: "procedure_step_completed", code: "DEV-17", evidence: ["ev.uc"] });
+  assert.equal(evaluateGate(s, "M4", m4At, { procedures: procs }).status, "pass");
+  assert.equal(evaluateGate(s, "M2", m4At, { procedures: procs }).status, "pass");
+});
+
+test("non-gating steps never block: the completed log leaves them undone; explicit not-active triggers change nothing; DEV-18 is a warning only", () => {
+  const c = completedLifecycleCase("substation");
+  const procs = [...PROCEDURES];
+  const nonGating = PROCEDURES.filter((p) => gatingOf(p) === "non_gating").map((p) => p.code);
+  assert.deepEqual([...nonGating].sort(), ["CAP-04", "DEV-15", "DEV-18", "GR-01", "GR-02", "GR-03", "GR-04", "PROC-05", "PROC-06", "PROC-07", "RET-05"]);
+  let s = c.initial;
+  for (const b of c.batches) {
+    s = replay(s, b.events);
+    let k = 0;
+    const off = TRIGGER_IDS.map((t): LifecycleEvent => ({ id: `off.${b.gate}.${++k}`, at: b.asOf, actor: "ownerRep", type: "trigger_evaluated", trigger: t, active: false, basis: "evaluated, not present", evidence: [] }));
+    const g = evaluateGate(replay(s, off), b.gate, b.asOf, { procedures: procs });
+    assert.equal(g.status, "pass", b.gate);
+    for (const code of nonGating) assert.ok(!g.blockers.some((x) => x.recordId === code) && !g.missingInputs.some((m) => m.includes(code)), `${code} affected ${b.gate}`);
+    if (b.gate === "M4") assert.deepEqual(g.warnings, ["DEV-18 Seasonal, staged, and fallback delivery planning not accepted; gate at risk (Unverified fallback (gate kept at risk))"]);
+    else assert.deepEqual(g.warnings, []);
+  }
 });
 
 test("coverage: every reducer event type is exercised by this suite", () => {

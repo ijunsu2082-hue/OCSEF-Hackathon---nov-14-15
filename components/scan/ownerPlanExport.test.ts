@@ -7,7 +7,7 @@ import { planInputFromHeadScan } from "../../lib/owner/planInput";
 import { FIXTURE_AS_OF, ownerCases } from "../../lib/owner/fixtures";
 import { emptyDraft, memoryStorage, setTaskEdit, draftKey } from "../../lib/owner/draftStore";
 import { evaluateAllGates } from "../../lib/owner/lifecycle";
-import { PROCEDURES } from "../../lib/owner/procedures";
+import { PROCEDURES, TRIGGER_IDS } from "../../lib/owner/procedures";
 import type { DraftEdits } from "../../lib/owner/types";
 import {
   deadlinesIcs,
@@ -179,4 +179,31 @@ test("lifecycleFromPlan never fakes a pass; credits a procedure only when all it
   const m0b = evaluateAllGates(all.state!, asOf, { procedures: [...PROCEDURES] })[0];
   assert.equal(m0b.missingInputs.some((x) => x.startsWith("procedure DEV-03")), false);
   assert.notEqual(m0b.status, "pass");
+});
+
+test("lifecycleFromPlan: triggers stay not evaluated by default; only a yes/no plan fact named by trigger id records an evaluation", () => {
+  const input = headInput();
+  const asOf = FIXTURE_AS_OF;
+  const base = lifecycleFromPlan(buildOwnerPlan(input, { scenario: "baseline", asOf }), asOf);
+  assert.equal(base.events.some((e) => e.type === "trigger_evaluated"), false, "no trigger evaluation is inferred");
+  assert.deepEqual([...new Set(base.triggers.map((t) => t.state))], ["not_evaluated"]);
+  assert.deepEqual(base.triggers.map((t) => t.trigger), [...TRIGGER_IDS]);
+  // M1 names the doc-required emergency evaluation as missing; owner-configured triggers are not listed.
+  const m1 = evaluateAllGates(base.state!, asOf, { procedures: [...PROCEDURES] })[1];
+  assert.ok(m1.missingInputs.some((m) => m.startsWith("trigger trigger.emergency not evaluated")));
+  assert.equal(m1.missingInputs.some((m) => m.includes("trigger.assurance_configured")), false);
+  const fact = (id: string, value: boolean | { state: "unknown"; reason: string }) => ({ id, subject: "case", predicate: "trigger.emergency", value, provenance: "user_assertion" as const, evidence: [], asOf });
+  const withFact = (facts: ReturnType<typeof fact>[]) => lifecycleFromPlan(buildOwnerPlan(input, { scenario: "baseline", asOf, edits: { planKey: planKey(input.target), facts } }), asOf);
+  const no = withFact([fact("f.trigger.emergency", false)]);
+  assert.equal(no.error, null);
+  assert.equal(no.triggers.find((t) => t.trigger === "trigger.emergency")!.state, "not_active");
+  assert.equal(no.events.filter((e) => e.type === "trigger_evaluated").length, 1);
+  const m1b = evaluateAllGates(no.state!, asOf, { procedures: [...PROCEDURES] })[1];
+  assert.equal(m1b.missingInputs.some((m) => m.includes("trigger.emergency")), false);
+  const yes = withFact([fact("f.trigger.emergency", true)]);
+  assert.equal(yes.triggers.find((t) => t.trigger === "trigger.emergency")!.state, "active");
+  assert.ok(evaluateAllGates(yes.state!, asOf, { procedures: [...PROCEDURES] })[1].missingInputs.some((m) => m.startsWith("procedure DEV-02 ")));
+  const unknown = withFact([fact("f.trigger.emergency", { state: "unknown", reason: "not yet triaged" })]);
+  assert.equal(unknown.triggers.find((t) => t.trigger === "trigger.emergency")!.state, "not_evaluated");
+  assert.equal(unknown.events.some((e) => e.type === "trigger_evaluated"), false);
 });

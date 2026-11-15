@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { BuiltOwnerPlan } from "@/lib/owner/ownerPlan";
-import { current, evaluateGate, GATE_STAGE, GATES, type GateEvaluation } from "@/lib/owner/lifecycle";
-import { PROCEDURES, proceduresForStage } from "@/lib/owner/procedures";
+import { current, evaluateGate, GATE_STAGE, GATES, triggerStatus, type GateEvaluation, type LifecycleState, type TriggerState } from "@/lib/owner/lifecycle";
+import { gatingOf, PROCEDURES, RULE_IDS } from "@/lib/owner/procedures";
+import type { ProcedureStep } from "@/lib/owner/types";
 import type { OwnerSourceItem, OwnerSourcesResponse } from "@/lib/owner/ownerSources";
 import type { GateId, PlanTarget } from "@/lib/owner/types";
 import { lifecycleFromPlan, STAGE_LABEL } from "./ownerPlanExport";
 import s from "./owner-plan.module.css";
 
 const GATE_STATUS_LABEL: Record<GateEvaluation["status"], string> = { pass: "Pass", blocked: "Blocked", not_ready: "Not ready" };
+const TRIGGER_LABEL: Record<TriggerState, string> = { active: "Trigger active: counts toward this gate", not_active: "Trigger evaluated, not active: does not count", not_evaluated: "Trigger not evaluated" };
+
+function ProcedureItem({ p, state, children }: { p: ProcedureStep; state: LifecycleState | null; children?: ReactNode }) {
+  const done = state ? current(state.procedures[p.code]) : undefined;
+  return (
+    <li className={s.task} data-status={done ? "done" : "not_started"}>
+      <div className={s.taskHead}><code>{p.code}</code> <b className={s.title}>{p.title}</b></div>
+      <p className={s.meta}>{p.role} · {STAGE_LABEL[p.stage]}{p.gateOverride ? ` · gate ${p.gateOverride} (named by doc, not stage default)` : ""} · {done ? "credited (user assertion)" : "not recorded"}</p>
+      {children}
+      {p.blocksGateOn?.length ? <p className={s.meta}>{gatingOf(p) === "non_gating" ? "Keeps the gate at risk on" : "Blocks the gate on"}: {p.blocksGateOn.join("; ")}</p> : null}
+      <p className={s.source}>Source: <code>{p.sourceDoc}</code></p>
+    </li>
+  );
+}
 
 /** M0–M9 readiness from the event log the plan's task statuses support. A pass is evidence readiness, never an approval. */
 export default function LifecycleGatesView({ plan, asOf }: { plan: BuiltOwnerPlan; asOf: string }) {
@@ -18,7 +33,7 @@ export default function LifecycleGatesView({ plan, asOf }: { plan: BuiltOwnerPla
     const procedures = [...PROCEDURES];
     if (!mapping.state) {
       return GATES.map((gate): GateEvaluation => ({
-        gate, status: "not_ready", blockers: [], asOf,
+        gate, status: "not_ready", blockers: [], asOf, warnings: [],
         missingInputs: [`lifecycle event log could not be replayed: ${mapping.error ?? "unknown error"}`],
       }));
     }
@@ -27,6 +42,9 @@ export default function LifecycleGatesView({ plan, asOf }: { plan: BuiltOwnerPla
   const [selected, setSelected] = useState<GateId>("M0");
   const ev = evaluations.find((e) => e.gate === selected)!;
   const gateTasks = plan.tasks.filter((t) => t.gate === selected);
+  const atGate = PROCEDURES.filter((p) => p.gate === selected);
+  const byMode = (m: ReturnType<typeof gatingOf>) => atGate.filter((p) => gatingOf(p) === m);
+  const noGate = PROCEDURES.filter((p) => !p.gate);
   const eventCounts = mapping.events.reduce<Record<string, number>>((m, e) => ({ ...m, [e.type]: (m[e.type] ?? 0) + 1 }), {});
 
   return (
@@ -61,6 +79,12 @@ export default function LifecycleGatesView({ plan, asOf }: { plan: BuiltOwnerPla
               <ul className={s.list}>{ev.missingInputs.map((m) => <li key={m}>{m}</li>)}</ul>
             </>
           ) : null}
+          {ev.warnings.length ? (
+            <>
+              <span className={s.label}>At risk, does not change status ({ev.warnings.length})</span>
+              <ul className={s.list}>{ev.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
+            </>
+          ) : null}
           {gateTasks.length ? (
             <>
               <span className={s.label}>Plan tasks at this gate</span>
@@ -84,24 +108,46 @@ export default function LifecycleGatesView({ plan, asOf }: { plan: BuiltOwnerPla
 
       <section className={s.section} aria-labelledby="lg-procs">
         <h3 id="lg-procs">Procedures for {selected}</h3>
-        {GATE_STAGE[selected].map((stage) => (
-          <div key={stage} className={s.stage}>
-            <h4 className={s.subhead}>{STAGE_LABEL[stage]}</h4>
+        <div className={s.stage}>
+          <h4 className={s.subhead}>Required ({byMode("required").length})</h4>
+          <p className={s.meta}>Each must be recorded complete before {selected} can pass.</p>
+          <ul className={s.tasks}>{byMode("required").map((p) => <ProcedureItem key={p.code} p={p} state={mapping.state} />)}</ul>
+        </div>
+        {byMode("conditional").length ? (
+          <div className={s.stage}>
+            <h4 className={s.subhead}>Conditional ({byMode("conditional").length})</h4>
+            <p className={s.meta}>Count toward {selected} only while their trigger is recorded active; a completion counts only if recorded after the activation.</p>
             <ul className={s.tasks}>
-              {proceduresForStage(stage).map((p) => {
-                const done = mapping.state ? current(mapping.state.procedures[p.code]) : undefined;
+              {byMode("conditional").map((p) => {
+                const t = mapping.state ? triggerStatus(mapping.state, p.trigger!) : "not_evaluated";
+                const rule = RULE_IDS[p.trigger!];
+                const basis = mapping.triggers.find((x) => x.trigger === p.trigger)?.basis;
                 return (
-                  <li key={p.code} className={s.task} data-status={done ? "done" : "not_started"}>
-                    <div className={s.taskHead}><code>{p.code}</code> <b className={s.title}>{p.title}</b></div>
-                    <p className={s.meta}>{p.role}{p.gate ? ` · gate ${p.gate}` : " · no gate"} · {done ? "credited (user assertion)" : "not recorded"}</p>
-                    {p.blocksGateOn?.length ? <p className={s.meta}>Blocks the gate on: {p.blocksGateOn.join("; ")}</p> : null}
-                    <p className={s.source}>Source: <code>{p.sourceDoc}</code></p>
-                  </li>
+                  <ProcedureItem key={p.code} p={p} state={mapping.state}>
+                    <p className={t === "not_evaluated" ? s.unknown : s.meta}>
+                      <code>{p.trigger}</code>: {TRIGGER_LABEL[t]}
+                      {t === "not_evaluated" ? (rule?.evaluationRequired ? ` (the doc requires this evaluation, so ${selected} lists it as missing)` : " (treated as not active)") : ""}
+                      {basis ? `. Basis: ${basis}` : ""}
+                    </p>
+                    {rule ? <p className={s.detail}>Applies when: {rule.description}</p> : null}
+                  </ProcedureItem>
                 );
               })}
             </ul>
           </div>
-        ))}
+        ) : null}
+        {byMode("non_gating").length ? (
+          <div className={s.stage}>
+            <h4 className={s.subhead}>Non-gating ({byMode("non_gating").length})</h4>
+            <p className={s.meta}>Lifelong, portfolio or post-gate work in these stages. Never affects {selected}.</p>
+            <ul className={s.tasks}>{byMode("non_gating").map((p) => <ProcedureItem key={p.code} p={p} state={mapping.state} />)}</ul>
+          </div>
+        ) : null}
+        <details className={s.details}>
+          <summary>Procedures attached to no gate ({noGate.length})</summary>
+          <p className={s.detail}>Grants (WORKFLOWS 5A) names no milestone, so these steps never affect M0 to M9. Committed funding still counts at M3 through funding records.</p>
+          <ul className={s.tasks}>{noGate.map((p) => <ProcedureItem key={p.code} p={p} state={mapping.state} />)}</ul>
+        </details>
       </section>
 
       <OwnerSourcesPanel target={plan.target} />

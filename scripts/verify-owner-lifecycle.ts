@@ -10,9 +10,11 @@
 
 import assert from "node:assert/strict";
 import {
-  LifecycleError, applyEvent, createLifecycle, current, evaluateGate, replay, stateHash,
+  GATES, LifecycleError, applyEvent, createLifecycle, current, evaluateGate, replay, stateHash, triggerStatus,
   type GateEvaluation, type LifecycleConfig, type LifecycleEvent, type LifecycleState,
 } from "../lib/owner/lifecycle";
+import { PROCEDURES, TRIGGER_IDS, gatingOf } from "../lib/owner/procedures";
+import { LIVENESS_CASE_IDS, completedLifecycleCase } from "../lib/owner/fixtures";
 import { evaluateRules, segmentRouteByJurisdiction, type RulePack } from "../lib/owner/rules";
 import { applyDisruption, backSchedule, createScheduleBaseline, isoDay, reforecast, schedule, type SchedTask } from "../lib/owner/schedule";
 import { createDraftStore, draftKey, emptyDraft, memoryStorage, mergeDraft, setTaskEdit } from "../lib/owner/draftStore";
@@ -56,7 +58,96 @@ const MICROGRID: SchedTask[] = [
 ].map(([id, durationDays, dependsOn]) => ({ id: id as string, durationDays: durationDays as number, dependsOn: dependsOn as string[], offsetDays: 0 }));
 const SLIP = { id: "swgr", taskId: "equipment_delivery", delayDays: 112, reason: "switchgear +16 weeks", at: T("2028-05-01") };
 
+const PROCS = [...PROCEDURES];
+const gateOf = (s: LifecycleState, g: GateId, asOf: string) => evaluateGate(s, g, asOf, { procedures: PROCS });
+
+/** Per-gate "can pass": replay the completed log batch by batch and evaluate each gate when its batch lands. */
+function livenessScenario(id: (typeof LIVENESS_CASE_IDS)[number]) {
+  return {
+    name: `liveness ${id}: fully completed log (required steps only, no trigger active) passes M0..M9 in order`,
+    run: () => {
+      const c = completedLifecycleCase(id);
+      let s = c.initial;
+      const out: string[] = [];
+      for (const b of c.batches) {
+        s = replay(s, b.events);
+        const g = gateOf(s, b.gate, b.asOf);
+        assert.equal(g.status, "pass", `${b.gate} ${g.status}: ${[...g.blockers.map((x) => `${x.code}:${x.recordId}`), ...g.missingInputs].join("; ")}`);
+        out.push(`${b.gate} ${b.asOf.slice(0, 10)} pass (${b.completedCodes.length} steps${g.warnings.length ? `, ${g.warnings.length} warning` : ""})`);
+      }
+      assert.ok(TRIGGER_IDS.every((t) => triggerStatus(s, t) !== "active"));
+      return out.join("; ");
+    },
+  };
+}
+
+function partialScenario(id: (typeof LIVENESS_CASE_IDS)[number]) {
+  return {
+    name: `partial ${id}: each gate stays blocked/not ready, naming every withheld required step`,
+    run: () => {
+      const c = completedLifecycleCase(id);
+      let before = c.initial;
+      const out: string[] = [];
+      for (const b of c.batches) {
+        const none = gateOf(before, b.gate, b.asOf);
+        assert.notEqual(none.status, "pass");
+        const withheld = replay(before, b.events.filter((e) => e.type !== "procedure_step_completed"));
+        const g = gateOf(withheld, b.gate, b.asOf);
+        const required = PROCEDURES.filter((p) => p.gate === b.gate && gatingOf(p) === "required" && !current(before.procedures[p.code]));
+        assert.notEqual(g.status, "pass");
+        const unnamed = required.filter((p) => !g.blockers.some((x) => x.recordId === p.code) && !g.missingInputs.some((m) => m.startsWith(`procedure ${p.code} `)));
+        assert.deepEqual(unnamed.map((p) => p.code), []);
+        out.push(`${b.gate} ${none.status}->${g.status} (${g.blockers.length}b/${g.missingInputs.length}m)`);
+        before = replay(before, b.events);
+      }
+      return `[no records -> domain records without procedures] ${out.join(" ")}`;
+    },
+  };
+}
+
 const scenarios: { name: string; run: () => string }[] = [
+  ...LIVENESS_CASE_IDS.flatMap((id) => [livenessScenario(id), partialScenario(id)]),
+  {
+    name: "conditional steps: each trigger, once active, holds its gate until that procedure completes after the activation",
+    run: () => {
+      const c = completedLifecycleCase("microgrid");
+      const out: string[] = [];
+      for (const st of PROCEDURES.filter((p) => gatingOf(p) === "conditional")) {
+        let s = c.initial;
+        let asOf = "";
+        for (const b of c.batches) { s = replay(s, b.events); asOf = b.asOf; if (b.gate === st.gate) break; }
+        let k = 0;
+        const ev = (body: Payload): LifecycleEvent => ({ ...(body as object), id: `v.${st.code}.${++k}`, at: asOf, actor: "ownerRep" } as LifecycleEvent);
+        s = applyEvent(s, ev({ type: "trigger_evaluated", trigger: st.trigger!, active: true, basis: "verification", evidence: [] }));
+        const held = gateOf(s, st.gate!, asOf);
+        assert.notEqual(held.status, "pass");
+        s = applyEvent(s, ev({ type: "evidence_recorded", evidence: { id: `ev.v.${st.code}`, kind: "document", title: st.code, source: { publisher: "synthetic" }, retrievedAt: asOf, freshness: "fresh", provenance: "owner_verified" } }));
+        s = applyEvent(s, ev({ type: "procedure_step_completed", code: st.code, evidence: [`ev.v.${st.code}`] }));
+        const after = gateOf(s, st.gate!, asOf);
+        assert.equal(after.status, "pass");
+        out.push(`${st.code}@${st.gate} ${held.status}->pass`);
+      }
+      return out.join("; ");
+    },
+  },
+  {
+    name: "non-gating steps never affect a gate; DEV-18 unverified fallback is an at-risk warning only",
+    run: () => {
+      const c = completedLifecycleCase("substation");
+      const nonGating = PROCEDURES.filter((p) => gatingOf(p) === "non_gating").map((p) => p.code);
+      let s = c.initial;
+      let warned = "";
+      for (const b of c.batches) {
+        s = replay(s, b.events);
+        const g = gateOf(s, b.gate, b.asOf);
+        for (const code of nonGating) assert.ok(!g.blockers.some((x) => x.recordId === code) && !g.missingInputs.some((m) => m.includes(code)), `${code} at ${b.gate}`);
+        if (g.warnings.length) warned = `${b.gate}: ${g.warnings.join("; ")}`;
+      }
+      assert.ok(nonGating.every((code) => !current(s.procedures[code])), "non-gating steps were never completed");
+      assert.match(warned, /^M4: DEV-18 /);
+      return `${nonGating.length} non-gating steps (${nonGating.join(", ")}) never completed, never listed; ${warned}`;
+    },
+  },
   {
     name: "period shift (microgrid switchgear +16 wk: energization Jun 1 → Sep 21, acceptance Jun 15 → Oct 5, dependents only)",
     run: () => {

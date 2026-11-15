@@ -15,9 +15,9 @@
  */
 
 import { createDraftStore, type Draft, type DraftStore, type StorageAdapter } from "../../lib/owner/draftStore";
-import { createLifecycle, replay, type LifecycleEvent, type LifecycleState } from "../../lib/owner/lifecycle";
+import { createLifecycle, replay, type LifecycleEvent, type LifecycleState, type TriggerState } from "../../lib/owner/lifecycle";
 import { draftStorageKey, planKey, type BuiltOwnerPlan } from "../../lib/owner/ownerPlan";
-import { STAGE_ORDER } from "../../lib/owner/procedures";
+import { STAGE_ORDER, TRIGGER_IDS } from "../../lib/owner/procedures";
 import type { DraftEdits, Evidence, Fact, FactValue, PlanTarget, Provenance, StageId, TaskEdit } from "../../lib/owner/types";
 import { isUnknown } from "../../lib/owner/types";
 
@@ -297,6 +297,8 @@ export interface LifecycleMapping {
   partial: string[];
   /** What the plan cannot supply; those gate inputs stay missing. */
   notMapped: string[];
+  /** Every trigger rule id with the state the plan supports. "not_evaluated" unless a plan fact says so. */
+  triggers: { trigger: string; state: TriggerState; basis: string }[];
   error: string | null;
 }
 
@@ -304,13 +306,34 @@ const NOT_MAPPED = [
   "intake acceptance (needs a configured triage role)",
   "gate decisions and signoffs (need configured decision authority)",
   "authorizations, submissions, conditions, funding, budgets, land, procurement, tests, assets (no plan record)",
+  "trigger evaluations, except plan facts whose predicate is a trigger id with a yes/no value (unevaluated triggers are treated as not active)",
 ];
+
+/**
+ * Trigger state the plan supports: a non-superseded plan fact whose predicate is the trigger id and whose
+ * value is boolean. Conflicting or Unknown values, or no fact, leave the trigger not evaluated.
+ */
+function planTriggers(plan: BuiltOwnerPlan): { trigger: string; state: TriggerState; basis: string; fact: Fact | null }[] {
+  const superseded = new Set(plan.facts.map((f) => f.supersedes).filter((x): x is string => !!x));
+  return TRIGGER_IDS.map((trigger) => {
+    const fs = plan.facts.filter((f) => f.predicate === trigger && !superseded.has(f.id));
+    if (fs.length === 0) return { trigger, state: "not_evaluated" as const, basis: "no plan fact", fact: null };
+    const values = [...new Set(fs.map((f) => f.value))];
+    if (values.length !== 1 || typeof values[0] !== "boolean") {
+      return { trigger, state: "not_evaluated" as const, basis: `plan facts ${fs.map((f) => f.id).join(", ")} are ${values.length > 1 ? "conflicting" : factValueText(values[0])}`, fact: null };
+    }
+    const f = fs[0];
+    return { trigger, state: values[0] ? ("active" as const) : ("not_active" as const), basis: `plan fact ${f.id} (${PROVENANCE_LABEL[f.provenance]}): ${factValueText(f.value)}`, fact: f };
+  });
+}
 
 /**
  * Event log the plan supports, in order, all at `asOf`:
  * 1. evidence_recorded for each plan evidence item;
  * 2. next_action_set from the plan's next action (no authority needed);
- * 3. per procedure code whose plan tasks are all "done": an attestation evidence
+ * 3. trigger_evaluated only for triggers a plan fact decides (planTriggers); all
+ *    other triggers stay not evaluated, which the gates treat as not active;
+ * 4. per procedure code whose plan tasks are all "done": an attestation evidence
  *    (provenance user_assertion) then procedure_step_completed citing it.
  * Nothing else is inferred, so gates needing decisions, signoffs or external
  * records stay not_ready with their missing inputs.
@@ -326,6 +349,12 @@ export function lifecycleFromPlan(plan: BuiltOwnerPlan, asOf: string): Lifecycle
   if (plan.nextAction && next?.due) {
     events.push({ id: id("next_action"), at: asOf, actor, type: "next_action_set", nextAction: plan.nextAction, nextActionDate: `${next.due.slice(0, 10)}T00:00:00Z` });
   }
+  const triggers = planTriggers(plan);
+  for (const t of triggers) {
+    if (!t.fact) continue;
+    events.push({ id: id(`trigger.${t.trigger}`), at: asOf, actor, type: "trigger_evaluated", trigger: t.trigger, active: t.state === "active", basis: t.basis, evidence: [...t.fact.evidence] });
+  }
+  const triggerSummary = triggers.map(({ trigger, state, basis }) => ({ trigger, state, basis }));
   const byCode = new Map<string, typeof plan.tasks>();
   for (const t of plan.tasks) if (t.code) byCode.set(t.code, [...(byCode.get(t.code) ?? []), t]);
   const credited: string[] = [];
@@ -349,8 +378,8 @@ export function lifecycleFromPlan(plan: BuiltOwnerPlan, asOf: string): Lifecycle
     config: { roles: {}, authority: { triage: [], decision: [], applicabilityReviewer: [], instrumentVerifier: [], landRights: [], budget: [], submission: [], award: [], waiver: [], conditionReviewer: [], designAuthority: [], ncrDisposition: [], testReviewer: [], gateSignoff: {} }, requiredAwardApprovals: [] },
   });
   try {
-    return { state: replay(initial, events), events, credited, partial, notMapped: NOT_MAPPED, error: null };
+    return { state: replay(initial, events), events, credited, partial, notMapped: NOT_MAPPED, triggers: triggerSummary, error: null };
   } catch (err) {
-    return { state: null, events, credited, partial, notMapped: NOT_MAPPED, error: err instanceof Error ? err.message : String(err) };
+    return { state: null, events, credited, partial, notMapped: NOT_MAPPED, triggers: triggerSummary, error: err instanceof Error ? err.message : String(err) };
   }
 }

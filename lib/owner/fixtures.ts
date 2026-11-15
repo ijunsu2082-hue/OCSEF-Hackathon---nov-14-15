@@ -9,6 +9,8 @@
 
 import { planInputFromPr2Scan, type OptionInput, type PlanInput, type PlanMilestone, type Pr2ScanResultLike } from "./planInput";
 import type { Evidence, Fact, FactValue, OptionKind, PlanTarget, Sector, StageId, GateId } from "./types";
+import { createLifecycle, type LifecycleConfig, type LifecycleEvent, type LifecycleState } from "./lifecycle";
+import { PROCEDURES, RULE_IDS, gatingOf, preconditionCodes, procedureByCode, topologicalOrder } from "./procedures";
 
 /** Fixed clock for all fixtures. */
 export const FIXTURE_AS_OF = "2026-11-01T00:00:00.000Z";
@@ -620,4 +622,215 @@ function dayNum(iso: string): number {
 function isoAdd(iso: string, days: number): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)!;
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+// ---------------------------------------------------------------- lifecycle liveness logs
+
+/**
+ * Fully completed lifecycle event logs for the Westminster microgrid and the
+ * substation expansion (SYNTHETIC records shaped by docs/INFRASTRUCTURE-CASES.md).
+ * One batch per gate, in M0..M9 order; each batch records exactly what that gate
+ * checks: domain records, sign-offs, and every *required* catalog step at the gate
+ * (plus any not-yet-completed unconditional catalog preconditions of those steps,
+ * so completions never precede their preconditions). Conditional steps are left
+ * alone (no trigger is active; evaluation-required triggers are recorded as not
+ * active with a basis) and non-gating steps are never completed, so a pass proves
+ * neither is needed. Used by the liveness test and scripts/verify-owner-lifecycle.ts.
+ */
+export const LIVENESS_CONFIG: LifecycleConfig = {
+  roles: {
+    triage: ["triage"], sponsor: ["investment"], compliance: ["compliance"], verifier: ["permit_verifier"],
+    land: ["land_legal"], finance: ["finance"], signatory: ["signatory"], contracting: ["contracting"],
+    waiverAuth: ["waiver"], design: ["design_authority"], quality: ["quality"], cx: ["cx_authority"],
+    ownerRep: ["owner_rep"], custodian: ["records"], analyst: [],
+  },
+  authority: {
+    triage: ["triage"], decision: ["investment"], applicabilityReviewer: ["compliance"], instrumentVerifier: ["permit_verifier"],
+    landRights: ["land_legal"], budget: ["finance"], submission: ["signatory"], award: ["contracting"], waiver: ["waiver"],
+    conditionReviewer: ["compliance"], designAuthority: ["design_authority"], ncrDisposition: ["quality"], testReviewer: ["cx_authority"],
+    gateSignoff: { M6: ["owner_rep"], M7: ["cx_authority"], M9: ["records"] },
+  },
+  requiredAwardApprovals: ["technical", "finance", "legal"],
+};
+
+export interface LivenessBatch { gate: GateId; asOf: string; events: LifecycleEvent[]; completedCodes: string[] }
+export interface LivenessCase { caseId: string; title: string; initial: LifecycleState; batches: LivenessBatch[] }
+
+type EventBody = LifecycleEvent extends infer E ? (E extends LifecycleEvent ? Omit<E, "id" | "at" | "actor"> : never) : never;
+
+interface LivenessSpec {
+  caseId: string; title: string; owner: string; nextAction: string;
+  dates: Record<GateId, string>;
+  option: { id: string; label: string; others: { id: string; label: string }[] };
+  parcels: string[];
+  budget: number; funding: { id: string; provider: string; kind: "capital" | "loan" | "rate_base" | "grant" | "other"; amount: number }[];
+  instruments: { id: string; requirement: string; authority: string; activity: string; phase: string; jurisdictionId: string; expiresAt: string }[];
+  condition: { id: string; sourceRecordId: string; text: string; authority: string; dueAt: string };
+  pkg: { id: string; scope: string; license: string; supplier: string; equipment: { id: string; model: string; leadTimeDays: number } };
+  constructionTest: string; commissioningTest: string;
+  asset: { id: string; type: string; custodian: string };
+  /** M8 retirement closure path: a linked decommissioning case, or RET-01 recorded in this case. */
+  closure: "linked_case" | "ret01";
+}
+
+const LIVENESS_SPECS: Record<"microgrid" | "substation", LivenessSpec> = {
+  microgrid: {
+    caseId: "case-microgrid", title: "Westminster critical-facility microgrid (synthetic)", owner: "City facilities manager",
+    nextAction: "Interval-meter load logging and critical-load audit",
+    dates: { M0: "2026-12-02", M1: "2027-02-01", M2: "2027-03-01", M3: "2027-06-01", M4: "2027-10-01", M5: "2027-11-20", M6: "2028-05-20", M7: "2028-06-15", M8: "2043-01-10", M9: "2045-06-01" },
+    option: { id: "B", label: "400 kW PV, 1 MW / 4 MWh battery, islanding and controls", others: [{ id: "A", label: "Battery and controls only" }, { id: "C", label: "PV, 8 MWh battery, critical-load transfer" }] },
+    parcels: ["APN-195-01"],
+    budget: 6_800_000, funding: [{ id: "fs-capital", provider: "City capital plan", kind: "capital", amount: 3_000_000 }, { id: "fs-loan", provider: "State resilience loan (synthetic)", kind: "loan", amount: 3_800_000 }],
+    instruments: [{ id: "auth-bld", requirement: "Building and electrical permit", authority: "City of Westminster", activity: "install", phase: "construction", jurisdictionId: "westminster", expiresAt: "2029-10-01" }],
+    condition: { id: "cond-fire", sourceRecordId: "auth-bld", text: "Fire department battery-room inspection before energization", authority: "Fire authority", dueAt: "2028-05-31" },
+    pkg: { id: "pkg-epc", scope: "Microgrid EPC incl. switchgear", license: "C-10 electrical", supplier: "sup-epc", equipment: { id: "eq-swgr", model: "SWGR-1200A", leadTimeDays: 120 } },
+    constructionTest: "battery-enclosure-insulation", commissioningTest: "islanding-transfer",
+    asset: { id: "asset-bess", type: "BESS 1 MW / 4 MWh with 400 kW PV", custodian: "City facilities operations" },
+    closure: "linked_case",
+  },
+  substation: {
+    caseId: "case-substation", title: "Synthetic distribution substation expansion", owner: "Distribution planning manager",
+    nextAction: "15-minute load history and N-1 contingency study",
+    dates: { M0: "2026-12-05", M1: "2027-02-01", M2: "2027-04-01", M3: "2027-12-01", M4: "2027-12-15", M5: "2028-01-15", M6: "2029-09-01", M7: "2029-10-01", M8: "2068-01-10", M9: "2070-06-01" },
+    option: { id: "A", label: "Transformer replacement/addition, +20 MVA", others: [{ id: "B", label: "Reconductor plus storage and managed load" }, { id: "C", label: "New 40 MVA substation" }] },
+    parcels: ["APN-SUB-01", "ROW-FEEDER-02"],
+    budget: 18_000_000, funding: [{ id: "fs-ratebase", provider: "Approved rate-base capital (synthetic)", kind: "rate_base", amount: 18_000_000 }],
+    instruments: [
+      { id: "auth-env", requirement: "Environmental screening determination", authority: "State environmental agency", activity: "site work", phase: "construction", jurisdictionId: "state", expiresAt: "2031-01-01" },
+      { id: "auth-reg", requirement: "Regulator approval of substation filing", authority: "Utility regulator", activity: "build", phase: "construction", jurisdictionId: "state-puc", expiresAt: "2031-01-01" },
+    ],
+    condition: { id: "cond-oil", sourceRecordId: "auth-env", text: "Transformer oil containment inspection before energization", authority: "State environmental agency", dueAt: "2029-09-30" },
+    pkg: { id: "pkg-xfmr", scope: "Substation transformer supply and install", license: "C-10 electrical", supplier: "sup-xfmr", equipment: { id: "eq-xfmr", model: "XFMR-28MVA", leadTimeDays: 420 } },
+    constructionTest: "xfmr-insulation-resistance", commissioningTest: "n1-transfer-scada",
+    asset: { id: "asset-xfmr", type: "Distribution transformer bank (+20 MVA)", custodian: "Substation operations" },
+    closure: "ret01",
+  },
+};
+
+export const LIVENESS_CASE_IDS = Object.keys(LIVENESS_SPECS) as (keyof typeof LIVENESS_SPECS)[];
+
+export function completedLifecycleCase(id: keyof typeof LIVENESS_SPECS): LivenessCase {
+  const sp = LIVENESS_SPECS[id];
+  const initial = createLifecycle({ caseId: sp.caseId, title: sp.title, sector: "electric", config: LIVENESS_CONFIG });
+  const done = new Set<string>();
+  const order = topologicalOrder();
+  let n = 0;
+  const batches: LivenessBatch[] = [];
+  for (const gate of ["M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9"] as GateId[]) {
+    const at = `${sp.dates[gate]}T12:00:00Z`;
+    const events: LifecycleEvent[] = [];
+    const add = (actor: string, body: EventBody) => events.push({ ...(body as object), id: `${sp.caseId}.${String(++n).padStart(3, "0")}`, at, actor } as LifecycleEvent);
+    const evidence = (eid: string, title: string) => add("analyst", { type: "evidence_recorded", evidence: { id: eid, kind: "document", title, source: { publisher: "synthetic liveness fixture" }, retrievedAt: at, freshness: "fresh", provenance: "owner_verified" } });
+    const e = (what: string) => `ev.${id}.${gate}.${what}`;
+    switch (gate) {
+      case "M0":
+        evidence(e("intake"), "Intake report");
+        add("triage", { type: "intake_accepted", owner: sp.owner, urgency: "routine", nextAction: sp.nextAction, nextActionDate: `${sp.dates.M1}T00:00:00Z`, sourceEvidence: [e("intake")] });
+        for (const t of Object.keys(RULE_IDS).filter((k) => RULE_IDS[k].evaluationRequired)) {
+          add("triage", { type: "trigger_evaluated", trigger: t, active: false, basis: "Intake urgency recorded as routine", evidence: [e("intake")] });
+        }
+        break;
+      case "M1":
+        evidence(e("appraisal"), "Option appraisal and decision record");
+        add("sponsor", { type: "decision_recorded", decision: {
+          id: `dec-${id}-m1`, gate: "M1", kind: "alternative", question: "Preferred alternative", owner: "sponsor",
+          alternatives: [{ id: sp.option.id, label: sp.option.label, viable: true }, ...sp.option.others.map((o) => ({ ...o, viable: true }))],
+          outcome: "proceed", rationale: `Option ${sp.option.id} selected under the approved appraisal frame`, weights: { resilience: 0.5, cost: 0.5 }, assumptions: [],
+          evidence: [e("appraisal")], decidedAt: at, revisitAt: null,
+        } });
+        add("sponsor", { type: "decision_signed", decisionId: `dec-${id}-m1`, version: 1 });
+        break;
+      case "M2":
+        sp.parcels.forEach((parcel, i) => {
+          evidence(e(`rights-${i}`), `Executed instrument for ${parcel}`);
+          add("land", { type: "land_record_added", record: { id: `lr-${id}-${i}`, parcel, instrument: "executed", evidence: [] } });
+          add("land", { type: "land_rights_accepted", recordId: `lr-${id}-${i}`, evidence: [e(`rights-${i}`)] });
+        });
+        break;
+      case "M3":
+        evidence(e("budget"), "Budget approval minutes");
+        add("finance", { type: "budget_approved", budget: { id: `bud-${id}`, amount: sp.budget, currency: "USD", residualGap: null } });
+        for (const f of sp.funding) {
+          evidence(e(f.id), `${f.provider} commitment`);
+          add("finance", { type: "funding_source_recorded", source: { id: f.id, provider: f.provider, kind: f.kind, amount: f.amount, currency: "USD", status: "committed", evidence: [e(f.id)] } });
+        }
+        break;
+      case "M4":
+        add("design", { type: "baseline_recorded", baseline: { id: `bl-${id}-design`, kind: "design", version: 1, content: { option: sp.option.id }, createdAt: at, supersedes: null } });
+        for (const a of sp.instruments) {
+          add("compliance", { type: "authorization_identified", authorization: { id: a.id, requirement: a.requirement, authority: a.authority, activity: a.activity, phase: a.phase, jurisdictionId: a.jurisdictionId } });
+          add("compliance", { type: "authorization_applicability_set", authorizationId: a.id, applicability: "confirmed applicable", basis: `${a.authority} source reviewed` });
+          for (const st of ["in preparation", "submitted", "under review"] as const) add("compliance", { type: "authorization_external_changed", authorizationId: a.id, state: st, evidence: [] });
+          evidence(e(a.id), `${a.requirement} (issued instrument)`);
+          add("verifier", { type: "authorization_external_changed", authorizationId: a.id, state: "issued", evidence: [e(a.id)], issuedAt: at, expiresAt: `${a.expiresAt}T00:00:00Z` });
+        }
+        add("compliance", { type: "condition_recorded", condition: { id: sp.condition.id, sourceRecordId: sp.condition.sourceRecordId, text: sp.condition.text, authority: sp.condition.authority, responsibleParty: sp.owner, dueAt: `${sp.condition.dueAt}T00:00:00Z`, trigger: null, blocksGates: ["M6"] } });
+        break;
+      case "M5": {
+        const p = sp.pkg;
+        evidence(e("license"), `${p.supplier} ${p.license} license`);
+        add("contracting", { type: "supplier_registered", supplier: { id: p.supplier, name: p.supplier, licenses: [{ class: p.license, jurisdictionId: "CA", expiresAt: `${sp.dates.M7}T00:00:00Z`, evidenceId: e("license") }] } });
+        evidence(e("availability"), `${p.equipment.model} availability confirmation`);
+        add("contracting", { type: "procurement_package_created", package: { id: p.id, scope: p.scope, requiredLicense: { class: p.license, jurisdictionId: "CA" }, equipment: [{ id: p.equipment.id, model: p.equipment.model, supplierId: p.supplier, longLead: true, availability: "available", leadTimeDays: p.equipment.leadTimeDays, evidence: [e("availability")] }] } });
+        for (const k of LIVENESS_CONFIG.requiredAwardApprovals) add("contracting", { type: "procurement_approval_recorded", packageId: p.id, kind: k });
+        add("contracting", { type: "procurement_awarded", packageId: p.id, supplierId: p.supplier });
+        evidence(e("contract"), "Executed contract");
+        add("signatory", { type: "contract_executed", packageId: p.id, evidence: [e("contract")] });
+        break;
+      }
+      case "M6":
+        evidence(e("test"), `${sp.constructionTest} record`);
+        add("cx", { type: "test_result_recorded", result: { id: `T-${id}-c1`, testId: sp.constructionTest, stage: "construction", critical: true, outcome: "pass", executedAt: at, executor: "Contractor QA", witness: "Owner engineer", reviewedBy: "cx", retestOf: null, observed: "within criterion", evidence: [e("test")], deferral: null } });
+        evidence(e("condition"), `${sp.condition.text} (inspection report)`);
+        add("compliance", { type: "condition_status_changed", conditionId: sp.condition.id, status: "evidence_submitted", evidence: [e("condition")] });
+        add("compliance", { type: "condition_status_changed", conditionId: sp.condition.id, status: "verified", evidence: [] });
+        add("compliance", { type: "condition_closed", conditionId: sp.condition.id });
+        evidence(e("completion"), "Construction completion record");
+        add("ownerRep", { type: "gate_signoff", gate: "M6", evidence: [e("completion")] });
+        break;
+      case "M7":
+        add("ownerRep", { type: "asset_registered", asset: { id: sp.asset.id, assetType: sp.asset.type, baselineId: `bl-${id}-design` } });
+        add("ownerRep", { type: "asset_custodian_assigned", assetId: sp.asset.id, custodian: sp.asset.custodian });
+        add("ownerRep", { type: "asset_status_changed", assetId: sp.asset.id, status: "validated" });
+        add("ownerRep", { type: "asset_status_changed", assetId: sp.asset.id, status: "in_service" });
+        evidence(e("test"), `${sp.commissioningTest} record`);
+        add("cx", { type: "test_result_recorded", result: { id: `T-${id}-x1`, testId: sp.commissioningTest, stage: "commissioning", critical: true, outcome: "pass", executedAt: at, executor: "Commissioning agent", witness: "Operations", reviewedBy: "cx", retestOf: null, observed: "within criterion", evidence: [e("test")], deferral: null } });
+        evidence(e("acceptance"), "Commissioning acceptance");
+        add("cx", { type: "gate_signoff", gate: "M7", evidence: [e("acceptance")] });
+        break;
+      case "M8":
+        evidence(e("condition"), "End-of-life condition assessment");
+        add("sponsor", { type: "decision_recorded", decision: {
+          id: `dec-${id}-m8`, gate: "M8", kind: "retirement", question: "Retire at end of life", owner: "asset manager",
+          alternatives: [{ id: "retire", label: "Retire and restore site", viable: true }], outcome: "stop",
+          rationale: "Condition and cost trend favour retirement over renewal", weights: {}, assumptions: [], evidence: [e("condition")], decidedAt: at, revisitAt: null,
+        } });
+        add("sponsor", { type: "decision_signed", decisionId: `dec-${id}-m8`, version: 1 });
+        if (sp.closure === "linked_case") add("sponsor", { type: "linked_case_opened", link: { caseId: `${sp.caseId}-decom`, relation: "decommissioning", fromBaselineId: null, trigger: `dec-${id}-m8`, reason: "Stage 11 decommissioning and closure" } });
+        break;
+      case "M9":
+        add("ownerRep", { type: "asset_status_changed", assetId: sp.asset.id, status: "retired" });
+        for (const a of sp.instruments) add("compliance", { type: "authorization_external_changed", authorizationId: a.id, state: "closed", evidence: [] });
+        evidence(e("archive"), "Final status certificate and archive manifest");
+        add("custodian", { type: "gate_signoff", gate: "M9", evidence: [e("archive")] });
+        break;
+    }
+    // Required catalog steps at this gate, preceded by any outstanding unconditional catalog preconditions.
+    const need = new Set<string>();
+    const pull = (code: string) => {
+      if (done.has(code) || need.has(code)) return;
+      need.add(code);
+      for (const p of preconditionCodes(procedureByCode(code)!, false)) pull(p);
+    };
+    for (const step of PROCEDURES) if (step.gate === gate && gatingOf(step) === "required") pull(step.code);
+    if (gate === "M8" && sp.closure === "ret01") pull("RET-01"); // closure path documented in this case
+    const codes = order.filter((c) => need.has(c));
+    if (codes.length) evidence(e("procedures"), `Accepted procedure evidence at ${gate}`);
+    for (const code of codes) {
+      add("ownerRep", { type: "procedure_step_completed", code, evidence: [e("procedures")] });
+      done.add(code);
+    }
+    batches.push({ gate, asOf: at, events, completedCodes: codes });
+  }
+  return { caseId: sp.caseId, title: sp.title, initial, batches };
 }

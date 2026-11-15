@@ -126,6 +126,8 @@ const gates = m.state ? evaluateAllGates(m.state, AS_OF, { procedures: [...PROCE
 row("gate replay succeeds", m.error === null && gates.length === 10, m.error ?? `${m.events.length} events`);
 row("no gate passes from plan statuses alone", gates.every((g) => g.status !== "pass"), gates.map((g) => `${g.gate}:${g.status}`).join(" "));
 row("every not_ready gate lists missing inputs", gates.filter((g) => g.status === "not_ready").every((g) => g.missingInputs.length > 0), "");
+row("triggers not evaluated by default (no plan fact), none recorded as events", m.triggers.length > 0 && m.triggers.every((t) => t.state === "not_evaluated") && !m.events.some((e) => e.type === "trigger_evaluated"), `${m.triggers.length} triggers`);
+row("M1 names the doc-required emergency trigger evaluation as missing", !!gates[1]?.missingInputs.some((x) => x.startsWith("trigger trigger.emergency not evaluated")), gates[1]?.missingInputs.filter((x) => x.startsWith("trigger ")).join("; ") ?? "");
 
 let fail = 0;
 for (const r of rows) {

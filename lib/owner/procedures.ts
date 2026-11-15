@@ -233,6 +233,10 @@ export const GATE_OVERRIDES: Readonly<Record<string, { gate: GateId; sourceDoc: 
     gate: "M4", sourceDoc: sec(DEV_DOC, "DEV-14 — Discover and reconcile asset configuration"), quote: "does not stop urgent response, but blocks design claims that rely on the unknown",
     reason: "Unreconciled configuration blocks design claims (M4 design ready), not intake acceptance.",
   },
+  "DEV-17": {
+    gate: "M4", sourceDoc: sec(DEV_DOC, "DEV-17 — Coordinate utility conflicts and relocation interfaces"), quote: "Assign each conflict a disposition and design reference",
+    reason: "Conflict dispositions are design-baseline work (compared against DEV-10's design revision), so they belong to M4 design ready; DEV-19 (M5) consumes them. M2 is site-control evidence only.",
+  },
   "DEV-19": {
     gate: "M5", sourceDoc: sec(DEV_DOC, "DEV-19 — Release construction work package from design baseline"), quote: "Provide a controlled handoff from design/procurement readiness to field execution",
     reason: "Release to field execution is the M5 package-ready-for-construction handoff, after award (PROC-04).",
@@ -355,6 +359,9 @@ const DEFS: Def[] = [
       "Current incident commander/response contact role and acknowledgements",
     ],
     preconditions: ["DEV-01"], // DEV-01 step 2: urgent intake is handed to response authority
+    // Conditional: only emergency intakes run the response branch (WORKFLOWS s1
+    // "Emergency cases may advance to response coordination ..."). Gate M1, see GATE_OVERRIDES.
+    gating: "conditional", trigger: "trigger.emergency",
     outputs: [
       "Event log with each transfer (sender/receiver, state, restrictions, hazards, actions, next report time)",
       "Stabilization review: timeline, interruption/restoration state, temporary measures, hazards, monitoring needs, residual restrictions",
@@ -401,7 +408,10 @@ const DEFS: Def[] = [
       "Approved asset, GIS, maintenance, incident, drawing and operator records with extraction dates",
       "Owner/operator confirmation of service boundary and configuration",
     ],
-    preconditions: ["DEV-01"], // "Use when intake references an asset that cannot be matched"
+    preconditions: ["DEV-01"], // case exists; "Use when intake references an asset that cannot be matched" is the trigger
+    // Conditional (DEV-14 "Use when ..."). Not an intake blocker: "Unknown configuration does not
+    // stop urgent response, but blocks design claims that rely on the unknown" -> M4, see GATE_OVERRIDES.
+    gating: "conditional", trigger: "trigger.unmatched_asset",
     outputs: [
       "Discovery record with candidates marked confirmed/possible/rejected/retired/unknown and reproducible query/extract reference",
       "Provisional asset references with explicit uncertainty and field verification task where no reliable record exists",
@@ -424,6 +434,8 @@ const DEFS: Def[] = [
       "Urgency class and source; verified and cited deadlines; effort/cost range and basis; capacity constraints",
     ],
     preconditions: ["DEV-03"], // evidence packet requires baseline confidence
+    // Portfolio-level triage across cases: "Portfolio rank is not approval to spend or proceed."
+    gating: "non_gating",
     outputs: [
       "Disposition per case: defer, study, combine, advance, or decline, with rationale and review trigger",
       "Visible queue of unranked/incomplete cases",
@@ -479,16 +491,21 @@ const DEFS: Def[] = [
     ],
     recovery:
       "No viable option: document constraints and next action, do not force a choice. Incomplete data: label provisional decision with guardrails and study owner. Route/site unavailable: reopen affected options. Demand shift: new baseline/appraisal version. Emergency interim option: separate duration, owner, exit criteria and permanent decision gate.",
-    blocksGateOn: ["Downstream commitments that depend on unresolved provisional-selection conditions, unless authority explicitly releases them"],
+    // No gate blocker: the doc blocks *downstream commitments* that depend on unresolved provisional
+    // conditions, not M1. Record each such condition as a lifecycle Condition whose blocksGates names the
+    // commitment gate (e.g. M3 authority, M5 award) so it blocks there until released.
   },
   {
     code: "DEV-06", stage: "feasibility", doc: DEV_DOC, heading: "DEV-06 — Maintain dependency and decision readiness",
     role: "Case manager",
     inputs: [
       "Milestone/dependency items: predecessor/successor, owner, required input/version, need-by date, lead-time basis/source, status, affected gate",
-      "Accepted priority and resource assumptions from DEV-15",
+      "Optional: accepted priority and resource assumptions from DEV-15 portfolio triage, when available",
     ],
-    preconditions: ["DEV-15"], // DEV-15 feeds "dependency planner (DEV-06)"; DEV-06 states no other trigger
+    // DEV-15 only feeds DEV-06 ("Feed accepted priority ... to ... dependency planner (DEV-06)"), so it is an
+    // optional input, not a precondition. The register maps the accepted case's dependencies and gaps,
+    // which DEV-03 establishes ("major dependencies and material data gaps have owners").
+    preconditions: ["DEV-03"],
     outputs: [
       "Milestone/dependency register distinguishing hard prerequisites from coordination preferences",
       "Weekly/configured review of critical path, overdue gaps, expiring evidence, unresolved authority, decisions due",
@@ -510,7 +527,9 @@ const DEFS: Def[] = [
       "Controlled evidence versions and source access",
       "Independence/conflict declaration and reviewer competence",
     ],
-    preconditions: ["DEV-01", "trigger.assurance_configured"], // case exists + owner-configured trigger
+    preconditions: ["DEV-01"], // case exists
+    // Conditional: "Use at owner-configured risk, novelty, consequence, uncertainty, or decision gate."
+    gating: "conditional", trigger: "trigger.assurance_configured",
     outputs: [
       "Assurance plan",
       "Findings log (ID, severity, reference, evidence, required response, owner, due date) and author dispositions",
@@ -599,6 +618,10 @@ const DEFS: Def[] = [
       "Operator requirements for ownership, access, protection/relocation, service window, cost responsibility",
     ],
     preconditions: ["DEV-07", "DEV-10"], // work geometry (DEV-07) compared against current design revision (DEV-10)
+    // Conditional: "Use when proposed works may encounter or affect existing utility ...". Gate M4, see
+    // GATE_OVERRIDES (dispositions carry a design reference; M2 is site control). No blocker text:
+    // unresolved conflicts block the affected scope at DEV-19 release ("unresolved conflict ... blocks affected scope").
+    gating: "conditional", trigger: "trigger.utility_conflict",
     outputs: [
       "Conflict register with disposition and design reference per conflict",
       "Alternatives (avoid, protect, relocate, sequence)",
@@ -609,7 +632,6 @@ const DEFS: Def[] = [
     ],
     recovery:
       "Unknown owner: records search, do not infer from markings. Inaccurate records: stop affected design/work, log verified location. Operator nonresponse: escalate via interface channel, show schedule exposure. Multiple operators: one coordination log. Changed alignment: rerun conflict query, notify reviewers.",
-    blocksGateOn: ["Unresolved high-consequence utility conflicts (unless authorized conditional release with limits)"],
   },
   // --------------------------------------------------------------- capital
   {
@@ -691,6 +713,9 @@ const DEFS: Def[] = [
       "Invoice/payment/receipt transaction evidence",
     ],
     preconditions: ["CAP-01"], // cash forecast built from the capital plan sources/uses
+    // Non-gating: M3 "requires approved budget and a credible, status-labeled funding path plus explicit
+    // residual gap/conditions"; no cash forecast or draw is named. Draws/reforecasts continue through delivery.
+    gating: "non_gating",
     outputs: [
       "Period cash forecast (accrual/commitment view separate from cash view)",
       "Draw/reimbursement claims with line mapping, eligible-cost evidence and reconciliation status",
@@ -713,7 +738,11 @@ const DEFS: Def[] = [
       "Current baseline version",
       "Domain reviewer returns: affected / not affected with rationale / unknown",
     ],
-    preconditions: ["CAP-01"], // change is logged "against the current baseline"; capital plan is the baseline named first
+    // "Log once, link everywhere": a change is logged against whatever baseline is current (capital,
+    // award, permit, agreement), so no single procedure precedes it.
+    preconditions: [],
+    // Conditional: "Treat material change as a linked workflow ...". Owner-configured thresholds decide materiality.
+    gating: "conditional", trigger: "trigger.material_change",
     outputs: [
       "Single change record linked to all affected cases and records",
       "Consolidated impact set and matrix with evidence and owner per link",
@@ -728,7 +757,7 @@ const DEFS: Def[] = [
     ],
     recovery:
       "Missing source evidence: mark review blocked, name retrieval owner/date. Reviewer disagreement: keep both, escalate. Premature implementation: log as incident/exception, never backdate approval. External approval denied/delayed: retain baseline, hold action, route alternative/no-go/staged decision.",
-    blocksGateOn: ["Unknown change impact (prevents closure)"],
+    // No gate blocker: "unknown impact prevents closure" is closure of the change record itself.
   },
   // ---------------------------------------------------------------- grants
   {
@@ -739,7 +768,10 @@ const DEFS: Def[] = [
       "CAP records for match/cost-share and cash-flow mapping",
       "Technical/partner scope validation; counsel/compliance review of unresolved interpretation",
     ],
-    preconditions: ["DEV-05", "CAP-01"], // WORKFLOWS 5A "Feasible option and funding need"; step 2 maps to CAP records
+    // WORKFLOWS 5A "Feasible option and funding need". No CAP-01 precondition: "finance plan proceeds
+    // alongside grant search" (WORKFLOWS s4) and "Planning may proceed while grants are explored" (CAP-01).
+    preconditions: ["DEV-05"],
+    gating: "non_gating", // WORKFLOWS 5A names no milestone (STAGE_GATE.grants = null)
     outputs: [
       "Opportunity record with status",
       "Criterion-by-criterion qualification answers with source, evidence, owner, reviewer",
@@ -764,6 +796,7 @@ const DEFS: Def[] = [
       "CAP allocations for reconciliation",
     ],
     preconditions: ["GR-01", "CAP-02"], // go decision; readiness gate 3 reconciles against CAP allocation
+    gating: "non_gating", // WORKFLOWS 5A names no milestone
     outputs: [
       "Requirement matrix with per-item state",
       "Independent completeness review with field-level deficiencies",
@@ -785,7 +818,10 @@ const DEFS: Def[] = [
       "Official award and terms (not the notice of selection)",
       "Submitted request and CAP plan for comparison",
     ],
-    preconditions: ["GR-02"], // "Upon selection" of a submitted application
+    // "Upon selection" of a submitted application; CAP-03 "Before contract/award acceptance, match proposed
+    // obligation schedule against active authority and delegated signing limit."
+    preconditions: ["GR-02", "CAP-03"],
+    gating: "non_gating", // WORKFLOWS 5A names no milestone
     outputs: [
       "Award record",
       "Obligation item per term/condition with source section, owner, due/trigger, evidence, status",
@@ -808,6 +844,7 @@ const DEFS: Def[] = [
       "Technical output certifications; finance ledger, match, claims and receipts reconciliation",
     ],
     preconditions: ["GR-03"], // "Create a schedule from executed award terms"
+    gating: "non_gating", // WORKFLOWS 5A names no milestone
     outputs: [
       "Monitoring schedule and submitted reports with receipts; sponsor acceptance tracked separately",
       "Amendment requests and written sponsor decisions",
@@ -832,7 +869,15 @@ const DEFS: Def[] = [
       "Frozen award-term version, current instruments and amendments, executed agreement versions",
       "Transaction-level reconciliation of obligated/actual/claimed/received amounts",
     ],
-    preconditions: ["CHG-01"], // "handles downstream obligations after a change"
+    // "Start promptly when a potential trigger appears": not after CHG-01 completes. Each branch needs
+    // its own record to act on (award, instrument, executed agreement), so dependencies are per branch.
+    preconditions: [],
+    gating: "conditional", trigger: "trigger.recovery_transfer_release", // gate M9, see GATE_OVERRIDES
+    conditionalPreconditions: [
+      { when: "branch.grant_recovery", preconditions: ["GR-03"] },
+      { when: "branch.permit_transfer", preconditions: ["PER-03"] },
+      { when: "branch.agreement_release", preconditions: ["AGR-01"] },
+    ],
     outputs: [
       "Grant recovery: subrecipient records, formal notices, sponsor decisions, ledger adjustments, revised CAP sources/uses",
       "Permit/license: authority-specific transfer/amendment/surrender package, receipt/docket ID, verified external disposition",
@@ -936,7 +981,9 @@ const DEFS: Def[] = [
     ],
     recovery:
       "Uncertain renewal timing: show 'date to verify' and block calendar confidence. Do not infer transferability. Keep ordinary condition tasks active during disputes unless suspension is documented by authorized source/reviewer.",
-    blocksGateOn: ["Expired instrument", "Open instrument conditions before the configured activity"],
+    // Only expiry blocks the gate ("expired instrument ... blocks configured gate"); M4 needs instruments
+    // "recorded with conditions and dates". Open conditions block via Condition.blocksGates at their activity gate.
+    blocksGateOn: ["Expired instrument"],
   },
   {
     code: "AGR-01", stage: "permits", doc: AUTH_DOC, heading: "AGR-01 — Agreements and commitments",
@@ -946,7 +993,9 @@ const DEFS: Def[] = [
       "Scope, dependencies, template/source, required approvals, target date, risks",
       "Linked permits, funding and cost lines",
     ],
-    preconditions: ["DEV-07"], // WORKFLOWS 5B trigger "Candidate site/route and concept exist"
+    // WORKFLOWS 5B trigger "Candidate site/route and concept exist"; step 3 "Before execution, confirm internal
+    // approval covers ... funding and appropriation, required prerequisite permits" -> CAP-03, PER-03.
+    preconditions: ["DEV-07", "CAP-03", "PER-03"],
     outputs: [
       "Agreement record and clause/topic issue log with immutable drafts",
       "Internal approval tied to exact final version; signature routing",
@@ -961,7 +1010,8 @@ const DEFS: Def[] = [
     ],
     recovery:
       "Unsigned, partially signed, conditional, disputed or expired agreements stay distinct. Missing signatory authority blocks execution routing. Amendment repeats review/approval/execution; prior terms remain until change verified. At expiry/termination verify surviving obligations; do not close solely because term ended.",
-    blocksGateOn: ["Missing signatory authority (blocks execution routing)", "Open obligation (blocks closeout)"],
+    // Closeout ("open obligation prevents closeout") is not M4; it is carried by RET-03/RET-04 at M9.
+    blocksGateOn: ["Missing signatory authority (blocks execution routing)"],
   },
   // ----------------------------------------------------------- engineering
   {
@@ -974,6 +1024,8 @@ const DEFS: Def[] = [
       "Operator/maintainer operability review",
     ],
     preconditions: ["DEV-05"], // "Confirm selected option and current requirements before concept design"
+    // DEV-14: unknown configuration "blocks design claims that rely on the unknown".
+    conditionalPreconditions: [{ when: "trigger.unmatched_asset", preconditions: ["DEV-14"] }],
     outputs: [
       "Approved design basis",
       "Requirements register, interface register, assumption/data-gap log",
@@ -1016,7 +1068,11 @@ const DEFS: Def[] = [
       "Cost range, escalation/cancellation exposure and funding authority",
       "Procurement route and contract review",
     ],
-    preconditions: ["DEV-11"], // candidate record cites design maturity and specification revision
+    // Candidate record cites design maturity and specification revision (DEV-11); "Finance confirms
+    // available authorized funding and exposure basis" (CAP-03).
+    preconditions: ["DEV-11", "CAP-03"],
+    // Conditional: "This is a configurable owner gate, not a presumption that early release is authorized."
+    gating: "conditional", trigger: "trigger.early_release",
     outputs: [
       "Release/hold decision record with limited scope, exclusions, exposure ceiling, stop conditions, interface freeze date",
       "Release packet with traceable vendor acknowledgement",
@@ -1039,12 +1095,18 @@ const DEFS: Def[] = [
     ],
     preconditions: ["DEV-10"], // "At concept, identify outages" — concept follows design basis
     outputs: [
+      "Plan approved: continuity plan version approved by operations authority after design-review validation",
       "Continuity plan",
       "Cutover work package with hold points, abort/rollback conditions",
       "Readiness review and go/no-go decision log; actual-step records",
       "Restoration verification and operator acceptance",
     ],
+    // Gating acceptance is the plan (M4, design stage). The doc's "Acceptance" paragraph is cutover
+    // closure during execution; it is kept as followUpAcceptance and never consulted by gates.
     acceptance: [
+      "Plan approved: outages, interfaces, temporary service and affected parties identified at concept; cutover feasibility validated at design review with operator, maintainer, safety, and external operators",
+    ],
+    followUpAcceptance: [
       "Actual work evidence, deviations dispositioned, service state confirmed by operations",
       "Temporary arrangements removed or assigned with expiry/review; defects and monitoring owned",
       "Asset/configuration records updated; stakeholders notified",
@@ -1061,6 +1123,9 @@ const DEFS: Def[] = [
       "Technical interfaces from engineering; access/commitment effects from land/community leads",
     ],
     preconditions: ["DEV-10"], // engineering confirms technical interfaces for phases
+    // Non-gating: "If fallback is unverified, label it contingency concept and keep gate at risk." The docs
+    // define no at-risk gate status, so an incomplete DEV-18 is reported as a gate warning, never a block.
+    gating: "non_gating",
     outputs: [
       "Scenario register (baseline and adverse) with activation/exit criteria",
       "Phase boundaries, last responsible decision dates, minimum viable service per phase",
@@ -1083,10 +1148,14 @@ const DEFS: Def[] = [
       "Vendor submittal status; service/outage/cutover links",
       "Funding, contract and release delegation",
     ],
-    // Readiness review confirms: released design (DEV-11), outage/cutover (DEV-13),
-    // utility conflicts (DEV-17), land access (DEV-08), permit conditions (PER-04),
-    // vendor data (PROC-05 submittal register), funding/authority (CAP-03).
-    preconditions: ["DEV-11", "DEV-13", "DEV-17", "DEV-08", "PER-04", "PROC-05", "CAP-03"],
+    // Readiness review confirms: released design (DEV-11), outage/cutover plan (DEV-13 plan approved),
+    // land access (DEV-08), issued instruments (PER-03) with conditions recorded ("Permit/condition owners
+    // confirm applicable prerequisites and obligations"), executed contract (PROC-04) and
+    // "approved-for-use vendor data and substitutions", funding/authority (CAP-03). Utility conflict
+    // dispositions (DEV-17) only when a conflict exists. PER-04/PROC-05 are long-running and not awaited.
+    // Gate M5, see GATE_OVERRIDES.
+    preconditions: ["DEV-11", "DEV-13", "DEV-08", "PER-03", "rule.instrument_conditions_recorded", "PROC-04", "rule.vendor_submittals_approved", "CAP-03"],
+    conditionalPreconditions: [{ when: "trigger.utility_conflict", preconditions: ["DEV-17"] }],
     outputs: [
       "Release packet per bounded area/package",
       "Blocker list with owner, due date, affected area, resolution evidence",
@@ -1168,6 +1237,9 @@ const DEFS: Def[] = [
     role: "Contract role verifies entitlement; finance authorizes payment",
     inputs: ["Executed contract obligation matrix", "Vendor submittals", "Deliveries", "Invoices"],
     preconditions: ["PROC-04"], // "Transition obligation matrix to PROC-05"
+    // Non-gating: invoice/payment administration runs through construction ("Payment is not turnover or
+    // beneficial use"). M5 submittals are carried by DEV-19's rule.vendor_submittals_approved.
+    gating: "non_gating",
     outputs: [
       "Obligation rows and submittal register",
       "Delivery receipts with accept/partial/reject authority",
@@ -1186,13 +1258,16 @@ const DEFS: Def[] = [
     role: "Contract authority (finance decides final payment independently)",
     inputs: ["Executed contract and baseline", "Change requests, vendor proposals, claims notices"],
     preconditions: ["PROC-04"], // changes/claims act on an executed contract
+    // Non-gating: WORKFLOWS s7 M5 = "authorization, executed scope/contract, interfaces, submittals and
+    // delivery plan are recorded"; change/claim/closeout run after award, closeout after construction.
+    gating: "non_gating",
     outputs: [
       "Change records through signed change and revised baseline",
       "Claim records separating allegation from accepted liability",
       "Closeout checklist",
     ],
     acceptance: [
-      UNSPECIFIED, "Closeout checklist items reconciled and open obligations visible",
+      UNSPECIFIED, "Open obligations stay visible",
     ],
     recovery:
       "RFI, field direction, forecast or submittal does not change contract absent authorized execution. Emergency direction uses configured authority and retrospective record; no silent bypass.",
@@ -1202,6 +1277,8 @@ const DEFS: Def[] = [
     role: "Contract manager (contract authority decides extension/replacement/termination)",
     inputs: ["Executed agreement and amendments", "Critical vendor/service list"],
     preconditions: ["PROC-04"], // reconciles against executed agreement
+    // Non-gating: "Use when contract administration continues after construction".
+    gating: "non_gating",
     outputs: [
       "Continuity record per critical vendor/service",
       "Renewal/transition decisions, recipient acknowledgements, access removal and final deliverables",
@@ -1221,7 +1298,8 @@ const DEFS: Def[] = [
     ],
     preconditions: ["PROC-04", "DEV-19", "gate.M5"], // "after authorized gate and executed package"
     outputs: ["Readiness disposition", "Baselines and named leads", "Authorizations"],
-    acceptance: ["Readiness disposition, baselines, named leads and authorizations recorded"],
+    // The section lists Evidence ("readiness disposition, baselines, named leads, authorizations"), not acceptance.
+    acceptance: [UNSPECIFIED],
     recovery:
       "Missing critical access, design, interface or configured prerequisite blocks affected work unless exception specifies scope, controls, approver, owner and expiry.",
     blocksGateOn: ["Missing critical access, design, interface or configured prerequisite"],
@@ -1277,6 +1355,9 @@ const DEFS: Def[] = [
     role: "Owner verifies; authorized owner records completion",
     inputs: ["Contractor submission: scope, as-builts, quality/test records, NCRs, punch, quantities, training, certifications"],
     preconditions: ["CONST-02", "CONST-03"], // completion submission includes field quantities and quality/test records
+    // M6 requires "approved changes reflected": when a change is recorded, its decision (CONST-05) and
+    // contract change ("Link contract change PROC-06") precede completion.
+    conditionalPreconditions: [{ when: "trigger.construction_change", preconditions: ["CONST-05", "PROC-06"] }],
     outputs: ["Owner walkdown/verification", "Punch list with class, owner, due date, carryover authority", "Construction completion record (separate from contract completion, payment, beneficial use)"],
     acceptance: [
       "M6: configured scope installed, critical inspection/test evidence present, open items dispositioned, approved changes reflected, authorized owner records completion",
@@ -1290,6 +1371,7 @@ const DEFS: Def[] = [
     role: "Owner engineer with quality/safety/operations roles",
     inputs: ["Suspended boundary status, installed/incomplete work, hazards, stored materials"],
     preconditions: ["CONST-01"], // applies to work fronts after mobilization
+    gating: "conditional", trigger: "trigger.work_suspension", // "For seasonal shutdown, extended suspension, ..."
     outputs: ["Preservation/restart record per area/system", "Restart acceptance with limits, rejected areas and remediation"],
     acceptance: ["Every suspended boundary has custodian and review trigger", "Restart decision names reviewed evidence and exceptions"],
     recovery: "Lost/expired evidence triggers inspection/requalification decision by designated authority; paused work is not presumed acceptable. Log is not formal contract notice.",
@@ -1353,6 +1435,7 @@ const DEFS: Def[] = [
     role: "Commissioning proposes; authorized acceptance authority decides",
     inputs: ["Boundary map, components, interfaces, test/dossier status per boundary"],
     preconditions: ["TURN-01"], // phased boundaries derive from commissioning boundaries
+    gating: "conditional", trigger: "trigger.phased_turnover", // "When service begins by system, location, or stage"
     outputs: ["Boundary register with custodian per boundary", "Per-phase reconciliation and evidence export"],
     acceptance: ["Every component maps to accountable state/custodian or documented shared owner", "Each phase exports its own evidence and open items"],
     recovery: "Boundary change invalidates affected links and requires review. Disputed interface ownership or untestable boundary holds affected phase and assigns joint owner.",
@@ -1361,7 +1444,7 @@ const DEFS: Def[] = [
   // ------------------------------------------------------------ operations
   {
     code: "OPS-01", stage: "operations", doc: DEL_DOC, heading: "OPS-01 — Asset baseline and recurring plan",
-    role: "Asset owner accepts identity and plan",
+    role: null, // section names no accountable role
     inputs: ["Commissioning baseline and in-service decision basis", "Owner-set maintenance rules and sources"],
     preconditions: ["TURN-05"], // asset fields need in-service decision basis and commissioning baseline
     outputs: ["Asset records", "Recurring plan/tasks", "Work orders"],
@@ -1383,7 +1466,7 @@ const DEFS: Def[] = [
   },
   {
     code: "OPS-03", stage: "operations", doc: DEL_DOC, heading: "OPS-03 — Warranty, service and compliance renewals",
-    role: "Contract/compliance owner",
+    role: null, // section assigns reviewers and escalates to "accountable owner" but names no owning role
     inputs: ["Instruments with source-documented dates", "Owner-configured lead times"],
     preconditions: ["OPS-01"],
     outputs: ["Obligation calendar", "Renewal cases with submission receipts and decisions", "Warranty claims"],
@@ -1425,6 +1508,7 @@ const DEFS: Def[] = [
     role: "Outgoing and incoming custodians; authorized roles decide effective date",
     inputs: ["Inventory of affected assets, contracts, permits, land rights, grant conditions, access, procedures"],
     preconditions: ["OPS-01"], // inventories asset records
+    gating: "conditional", trigger: "trigger.custodian_change", // "Open transition case when asset owner, operator, ... changes"
     outputs: ["Transition case", "Versioned handover pack and outstanding-risk schedule", "Incoming acceptance/rejection with limits"],
     acceptance: ["Both sides acknowledge inventory/exceptions", "Each obligation has owner and effective date; access dispositioned; rejected items have resolution owner"],
     recovery: "If right or permit continuity is uncertain, retain current accountable owner pending source-based determination. Restricted records do not copy by default.",
@@ -1434,6 +1518,7 @@ const DEFS: Def[] = [
     role: "Incident lead; investigation lead",
     inputs: ["Event record and sourced timeline", "Restoration evidence"],
     preconditions: ["OPS-02"], // builds on the event record
+    gating: "conditional", trigger: "trigger.incident", // WORKFLOWS s10 "incident spins linked case"
     outputs: ["Decision log and investigation findings", "Return-to-routine decision with scope and limits", "Corrective actions linked to OPS-06"],
     acceptance: ["Event facts, response decisions, findings and corrective closure distinct", "Unresolved action owned with review trigger"],
     recovery: "Incident closure may leave corrective work open; do not clear backlog on event closure. Uncertain cause retains monitoring and review date.",
@@ -1443,6 +1528,7 @@ const DEFS: Def[] = [
     role: "Reviewer/owner per instrument",
     inputs: ["Obligation register", "Current authoritative instrument/issuer record"],
     preconditions: ["OPS-03"], // reconciles the obligation register
+    gating: "conditional", trigger: "trigger.instrument_review", // "Before renewal, transfer, modification, operator change or retirement"
     outputs: ["Applicability rows", "Amendment/assignment/surrender filings with receipts and effective instruments"],
     acceptance: ["Each affected instrument has verified status/source, accountable party, effective-date evidence or open exception, next action"],
     recovery: "Current holder remains accountable until effective transfer is recorded. Denial, delay, scope dispute or missed date escalates; pending request is not approval. System never decides applicability.",
@@ -1452,7 +1538,9 @@ const DEFS: Def[] = [
     code: "RET-01", stage: "decommissioning", doc: DEL_DOC, heading: "RET-01 — Assessment and approval",
     role: "Asset owner leads; asset/investment authority approves",
     inputs: ["Asset status and retirement reason/source", "Alternatives, affected services, obligations, restoration, cost/funding"],
-    preconditions: ["OPS-01"], // assessment of an in-service asset record
+    // Assessment of an in-service asset record (OPS-01); the condition/lifecycle business case that compares
+    // "maintain, repair, refurbish, upgrade, replace, transfer, retire" (OPS-04) precedes retirement approval.
+    preconditions: ["OPS-01", "OPS-04"],
     outputs: ["Retirement assessment", "Approve/reject/defer/condition decision", "Linked successor case"],
     acceptance: [
       UNSPECIFIED, "No shutdown from draft or forecast",
@@ -1474,7 +1562,9 @@ const DEFS: Def[] = [
     code: "RET-03", stage: "decommissioning", doc: DEL_DOC, heading: "RET-03 — Disposition, restoration, obligations and finance",
     role: "Owners accept evidence; finance/contract approver closes",
     inputs: ["Items and materials from shutdown", "Contracts, grants, permits, land, service obligations"],
-    preconditions: ["RET-02"], // dispositions items released by shutdown/transfer
+    // Dispositions items released by shutdown/transfer (RET-02); OPS-09 "Before ... retirement, reconcile
+    // register against current authoritative instrument/issuer record" precedes the obligation matrix.
+    preconditions: ["RET-02", "OPS-09"],
     outputs: ["Disposition records with chain of custody", "Obligation matrix", "Financial/contract closeout"],
     acceptance: [
       UNSPECIFIED, "Blank is never closed",
@@ -1496,6 +1586,8 @@ const DEFS: Def[] = [
     role: "Risk owner; reviewer closes items",
     inputs: ["Restoration, monitoring, warranty tail, unresolved claim, land duty or accepted residual"],
     preconditions: ["RET-03"], // obligation matrix includes restoration/monitoring
+    // Non-gating: the aftercare register "remains visible after physical closure"; M9 does not wait on it.
+    gating: "non_gating",
     outputs: ["Aftercare register visible after physical closure", "Review records"],
     acceptance: ["Aftercare visible after physical closure", "Overdue work escalates", "Each item has custodian/funding or explicit exception"],
     recovery: "Trigger or adverse trend opens linked case and reopens retirement decision. Lapsed monitoring or lost owner/funding escalates; obligation stays open.",
@@ -1527,21 +1619,34 @@ export interface ProcedureGraph {
   edges: { from: string; to: string }[];
   /** Preconditions that are rule ids, not procedures. */
   ruleEdges: { rule: string; to: string }[];
+  /** Preconditions that apply only when `when` holds (step.conditionalPreconditions). */
+  conditionalEdges: { from: string; to: string; when: string }[];
 }
 
 export function procedureGraph(): ProcedureGraph {
   const edges: ProcedureGraph["edges"] = [];
   const ruleEdges: ProcedureGraph["ruleEdges"] = [];
+  const conditionalEdges: ProcedureGraph["conditionalEdges"] = [];
   for (const step of PROCEDURES) {
     for (const pre of step.preconditions) {
       if (BY_CODE.has(pre)) edges.push({ from: pre, to: step.code });
       else ruleEdges.push({ rule: pre, to: step.code });
     }
+    for (const c of step.conditionalPreconditions ?? []) for (const pre of c.preconditions) conditionalEdges.push({ from: pre, to: step.code, when: c.when });
   }
-  return { nodes: PROCEDURES.map((s) => s.code), edges, ruleEdges };
+  return { nodes: PROCEDURES.map((s) => s.code), edges, ruleEdges, conditionalEdges };
 }
 
-/** Deterministic topological order (Kahn, ties broken by catalog order). Throws on cycle. */
+/** Procedure-code preconditions of a step; with `conditional`, also every conditional precondition (worst case: all hold). */
+export function preconditionCodes(step: ProcedureStep, conditional = true): string[] {
+  const all = [...step.preconditions, ...(conditional ? (step.conditionalPreconditions ?? []).flatMap((c) => c.preconditions) : [])];
+  return [...new Set(all.filter((p) => BY_CODE.has(p)))];
+}
+
+/**
+ * Deterministic topological order (Kahn, ties broken by catalog order). Throws on cycle.
+ * Conditional preconditions are ordered too, so the order stays valid whichever triggers hold.
+ */
 export function topologicalOrder(codes: readonly string[] = PROCEDURES.map((s) => s.code)): string[] {
   const set = new Set(codes);
   const indeg = new Map<string, number>();
@@ -1553,7 +1658,7 @@ export function topologicalOrder(codes: readonly string[] = PROCEDURES.map((s) =
   for (const c of set) {
     const step = BY_CODE.get(c);
     if (!step) throw new Error(`Unknown procedure code: ${c}`);
-    for (const pre of step.preconditions) {
+    for (const pre of preconditionCodes(step)) {
       if (!set.has(pre)) continue;
       indeg.set(c, (indeg.get(c) ?? 0) + 1);
       out.get(pre)!.push(c);

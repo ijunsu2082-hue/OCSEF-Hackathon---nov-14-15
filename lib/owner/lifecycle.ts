@@ -10,6 +10,7 @@
 
 import type { Evidence, Fact, GateId, ProcedureStep, Sector, StageId, Unknown } from "./types";
 import { evaluationKey, type RuleEvaluation } from "./rules";
+import { RULE_IDS, STAGE_GATE, STAGE_ORDER, gatingOf } from "./procedures";
 
 // ---------------------------------------------------------------------------
 // Deterministic hashing (non-cryptographic; for replay/state identity only).
@@ -63,7 +64,7 @@ export type LifecycleErrorCode =
   | "UNAUTHORIZED" | "ILLEGAL_TRANSITION" | "MISSING_FIELD" | "IMMUTABLE_RECORD" | "IMMUTABLE_BASELINE"
   | "STALE_VERSION" | "NOT_APPLICABLE_REQUIRES_REVIEWER" | "RIGHTS_FROM_OUTREACH" | "PACKAGE_HASH_MISMATCH"
   | "AWARD_BEFORE_SUBMISSION" | "AWARD_BEFORE_APPROVALS" | "LICENSE_MISMATCH" | "LICENSE_EXPIRED"
-  | "RETEST_CHAIN" | "WAIVER_REQUIRES_APPROVER" | "EVIDENCE_REQUIRED" | "SUPERSEDES_INVALID";
+  | "RETEST_CHAIN" | "WAIVER_REQUIRES_APPROVER" | "EVIDENCE_REQUIRED" | "SUPERSEDES_INVALID" | "UNKNOWN_TRIGGER";
 
 export class LifecycleError extends Error {
   readonly code: LifecycleErrorCode;
@@ -287,6 +288,8 @@ export interface ProcurementPackage {
 
 export interface GateSignoff { gate: GateId; by: string; at: string; evidence: string[] }
 export interface ProcedureCompletion { code: string; by: string; at: string; evidence: string[] }
+/** Evaluation of a conditional-procedure trigger (procedures.ts RULE_IDS kind "trigger"). Latest revision wins. */
+export interface TriggerEvaluation { trigger: string; active: boolean; basis: string; by: string; at: string; evidence: string[] }
 export interface LinkedCase { caseId: string; relation: "renewal" | "replacement" | "incident" | "decommissioning"; fromBaselineId: string | null; trigger: string | null; reason: string; at: string }
 
 /** One immutable revision of a record. */
@@ -339,6 +342,8 @@ export interface LifecycleState {
   packages: Record<string, Rev<ProcurementPackage>[]>;
   signoffs: Rev<GateSignoff>[];
   procedures: Record<string, Rev<ProcedureCompletion>[]>;
+  /** Trigger evaluations by trigger id; absent = not evaluated. */
+  triggers: Record<string, Rev<TriggerEvaluation>[]>;
   ruleEvaluations: Record<string, Rev<RuleEvaluation>[]>;
   linkedCases: Rev<LinkedCase>[];
 }
@@ -353,7 +358,7 @@ export function createLifecycle(init: { caseId: string; title: string; sector?: 
     case: [{ revision: 0, eventId: "init", at: "", by: "system", record: c }],
     facts: {}, evidence: {}, decisions: {}, authorizations: {}, submissions: {}, conditions: {}, assets: {},
     ncrs: {}, tests: {}, baselines: {}, land: {}, funding: {}, budgets: {}, suppliers: {}, packages: {},
-    signoffs: [], procedures: {}, ruleEvaluations: {}, linkedCases: [],
+    signoffs: [], procedures: {}, triggers: {}, ruleEvaluations: {}, linkedCases: [],
   };
 }
 
@@ -415,6 +420,8 @@ export type LifecycleEvent = Base & (
   | { type: "equipment_substituted"; packageId: string; equipmentId: string; model: string; supplierId: string }
   | { type: "gate_signoff"; gate: GateId; evidence: string[] }
   | { type: "procedure_step_completed"; code: string; evidence: string[] }
+  /** Record whether a conditional-procedure trigger holds; active=false records an explicit "evaluated, not active". */
+  | { type: "trigger_evaluated"; trigger: string; active: boolean; basis: string; evidence: string[] }
   | { type: "rule_evaluations_recorded"; evaluations: RuleEvaluation[] }
 );
 export type LifecycleEventType = LifecycleEvent["type"];
@@ -430,7 +437,7 @@ export const EVENT_TYPES: readonly LifecycleEventType[] = [
   "ncr_raised", "ncr_status_changed", "test_result_recorded", "baseline_recorded", "linked_case_opened",
   "supplier_registered", "procurement_package_created", "procurement_approval_recorded", "procurement_awarded",
   "contract_executed", "equipment_availability_changed", "equipment_substituted", "gate_signoff",
-  "procedure_step_completed", "rule_evaluations_recorded",
+  "procedure_step_completed", "trigger_evaluated", "rule_evaluations_recorded",
 ];
 
 // ---------------------------------------------------------------------------
@@ -460,7 +467,7 @@ function transition<S extends string>(table: Record<S, S[]>, from: S, to: S, kin
 }
 
 type MapKey = "facts" | "evidence" | "decisions" | "authorizations" | "submissions" | "conditions" | "assets" | "ncrs" | "tests"
-  | "baselines" | "land" | "funding" | "budgets" | "suppliers" | "packages" | "procedures" | "ruleEvaluations";
+  | "baselines" | "land" | "funding" | "budgets" | "suppliers" | "packages" | "procedures" | "triggers" | "ruleEvaluations";
 type RecOf<K extends MapKey> = LifecycleState[K] extends Record<string, Rev<infer T>[]> ? T : never;
 
 function put<K extends MapKey>(s: LifecycleState, key: K, id: string, record: RecOf<K>, ev: LifecycleEvent): LifecycleState {
@@ -876,6 +883,13 @@ function reduce(s: LifecycleState, ev: LifecycleEvent): LifecycleState {
       requireEvidence(ev.evidence, `procedure ${ev.code}`);
       return put(s, "procedures", ev.code, { code: ev.code, by: ev.actor, at: ev.at, evidence: [...ev.evidence] }, ev);
     }
+    case "trigger_evaluated": {
+      const def = RULE_IDS[ev.trigger];
+      if (!def || def.kind !== "trigger") throw new LifecycleError("UNKNOWN_TRIGGER", `${String(ev.trigger)} is not a trigger rule id in procedures.ts RULE_IDS`, ev.trigger);
+      if (typeof ev.active !== "boolean") throw new LifecycleError("MISSING_FIELD", "trigger active must be true or false", ev.trigger);
+      requireText(ev.basis, `basis for ${ev.trigger}`, ev.trigger);
+      return put(s, "triggers", ev.trigger, { trigger: ev.trigger, active: ev.active, basis: ev.basis, by: ev.actor, at: ev.at, evidence: [...(ev.evidence ?? [])] }, ev);
+    }
     case "rule_evaluations_recorded": {
       let next = s;
       for (const e of ev.evaluations) next = put(next, "ruleEvaluations", evaluationKey(e), { ...e, missingInputs: [...e.missingInputs], evidence: [...e.evidence] }, ev);
@@ -909,16 +923,32 @@ export function conditionEffectiveStatus(c: Condition, asOf: string): ConditionS
 // Gate evaluation.
 
 export interface GateBlocker { code: string; reason: string; recordId: string }
-export interface GateEvaluation { gate: GateId; status: "pass" | "blocked" | "not_ready"; blockers: GateBlocker[]; missingInputs: string[]; asOf: string }
+export interface GateEvaluation {
+  gate: GateId; status: "pass" | "blocked" | "not_ready"; blockers: GateBlocker[]; missingInputs: string[]; asOf: string;
+  /** At-risk notes that never change status (non-gating steps with a doc "keep gate at risk" condition, e.g. DEV-18). */
+  warnings: string[];
+}
 export interface EvaluateGateOptions {
   /** Procedure catalogue (from lib/owner/procedures.ts). Steps for this gate must be completed. */
   procedures?: ProcedureStep[];
 }
 
-export const GATE_STAGE: Record<GateId, StageId[]> = {
-  M0: ["intake"], M1: ["feasibility"], M2: ["site_control"], M3: ["capital", "grants"], M4: ["permits", "engineering"],
-  M5: ["procurement"], M6: ["construction"], M7: ["commissioning"], M8: ["operations"], M9: ["decommissioning"],
-};
+/**
+ * Stages whose default gate is each milestone, derived from procedures.ts STAGE_GATE (single source of
+ * truth). Grants (WORKFLOWS 5A names no milestone) map to no gate. Individual steps may carry a
+ * doc-based gateOverride; gate membership of a step is always `step.gate`.
+ */
+export const GATE_STAGE: Record<GateId, StageId[]> = Object.fromEntries(
+  (["M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9"] as GateId[]).map((g) => [g, STAGE_ORDER.filter((st) => STAGE_GATE[st] === g)]),
+) as Record<GateId, StageId[]>;
+
+export type TriggerState = "active" | "not_active" | "not_evaluated";
+
+/** Latest recorded evaluation of a trigger, or "not_evaluated". */
+export function triggerStatus(s: LifecycleState, trigger: string): TriggerState {
+  const t = current(s.triggers[trigger]);
+  return !t ? "not_evaluated" : t.active ? "active" : "not_active";
+}
 
 function latestDecision(s: LifecycleState, gate: GateId): DecisionRecord | undefined {
   const ds = currentAll(s.decisions).filter((d) => d.gate === gate);
@@ -1211,14 +1241,42 @@ export function evaluateGate(state: LifecycleState, gate: GateId, asOf: string, 
     }
   }
 
-  // Generic procedure-catalogue steps for this gate.
+  // Generic procedure-catalogue steps for this gate, by gating mode (procedures.ts gatingOf):
+  // - required: incomplete -> PROCEDURE_INCOMPLETE blocker (blocksGateOn) or missing input.
+  // - conditional: only while its trigger is recorded active, then as required; a completion counts
+  //   only if recorded after the latest activation. Not evaluated -> missing input only when RULE_IDS
+  //   marks the trigger evaluation as a doc gate requirement, otherwise treated as not active.
+  // - non_gating: never affects status; an incomplete step with a doc at-risk condition adds a warning.
+  const warnings: string[] = [];
   for (const step of (opts.procedures ?? []).filter((p) => p.gate === gate).sort((a, b) => a.code.localeCompare(b.code))) {
-    const done = current(state.procedures[step.code]);
+    const mode = gatingOf(step);
+    const revs = state.procedures[step.code];
+    const last = revs?.[revs.length - 1];
+    if (mode === "non_gating") {
+      if (!last && step.blocksGateOn?.length) warnings.push(`${step.code} ${step.title} not accepted; gate at risk (${step.blocksGateOn.join("; ")})`);
+      continue;
+    }
+    let after = -1;
+    let cause = "";
+    if (mode === "conditional") {
+      const trig = step.trigger ?? "";
+      const tRevs = state.triggers[trig];
+      const t = tRevs?.[tRevs.length - 1];
+      if (!t) {
+        if (RULE_IDS[trig]?.evaluationRequired) missing.push(`trigger ${trig} not evaluated (decides whether ${step.code} ${step.title} applies)`);
+        continue;
+      }
+      t.record.evidence.forEach((x) => ev.add(x));
+      if (!t.record.active) continue;
+      after = t.revision;
+      cause = ` (required while ${trig} is active since ${t.at}${last && last.revision < after ? `; completion at ${last.at} predates it` : ""})`;
+    }
+    const done = last && last.revision > after ? last.record : undefined;
     if (done) { done.evidence.forEach((x) => ev.add(x)); continue; }
     if (step.blocksGateOn && step.blocksGateOn.length) {
-      blockers.push({ code: "PROCEDURE_INCOMPLETE", reason: `${step.code} ${step.title} not accepted (${step.blocksGateOn.join("; ")})`, recordId: step.code });
+      blockers.push({ code: "PROCEDURE_INCOMPLETE", reason: `${step.code} ${step.title} not accepted (${step.blocksGateOn.join("; ")})${cause}`, recordId: step.code });
     } else {
-      missing.push(`procedure ${step.code} ${step.title}`);
+      missing.push(`procedure ${step.code} ${step.title}${cause}`);
     }
   }
 
@@ -1228,7 +1286,7 @@ export function evaluateGate(state: LifecycleState, gate: GateId, asOf: string, 
 
   blockers.sort((a, b) => a.code.localeCompare(b.code) || a.recordId.localeCompare(b.recordId));
   const uniqMissing = [...new Set(missing)];
-  return { gate, status: blockers.length ? "blocked" : uniqMissing.length ? "not_ready" : "pass", blockers, missingInputs: uniqMissing, asOf };
+  return { gate, status: blockers.length ? "blocked" : uniqMissing.length ? "not_ready" : "pass", blockers, missingInputs: uniqMissing, asOf, warnings };
 }
 
 export const GATES: readonly GateId[] = ["M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9"];
