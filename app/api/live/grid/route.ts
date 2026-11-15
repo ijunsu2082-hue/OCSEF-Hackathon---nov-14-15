@@ -3,7 +3,8 @@ import { buildGridFeed, gridErrorFeed } from "@/lib/live/grid";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" };
+// Netlify-Vary: query makes the CDN cache each lat/lon separately (it ignores the query string otherwise).
+const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120", "Netlify-Vary": "query" };
 
 const parse = (v: string | null): number | null => {
   if (v == null || v.trim() === "") return null;

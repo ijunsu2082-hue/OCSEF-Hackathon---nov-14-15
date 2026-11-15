@@ -4,7 +4,8 @@ import type { LiveFeed } from "@/lib/live/types";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=240" };
+// Netlify-Vary: query makes the CDN cache each lat/lon/r separately (it ignores the query string otherwise).
+const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=240", "Netlify-Vary": "query" };
 
 function errorFeed(message: string): LiveFeed<WeatherLive> {
   return {

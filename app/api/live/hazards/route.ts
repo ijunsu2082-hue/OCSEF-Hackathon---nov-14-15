@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
     const feed = await buildHazardsFeed(lat, lon, r);
     return Response.json(feed, {
-      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300", "Netlify-Vary": "query" },
     });
   } catch {
     return Response.json(errorFeed("Hazards feed failed unexpectedly."), {
