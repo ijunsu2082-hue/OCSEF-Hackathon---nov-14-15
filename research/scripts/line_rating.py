@@ -1,8 +1,9 @@
 """Hourly line-rating model for "The Wire That Breathes" (simplified IEEE Std 738 steady-state heat balance).
 
-For each hour of real 2024 weather it computes how many amps a standard conductor could carry:
+For each hour of real weather (2025 in the app; 2024 kept) it computes how many amps a standard conductor could carry:
   static_A        worst-case fixed rating: 40 C air, 0.61 m/s (2 ft/s) wind, 1000 W/m2 sun, all year
-  aar_A           ambient-adjusted rating (what FERC Order 881 requires): real temp + real sun, but wind fixed at 0.61 m/s
+  aar_A           ambient-adjusted rating, as FERC Order 881 defines it: real air temp + day/night sun only
+                  (daytime = worst-case 1000 W/m2, night = 0; "day" = any measured sun > 0), wind fixed at 0.61 m/s 90 deg
   dlr_A           dynamic line rating: real temp + real sun + real wind (wind at 45 deg to the line)
   dlr_conservative_A  same, but wind speed halved (sheltering / uncertainty margin)
 
@@ -20,6 +21,12 @@ TC = 75.0            # max conductor temperature, C
 EPS, ALPHA = 0.8, 0.8
 ELEV = 100.0         # m, typical coastal/inland basin
 STATIC = dict(ta=40.0, wind=0.61, sun=1000.0, angle=90.0)
+AAR_WIND = 0.61
+
+
+def aar_sun(sun):
+    """Order 881 AARs use day/night solar, not measured sun: worst-case sun by day, none at night."""
+    return STATIC["sun"] if sun > 0 else 0.0
 
 
 def r_at(tc):
@@ -60,7 +67,7 @@ def main(src, dst):
             sun = float(r["shortwave_radiation (W/m²)"])
         except (ValueError, KeyError):
             continue
-        aar = ampacity(ta, 0.61, sun, 90.0)
+        aar = ampacity(ta, AAR_WIND, aar_sun(sun), 90.0)
         dlr = ampacity(ta, ws, sun, 45.0)
         dlrc = ampacity(ta, ws * 0.5, sun, 45.0)
         out.append([r["time"], ta, ws, sun, round(static), round(aar), round(dlr), round(dlrc),

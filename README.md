@@ -1,23 +1,28 @@
-# GridSentinel — Regional Energy Infrastructure Intelligence
+# Mapergy — Regional Energy Infrastructure Intelligence
 
-A dark-mode "command center" for a region's **energy infrastructure**: where the power comes from (real power plants, renewable and fossil), how it moves (real transmission lines and substations), and who draws it (large load centers). For every asset it shows **output / power draw, capacity, energy cycle, age of infrastructure and upgrade potential**, scores grid risk, simulates a 105 °F heatwave, models upgrades with live ROI, and drafts + dispatches an AI energy-audit memo.
+A dark-mode "command center" for **electrical** infrastructure: it maps every major load center in a region, scores its grid-risk exposure, simulates a 105 °F heatwave demand shock, models solar + drive-retrofit upgrades with live ROI, and drafts + dispatches an AI energy-audit memo.
 
-On top of the map sit **Niche Cases**: real, local stories that show a hidden problem and a fix. The first one is **The Wire That Breathes**: power lines are rated as if every hour were a hot, windless afternoon, so on most hours they could safely carry far more power, and on the worst heat-wave hours the fixed rating is not safe enough. See §4.7.
+**Scope:** a **100-mile radius around Westminster High School**, Westminster CA (`33.7538, -118.0111`). **Region id:** `westminster-100mi`. **Seeded:** 11 real sites, all inside the radius.
 
-**Scope:** a **100-mile radius around Westminster High School**, Westminster CA (`33.7538, -118.0111`). **Region id:** `westminster-100mi`.
-
-**What is on the map (four layers, §4.6):**
-
-| Layer | What | Source | Real or modeled |
-| --- | --- | --- | --- |
-| **Generation** | 697 operating power plants (≈39.5 GW): gas, solar, batteries, wind, hydro, biogas | EIA-860 (2025) | **Real** MW, fuel, in-service year, planned retirements |
-| **Transmission** | High-voltage lines + substations | OpenStreetMap | **Real** geometry and voltage where tagged |
-| **Load centers** | The 11 seeded sites below: the region's largest public water/wastewater plants, treated as **electricity users** | §4.1 | Sites and coordinates real; **MW ratings modeled** |
-| **Niche cases** | Featured stories with real data behind them (§4.7) | `research/` | Real, sourced; models labeled as models |
-
-The load-center model claims only one thing about each site: **how much electricity it draws, what it costs, and what it emits**. Every nameplate MW there is a modeled electrical rating derived from the site's published scale, not an operator-published figure; say so in the UI footer.
+**Dataset is settled: energy-only.** Each of the 11 sites is modeled as an **electrical load center** — nameplate MW, utilization %, motor efficiency, grid carbon, MVA feeders. Nothing in the contract, the formulas, the charts or the memo models a process throughput, a resource, or a supply chain; the site names are real so judges can look them up, and the platform claims only one thing about them: **how much electricity they draw, what it costs, and what it emits.** Every nameplate MW is a modeled electrical rating derived from the site's published scale, not an operator-published figure — say so in the UI footer.
 
 Swapping `data/nodes.json` + `data/regions.json` and the region id relocates the whole platform; every formula, endpoint and component is region-agnostic.
+
+### Evidence framework — every number has a citation
+
+A deterministic, source-backed evidence layer sits under the UI. Every displayed claim is
+one of **observed / derived / modeled / inferred**, is content-addressed, and is re-verified
+from the exact bytes or formula that produce it. The UI reads claim values (not parallel
+literals) and shows an **Evidence** tab in the analyzer drawer with verification status,
+sources, snapshots and disclosures. Click any `S1`/`∂` chip for the provenance chain.
+
+```bash
+npm run evidence:build          # offline, deterministic, committed inputs only
+npm run evidence:verify:files   # re-hash snapshots + re-resolve every locator (strict)
+```
+
+Full contract, architecture, commands, extension rules and restore paths:
+**[`research/README.md`](research/README.md)**.
 
 ---
 
@@ -51,9 +56,6 @@ Four sessions work in this repo at once. **The only way this stays mergeable is 
 | **Dev 2 — Data & simulation** | `data/**`, `lib/simulation.ts`, `lib/risk.ts`, `lib/region.ts`, `lib/format.ts`, `app/api/region/**`, `app/api/simulate/**`, `components/energy/**` (`TelemetryTab.tsx`, `UpgradeSimulatorTab.tsx`, `charts/**`) | `nodes.json`/`regions.json` for `westminster-100mi`, all math, Recharts energy-mix + payback charts, region/simulate APIs |
 | **Dev 3 — AI & outreach** | `lib/ai/**`, `lib/email/**`, `app/api/generate-brief/**`, `app/api/send-audit/**`, `components/outreach/**` (`ProviderActionTab.tsx`, `MemoPreview.tsx`, `DispatchForm.tsx`) | Gemini memo generation with offline fallback, Resend dispatch with simulated fallback, memo UI |
 | **Dev 4 — Design & pitch** | `components/primitives/**`, `design/tokens.css`, `docs/**` | Tokens + primitives (**done**), `docs/DEMO.md` + `docs/PITCH.md`, final consistency pass (report, not edits) |
-| **Research — real-grid data & niche cases** | `research/**` | Real plant / line / substation layers (GeoJSON), weather + line-rating data, `research/GRID_STORIES.md`, `research/layers/niche_cases.json` |
-
-Rendering the new layers and niche cases is split along the existing lines: **Dev 1** draws the layers and the niche-case markers on the map (`components/shell/**`); **Dev 2** owns `components/energy/NicheCaseTab.tsx` (the drawer view of one case) and any math on the layer data.
 
 ---
 
@@ -110,15 +112,6 @@ data/
   regions.json region metadata (center, radius, bounds)         Dev 2
 design/tokens.css                                               Dev 4 (done)
 docs/DEMO.md docs/PITCH.md                                      Dev 4
-research/                                                       Research
-  layers/                 map-ready files (§4.6), copied to public/layers/ at integration
-    plants.geojson          EIA-860 power plants in the radius
-    transmission.geojson    OSM power lines (≥ 69 kV)
-    substations.geojson     OSM substations
-    niche_cases.json        Niche-case cards (§4.7)
-  GRID_STORIES.md         every grid story, with sources
-  data/                   full CSVs (generators, retirements, proposed, hourly line ratings, weather)
-  scripts/                Python that rebuilds every file from the public sources
 ```
 
 ---
@@ -343,7 +336,7 @@ Anyone still on the old field names is unblocked by §4.2: `loadRatio` replaces 
 // data/nodes.json — FeatureCollection + the region it belongs to + grid ties
 { "region_id": "westminster-100mi", "type": "FeatureCollection",
   "features": [ /* 11 features, §4.1 */ ],
-  "flows": [ /* 9 PowerFlow segments */ ] }
+  "flows": [ /* 10 PowerFlow segments, one an explicitly modeled tie */ ] }
 ```
 
 Eleven real sites, every one inside 100 miles of Westminster High School (**farthest** is Carlsbad at ~58 mi). Coordinates and in-service years were verified against operator/agency records.
@@ -397,11 +390,9 @@ node -e "const d=require('./data/nodes.json');for(const f of d.features){const p
 
 **Power flows** (`flows` in `nodes.json`, MVA sizes the line — one directed segment per tie, no reverse duplicates):
 
-`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
+`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `oc-02 → la-07` **Fountain Valley–Harbor 69 kV tie (45, modeled)** · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
 
-That is **9 segments over 11 nodes**, one connected component, no pair linked twice. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
-
-> ⚠️ **These 9 flows are illustrative, not real power lines.** No public source shows, for example, a 230 kV "SDCWA emergency intertie" from Diemer to Carlsbad. An energy judge can check this. Render them dashed and labelled **"modeled tie (illustrative)"** in the tooltip and legend, and never present them as real circuits. The **real** grid is the transmission layer in §4.6; it is the one to point at on stage.
+That is **10 segments over 11 nodes**, one connected component, no pair linked twice. The `oc-02 → la-07` tie is **modeled**, not an operator-published circuit; it exists to connect the Orange County pair to the LA/San Diego tree so the graph is one network instead of two islands. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
 
 ### 4.2 Formulas (§3 of the spec, energy units — `lib/simulation.ts`, pure)
 
@@ -450,6 +441,22 @@ risk = 40 * fossilShare                                        // (100 - solar -
 // Display-only escalation — never mutate the stored properties.
 ```
 
+`energyRisk()` remains the legacy exposure score and is unchanged for `/api/simulate` and the evidence formulas. The UI uses **Risk Index v2** from `assessRisk()`:
+
+```ts
+L = energyRisk factors + overload penalty (0–10)
+C = criticality 1–5; default 3, `assumed = true` until a customer/CFI layer exists
+R = clamp(L × C / 3, 0, 100)
+```
+
+Both scores come from **one** builder: `buildRiskFactors()` returns the weighted factors, `energyRisk()` sums them and returns the unchanged legacy exposure (so `/api/simulate` and §4.4 keep their exact values), and `assessRisk()` adds the overload penalty and applies the consequence multiplier. The old inline formula and the v2 decomposition cannot drift because there is only one place that computes a factor.
+
+Each factor carries the evidence predicates it is computed from, and the telemetry panel renders those citations beside the bar: `source_mix.natural_gas` + `source_mix.other` for fossil exposure, `carbon_intensity_gco2_kwh`, `motor_efficiency_rating`, and `age_years` — itself a `derived` claim with no upstream source, which is why it shows the `∂` marker rather than a source code. Under heatwave the stressed carbon factor and the two penalties are tagged `scenario`, because those values are computed at render time and are not stored claims.
+
+The weights (40/25/20/15), the 200 gCO₂/kWh carbon floor, the 0.85 motor benchmark and the 20-year age floor are **platform screening constants**, not an external standard. Maximo, FEMA's National Risk Index and Technosylva publish reproducible score maths, but none publishes this one, so the panel says "screening index, not a failure probability" and the weight set must never be described as calibrated.
+
+`C = 3` is neutral, so the baseline `R` reproduces the §4.4 scores exactly while the consequence dimension is unloaded. The drawer and telemetry tab show the `L`/`C`/`R` decomposition, factor bars, a deterministic regional rank/percentile, a confidence badge and — on the upgrade tab — risk points removed per $M of capex (motor-efficiency and overload effects only; solar carbon reduction is not scored yet). `rankRisks()` breaks ties by id. Every `C` is labelled **assumed** until `criticalityFor()` receives both population and critical-facility counts.
+
 ### 4.4 Expected values (use as G1 assertions)
 
 Every figure below is computed from the **unrounded** `nameplate_draw_mw × utilization_pct` in `data/nodes.json` — not from the 2-dp `Live MW` column. Rounding that column first drifts annual energy by ~20 MWh/yr, which is exactly enough for a judge's calculator to disagree with the screen. `npx tsc --noEmit` is clean and these were re-derived from the file after the §3.1 migration:
@@ -478,56 +485,7 @@ Risk scores: `oc-01 31.3 · oc-02 67.8 · la-01 49.4 · la-02 46.4 · la-03 67.2
 - **Telemetry:** site name/type/operator, in-service year, utilization bar (live MW vs nameplate), live MW, `homesEquivalent`, stacked `EnergyMixChart` (Recharts `BarChart`, `stackId`, five sources), `RiskPill`, CO₂/yr.
 - **Upgrade Simulator:** two controls — *Solar array* `0…2×rec` step 0.25 MW, *Drive retrofit (VFD)* toggle. Live readouts: post-upgrade draw, grid offset, CO₂ avoided, capex, annual savings, **payback years**. `PaybackChart` = Recharts `AreaChart` of cumulative net position over 15 years: it starts at `−capex` and crosses zero at payback — that crossing is the story. Sliders compute locally from `lib/simulation.ts`; **do not** round-trip `/api/simulate` on drag.
 
-### 4.6 Real-grid layers (`research/layers/`, Research)
-
-Static GeoJSON in WGS84 `[lon, lat]`, already clipped to 100 mi of Westminster HS. They live in `research/layers/`; Next.js only serves files from `public/`, so the integrator runs `mkdir -p public/layers && cp research/layers/* public/layers/` once, and the map fetches them client-side (`fetch("/layers/plants.geojson")`). They never touch `RegionPayload` or `lib/types.ts`. Rebuild them any time with `research/scripts/` (commands in `research/README.md`).
-
-| File | Feature | Properties the UI uses |
-| --- | --- | --- |
-| `plants.geojson` | Point per power plant (operating generators summed) | `plant_name`, `utility_name`, `nameplate_mw`, `primary_source` (`natural_gas` / `solar` / `battery` / `wind` / `hydro` / `biogas` / …), `mw_by_source`, `oldest_year`, `newest_year`, `capacity_weighted_age_years`, `planned_retirement_mw`, `technologies`, `distance_mi` |
-| `transmission.geojson` | LineString per OSM `power=line`, ≥ 69 kV | `voltage_kv`, `operator`, `name` (often empty) |
-| `substations.geojson` | Point per OSM `power=substation` | `name`, `operator`, `voltage_kv` |
-| `niche_cases.json` | Array of `NicheCase` (§4.7) | all |
-
-Rules:
-- **Plants:** marker area ∝ `nameplate_mw`, colour by `primary_source` (Dev 4 adds `--src-gas/solar/battery/wind/hydro/other` tokens; source colours must stay distinct from the risk ramp). Tooltip: name, MW, fuel, in-service years, planned retirement MW. These numbers are **real EIA data**, unlike the modeled load centers, so the tooltip footer says "EIA-860 2025".
-- **Transmission:** `weight` by voltage (500 kV 3 px, 230 kV 2 px, 115–138 kV 1.25 px, 69 kV 0.75 px), `--muted` at 45 % opacity so the risk-coloured markers stay on top. Untagged voltage → 69 kV style.
-- **Layer toggles** in the map legend card: Plants · Transmission · Substations · Load centers · Niche cases. Default on: Load centers + Niche cases + Transmission.
-- Headline numbers for the intro beat (from `plants.geojson`): **697 plants, ≈39.5 GW operating**; by fuel ≈ 18.6 GW gas, 7.1 GW solar, 6.9 GW batteries, 4.0 GW wind, 2.4 GW hydro. Recompute from the file before quoting.
-
-### 4.7 Niche Cases
-
-A niche case is a pinned, real, local story: a specific place, the hidden problem there, the fix, and the numbers behind both. Clicking its map marker opens `NicheCaseTab` in the drawer. Shape of each entry in `research/layers/niche_cases.json`:
-
-```ts
-interface NicheCase {
-  id: string;                          // "wire-that-breathes"
-  title: string;
-  category: "Transmission" | "Generation" | "Storage" | "Load" | "Water-Energy" | "Gas" | "Wildfire" | "Heat" | "Distributed";
-  location: { name: string; lat: number; lon: number; distance_mi: number };   // distance from Westminster HS
-  one_liner: string;                   // what a judge remembers
-  problem: string;                     // plain English, 2–4 sentences
-  fix: string;                         // the concrete solution
-  shock_line: string;                  // what the presenter says on stage
-  stats: { label: string; value: string; kind: "measured" | "modeled"; source: string }[];
-  team_bullets: ("output_draw" | "capacity" | "energy_cycle" | "infra_age" | "upgrade_potential")[];
-  chart?: { kind: "line_rating"; data_url: string };   // optional hourly series for the tab
-}
-```
-
-`NicheCaseTab` shows: title + location, one-liner, problem / fix, the `stats` list with a **MEASURED** or **MODELED** tag on every number and its source, and the optional chart. No number without its tag.
-
-**Case 1: The Wire That Breathes** (category Transmission)
-- **Problem:** most lines carry a fixed "static" rating that assumes a 40 °C, almost windless, full-sun afternoon all year. Real limit = how hot the wire gets, and that depends on the weather.
-- **Fix:** rate each line hour by hour from real weather (dynamic line rating). On most hours that frees capacity on wires that already exist, with no construction. On the worst heat hours it also flags when the fixed rating is too generous.
-- **Data (modeled, IEEE 738 heat balance, ACSR "Drake" conductor at 75 °C, real 2024 hourly weather, wind halved for safety):** at Westminster HS the safe rating sits **above** the static rating in 100 % of 2024 hours, with a median of **≈1.58× static**. FERC Order 881 already requires the temperature part (ambient-adjusted ratings). The wind part is optional, and it adds a further **≈20 % median during summer 4–8 pm**, the evening peak. Flip side: in downtown LA on **6 Sep 2024, 1 pm (45.7 °C in the reanalysis)** the modeled safe rating was **≈0.90× static**, about 10 % *below* the fixed number. Source files: `research/data/line_ratings/summary.json` and the hourly CSVs next to it.
-- **Say on stage:** "The wires aren't full. We just pretend every hour is a hot, still afternoon, and on the one afternoon that really is, the fixed number isn't even safe."
-- **Honesty line:** these are screening estimates for a typical conductor, not utility operating ratings. Real ratings need line-specific conductor, clearance surveys and at-line sensors.
-- **Physical demo (optional):** a 1 m nichrome "line" over an LED city sags into a "tree" under load and lifts when a fan blows on it. The sag goes from about 10 mm to about 40 mm, enough to see.
-
-More cases with sources are in `research/GRID_STORIES.md`; promote the best 2–3 into `niche_cases.json`.
-
-### 4.8 Six-phase grid chain — `lib/grid.ts`
+### 4.7 Six-phase grid chain — `lib/grid.ts`
 
 The spec models the grid end to end; the load centers are only phase 5 of that chain. `lib/grid.ts` (pure, no I/O) derives all six phases for any load center from data the app already has — the simulated operating point, the modelled ties in `nodes.json`, and the inspected age. Nothing is fetched, nothing is stored, and `lib/types.ts` is untouched.
 
@@ -567,7 +525,7 @@ Validate: `node_id` exists (404), `added_solar_mw` finite 0–100 (422). Default
 
 ```
 To: <operator> — Energy & Sustainability
-From: GridSentinel Audit Desk
+From: Mapergy Audit Desk
 Re: <site name> (<load type>, <age> yr) — grid-risk and decarbonization screen
 
 RECOMMENDATION  <the intervention, one sentence, with MW and % named>
@@ -584,7 +542,7 @@ If no key or the call fails: return `source: "fallback"` with a template-built m
 ### 5.4 `POST /api/send-audit` — body `AuditRequest` → `AuditResponse`
 - No `RESEND_API_KEY` → **200** `{ delivered: false, mode: "simulated", ... }` with a detail telling the operator to add the key. The UI shows a "simulated dispatch" receipt so the demo never dead-ends.
 - Key present → `resend.emails.send({ from: AUDIT_FROM_EMAIL, to, subject, html, text })`; handle `{ error }` as 502 with a sanitized message; `provider_id = data.id`.
-- `from` defaults to `GridSentinel Audits <audits@resend.dev>`; without a verified domain Resend only delivers to the account owner's address — say so in the UI under the recipient field.
+- `from` defaults to `Mapergy Audits <audits@resend.dev>`; without a verified domain Resend only delivers to the account owner's address — say so in the UI under the recipient field.
 - Only send to addresses matching a sane email regex; reject otherwise (400). One recipient, no CC/BCC, no arrays.
 
 ### 5.5 UI-side fallback values (so shell work never blocks)
@@ -630,8 +588,7 @@ Left: product mark + region selector (one option, `Westminster 100-Mile Radius`)
 - Load markers: `L.divIcon` dot sized `10 + nameplate/8` px, fill = risk color, 2 px ring in `--bg`; selected gets an accent halo + `bringToFront`; include an invisible ≥28 px hit target.
 - Power flows: `L.polyline([[lat,lon],…], { className: "flow-line", weight: 1 + mva/90, opacity: .55 })`. `design/tokens.css` already animates `.flow-line` (`stroke-dasharray: 2 10`, 1.2 s) and retints it to `--flow` under stress (0.5 s) — no JS needed for the recolour.
 - Avoid SSR: `MapCanvas` uses `dynamic(() => import("./MapView"), { ssr: false })`; import `"leaflet/dist/leaflet.css"` inside `MapView`. Call `map.invalidateSize()` when the drawer or tabs change.
-- Legend card (bottom-left): risk ramp + `power flow direction` + the radius scale + the layer toggles from §4.6.
-- Real-grid layers (§4.6) render **under** the load-center markers: transmission first, then substations, then plants, then load centers, then niche-case markers on top. Niche-case markers use a distinct shape (a diamond `divIcon` in `--accent-2`) so they never read as a risk dot.
+- Legend card (bottom-left): risk ramp + `power flow direction` + the radius scale.
 
 ---
 
@@ -641,9 +598,8 @@ Left: product mark + region selector (one option, `Westminster 100-Mile Radius`)
 | --- | --- | --- |
 | **G0 — Contract** | G0 commit | ✅ `lib/types.ts`, `design/tokens.css`, `components/primitives/*` committed. Everyone unblocked. |
 | **G1 — Data spine** | Dev 2 | `nodes.json` + `regions.json` valid GeoJSON; §4.4 assertions reproduce exactly; `/api/simulate` returns sane numbers for `node-la-05` under heatwave. |
-| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 9 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
-| **G2b — Real grid on screen** | Dev 1 + Research | `research/layers/*` copied to `public/layers/` and loading; transmission, substations and plants render with toggles; niche-case markers open `NicheCaseTab`. |
-| **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders move payback instantly; no `NaN`/`Infinity` anywhere; `NicheCaseTab` renders The Wire That Breathes with MEASURED/MODELED tags. |
+| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 10 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
+| **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders move payback instantly; no `NaN`/`Infinity` anywhere. |
 | **G4 — Outreach live** | Dev 3 | Memo generates (fallback if no key), dispatch returns a receipt, button has pending/done/error states. |
 | **G5 — Integration** | All | `npx tsc --noEmit` clean, `npm run build` clean, one browser pass heatwave on/off × three tabs × one dispatch. |
 | **G6 — Pitch** | Dev 4 | `docs/DEMO.md` rehearsed twice; screen numbers match `docs/PITCH.md`; fallback path tested with no API keys. |
@@ -658,7 +614,7 @@ Left: product mark + region selector (one option, `Westminster 100-Mile Radius`)
 2. `feat/dev2-data-sim` (data, simulation, APIs, tabs 1–2)
 3. `feat/dev1-shell` (layout, page, globals, map, control bar, drawer)
 4. `feat/dev3-outreach` (AI, email, tab 3)
-5. Integrator wires `app/page.tsx` (Dev 1-owned), adds the tokens import to `app/globals.css`, deletes `components/shell/__fixtures__.ts`, and copies `research/layers/*` into `public/layers/`.
+5. Integrator wires `app/page.tsx` (Dev 1-owned), adds the tokens import to `app/globals.css`, deletes `components/shell/__fixtures__.ts`.
 
 `app/page.tsx` is the single composition point and is owned by Dev 1 only — everyone else ships self-contained components taking the props in §3.
 
@@ -675,7 +631,7 @@ cp .env.example .env.local
 | `GEMINI_API_KEY` | Memo falls back to the deterministic template, banner reads "template memo" |
 | `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
 | `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` |
-| `AUDIT_FROM_EMAIL` | `GridSentinel Audits <audits@resend.dev>` |
+| `AUDIT_FROM_EMAIL` | `Mapergy Audits <audits@resend.dev>` |
 | `DEMO_INBOX_EMAIL` | Recipient field starts empty with a placeholder |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Datasets are read from `data/` and `public/layers/` instead of Supabase |
 
@@ -715,13 +671,12 @@ vars are unset, a query errors, or a table is empty, it reads the local file ins
 
 | Time | Beat |
 | --- | --- |
-| 0:00–0:20 | Transmission + plants layers on. "Everything that makes, moves and uses power within 100 miles of this school: 697 real power plants, about 39.5 GW, and the high-voltage lines between them." |
-| 0:20–0:50 | Click Hyperion (risk 72.3, 341 g/kWh, 58 % motor efficiency vs the 85 % benchmark). "High fossil reliance plus worn drives." |
-| 0:50–1:20 | Hit **105 °F HEATWAVE**: draw 147 → 283 MW, carbon +140 %, three assets overload — Carlsbad pins at its 105 % ceiling. |
-| 1:20–1:55 | Upgrade Simulator on Hyperion: 8 MW solar + drive retrofit → 21.6 → 16.4 MW, CO₂ avoided, 5.5-year payback, cashflow line crosses zero. |
-| 1:55–2:40 | **Niche case: The Wire That Breathes.** Click the diamond. "This wire is rated as if every hour were 104 °F with no wind. Using real 2024 weather, it could safely carry about 1.6× that on a typical hour, and on 6 Sep 2024, the one afternoon it really was that hot, the fixed rating wasn't even safe." Optional: fan on the physical rig. |
-| 2:40–3:05 | Provider Action → generate memo → **Dispatch**; the email lands in the demo inbox live. |
-| 3:05–3:20 | "Same engine, any region. The study that took a consultant a quarter now takes a click." |
+| 0:00–0:20 | "Every major load center within 100 miles of this school — 206 MW of nameplate demand, 147 MW live. Color is grid risk, not age." |
+| 0:20–0:55 | Click Hyperion (risk 72.3, 341 g/kWh, 58 % motor efficiency vs the 85 % benchmark). "High fossil reliance plus worn drives." |
+| 0:55–1:30 | Hit **105 °F HEATWAVE**: draw 147 → 283 MW, carbon +140 %, three assets overload — Carlsbad pins at its 105 % ceiling. |
+| 1:30–2:15 | Upgrade Simulator on Hyperion: 8 MW solar + drive retrofit → 21.6 → 16.4 MW, CO₂ avoided, 5.5-year payback, cashflow line crosses zero. |
+| 2:15–2:45 | Provider Action → generate memo → **Dispatch**; the email lands in the demo inbox live. |
+| 2:45–3:00 | "Same engine, any region. The study that took a consultant a quarter now takes a click." |
 
 Rehearse against the live screen; never read numbers from memory.
 
@@ -737,7 +692,4 @@ Rehearse against the live screen; never read numbers from memory.
 | Venue wifi dies | All data static; no external calls on the happy path |
 | Parallel sessions stomping files | Ownership table §0 + single composition point |
 | Slider math shows `Infinity` | `payback_years: null` + "n/a" render; unit-check `savings = 0` |
-| MW figures challenged as invented | Footer: sites and coordinates verified, electrical ratings modeled. Point judges at the **real** EIA-860 plant layer for hard numbers. |
-| Illustrative flows mistaken for real circuits | Dashed + "modeled tie (illustrative)" label (§4.1); the real network is the transmission layer |
-| Line-rating numbers over-claimed | Every niche-case number carries MEASURED / MODELED; say "screening estimate for a typical conductor" out loud |
-| Layer files too heavy for the demo laptop | Transmission is filtered to ≥ 69 kV and coordinates rounded to 5 decimals; all layers are local static files |
+| MW figures challenged as invented | Footer: sites and coordinates verified, electrical ratings modeled |

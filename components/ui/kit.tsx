@@ -33,14 +33,19 @@ export function Stat({
   label,
   value,
   unit,
+  cite,
 }: {
   label: string;
   value: string;
   unit?: string;
+  cite?: ReactNode;
 }) {
   return (
     <div className="kpi">
-      <span className="kpi-label">{label}</span>
+      <span className="kpi-label">
+        {label}
+        {cite ? <span className="kpi-cite">{cite}</span> : null}
+      </span>
       <span className="kpi-value">
         {value}
         {unit ? <span className="kpi-unit">{unit}</span> : null}

@@ -1,598 +1,293 @@
 "use client";
 
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
-import {
-  escapeHtml,
-  loadPlants,
-  loadSubstations,
-  loadTransmission,
-  plantRadius,
-  sourceClass,
-  sourceLabel,
-  transmissionWeight,
-  type LayerVisibility,
-  type PlantFeature,
-  type SubstationFeature,
-  type TransmissionFeature,
-} from "@/lib/gridLayers";
-import type { CorridorLoading } from "@/lib/grid";
-import type { NicheCase } from "@/lib/niche";
-import type { RiskEntry } from "@/lib/risk";
+import * as maplibregl from "maplibre-gl";
+import { setWorkerUrl, type Map as GLMap, type GeoJSONSource, type MapOptions } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import type { FacilityFeature, PowerFlow, SimResult } from "@/lib/types";
+import type { RiskEntry } from "@/lib/risk";
+import type { NicheCase } from "@/lib/niche";
+import { basemapById, type BasemapId } from "@/lib/basemaps";
+import type { SurfaceMode } from "@/lib/basemaps";
+import { loadPlants, loadSubstations, loadTransmission, plantRadius, type LayerVisibility, type PlantFeature, type SubstationFeature, type TransmissionFeature } from "@/lib/gridLayers";
+import { plantTooltipHtml } from "@/lib/scan/sourceLabel";
+import { substationSourceCard } from "@/lib/substationSource";
+import type { CorridorSelection, MapController } from "./mapTypes";
+import LeafletMapView from "./LeafletMapView";
 
-interface MapViewProps {
-  nodes: FacilityFeature[];
-  flows: PowerFlow[];
-  risks: Record<string, RiskEntry>;
-  sims: Record<string, SimResult>;
-  selectedId: string | null;
-  heatwave: boolean;
-  view3d: boolean;
-  bounds: [[number, number], [number, number]];
-  center: [number, number];
-  radiusMiles: number;
-  layers: LayerVisibility;
-  corridors: CorridorLoading[];
-  nicheCases: NicheCase[];
-  selectedNicheId: string | null;
-  onSelect: (id: string) => void;
-  onSelectNiche: (id: string) => void;
-  onMapReady?: (map: L.Map) => void;
+// MapLibre's tiles/style work runs in a worker. Bundlers rewrite the
+// `new URL("maplibre-gl/dist/...", import.meta.url)` form to a chunk path that
+// is not emitted in the production build, so the map stayed blank with
+// "Worker failed to load". Serve the same file from /public instead; if the
+// maplibre-gl version changes, re-copy
+// node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs over it.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+
+interface Props {
+  nodes: FacilityFeature[]; flows: PowerFlow[]; risks: Record<string, RiskEntry>; sims: Record<string, SimResult>;
+  selectedId: string | null; heatwave: boolean; view3d: boolean; bounds: [[number, number], [number, number]];
+  surface: SurfaceMode;
+  center: [number, number]; radiusMiles: number; layers: LayerVisibility; nicheCases: NicheCase[];
+  selectedNicheId: string | null; onSelect: (id: string) => void; onSelectNiche: (id: string) => void;
+  selectedCorridorId: string | null; onSelectCorridor: (corridor: CorridorSelection) => void; selectedCorridor: CorridorSelection | null;
+  onTerrainStatus?: (state: "loading" | "ready" | "unavailable") => void;
+  onMapReady?: (map: MapController) => void; basemap: BasemapId; scanMode: boolean;
+  scan: { lat: number; lon: number; radius_mi: number } | null; onScanPoint: (lat: number, lon: number) => void;
 }
 
-export function shortName(name: string): string {
-  return name
-    .replace(" Generating Station", "")
-    .replace(" Power Plant", "")
-    .replace(" Switching Station", "")
-    .replace(" Substation", "")
-    .replace(" Data Center", " DC")
-    .replace(" Medical Center", " MC")
-    .replace(" High School", " HS")
-    .trim();
+type PropsWithFallback = Props & { onFallback: () => void };
+type PropsRecord = Record<string, string | number | boolean>;
+type FC = FeatureCollection<Geometry, PropsRecord>;
+
+const EMPTY: FC = { type: "FeatureCollection", features: [] };
+const SOURCE_IDS = ["gs-context", "gs-transmission", "gs-substations", "gs-plants", "gs-flows", "gs-facilities", "gs-extrusions", "gs-corridor-detail", "gs-niches", "gs-scan"] as const;
+
+function circle(lon: number, lat: number, miles: number): Feature {
+  const coords: [number, number][] = [];
+  const radius = miles * 1609.344;
+  for (let i = 0; i <= 96; i++) {
+    const bearing = (i / 96) * Math.PI * 2;
+    const angular = radius / 6371008.8;
+    const lat1 = (lat * Math.PI) / 180;
+    const lon1 = (lon * Math.PI) / 180;
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(bearing));
+    const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(angular) * Math.cos(lat1), Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2));
+    coords.push([(lon2 * 180) / Math.PI, (lat2 * 180) / Math.PI]);
+  }
+  return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [coords] } };
 }
 
-export default function MapView({
-  nodes,
-  flows,
-  risks,
-  sims,
-  selectedId,
-  heatwave,
-  view3d,
-  bounds,
-  center,
-  radiusMiles,
-  layers,
-  corridors,
-  nicheCases,
-  selectedNicheId,
-  onSelect,
-  onSelectNiche,
-  onMapReady,
-}: MapViewProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const markerGroupRef = useRef<L.LayerGroup | null>(null);
-  const flowGroupRef = useRef<L.LayerGroup | null>(null);
-  const contextGroupRef = useRef<L.LayerGroup | null>(null);
-  const transmissionGroupRef = useRef<L.LayerGroup | null>(null);
-  const substationGroupRef = useRef<L.LayerGroup | null>(null);
-  const plantGroupRef = useRef<L.LayerGroup | null>(null);
-  const nicheGroupRef = useRef<L.LayerGroup | null>(null);
-  const darkLayerRef = useRef<L.TileLayer | null>(null);
-  const satLayerRef = useRef<L.TileLayer | null>(null);
-  const syncRef = useRef<() => void>(() => undefined);
-  const markerElsRef = useRef<{ id: string; el: HTMLElement }[]>([]);
-  const nodesRef = useRef(nodes);
-  const simsRef = useRef(sims);
-  simsRef.current = sims;
-  const onSelectRef = useRef(onSelect);
-  const onSelectNicheRef = useRef(onSelectNiche);
-  const onReadyRef = useRef(onMapReady);
-  const firstSelection = useRef(true);
-  const [points, setPoints] = useState<Record<string, { x: number; y: number }>>({});
+function fc(features: Feature[]): FC { return { type: "FeatureCollection", features: features as Feature<Geometry, PropsRecord>[] }; }
+function point(lon: number, lat: number, properties: PropsRecord = {}): Feature<Point, PropsRecord> {
+  return { type: "Feature", properties, geometry: { type: "Point", coordinates: [lon, lat] } };
+}
 
-  // Real-grid layers fetch lazily: a layer loads the first time it is switched
-  // on, and never again (lib/gridLayers caches the promise per file).
-  const [plants, setPlants] = useState<PlantFeature[] | null>(null);
-  const [transmission, setTransmission] = useState<TransmissionFeature[] | null>(null);
-  const [substations, setSubstations] = useState<SubstationFeature[] | null>(null);
+function styleFor(basemap: BasemapId) {
+  const definition = basemapById(basemap);
+  return {
+    version: 8 as const,
+    sources: { base: { type: "raster" as const, tiles: [definition.url], tileSize: 256, maxzoom: definition.maxNativeZoom, attribution: "Tiles © Esri" } },
+    layers: [{ id: "base-raster", type: "raster" as const, source: "base", paint: { "raster-opacity": basemap === "dark" ? 0.95 : 1, "raster-brightness-max": 0.95 } }],
+  };
+}
 
-  nodesRef.current = nodes;
-  onSelectRef.current = onSelect;
-  onSelectNicheRef.current = onSelectNiche;
-  onReadyRef.current = onMapReady;
+function addSource(map: GLMap, id: string) { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); }
+function setData(map: GLMap, id: string, data: FC) { (map.getSource(id) as GeoJSONSource | undefined)?.setData(data); }
+
+function NativeMap(props: PropsWithFallback) {
+  const host = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<GLMap | null>(null);
+  const readyRef = useRef(props.onMapReady);
+  const propsRef = useRef(props);
+  const scanModeRef = useRef(props.scanMode);
+  const scanPointRef = useRef(props.onScanPoint);
+  const sourcesRef = useRef<{ context: FC; scan: FC; facilities: FC; extrusions: FC; flows: FC; plants: FC; substations: FC; transmission: FC; corridor: FC; niches: FC } | null>(null);
+  const [plants, setPlants] = useState<PlantFeature[]>([]);
+  const [lines, setLines] = useState<TransmissionFeature[]>([]);
+  const [substations, setSubstations] = useState<SubstationFeature[]>([]);
+  const substationsRef = useRef(substations);
+  readyRef.current = props.onMapReady;
+  propsRef.current = props;
+  scanModeRef.current = props.scanMode;
+  scanPointRef.current = props.onScanPoint;
+  substationsRef.current = substations;
+
+  const sources = useMemo(() => {
+    const features = props.nodes.map((f) => {
+      const [lon, lat] = f.geometry.coordinates;
+      const risk = props.risks[f.properties.id];
+      const sim = props.sims[f.properties.id];
+      return point(lon, lat, { id: f.properties.id, name: f.properties.name, color: risk?.color ?? "#38d6c4", size: Math.min(20, 7 + f.properties.infrastructure.nameplate_draw_mw / 10), height: 25 + (sim?.effective_draw_mw ?? 0) * 4 });
+    });
+    const extrusionFeatures = props.nodes.map((f) => {
+      const [lon, lat] = f.geometry.coordinates;
+      const polygon = circle(lon, lat, 0.025);
+      const sim = props.sims[f.properties.id];
+      polygon.properties = { id: f.properties.id, color: props.risks[f.properties.id]?.color ?? "#38d6c4", height: Math.min(220, 22 + (sim?.effective_draw_mw ?? 0) * 0.08) };
+      return polygon;
+    });
+    const flowFeatures: Feature[] = props.flows.flatMap((flow) => {
+      const from = props.nodes.find((f) => f.properties.id === flow.from)?.geometry.coordinates;
+      const to = props.nodes.find((f) => f.properties.id === flow.to)?.geometry.coordinates;
+      return from && to ? [{ type: "Feature", properties: { label: flow.label, mva: flow.mva }, geometry: { type: "LineString", coordinates: [from, to] } }] : [];
+    });
+    const context = circle(props.center[1], props.center[0], props.radiusMiles);
+    const scanFeature = props.scan ? circle(props.scan.lon, props.scan.lat, props.scan.radius_mi) : null;
+    const scanFeatures: Feature[] = scanFeature && props.scan ? [scanFeature, point(props.scan.lon, props.scan.lat, { label: "Scan center" })] : [];
+    const plantFeatures = plants.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], { color: sourceColor(f.properties.primary_source), radius: plantRadius(f.properties.nameplate_mw ?? Number.NaN), name: f.properties.plant_name, tooltip: plantTooltipHtml(f) }));
+    const subFeatures = substations.map((f) => point(f.geometry.coordinates[0], f.geometry.coordinates[1], {
+      name: f.properties.name ?? "", osm_id: f.properties.osm_id ?? "",
+      operator: f.properties.operator ?? "", voltage_kv: f.properties.voltage_kv ?? 0,
+    }));
+    const lineFeatures: Feature[] = lines.map((f, index) => ({ type: "Feature", properties: { voltage: f.properties.voltage_kv ?? 0, corridorId: String(f.properties.osm_id ?? `${index}-${f.geometry.coordinates[0]?.join(",")}`) }, geometry: f.geometry }));
+    const corridorPoints = props.selectedCorridor ? [
+      point(props.selectedCorridor.coordinates[0]?.[0] ?? 0, props.selectedCorridor.coordinates[0]?.[1] ?? 0, { role: "endpoint", label: "A · line endpoint" }),
+      point(props.selectedCorridor.coordinates.at(-1)?.[0] ?? 0, props.selectedCorridor.coordinates.at(-1)?.[1] ?? 0, { role: "endpoint", label: "B · line endpoint" }),
+      ...(props.selectedCorridor.nearestSubstation ? [point(props.selectedCorridor.nearestSubstation.coordinates[0], props.selectedCorridor.nearestSubstation.coordinates[1], { role: "substation", label: `Nearest · ${props.selectedCorridor.nearestSubstation.name}` })] : []),
+    ] : [];
+    const niches = props.nicheCases.map((f) => point(f.location.lon, f.location.lat, { id: f.id, title: f.title, category: f.category }));
+    return { context: fc([context]), scan: fc(scanFeatures), facilities: fc(features), extrusions: fc(extrusionFeatures), flows: fc(flowFeatures), plants: fc(plantFeatures), substations: fc(subFeatures), transmission: fc(lineFeatures), corridor: fc(corridorPoints), niches: fc(niches) };
+  }, [props.nodes, props.flows, props.risks, props.sims, props.center, props.radiusMiles, props.scan, props.nicheCases, props.selectedCorridor, plants, lines, substations]);
+  sourcesRef.current = sources;
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host || mapRef.current) return;
+    let alive = true;
+    if (props.layers.plants) loadPlants().then((v) => alive && setPlants(v.features)).catch(() => alive && setPlants([]));
+    if (props.layers.transmission) loadTransmission().then((v) => alive && setLines(v.features)).catch(() => alive && setLines([]));
+    if (props.layers.substations || props.layers.transmission) loadSubstations().then((v) => alive && setSubstations(v.features)).catch(() => alive && setSubstations([]));
+    return () => { alive = false; };
+  }, [props.layers.plants, props.layers.transmission, props.layers.substations]);
 
-    const map = L.map(host, {
-      center: [34.05, -118.25],
-      zoom: 9,
-      zoomControl: false,
-      attributionControl: false,
-      minZoom: 7,
-      maxZoom: 16,
-      zoomAnimation: false,
-      fadeAnimation: false,
-      markerZoomAnimation: false,
-    });
-
-    const darkTiles = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19, className: "dark-tile" },
-    ).addTo(map);
-
-    const satelliteTiles = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19, className: "sat-tile" },
-    );
-
-    darkLayerRef.current = darkTiles;
-    satLayerRef.current = satelliteTiles;
-
-    map.fitBounds(bounds as L.LatLngBoundsExpression, {
-      padding: [46, 46],
-      animate: false,
-    });
-
-    // Draw order (README §4.6): real grid under, load centers above, niche
-    // markers on top. Panes make that independent of when each layer loads.
-    map.createPane("gs-transmission").style.zIndex = "340";
-    map.createPane("gs-substation").style.zIndex = "350";
-    map.createPane("gs-plants").style.zIndex = "360";
-
-    contextGroupRef.current = L.layerGroup().addTo(map);
-    flowGroupRef.current = L.layerGroup().addTo(map);
-    transmissionGroupRef.current = L.layerGroup().addTo(map);
-    substationGroupRef.current = L.layerGroup().addTo(map);
-    plantGroupRef.current = L.layerGroup().addTo(map);
-    markerGroupRef.current = L.layerGroup().addTo(map);
-    nicheGroupRef.current = L.layerGroup().addTo(map);
-
-    const sync = () => {
-      const next: Record<string, { x: number; y: number }> = {};
-      for (const f of nodesRef.current) {
-        const [lon, lat] = f.geometry.coordinates;
-        const p = map.latLngToContainerPoint([lat, lon]);
-        next[f.properties.id] = { x: p.x, y: p.y };
-      }
-      setPoints(next);
-    };
-
-    syncRef.current = sync;
-    map.on("move zoom resize viewreset", sync);
-
-    // Selection is resolved against rendered marker positions so it survives
-    // the CSS 3D tilt, where Leaflet's own coordinate math no longer matches.
-    map.on("click", (event: L.LeafletMouseEvent) => {
-      const original = event.originalEvent as MouseEvent;
-      if (typeof original.clientX !== "number") return;
-      const cx = original.clientX;
-      const cy = original.clientY;
-
-      let bestId: string | null = null;
-      let bestDistance = Number.POSITIVE_INFINITY;
-
-      for (const { id, el } of markerElsRef.current) {
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0) continue;
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const dx = Math.abs(cx - centerX);
-        const dy = cy - centerY;
-        const sim = simsRef.current[id];
-        const columnHeight = 34 + (sim ? sim.effective_draw_mw * 5.5 : 0);
-
-        const overColumn = dx <= 20 && dy <= 22 && dy >= -(columnHeight + 26);
-        const nearBase = Math.hypot(dx, dy) <= 30;
-        if (!overColumn && !nearBase) continue;
-
-        const distance = Math.abs(dx) + Math.max(0, Math.abs(dy) - 20);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestId = id;
-        }
-      }
-
-      if (bestId) onSelectRef.current(bestId);
-    });
-
-    sync();
-
+  useEffect(() => {
+    const container = host.current;
+    if (!container || mapRef.current) return;
+    let map: GLMap;
+    try {
+      const options: MapOptions = { container, style: styleFor(props.basemap), center: [props.center[1], props.center[0]], zoom: 9, pitch: props.view3d ? 50 : 0, bearing: props.view3d ? -10 : 0, maxPitch: 65, attributionControl: false, canvasContextAttributes: { antialias: true } };
+      map = new maplibregl.Map(options);
+    } catch {
+      props.onFallback(); return;
+    }
     mapRef.current = map;
-    onReadyRef.current?.(map);
-
-    return () => {
-      map.off();
-      map.remove();
-      mapRef.current = null;
-      markerGroupRef.current = null;
-      flowGroupRef.current = null;
-      contextGroupRef.current = null;
-      transmissionGroupRef.current = null;
-      substationGroupRef.current = null;
-      plantGroupRef.current = null;
-      nicheGroupRef.current = null;
-      darkLayerRef.current = null;
-      satLayerRef.current = null;
-    };
-  }, [bounds]);
-
-  // ---- Real-grid layer fetches ---------------------------------------------
-
-  useEffect(() => {
-    if (!layers.transmission || transmission) return;
-    let alive = true;
-    loadTransmission()
-      .then((data) => {
-        if (alive) setTransmission(data.features as TransmissionFeature[]);
-      })
-      .catch(() => {
-        if (alive) setTransmission([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [layers.transmission, transmission]);
-
-  useEffect(() => {
-    if (!layers.substations || substations) return;
-    let alive = true;
-    loadSubstations()
-      .then((data) => {
-        if (alive) setSubstations(data.features as SubstationFeature[]);
-      })
-      .catch(() => {
-        if (alive) setSubstations([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [layers.substations, substations]);
-
-  useEffect(() => {
-    if (!layers.plants || plants) return;
-    let alive = true;
-    loadPlants()
-      .then((data) => {
-        if (alive) setPlants(data.features as PlantFeature[]);
-      })
-      .catch(() => {
-        if (alive) setPlants([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [layers.plants, plants]);
-
-  // ---- Real-grid layer rendering -------------------------------------------
-
-  useEffect(() => {
-    const group = transmissionGroupRef.current;
-    if (!group) return;
-    group.clearLayers();
-    if (!layers.transmission || !transmission) return;
-
-    const renderer = L.canvas({ pane: "gs-transmission", padding: 0.5 });
-    for (const feature of transmission) {
-      if (feature.geometry?.type !== "LineString") continue;
-      const latlngs = feature.geometry.coordinates.map(
-        ([lon, lat]) => [lat, lon] as [number, number],
-      );
-      L.polyline(latlngs, {
-        pane: "gs-transmission",
-        renderer,
-        interactive: false,
-        weight: transmissionWeight(feature.properties.voltage_kv),
-        // Canvas-rendered paths ignore CSS classes, so the neutral haze is set
-        // inline: --muted at 45 % (README §4.6).
-        color: "#8fa0b8",
-        opacity: 0.45,
-        lineCap: "round",
-      }).addTo(group);
-    }
-  }, [layers.transmission, transmission]);
-
-  useEffect(() => {
-    const group = substationGroupRef.current;
-    if (!group) return;
-    group.clearLayers();
-    if (!layers.substations || !substations) return;
-
-    const renderer = L.canvas({ pane: "gs-substation", padding: 0.5 });
-    for (const feature of substations) {
-      const [lon, lat] = feature.geometry.coordinates;
-      const props = feature.properties;
-      const marker = L.circleMarker([lat, lon], {
-        pane: "gs-substation",
-        renderer,
-        radius: 2.4,
-        weight: 0,
-        color: "#8fa0b8",
-        fillColor: "#8fa0b8",
-        fillOpacity: 0.35,
-        interactive: Boolean(props.name),
-      });
-      if (props.name) {
-        const voltage = props.voltage_kv === null ? "voltage untagged" : `${props.voltage_kv} kV`;
-        marker.bindTooltip(
-          `<b>${escapeHtml(props.name)}</b><br/>${escapeHtml(props.operator ?? "operator untagged")} · ${voltage}<br/><span class="tt-src">OSM</span>`,
-          { direction: "top", className: "grid-tooltip" },
-        );
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(container);
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+    map.on("load", () => {
+      if (!aliveRef.current) return;
+      for (const id of SOURCE_IDS) addSource(map, id);
+      map.addLayer({ id: "gs-context-fill", type: "fill", source: "gs-context", paint: { "fill-color": "#38d6c4", "fill-opacity": 0.035 } });
+      map.addLayer({ id: "gs-context-line", type: "line", source: "gs-context", paint: { "line-color": "#38d6c4", "line-width": 1, "line-opacity": 0.55, "line-dasharray": [2, 3] } });
+      map.addLayer({ id: "gs-transmission-line", type: "line", source: "gs-transmission", layout: { visibility: props.layers.transmission ? "visible" : "none" }, paint: { "line-color": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], "#f5c66b", "#9aa8bb"], "line-opacity": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 1, 0.48], "line-width": ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 5, ["interpolate", ["linear"], ["get", "voltage"], 0, 0.7, 138, 1.25, 230, 2, 500, 3]] } });
+      map.on("mouseenter", "gs-transmission-line", () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", "gs-transmission-line", () => { map.getCanvas().style.cursor = ""; });
+      map.addLayer({ id: "gs-corridor-points", type: "circle", source: "gs-corridor-detail", paint: { "circle-radius": ["case", ["==", ["get", "role"], "substation"], 6, 5], "circle-color": ["case", ["==", ["get", "role"], "substation"], "#53d8c9", "#f5c66b"], "circle-stroke-color": "#0b1015", "circle-stroke-width": 1.5 } });
+      map.addLayer({ id: "gs-corridor-labels", type: "symbol", source: "gs-corridor-detail", layout: { "text-field": ["get", "label"], "text-size": 10, "text-offset": [0, 1.3], "text-anchor": "top", "text-allow-overlap": true }, paint: { "text-color": "#f3f6fa", "text-halo-color": "#080c12", "text-halo-width": 1.5 } });
+      map.addLayer({ id: "gs-flow-lines", type: "line", source: "gs-flows", paint: { "line-color": props.heatwave ? "#ffb020" : "#38d6c4", "line-width": 1.5, "line-opacity": 0.65, "line-dasharray": [2, 2] } });
+      map.addLayer({ id: "gs-facilities", type: "circle", source: "gs-facilities", layout: { visibility: props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["get", "size"], "circle-color": ["get", "color"], "circle-stroke-color": "#eef8ff", "circle-stroke-width": 1, "circle-opacity": 0.92, "circle-pitch-alignment": "map" } });
+      map.addLayer({ id: "gs-facility-extrusions", type: "circle", source: "gs-facilities", layout: { visibility: props.view3d && props.layers.loadCenters ? "visible" : "none" }, paint: { "circle-radius": ["+", ["get", "size"], 3], "circle-color": ["get", "color"], "circle-opacity": 0.32, "circle-translate": [0, -18], "circle-pitch-alignment": "map" } });
+      map.addLayer({ id: "gs-facility-columns", type: "fill-extrusion", source: "gs-extrusions", layout: { visibility: props.view3d && props.layers.loadCenters ? "visible" : "none" }, paint: { "fill-extrusion-color": ["get", "color"], "fill-extrusion-height": ["get", "height"], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.82, "fill-extrusion-vertical-gradient": true } });
+      map.addLayer({ id: "gs-plants", type: "circle", source: "gs-plants", layout: { visibility: props.layers.plants ? "visible" : "none" }, paint: { "circle-radius": ["get", "radius"], "circle-color": ["get", "color"], "circle-stroke-color": "#0b1015", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      map.addLayer({ id: "gs-substations", type: "circle", source: "gs-substations", layout: { visibility: props.layers.substations ? "visible" : "none" }, paint: { "circle-radius": 2.4, "circle-color": "#8fa0b8", "circle-opacity": 0.55 } });
+      map.addLayer({ id: "gs-niches", type: "circle", source: "gs-niches", layout: { visibility: props.layers.nicheCases ? "visible" : "none" }, paint: { "circle-radius": 6, "circle-color": "#f4b957", "circle-stroke-color": "#10151d", "circle-stroke-width": 1.5 } });
+      map.addLayer({ id: "gs-scan-fill", type: "fill", source: "gs-scan", paint: { "fill-color": "#f5c66b", "fill-opacity": 0.08 } });
+      map.addLayer({ id: "gs-scan-line", type: "line", source: "gs-scan", paint: { "line-color": "#f5c66b", "line-width": 1.5, "line-dasharray": [2, 2] } });
+      map.addLayer({ id: "gs-scan-center", type: "circle", source: "gs-scan", paint: { "circle-radius": 4, "circle-color": "#f5c66b", "circle-stroke-color": "#0b1015", "circle-stroke-width": 2 } });
+      const current = sourcesRef.current;
+      if (current) for (const [id, data] of Object.entries({ "gs-context": current.context, "gs-transmission": current.transmission, "gs-substations": current.substations, "gs-plants": current.plants, "gs-flows": current.flows, "gs-facilities": current.facilities, "gs-extrusions": current.extrusions, "gs-corridor-detail": current.corridor, "gs-niches": current.niches, "gs-scan": current.scan })) setData(map, id, data);
+      map.addSource("gs-terrain", { type: "raster-dem", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], tileSize: 256, encoding: "terrarium", maxzoom: 15 });
+      if (propsRef.current.surface === "elevation") propsRef.current.onTerrainStatus?.("loading");
+      map.fitBounds([[props.bounds[0][1], props.bounds[0][0]], [props.bounds[1][1], props.bounds[1][0]]], { padding: 46, duration: 0 });
+      const controller: MapController = {
+        zoomIn: () => map.zoomIn(), zoomOut: () => map.zoomOut(),
+        // MapController accepts a scalar or [vertical, horizontal] padding; MapLibre
+        // wants a scalar or an explicit PaddingOptions box.
+        fitBounds: (b, options) => {
+          const padding = Array.isArray(options?.padding)
+            ? { top: options.padding[0], bottom: options.padding[0], left: options.padding[1], right: options.padding[1] }
+            : options?.padding;
+          map.fitBounds([[b[0][1], b[0][0]], [b[1][1], b[1][0]]], {
+            padding,
+            duration: options?.animate ? 700 : 0,
+          });
+        },
+        flyTo: (center, zoom, options) => map.flyTo({ center: [center[1], center[0]], zoom, duration: options?.duration ? options.duration * 1000 : 800 }),
+        setView: (center, zoom, options) => map.easeTo({ center: [center[1], center[0]], zoom, duration: options?.animate ? 700 : 0 }),
+        setCamera: (pitch, bearing) => map.easeTo({ pitch, bearing, duration: 450 }),
+        resetNorth: () => map.easeTo({ bearing: 0, pitch: map.getPitch(), duration: 350 }),
+      };
+      readyRef.current?.(controller);
+    });
+    map.on("click", (event) => {
+      if (scanModeRef.current) { scanPointRef.current(event.lngLat.lat, event.lngLat.lng); return; }
+      if (!map.getLayer("gs-substations")) return;
+      const features = map.queryRenderedFeatures(event.point, { layers: ["gs-niches", "gs-facilities", "gs-plants", "gs-substations", "gs-transmission-line"] });
+      const hit = features[0];
+      if (hit?.layer.id === "gs-niches" && typeof hit.properties?.id === "string") props.onSelectNiche(hit.properties.id);
+      else if (hit?.layer.id === "gs-facilities" && typeof hit.properties?.id === "string") props.onSelect(hit.properties.id);
+      else if (hit?.layer.id === "gs-plants" && typeof hit.properties?.tooltip === "string") {
+        // plantTooltipHtml escapes names and reads a null field as "not reported by source".
+        new maplibregl.Popup().setLngLat(event.lngLat).setHTML(hit.properties.tooltip).addTo(map);
       }
-      marker.addTo(group);
-    }
-  }, [layers.substations, substations]);
+      else if (hit?.layer.id === "gs-substations") {
+        new maplibregl.Popup().setLngLat(event.lngLat)
+          .setDOMContent(substationSourceCard(hit.properties ?? {})).addTo(map);
+      }
+      else if (hit?.layer.id === "gs-transmission-line" && hit.geometry.type === "LineString") {
+        const coordinates = hit.geometry.coordinates as [number, number][];
+        const middle = coordinates[Math.floor(coordinates.length / 2)] ?? coordinates[0];
+        const nearest = middle ? substationsRef.current.reduce<SubstationFeature | null>((best, feature) => {
+          if (!best) return feature;
+          const [lon, lat] = feature.geometry.coordinates;
+          const [bestLon, bestLat] = best.geometry.coordinates;
+          const cosine = Math.cos(middle[1] * Math.PI / 180);
+          return (lon - middle[0]) ** 2 * cosine ** 2 + (lat - middle[1]) ** 2 < (bestLon - middle[0]) ** 2 * cosine ** 2 + (bestLat - middle[1]) ** 2 ? feature : best;
+        }, null) : null;
+        props.onSelectCorridor({ id: String(hit.properties?.corridorId ?? ""), coordinates, voltage: Number(hit.properties?.voltage) || null, ...(nearest ? { nearestSubstation: { name: nearest.properties.name ?? "Unnamed substation", coordinates: nearest.geometry.coordinates } } : {}) });
+      }
+    });
+    map.on("sourcedata", (event) => {
+      if (event.sourceId === "gs-terrain" && event.isSourceLoaded && propsRef.current.surface === "elevation") {
+        map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
+        propsRef.current.onTerrainStatus?.("ready");
+      }
+    });
+    map.on("error", (event) => {
+      if (event.error?.message?.toLowerCase().includes("webgl")) props.onFallback();
+      // MapLibre attaches sourceId to source errors at runtime, not in its types.
+      else if ((event as { sourceId?: string }).sourceId === "gs-terrain") {
+        map.setTerrain(null);
+        propsRef.current.onTerrainStatus?.("unavailable");
+      }
+    });
+    return () => { resizeObserver.disconnect(); map.remove(); mapRef.current = null; };
+  // Initial map construction only. Runtime changes flow through the effects below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  const aliveRef = useRef(true);
+  useEffect(() => { aliveRef.current = true; return () => { aliveRef.current = false; }; }, []);
   useEffect(() => {
-    const group = plantGroupRef.current;
-    if (!group) return;
-    group.clearLayers();
-    if (!layers.plants || !plants) return;
-
-    for (const feature of plants) {
-      const [lon, lat] = feature.geometry.coordinates;
-      const props = feature.properties;
-      const years = props.oldest_year
-        ? props.newest_year && props.newest_year !== props.oldest_year
-          ? `${props.oldest_year}–${props.newest_year}`
-          : `${props.oldest_year}`
-        : "in-service year untagged";
-      const retirement =
-        props.planned_retirement_mw > 0
-          ? `<br/>planned retirement ${props.planned_retirement_mw.toFixed(1)} MW`
-          : "";
-
-      L.circleMarker([lat, lon], {
-        pane: "gs-plants",
-        radius: plantRadius(props.nameplate_mw),
-        weight: 1,
-        color: "rgba(5,7,12,0.85)",
-        fillOpacity: 0.85,
-        className: `plant-dot ${sourceClass(props.primary_source)}`,
-      })
-        .bindTooltip(
-          `<b>${escapeHtml(props.plant_name)}</b><br/>${props.nameplate_mw.toFixed(1)} MW · ${sourceLabel(props.primary_source)}<br/>in service ${years}${retirement}<br/><span class="tt-src">EIA-860 2025</span>`,
-          { direction: "top", className: "grid-tooltip" },
-        )
-        .addTo(group);
-    }
-  }, [layers.plants, plants]);
-
+    const map = mapRef.current; if (!map?.isStyleLoaded()) return;
+    for (const [id, data] of Object.entries({ "gs-context": sources.context, "gs-transmission": sources.transmission, "gs-substations": sources.substations, "gs-plants": sources.plants, "gs-flows": sources.flows, "gs-facilities": sources.facilities, "gs-extrusions": sources.extrusions, "gs-corridor-detail": sources.corridor, "gs-niches": sources.niches, "gs-scan": sources.scan })) setData(map, id, data);
+  }, [sources]);
   useEffect(() => {
-    const cg = contextGroupRef.current;
-    if (!cg) return;
-    cg.clearLayers();
-
-    L.circle(center as [number, number], {
-      radius: radiusMiles * 1609.34,
-      color: "#38D6C4",
-      weight: 1,
-      opacity: 0.55,
-      dashArray: "5 7",
-      fillColor: "#38D6C4",
-      fillOpacity: 0.05,
-      interactive: false,
-      className: "radius-ring",
-    }).addTo(cg);
-
-    L.marker(center as [number, number], {
-      icon: L.divIcon({
-        className: "home-marker-host",
-        html: `<span class="home-marker"><span class="home-marker-ring"></span><span class="home-marker-label">Westminster HS</span></span>`,
-        iconSize: [10, 10],
-        iconAnchor: [5, 5],
-      }),
-      interactive: false,
-      keyboard: false,
-      zIndexOffset: -200,
-    }).addTo(cg);
-  }, [center, radiusMiles]);
-
+    const map = mapRef.current; if (!map) return;
+    if (map.getSource("gs-terrain")) {
+      if (props.surface === "elevation" && map.isSourceLoaded("gs-terrain")) {
+        map.setTerrain({ source: "gs-terrain", exaggeration: 1 });
+        props.onTerrainStatus?.("ready");
+      }
+      else if (props.surface === "elevation") props.onTerrainStatus?.("loading");
+      else map.setTerrain(null);
+    }
+    for (const id of ["gs-facility-extrusions", "gs-facility-columns"]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", props.view3d && props.layers.loadCenters ? "visible" : "none");
+  }, [props.surface, props.view3d, props.layers.loadCenters, props.onTerrainStatus]);
   useEffect(() => {
-    const mg = markerGroupRef.current;
-    const fg = flowGroupRef.current;
-    if (!mg || !fg) return;
-
-    mg.clearLayers();
-    fg.clearLayers();
-
-    const markers: { id: string; el: HTMLElement }[] = [];
-    const coordById = new Map<string, [number, number]>();
-    for (const f of nodes) {
-      const [lon, lat] = f.geometry.coordinates;
-      coordById.set(f.properties.id, [lat, lon]);
+    const map = mapRef.current; if (!map) return;
+    for (const [id, visible] of [["gs-transmission-line", props.layers.transmission], ["gs-substations", props.layers.substations], ["gs-plants", props.layers.plants], ["gs-facilities", props.layers.loadCenters], ["gs-niches", props.layers.nicheCases]] as const) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    if (map.getLayer("gs-flow-lines")) map.setPaintProperty("gs-flow-lines", "line-color", props.heatwave ? "#ffb020" : "#38d6c4");
+    if (map.getLayer("gs-facilities")) map.setPaintProperty("gs-facilities", "circle-stroke-width", ["case", ["==", ["get", "id"], props.selectedId ?? ""], 3, 1]);
+    if (map.getLayer("gs-transmission-line")) {
+      map.setPaintProperty("gs-transmission-line", "line-color", ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], "#f5c66b", "#9aa8bb"]);
+      map.setPaintProperty("gs-transmission-line", "line-opacity", ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 1, 0.48]);
+      map.setPaintProperty("gs-transmission-line", "line-width", ["case", ["==", ["get", "corridorId"], props.selectedCorridorId ?? ""], 5, ["interpolate", ["linear"], ["get", "voltage"], 0, 0.7, 138, 1.25, 230, 2, 500, 3]]);
     }
-
-    const corridorById = new Map(corridors.map((corridor) => [corridor.id, corridor]));
-    const flowColor = heatwave ? "#FFB020" : "#38D6C4";
-    for (const flow of flows) {
-      const from = coordById.get(flow.from);
-      const to = coordById.get(flow.to);
-      if (!from || !to) continue;
-      const corridor = corridorById.get(flow.id);
-      const loadClass =
-        corridor?.severity === "watch"
-          ? " is-watch"
-          : corridor?.severity === "high" || corridor?.severity === "critical"
-            ? " is-congested"
-            : "";
-      const loading =
-        corridor === undefined
-          ? ""
-          : `<br/>${corridor.loading_pct}% of ${corridor.capacity_mva} MVA derated rating`;
-      // These ties are modeled, not published circuits (README §4.1): dashed,
-      // and the tooltip says so plainly.
-      L.polyline([from, to], {
-        color: flowColor,
-        weight: 1 + flow.mva / 90,
-        opacity: 0.5,
-        dashArray: "6 8",
-        className: `flow-line${loadClass}`,
-        interactive: true,
-      })
-        .bindTooltip(
-          `${escapeHtml(flow.label)} · ${flow.mva} MVA${loading}<br/><span class="tt-src">modeled tie (illustrative)</span>`,
-          { direction: "top", className: "grid-tooltip" },
-        )
-        .addTo(fg);
-    }
-
-    if (!layers.loadCenters) {
-      markerElsRef.current = [];
-      return;
-    }
-
-    for (const f of nodes) {
-      const [lon, lat] = f.geometry.coordinates;
-      const risk = risks[f.properties.id];
-      const selected = f.properties.id === selectedId;
-      const size = Math.round(10 + f.properties.infrastructure.nameplate_draw_mw / 8);
-      const html = `<span class="risk-marker${selected ? " is-selected" : ""}" style="--size:${size}px;--color:${risk.color}"><span class="risk-marker-halo"></span><span class="risk-marker-dot"></span></span>`;
-
-      const marker = L.marker([lat, lon], {
-        icon: L.divIcon({
-          className: "marker-host",
-          html,
-          iconSize: [34, 34],
-          iconAnchor: [17, 17],
-        }),
-        title: f.properties.name,
-        keyboard: false,
-        riseOnHover: true,
-        zIndexOffset: selected ? 600 : 0,
-      })
-        .on("click", () => onSelectRef.current(f.properties.id))
-        .addTo(mg);
-
-      const el = marker.getElement();
-      if (el) markers.push({ id: f.properties.id, el });
-    }
-
-    markerElsRef.current = markers;
-  }, [nodes, flows, risks, selectedId, heatwave, layers.loadCenters, corridors]);
-
+  }, [props.layers, props.heatwave, props.selectedId, props.selectedCorridorId]);
   useEffect(() => {
-    const group = nicheGroupRef.current;
-    if (!group) return;
-    group.clearLayers();
-    if (!layers.nicheCases) return;
+    const map = mapRef.current; if (!map) return;
+    const base = map.getSource("base") as { setTiles?: (tiles: string[]) => void } | undefined;
+    base?.setTiles?.([basemapById(props.basemap).url]);
+  }, [props.basemap]);
+  return <div ref={host} className="maplibre-host" aria-label="Interactive electrical grid map" />;
+}
 
-    for (const nicheCase of nicheCases) {
-      const selected = nicheCase.id === selectedNicheId;
-      L.marker([nicheCase.location.lat, nicheCase.location.lon], {
-        icon: L.divIcon({
-          className: "niche-marker-host",
-          html: `<span class="niche-marker${selected ? " is-selected" : ""}"><span class="niche-marker-halo"></span><span class="niche-diamond"></span></span>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        }),
-        title: nicheCase.title,
-        keyboard: false,
-        riseOnHover: true,
-        zIndexOffset: 900,
-      })
-        .on("click", () => onSelectNicheRef.current(nicheCase.id))
-        .bindTooltip(
-          `<b>${escapeHtml(nicheCase.title)}</b><br/><span class="tt-src">${nicheCase.category} · ${nicheCase.location.distance_mi} mi</span>`,
-          { direction: "top", className: "grid-tooltip" },
-        )
-        .addTo(group);
-    }
-  }, [layers.nicheCases, nicheCases, selectedNicheId]);
+function sourceColor(source: string): string {
+  return ({ natural_gas: "#f28c45", other_gas: "#f28c45", solar: "#f6ce55", battery: "#67dbbd", wind: "#67c6f0", hydro: "#6a9bf2" } as Record<string, string>)[source] ?? "#be8be8";
+}
 
-  useEffect(() => {
-    const map = mapRef.current;
-    const dark = darkLayerRef.current;
-    const satellite = satLayerRef.current;
-    if (!map || !dark || !satellite) return;
-
-    if (view3d) {
-      if (map.hasLayer(dark)) map.removeLayer(dark);
-      if (!map.hasLayer(satellite)) satellite.addTo(map);
-    } else {
-      if (map.hasLayer(satellite)) map.removeLayer(satellite);
-      if (!map.hasLayer(dark)) dark.addTo(map);
-    }
-
-    const timer = window.setTimeout(() => {
-      map.invalidateSize();
-      syncRef.current();
-    }, 340);
-    return () => window.clearTimeout(timer);
-  }, [view3d]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    if (firstSelection.current) {
-      firstSelection.current = false;
-      return;
-    }
-    const node = nodes.find((f) => f.properties.id === selectedId);
-    if (!node) return;
-    const [lon, lat] = node.geometry.coordinates;
-    map.flyTo([lat, lon], Math.max(map.getZoom(), 10), { duration: 0.8 });
-  }, [selectedId, nodes]);
-
-  return (
-    <div className="map-root">
-      <div ref={hostRef} className="leaflet-host" />
-
-      {view3d ? (
-        <div className="pillar-layer">
-          {nodes.map((f) => {
-            const point = points[f.properties.id];
-            if (!point) return null;
-            const sim = sims[f.properties.id];
-            const risk = risks[f.properties.id];
-            const height = Math.round(34 + sim.effective_draw_mw * 5.5);
-            const selected = f.properties.id === selectedId;
-            const pillarStyle = {
-              left: point.x,
-              top: point.y,
-              height,
-              "--h": `${height}px`,
-              "--c": risk.color,
-            } as CSSProperties;
-
-            return (
-              <Fragment key={f.properties.id}>
-                <span
-                  className="pillar-ground"
-                  aria-hidden
-                  style={
-                    {
-                      left: point.x,
-                      top: point.y,
-                      width: 34 + sim.effective_draw_mw * 2,
-                      height: 34 + sim.effective_draw_mw * 2,
-                      "--c": risk.color,
-                    } as CSSProperties
-                  }
-                />
-                <div
-                  className={`pillar${selected ? " is-selected" : ""}`}
-                  style={pillarStyle}
-                  aria-hidden
-                >
-                  <span className="pillar-stem" />
-                  <span className="pillar-body" />
-                  <span className="pillar-chip">
-                    <b>{sim.effective_draw_mw.toFixed(1)} MW</b>
-                    <span>{shortName(f.properties.name)}</span>
-                  </span>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
+export default function MapView(props: Props) {
+  const [fallback, setFallback] = useState(false);
+  if (fallback) return <LeafletMapView {...props} />;
+  return <NativeMap {...props} onFallback={() => setFallback(true)} />;
 }

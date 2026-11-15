@@ -225,10 +225,10 @@
     "source": "https://cdn.kpbs.org/news/documents/2012/05/01/05-01-12-factsheet-sequence-of-events.pdf"
    },
    {
-    "label": "The FERC/NERC report (May 1, 2012) attributes the blackout to operating in an unsecured state 'due to inadequate planning and a lack of observability and awareness of system operating conditions'; about 2.7 million customers were affected.",
+    "label": "The FERC/NERC staff report (released May 1, 2012) says the system was not being operated in a secure N-1 state, a failure stemming primarily from weaknesses in operations planning and real-time situational awareness; about 2.7 million customers lost power.",
     "value": "",
     "kind": "measured",
-    "source": "https://www.nerc.com/pa/rrm/ea/September%202011%20Southwest%20Blackout%20Event%20Document%20L/AZOutage_Report_01MAY12.pdf"
+    "source": "https://www.ferc.gov/sites/default/files/2020-05/04-27-2012-ferc-nerc-report.pdf"
    }
   ],
   "team_bullets": [
@@ -533,7 +533,7 @@
     "label": "The final expansion was completed and dedicated in 2023. It lets GWRS recycle 100% of OC San's reclaimable wastewater and makes enough water for about 1 million people.",
     "value": "",
     "kind": "measured",
-    "source": "https://idadesal.org/groundwater-replenishment-system-completion-increases-water-supply-reliability-for-orange-county"
+    "source": "https://www.bv.com/projects/groundwater-replenishment-system-final-expansion"
    },
    {
     "label": "The Colorado River Aqueduct lifts water 1,617 ft through 5 pumping plants. It runs 242 miles from Lake Havasu to Lake Mathews in Riverside (about 24.5 mi from Irvine), was completed in 1939, and carries about 1.25 million AF a year. All 5 pumping plants are more than 130 miles from Irvine, so outside the radius.",
@@ -872,7 +872,7 @@
    "distance_mi": 8.3
   },
   "one_liner": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
-  "problem": "On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for GridSentinel: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.",
+  "problem": "On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for Mapergy: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.",
   "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
   "shock_line": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
   "stats": [
@@ -1524,7 +1524,7 @@
     "label": "CARB's central estimate of total methane emissions is 99,650 +/- 9,300 metric tons. The commonly quoted 109,000 metric tons is the upper end CARB uses for full mitigation, not the central estimate.",
     "value": "",
     "kind": "measured",
-    "source": "https://ww2.arb.ca.gov/news/aliso-canyon-leak-emitted-109000-metric-tons-methane"
+    "source": "https://ww2.arb.ca.gov/sites/default/files/2020-07/aliso_canyon_methane_emissions-arb_final.pdf"
    },
    {
     "label": "The leak was reported Oct 23, 2015 and controlled Feb 11, 2016. CARB says it was about 20% of statewide methane emissions during the 16 weeks it was uncontrolled.",
@@ -1869,7 +1869,7 @@
     "label": "The microgrid can island the whole base (hundreds of buildings) for up to 21 days on on-site fuel. In summer 2022 it cut SDG&E demand by 5 MW a day for 10 days, and on Aug 17, 2022 it supplied power for about 3,000 homes from 4 to 9 p.m. during a Flex Alert.",
     "value": "",
     "kind": "measured",
-    "source": "https://microgridknowledge.com/government-military/article/33001213/resources/microgrid-perspectives"
+    "source": "https://www.microgridknowledge.com/government-military/article/33001213/microgrid-islanding-air-station-miramar-increases-time-in-island-mode-to-as-much-as-21-days"
    }
   ],
   "team_bullets": [

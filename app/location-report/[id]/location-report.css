@@ -1,0 +1,379 @@
+/* Location report (/location-report/[id]). Every class is lr- prefixed so nothing here
+   reaches /scan or the team app. scan.css (imported first) sets body overflow: hidden,
+   so the page scrolls inside .lr-page; print hands scrolling back to the document.
+   Rules are scoped under .lr-page so they outrank scan.css's body:has(.gs-scan-app) :is(p, h1, ...)
+   revert-layer block (specificity 0,1,2). */
+
+.lr-page {
+  height: 100vh;
+  overflow-y: auto;
+  background: #ffffff;
+  color: #1d2733;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lr-page .lr-doc {
+  width: min(100% - 48px, 880px);
+  margin: 0 auto;
+  padding: 40px 0 64px;
+}
+
+.lr-page .lr-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.lr-page .lr-header {
+  border-bottom: 1px solid #e6e9ee;
+  padding-bottom: 24px;
+}
+
+.lr-page .lr-kicker {
+  margin: 0 0 6px;
+  color: #556070;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lr-page .lr-h1 {
+  margin: 0;
+  color: #1d2733;
+  font-size: 30px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.lr-page .lr-deck {
+  margin: 8px 0 0;
+  color: #556070;
+  font-size: 15px;
+}
+
+.lr-page .lr-meta {
+  margin: 4px 0 0;
+  color: #556070;
+  font-size: 13px;
+}
+
+.lr-page .lr-note {
+  margin: 10px 0 0;
+  color: #b45309;
+  font-size: 13px;
+}
+
+.lr-page .lr-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: #1d2733;
+  word-break: break-all;
+}
+
+.lr-page .lr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+}
+
+.lr-page .lr-button {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #e6e9ee;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1d2733;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lr-page .lr-button:hover {
+  background: #f6f8fa;
+}
+
+.lr-page .lr-button-primary {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.lr-page .lr-button-primary:hover {
+  background: #0369a1;
+}
+
+.lr-page .lr-button:focus-visible,
+.lr-page .lr-link:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.lr-page .lr-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #e6e9ee;
+}
+
+.lr-page .lr-h2 {
+  margin: 0 0 12px;
+  color: #1d2733;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.lr-page .lr-text {
+  margin: 4px 0 0;
+  color: #1d2733;
+}
+
+.lr-page .lr-text-dim {
+  margin: 4px 0 0;
+  color: #556070;
+  font-size: 13px;
+}
+
+.lr-page span.lr-text-dim {
+  margin: 0;
+}
+
+.lr-page .lr-strong {
+  margin: 0;
+  font-weight: 600;
+  color: #1d2733;
+}
+
+.lr-page .lr-sky {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.lr-page .lr-caption {
+  margin: 12px 0 0;
+  color: #556070;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lr-page .lr-big {
+  margin: 0 0 6px;
+  color: #0284c7;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.lr-page .lr-rows {
+  margin: 12px 0 0;
+}
+
+.lr-page .lr-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  border-top: 1px solid #e6e9ee;
+}
+
+.lr-page .lr-row dt {
+  min-width: 0;
+  color: #556070;
+  font-size: 13px;
+}
+
+.lr-page .lr-row dd {
+  margin: 0;
+  flex-shrink: 0;
+  color: #1d2733;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lr-page .lr-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+
+.lr-page .lr-bar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #f6f8fa;
+}
+
+.lr-page .lr-bar span {
+  display: block;
+  height: 100%;
+}
+
+.lr-page .lr-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lr-page .lr-stat {
+  padding: 12px;
+  border: 1px solid #e6e9ee;
+  border-radius: 6px;
+}
+
+.lr-page .lr-stat-label {
+  margin: 0;
+  color: #556070;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lr-page .lr-stat-value {
+  margin: 4px 0 0;
+  color: #0284c7;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.lr-page .lr-table {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lr-page .lr-table th {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid #e6e9ee;
+  color: #556070;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.lr-page .lr-table td {
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid #e6e9ee;
+  vertical-align: top;
+  color: #1d2733;
+}
+
+.lr-page .lr-table td.lr-text-dim {
+  margin: 0;
+  color: #556070;
+}
+
+.lr-page .lr-table td.lr-sky {
+  color: #0284c7;
+}
+
+.lr-page .lr-table .lr-r {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lr-page .lr-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lr-page .lr-list > li {
+  padding: 10px 0;
+  border-top: 1px solid #e6e9ee;
+}
+
+.lr-page .lr-list > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.lr-page .lr-list p {
+  margin: 0;
+}
+
+.lr-page .lr-list p + p {
+  margin-top: 2px;
+}
+
+.lr-page .lr-link {
+  color: #0369a1;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lr-page .lr-link:hover {
+  text-decoration: underline;
+}
+
+.lr-page .lr-break {
+  word-break: break-all;
+  font-weight: 400;
+}
+
+.lr-page .lr-footer {
+  padding-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .lr-page .lr-doc {
+    width: calc(100% - 32px);
+    padding-top: 24px;
+  }
+  .lr-page .lr-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lr-page .lr-h1 {
+    font-size: 24px;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body:has(.lr-page) {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+  .lr-page {
+    height: auto;
+    overflow: visible;
+  }
+  .lr-page .lr-doc {
+    width: 100%;
+    padding: 0;
+  }
+  .lr-page .lr-noprint {
+    display: none !important;
+  }
+  .lr-page .lr-section,
+  .lr-page .lr-stat,
+  .lr-page .lr-list > li,
+  .lr-page .lr-table tr {
+    break-inside: avoid;
+  }
+  .lr-page .lr-h2 {
+    break-after: avoid;
+  }
+  .lr-page .lr-bar,
+  .lr-page .lr-swatch {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .lr-page .lr-link {
+    color: #0369a1;
+  }
+}

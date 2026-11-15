@@ -9,6 +9,9 @@ export interface SparklineProps {
   stroke?: string;
   /** Draw a filled area under the line. */
   area?: boolean;
+  /** Value axis floor; defaults to 0. Raise it to resolve small changes in a
+   * series that never approaches zero (a rating ratio, for example). */
+  floor?: number;
   className?: string;
 }
 
@@ -22,11 +25,12 @@ export function Sparkline({
   height = 24,
   stroke = "var(--accent)",
   area = false,
+  floor = 0,
   className,
 }: SparklineProps) {
   const padded = 2;
   const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
+  const min = Math.min(...values, floor);
   const span = max - min || 1;
   const step = values.length > 1 ? (width - padded * 2) / (values.length - 1) : 0;
 

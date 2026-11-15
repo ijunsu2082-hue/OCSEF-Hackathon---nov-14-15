@@ -1,0 +1,3439 @@
+{
+ "way/1004654179": {
+  "name": "Victorville Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3038",
+  "distance_m": 13.6
+ },
+ "way/1011137127": {
+  "name": "Brewster Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3132",
+  "distance_m": 9.3
+ },
+ "way/101677534": {
+  "name": "Seawind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2839",
+  "distance_m": 5.5
+ },
+ "way/1017858363": {
+  "name": "Bryman Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3383",
+  "distance_m": 2.0
+ },
+ "way/1017858370": {
+  "name": "Helendale Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3382",
+  "distance_m": 4.7
+ },
+ "way/1017858373": {
+  "name": "Wilde Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3381",
+  "distance_m": 7.8
+ },
+ "way/1020413322": {
+  "name": "Appgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0708",
+  "distance_m": 6.4
+ },
+ "way/102118056": {
+  "name": "Altwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2847",
+  "distance_m": 5.8
+ },
+ "way/102118057": {
+  "name": "Mountwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2848",
+  "distance_m": 12.1
+ },
+ "way/1021540115": {
+  "name": "Proctor Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0875",
+  "distance_m": 8.5
+ },
+ "way/1023480895": {
+  "name": "Alder Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1558",
+  "distance_m": 19.9
+ },
+ "way/1024402205": {
+  "name": "San Antonio Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1622",
+  "distance_m": 43.8
+ },
+ "way/1024712990": {
+  "name": "Archline Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1563",
+  "distance_m": 18.7
+ },
+ "way/1027234674": {
+  "name": "Neptune Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0850",
+  "distance_m": 8.7
+ },
+ "way/104056366": {
+  "name": "Esco Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1674",
+  "distance_m": 27.5
+ },
+ "way/1041825015": {
+  "name": "Downey Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0725",
+  "distance_m": 7.0
+ },
+ "way/1047533879": {
+  "name": "Duarte Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3100",
+  "distance_m": 4.7
+ },
+ "way/1047533880": {
+  "name": "Hopeful Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3136",
+  "distance_m": 4.8
+ },
+ "way/105230909": {
+  "name": "Rancho Santa Fe Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1724",
+  "distance_m": 11.8
+ },
+ "way/105828292": {
+  "name": "Pendleton Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1719",
+  "distance_m": 6.4
+ },
+ "way/1059438605": {
+  "name": "Dike Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0764",
+  "distance_m": 9.2
+ },
+ "way/1059438606": {
+  "name": "Seabright Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0905",
+  "distance_m": 12.5
+ },
+ "way/1059932981": {
+  "name": "Devil Canyon Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1585",
+  "distance_m": 53.1
+ },
+ "way/1067037663": {
+  "name": "Cal Cement Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0563",
+  "distance_m": 14.3
+ },
+ "way/1073692881": {
+  "name": "Olivenhein Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2384",
+  "distance_m": 3.5
+ },
+ "way/1088863760": {
+  "name": "Alamo Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0558",
+  "distance_m": 5.1
+ },
+ "way/109609240": {
+  "name": "Moraga Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1317",
+  "distance_m": 32.2
+ },
+ "way/1102244284": {
+  "name": "Lucerne Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3055",
+  "distance_m": 17.7
+ },
+ "way/1104824498": {
+  "name": "Newcomb Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1320",
+  "distance_m": 27.1
+ },
+ "way/1113503924": {
+  "name": "Alessandro Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1288",
+  "distance_m": 77.9
+ },
+ "way/1120403641": {
+  "name": "Capwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2851",
+  "distance_m": 5.9
+ },
+ "way/1121010951": {
+  "name": "Dutchwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3033",
+  "distance_m": 8.5
+ },
+ "way/1121132892": {
+  "name": "Northwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3285",
+  "distance_m": 6.6
+ },
+ "way/1126593009": {
+  "name": "Terrace Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3119",
+  "distance_m": 8.0
+ },
+ "way/1154163764": {
+  "name": "MWD Lake Mathews Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2855",
+  "distance_m": 4.9
+ },
+ "way/1160609824": {
+  "name": "Casa Blanca Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3480",
+  "distance_m": 19.4
+ },
+ "way/1160961868": {
+  "name": "Rubidoux Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3394",
+  "distance_m": 7.2
+ },
+ "way/1161246628": {
+  "name": "West Riverside Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3357",
+  "distance_m": 4.5
+ },
+ "way/1163784631": {
+  "name": "Glen Avon Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1306",
+  "distance_m": 9.9
+ },
+ "way/116428566": {
+  "name": "Station F",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1738",
+  "distance_m": 9.9
+ },
+ "way/1164332325": {
+  "name": "Cucamonga Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1582",
+  "distance_m": 13.0
+ },
+ "way/116790727": {
+  "name": "Tanker Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1329",
+  "distance_m": 5.9
+ },
+ "way/1172880609": {
+  "name": "Coronado Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1663",
+  "distance_m": 3.8
+ },
+ "way/118400846": {
+  "name": "Mojave Siphon Substation",
+  "owner": "Other",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2827",
+  "distance_m": 8.6
+ },
+ "way/1188553485": {
+  "name": "Niqf Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2348",
+  "distance_m": 11.8
+ },
+ "way/1199651904": {
+  "name": "Temple Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3105",
+  "distance_m": 9.0
+ },
+ "way/120259296": {
+  "name": "Phelan Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1614",
+  "distance_m": 19.5
+ },
+ "way/120878575": {
+  "name": "Savage Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1626",
+  "distance_m": 14.2
+ },
+ "way/1208787092": {
+  "name": "Santa Ana 1 Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2828",
+  "distance_m": 3.1
+ },
+ "way/1214083024": {
+  "name": "Ivyglen Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1309",
+  "distance_m": 2.8
+ },
+ "way/1215479747": {
+  "name": "Kimball Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3446",
+  "distance_m": 5.0
+ },
+ "way/1220401339": {
+  "name": "Redman Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0883",
+  "distance_m": 23.9
+ },
+ "way/1222384138": {
+  "name": "San Marino Substation",
+  "owner": "SCE",
+  "kv_class": "12kV to 32kV",
+  "cec_id": "SS3107",
+  "distance_m": 2.7
+ },
+ "way/1224935019": {
+  "name": "East Barstow Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3057",
+  "distance_m": 15.1
+ },
+ "way/1229806597": {
+  "name": "Rerc Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2852",
+  "distance_m": 13.4
+ },
+ "way/1237566553": {
+  "name": "Sky Valley Substation",
+  "owner": "IID",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1282",
+  "distance_m": 5.4
+ },
+ "way/1245960929": {
+  "name": "Canyon Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1149",
+  "distance_m": 13.0
+ },
+ "way/124693313": {
+  "name": "Del Rosa Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1584",
+  "distance_m": 9.8
+ },
+ "way/1248907994": {
+  "name": "Buckwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2845",
+  "distance_m": 4.6
+ },
+ "way/1249384513": {
+  "name": "Crafton Hills Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2830",
+  "distance_m": 1.0
+ },
+ "way/1249384523": {
+  "name": "Zanja Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1643",
+  "distance_m": 13.0
+ },
+ "way/124955100": {
+  "name": "Highland Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1596",
+  "distance_m": 23.6
+ },
+ "way/1249793977": {
+  "name": "Huston Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3039",
+  "distance_m": 17.2
+ },
+ "way/1250117745": {
+  "name": "University Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3476",
+  "distance_m": 15.7
+ },
+ "way/1252216788": {
+  "name": "Montgomery Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1705",
+  "distance_m": 6.4
+ },
+ "way/1252942880": {
+  "name": "Sunny Dunes Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3074",
+  "distance_m": 1.7
+ },
+ "way/1252946317": {
+  "name": "Desert Outpost Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3073",
+  "distance_m": 8.3
+ },
+ "way/126265491": {
+  "name": "Monserate Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1704",
+  "distance_m": 4.2
+ },
+ "way/1265015465": {
+  "name": "Palm Canyon Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3075",
+  "distance_m": 10.8
+ },
+ "way/1280463764": {
+  "name": "Burnt Mill Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3372",
+  "distance_m": 5.5
+ },
+ "way/1280463882": {
+  "name": "Agua Mansa Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2834",
+  "distance_m": 15.0
+ },
+ "way/1282256491": {
+  "name": "Orangecrest Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3481",
+  "distance_m": 12.3
+ },
+ "way/1282256500": {
+  "name": "Freeman Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2397",
+  "distance_m": 8.3
+ },
+ "way/1282256589": {
+  "name": "Maxwell Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1313",
+  "distance_m": 14.0
+ },
+ "way/1282256645": {
+  "name": "Arro Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1564",
+  "distance_m": 2.6
+ },
+ "way/1282342981": {
+  "name": "Greenspot Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2829",
+  "distance_m": 2.8
+ },
+ "way/1282342992": {
+  "name": "Purewater Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2832",
+  "distance_m": 12.0
+ },
+ "way/1283495855": {
+  "name": "Bunker Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1292",
+  "distance_m": 34.0
+ },
+ "way/1283857383": {
+  "name": "Tenaja Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3404",
+  "distance_m": 34.1
+ },
+ "way/1284233125": {
+  "name": "Stallion Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0535",
+  "distance_m": 1.6
+ },
+ "way/1284298191": {
+  "name": "Plaza Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3478",
+  "distance_m": 32.6
+ },
+ "way/1284460709": {
+  "name": "Concho Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1295",
+  "distance_m": 24.1
+ },
+ "way/1284460749": {
+  "name": "Tamarisk Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1328",
+  "distance_m": 23.0
+ },
+ "way/1284460823": {
+  "name": "Laquinta Substation",
+  "owner": "IID",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2356",
+  "distance_m": 16.0
+ },
+ "way/1284460829": {
+  "name": "Marshall Substation",
+  "owner": "IID",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3634",
+  "distance_m": 7.9
+ },
+ "way/1292124657": {
+  "name": "Eric Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0773",
+  "distance_m": 13.0
+ },
+ "way/1292792074": {
+  "name": "Rindge Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0925",
+  "distance_m": 12.9
+ },
+ "way/1294858608": {
+  "name": "MWD Etiwanda Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2984",
+  "distance_m": 5.4
+ },
+ "way/1294858614": {
+  "name": "Reduction Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1619",
+  "distance_m": 9.2
+ },
+ "way/1294858617": {
+  "name": "Pipe Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1615",
+  "distance_m": 3.3
+ },
+ "way/1294858621": {
+  "name": "Grapeland Peaker Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3042",
+  "distance_m": 5.8
+ },
+ "way/1294858626": {
+  "name": "Genamic Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1592",
+  "distance_m": 19.3
+ },
+ "way/1294858671": {
+  "name": "Hygen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1598",
+  "distance_m": 2.0
+ },
+ "way/1294858680": {
+  "name": "Linde Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1602",
+  "distance_m": 26.5
+ },
+ "way/1294858709": {
+  "name": "Rolling Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1621",
+  "distance_m": 24.2
+ },
+ "way/1294858783": {
+  "name": "Hub Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2362",
+  "distance_m": 14.6
+ },
+ "way/1294858826": {
+  "name": "Fibre Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3047",
+  "distance_m": 11.6
+ },
+ "way/1294893482": {
+  "name": "Simpson Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0911",
+  "distance_m": 4.4
+ },
+ "way/1294893541": {
+  "name": "Lambert Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1172",
+  "distance_m": 3.3
+ },
+ "way/1295105201": {
+  "name": "Galvanizing Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1591",
+  "distance_m": 8.8
+ },
+ "way/1295105207": {
+  "name": "Furnace Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1589",
+  "distance_m": 14.9
+ },
+ "way/1295105227": {
+  "name": "Wimbledon Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1641",
+  "distance_m": 32.9
+ },
+ "way/1295105244": {
+  "name": "Milliken Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2836",
+  "distance_m": 12.3
+ },
+ "way/1295566505": {
+  "name": "Springs Generation Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2850",
+  "distance_m": 11.1
+ },
+ "way/1295566579": {
+  "name": "Gavilan Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3376",
+  "distance_m": 26.9
+ },
+ "way/1295566690": {
+  "name": "Cajalco Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1293",
+  "distance_m": 5.2
+ },
+ "way/1295566728": {
+  "name": "MWD Temescal Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2985",
+  "distance_m": 1.3
+ },
+ "way/1296516806": {
+  "name": "Carbogen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0734",
+  "distance_m": 4.4
+ },
+ "way/1296516893": {
+  "name": "Shell Los Angeles Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2627",
+  "distance_m": 13.7
+ },
+ "way/1296516933": {
+  "name": "Navy Mole Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0847",
+  "distance_m": 4.5
+ },
+ "way/1296516941": {
+  "name": "Commodore Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0748",
+  "distance_m": 4.5
+ },
+ "way/1296516964": {
+  "name": "Station 119",
+  "owner": "LADWP",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3539",
+  "distance_m": 10.0
+ },
+ "way/1296516999": {
+  "name": "Arco Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3400",
+  "distance_m": 1.5
+ },
+ "way/1296517141": {
+  "name": "Boost Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0721",
+  "distance_m": 4.8
+ },
+ "way/1296517160": {
+  "name": "Thums A Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0930",
+  "distance_m": 51.5
+ },
+ "way/1296517161": {
+  "name": "Thums B Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0931",
+  "distance_m": 44.4
+ },
+ "way/1296517162": {
+  "name": "Thums D Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0933",
+  "distance_m": 51.4
+ },
+ "way/1296517163": {
+  "name": "Thums C Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0932",
+  "distance_m": 53.2
+ },
+ "way/1296517299": {
+  "name": "Soco Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1199",
+  "distance_m": 13.7
+ },
+ "way/1296517300": {
+  "name": "Recovery Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1193",
+  "distance_m": 9.8
+ },
+ "way/1296517408": {
+  "name": "Orcosan Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3312",
+  "distance_m": 5.8
+ },
+ "way/1296517409": {
+  "name": "Kiwi Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1188",
+  "distance_m": 18.6
+ },
+ "way/1296517580": {
+  "name": "Titans Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3080",
+  "distance_m": 7.6
+ },
+ "way/1296517588": {
+  "name": "Canyon Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3543",
+  "distance_m": 70.9
+ },
+ "way/1296518111": {
+  "name": "Yorba Linda Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1210",
+  "distance_m": 11.4
+ },
+ "way/1296518122": {
+  "name": "Yorba Linda Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1182",
+  "distance_m": 4.3
+ },
+ "way/1296518251": {
+  "name": "Liquid Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0827",
+  "distance_m": 6.4
+ },
+ "way/1302111187": {
+  "name": "Euclid Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3050",
+  "distance_m": 5.6
+ },
+ "way/1306912017": {
+  "name": "Anaverde Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0705",
+  "distance_m": 14.5
+ },
+ "way/132107032": {
+  "name": "Thumsgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3300",
+  "distance_m": 173.2
+ },
+ "way/1333609700": {
+  "name": "Procgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2262",
+  "distance_m": 15.8
+ },
+ "way/134659111": {
+  "name": "Cherry Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0740",
+  "distance_m": 6.4
+ },
+ "way/1355269493": {
+  "name": "Skylark Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1325",
+  "distance_m": 19.0
+ },
+ "way/1395515433": {
+  "name": "Valley Cntr. Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2378",
+  "distance_m": 12.5
+ },
+ "way/1417461328": {
+  "name": "Oceanside Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1711",
+  "distance_m": 7.4
+ },
+ "way/1422623947": {
+  "name": "Hesperia Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1594",
+  "distance_m": 14.9
+ },
+ "way/1424260384": {
+  "name": "Belvedere Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3120",
+  "distance_m": 4.3
+ },
+ "way/1431587249": {
+  "name": "Midwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2954",
+  "distance_m": 3.2
+ },
+ "way/1431683528": {
+  "name": "Goldtown Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0574",
+  "distance_m": 11.7
+ },
+ "way/1437127291": {
+  "name": "Breeze Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0561",
+  "distance_m": 9.1
+ },
+ "way/1448327922": {
+  "name": "Transwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2840",
+  "distance_m": 5.5
+ },
+ "way/1449655082": {
+  "name": "Cottonwood Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1581",
+  "distance_m": 10.5
+ },
+ "way/1450139149": {
+  "name": "Acton Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3067",
+  "distance_m": 10.1
+ },
+ "way/1450700178": {
+  "name": "Kinetic Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3560",
+  "distance_m": 2.5
+ },
+ "way/1450700181": {
+  "name": "Bj Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3559",
+  "distance_m": 3.5
+ },
+ "way/1454377815": {
+  "name": "Melrose Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1697",
+  "distance_m": 24.0
+ },
+ "way/1454457996": {
+  "name": "Maltby Substation",
+  "owner": "Other",
+  "kv_class": "12kV to 32kV",
+  "cec_id": "SS3573",
+  "distance_m": 5.5
+ },
+ "way/1456951683": {
+  "name": "Perris Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2857",
+  "distance_m": 39.5
+ },
+ "way/1457490121": {
+  "name": "Revital Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0890",
+  "distance_m": 7.4
+ },
+ "way/1457490124": {
+  "name": "Corners Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0751",
+  "distance_m": 8.8
+ },
+ "way/1457773032": {
+  "name": "Certified Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0738",
+  "distance_m": 5.7
+ },
+ "way/1458489448": {
+  "name": "Imperial Substation",
+  "owner": "LADWP",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0665",
+  "distance_m": 14.6
+ },
+ "way/1459549090": {
+  "name": "Domhill Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0766",
+  "distance_m": 3.2
+ },
+ "way/1461361564": {
+  "name": "Wesbasin Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3159",
+  "distance_m": 5.5
+ },
+ "way/1461361567": {
+  "name": "Hughesair Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0802",
+  "distance_m": 3.5
+ },
+ "way/1461366618": {
+  "name": "Polaris Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0871",
+  "distance_m": 5.4
+ },
+ "way/1461849022": {
+  "name": "Space Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0916",
+  "distance_m": 10.7
+ },
+ "way/1462897169": {
+  "name": "Galaxy Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0783",
+  "distance_m": 7.1
+ },
+ "way/1462903363": {
+  "name": "Westhill Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0957",
+  "distance_m": 3.5
+ },
+ "way/1462903368": {
+  "name": "Thermal Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0929",
+  "distance_m": 14.9
+ },
+ "way/1462903372": {
+  "name": "Chevgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0741",
+  "distance_m": 14.5
+ },
+ "way/1463227365": {
+  "name": "Bridge Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0727",
+  "distance_m": 19.3
+ },
+ "way/1463257282": {
+  "name": "Cosmic Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0754",
+  "distance_m": 2.3
+ },
+ "way/1467180896": {
+  "name": "Stadium Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0113",
+  "distance_m": 94.1
+ },
+ "way/1467185702": {
+  "name": "Grapevine Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0498",
+  "distance_m": 5.3
+ },
+ "way/1479953404": {
+  "name": "Santee Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1732",
+  "distance_m": 14.5
+ },
+ "way/1485094842": {
+  "name": "Little Harbor Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3439",
+  "distance_m": 11.4
+ },
+ "way/1485094844": {
+  "name": "Tengen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0927",
+  "distance_m": 11.9
+ },
+ "way/1485094850": {
+  "name": "Winderness Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2599",
+  "distance_m": 0.9
+ },
+ "way/1485094851": {
+  "name": "Southwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3287",
+  "distance_m": 8.1
+ },
+ "way/1485094932": {
+  "name": "Peerless Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3391",
+  "distance_m": 1.9
+ },
+ "way/1485094933": {
+  "name": "Segs 6 Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2803",
+  "distance_m": 7.5
+ },
+ "way/1485094934": {
+  "name": "Segs 7 Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2804",
+  "distance_m": 13.6
+ },
+ "way/1485094935": {
+  "name": "Segs 5 Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2805",
+  "distance_m": 10.0
+ },
+ "way/1485094936": {
+  "name": "Segs 4 Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2806",
+  "distance_m": 0.9
+ },
+ "way/1485094937": {
+  "name": "Segs 3 Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2807",
+  "distance_m": 14.4
+ },
+ "way/1485094938": {
+  "name": "Black Mt. Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2819",
+  "distance_m": 8.9
+ },
+ "way/1485094939": {
+  "name": "Southcap Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2820",
+  "distance_m": 8.1
+ },
+ "way/1485094940": {
+  "name": "Rancho Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3037",
+  "distance_m": 4.0
+ },
+ "way/1485094941": {
+  "name": "George A.F.B. Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2983",
+  "distance_m": 6.1
+ },
+ "way/1485094942": {
+  "name": "Ivyglen Meter Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2862",
+  "distance_m": 2.4
+ },
+ "way/1485094943": {
+  "name": "Elsinore Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1302",
+  "distance_m": 22.7
+ },
+ "way/1485094945": {
+  "name": "Pechanga Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2339",
+  "distance_m": 11.5
+ },
+ "way/1485094946": {
+  "name": "Red Mt. Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2873",
+  "distance_m": 3.3
+ },
+ "way/1485094948": {
+  "name": "Morro Hill Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1706",
+  "distance_m": 4.7
+ },
+ "way/1485094950": {
+  "name": "Sunnyside Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1741",
+  "distance_m": 17.5
+ },
+ "way/1485094951": {
+  "name": "Miramar Gt Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2877",
+  "distance_m": 36.3
+ },
+ "way/1485094952": {
+  "name": "Goal Line Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2344",
+  "distance_m": 9.5
+ },
+ "way/1485094953": {
+  "name": "Warren Canyon Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1749",
+  "distance_m": 25.4
+ },
+ "way/1485094954": {
+  "name": "Boulder Creek Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1654",
+  "distance_m": 8.1
+ },
+ "way/1485094957": {
+  "name": "Belding Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3325",
+  "distance_m": 6.2
+ },
+ "way/1485094960": {
+  "name": "Meadow Substation",
+  "owner": "Other",
+  "kv_class": "12kV to 32kV",
+  "cec_id": "SS3580",
+  "distance_m": 4.6
+ },
+ "way/1485094962": {
+  "name": "Converse Flats Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3375",
+  "distance_m": 4.6
+ },
+ "way/1485094965": {
+  "name": "Beaumont Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3318",
+  "distance_m": 7.3
+ },
+ "way/1485094967": {
+  "name": "Yucaipa Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1332",
+  "distance_m": 7.1
+ },
+ "way/1485094968": {
+  "name": "Smiley Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3064",
+  "distance_m": 4.2
+ },
+ "way/1485094970": {
+  "name": "Plastic Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3045",
+  "distance_m": 2.7
+ },
+ "way/1485094971": {
+  "name": "San Dimas Power Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0915",
+  "distance_m": 0.2
+ },
+ "way/1485094972": {
+  "name": "Sopipe Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0914",
+  "distance_m": 3.2
+ },
+ "way/1485094973": {
+  "name": "Santee Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3301",
+  "distance_m": 2.2
+ },
+ "way/1485094974": {
+  "name": "Injection Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0807",
+  "distance_m": 2.6
+ },
+ "way/1485094975": {
+  "name": "Belmont Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0713",
+  "distance_m": 6.9
+ },
+ "way/1485094976": {
+  "name": "Cedarwood Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3310",
+  "distance_m": 3.1
+ },
+ "way/1485094977": {
+  "name": "Orcogen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1189",
+  "distance_m": 5.1
+ },
+ "way/1485094978": {
+  "name": "Costa Mesa Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3087",
+  "distance_m": 3.4
+ },
+ "way/1485094979": {
+  "name": "Smithtool Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1198",
+  "distance_m": 4.1
+ },
+ "way/1485094981": {
+  "name": "Coyote Creek Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1181",
+  "distance_m": 4.1
+ },
+ "way/1485094982": {
+  "name": "Amalia Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3122",
+  "distance_m": 7.4
+ },
+ "way/1485094983": {
+  "name": "Shred Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3128",
+  "distance_m": 5.5
+ },
+ "way/1485094984": {
+  "name": "Shultz Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3126",
+  "distance_m": 1.6
+ },
+ "way/1485094985": {
+  "name": "Beejay Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0719",
+  "distance_m": 5.3
+ },
+ "way/1485094986": {
+  "name": "Naomi Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3124",
+  "distance_m": 3.5
+ },
+ "way/1485094988": {
+  "name": "South Gate Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3130",
+  "distance_m": 2.4
+ },
+ "way/1485094990": {
+  "name": "Bluff Cove Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3165",
+  "distance_m": 6.4
+ },
+ "way/1485094991": {
+  "name": "Haveda Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3297",
+  "distance_m": 9.8
+ },
+ "way/1485094992": {
+  "name": "Amco Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0704",
+  "distance_m": 10.8
+ },
+ "way/1485094994": {
+  "name": "Tidelands Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0872",
+  "distance_m": 5.3
+ },
+ "way/1485094995": {
+  "name": "Air Products Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0948",
+  "distance_m": 5.4
+ },
+ "way/1485094998": {
+  "name": "Toyota Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0937",
+  "distance_m": 2.5
+ },
+ "way/1485094999": {
+  "name": "Ringmill Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3118",
+  "distance_m": 3.7
+ },
+ "way/1485095001": {
+  "name": "Dougoil Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0768",
+  "distance_m": 15.7
+ },
+ "way/1485095002": {
+  "name": "Carmenita Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0735",
+  "distance_m": 21.7
+ },
+ "way/1485095003": {
+  "name": "Greening Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0793",
+  "distance_m": 13.6
+ },
+ "way/1485095005": {
+  "name": "Sponge Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0917",
+  "distance_m": 3.0
+ },
+ "way/1485095006": {
+  "name": "Puente Hills Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2619",
+  "distance_m": 3.3
+ },
+ "way/1485095007": {
+  "name": "Hillgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0799",
+  "distance_m": 1.6
+ },
+ "way/1485095008": {
+  "name": "Jose Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0811",
+  "distance_m": 3.0
+ },
+ "way/1485095009": {
+  "name": "Reno Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0886",
+  "distance_m": 2.0
+ },
+ "way/1485095010": {
+  "name": "Aerojet Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0696",
+  "distance_m": 4.5
+ },
+ "way/1485095012": {
+  "name": "Sierra Madre Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3103",
+  "distance_m": 5.5
+ },
+ "way/1485095013": {
+  "name": "Jet Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0809",
+  "distance_m": 1.6
+ },
+ "way/1485095016": {
+  "name": "Glendale Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2613",
+  "distance_m": 11.5
+ },
+ "way/1485095017": {
+  "name": "Nichols Canyon Substation",
+  "owner": "LADWP",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0668",
+  "distance_m": 5.9
+ },
+ "way/1485095018": {
+  "name": "MWD Venice Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3155",
+  "distance_m": 8.9
+ },
+ "way/1485095020": {
+  "name": "Reclaim Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3403",
+  "distance_m": 16.5
+ },
+ "way/1485095021": {
+  "name": "Rocketdyne Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2263",
+  "distance_m": 2.3
+ },
+ "way/1485095022": {
+  "name": "Etec-Gen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2251",
+  "distance_m": 4.8
+ },
+ "way/1485095023": {
+  "name": "Missile Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3036",
+  "distance_m": 12.0
+ },
+ "way/1485095024": {
+  "name": "Lehman Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2901",
+  "distance_m": 1.8
+ },
+ "way/1485095026": {
+  "name": "Getty Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2253",
+  "distance_m": 3.5
+ },
+ "way/1485095027": {
+  "name": "Tayshell Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2272",
+  "distance_m": 17.4
+ },
+ "way/1485095061": {
+  "name": "Lebec Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2608",
+  "distance_m": 43.3
+ },
+ "way/1485095064": {
+  "name": "Pacific Pipeline Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0466",
+  "distance_m": 3.7
+ },
+ "way/1485095290": {
+  "name": "Ordway Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3061",
+  "distance_m": 2.2
+ },
+ "way/1489634229": {
+  "name": "U.S. Borax Substation",
+  "owner": "Other",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2609",
+  "distance_m": 19.6
+ },
+ "way/1492294235": {
+  "name": "Shellsom Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3294",
+  "distance_m": 2.4
+ },
+ "way/1492294238": {
+  "name": "Ameron Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1559",
+  "distance_m": 2.1
+ },
+ "way/1492294239": {
+  "name": "Pearl Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3152",
+  "distance_m": 13.4
+ },
+ "way/1492294240": {
+  "name": "Fair Oaks Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3137",
+  "distance_m": 7.5
+ },
+ "way/1492309483": {
+  "name": "North Oaks Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0855",
+  "distance_m": 20.7
+ },
+ "way/1492309485": {
+  "name": "Great Lakes Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0575",
+  "distance_m": 4.4
+ },
+ "way/1492309625": {
+  "name": "Graham Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3129",
+  "distance_m": 20.4
+ },
+ "way/1492309927": {
+  "name": "West Barstow Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3059",
+  "distance_m": 2.8
+ },
+ "way/1492361837": {
+  "name": "Icegen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2624",
+  "distance_m": 7.8
+ },
+ "way/149304418": {
+  "name": "Latigo Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0822",
+  "distance_m": 2.9
+ },
+ "way/1533136998": {
+  "name": "Piute Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0870",
+  "distance_m": 12.4
+ },
+ "way/1544173896": {
+  "name": "Felicita Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1677",
+  "distance_m": 4.6
+ },
+ "way/1546541012": {
+  "name": "Mmc Chula Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2882",
+  "distance_m": 8.2
+ },
+ "way/1571010372": {
+  "name": "Rockair Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0892",
+  "distance_m": 4.5
+ },
+ "way/159759778": {
+  "name": "La Brea Substation",
+  "owner": "LADWP",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0918",
+  "distance_m": 2.4
+ },
+ "way/160066107": {
+  "name": "Bowl Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0723",
+  "distance_m": 4.7
+ },
+ "way/164767008": {
+  "name": "Rocket Test Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0596",
+  "distance_m": 11.0
+ },
+ "way/164863244": {
+  "name": "Edwards Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0570",
+  "distance_m": 30.4
+ },
+ "way/164878786": {
+  "name": "Hinkley Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3060",
+  "distance_m": 2.9
+ },
+ "way/165502975": {
+  "name": "Auld Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1289",
+  "distance_m": 18.1
+ },
+ "way/166510328": {
+  "name": "Ave. 42 Substation",
+  "owner": "IID",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2863",
+  "distance_m": 12.6
+ },
+ "way/166549841": {
+  "name": "Frances Way Substation",
+  "owner": "IID",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2353",
+  "distance_m": 15.2
+ },
+ "way/167005121": {
+  "name": "Mission Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1703",
+  "distance_m": 116.7
+ },
+ "way/167029616": {
+  "name": "Friars Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS3465",
+  "distance_m": 8.6
+ },
+ "way/167143653": {
+  "name": "Artesian Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3089",
+  "distance_m": 18.0
+ },
+ "way/167413743": {
+  "name": "Oak Park Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2258",
+  "distance_m": 12.5
+ },
+ "way/167413781": {
+  "name": "Crater Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0755",
+  "distance_m": 9.9
+ },
+ "way/167413782": {
+  "name": "Shelline Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3068",
+  "distance_m": 9.1
+ },
+ "way/168216618": {
+  "name": "Carpinteria Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1885",
+  "distance_m": 41.8
+ },
+ "way/168229988": {
+  "name": "Lockheed Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1909",
+  "distance_m": 2.0
+ },
+ "way/168229990": {
+  "name": "Elizabeth Lake Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0772",
+  "distance_m": 11.5
+ },
+ "way/169880228": {
+  "name": "Leonis Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0877",
+  "distance_m": 20.7
+ },
+ "way/169880246": {
+  "name": "Newmark Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0851",
+  "distance_m": 7.1
+ },
+ "way/179886362": {
+  "name": "Rosamond Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0597",
+  "distance_m": 13.4
+ },
+ "way/179988922": {
+  "name": "Santa Susana Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2267",
+  "distance_m": 17.2
+ },
+ "way/180763882": {
+  "name": "Foil Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1304",
+  "distance_m": 3.8
+ },
+ "way/184993874": {
+  "name": "University Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3405",
+  "distance_m": 4.6
+ },
+ "way/187582592": {
+  "name": "Stent Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3071",
+  "distance_m": 5.6
+ },
+ "way/196813668": {
+  "name": "Shuttle Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0909",
+  "distance_m": 5.8
+ },
+ "way/200209234": {
+  "name": "Carolina Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1150",
+  "distance_m": 13.8
+ },
+ "way/205000596": {
+  "name": "Oro Grande Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2982",
+  "distance_m": 2.6
+ },
+ "way/209270565": {
+  "name": "Lancaster Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0819",
+  "distance_m": 25.2
+ },
+ "way/209302397": {
+  "name": "Imperial Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0804",
+  "distance_m": 25.8
+ },
+ "way/218922138": {
+  "name": "Imperial Beach Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1685",
+  "distance_m": 1.8
+ },
+ "way/233472857": {
+  "name": "Arroyo Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0711",
+  "distance_m": 19.0
+ },
+ "way/24400771": {
+  "name": "San Onofre Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2874",
+  "distance_m": 30.0
+ },
+ "way/247982505": {
+  "name": "Grant Hill Substation",
+  "owner": "SDG&E",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3091",
+  "distance_m": 6.5
+ },
+ "way/257181124": {
+  "name": "Lennox Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0824",
+  "distance_m": 21.1
+ },
+ "way/25720675": {
+  "name": "Telegraph Canyon Substation",
+  "owner": "SDG&E",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2342",
+  "distance_m": 24.8
+ },
+ "way/26587777": {
+  "name": "Cannon Substation",
+  "owner": "SDG&E",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1658",
+  "distance_m": 17.9
+ },
+ "way/297133283": {
+  "name": "Lakewood Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0818",
+  "distance_m": 16.4
+ },
+ "way/30371205": {
+  "name": "Pearblossom Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0866",
+  "distance_m": 15.4
+ },
+ "way/30733362": {
+  "name": "Victor Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1637",
+  "distance_m": 55.0
+ },
+ "way/31807059": {
+  "name": "Dunhill Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1669",
+  "distance_m": 4.1
+ },
+ "way/31841298": {
+  "name": "U.C.S.D. Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2878",
+  "distance_m": 18.2
+ },
+ "way/31958095": {
+  "name": "Mcneil Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0695",
+  "distance_m": 8.8
+ },
+ "way/31958115": {
+  "name": "Magnolia Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2612",
+  "distance_m": 1.5
+ },
+ "way/32008433": {
+  "name": "Grayson Substation",
+  "owner": "Other",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2611",
+  "distance_m": 53.5
+ },
+ "way/353468602": {
+  "name": "Indigo Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2849",
+  "distance_m": 4.5
+ },
+ "way/353468604": {
+  "name": "Renwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2841",
+  "distance_m": 4.8
+ },
+ "way/353468609": {
+  "name": "Pan Aero Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2838",
+  "distance_m": 12.3
+ },
+ "way/353468611": {
+  "name": "Hugo Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3605",
+  "distance_m": 16.1
+ },
+ "way/353468612": {
+  "name": "Tiffanywind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2844",
+  "distance_m": 15.4
+ },
+ "way/368408174": {
+  "name": "La Colina Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3477",
+  "distance_m": 36.1
+ },
+ "way/37692543": {
+  "name": "Mandalay Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2898",
+  "distance_m": 10.0
+ },
+ "way/37692647": {
+  "name": "Ormond Beach Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2278",
+  "distance_m": 57.4
+ },
+ "way/379534577": {
+  "name": "Royal Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2264",
+  "distance_m": 23.0
+ },
+ "way/383644496": {
+  "name": "Somerset Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0913",
+  "distance_m": 9.5
+ },
+ "way/383664679": {
+  "name": "Calden Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0732",
+  "distance_m": 17.7
+ },
+ "way/383740652": {
+  "name": "Passons Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0865",
+  "distance_m": 7.6
+ },
+ "way/383857700": {
+  "name": "Atwood Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1137",
+  "distance_m": 19.8
+ },
+ "way/384143471": {
+  "name": "Apollo Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1136",
+  "distance_m": 9.9
+ },
+ "way/384143472": {
+  "name": "Shawnee Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1196",
+  "distance_m": 11.3
+ },
+ "way/384189505": {
+  "name": "Bayside Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1139",
+  "distance_m": 4.3
+ },
+ "way/384722368": {
+  "name": "Cypress Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1156",
+  "distance_m": 6.7
+ },
+ "way/384972401": {
+  "name": "Bassett Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0699",
+  "distance_m": 12.7
+ },
+ "way/384972411": {
+  "name": "Bradbury Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0724",
+  "distance_m": 7.5
+ },
+ "way/384972418": {
+  "name": "Dalton Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0760",
+  "distance_m": 25.6
+ },
+ "way/385078303": {
+  "name": "Pico Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0867",
+  "distance_m": 27.3
+ },
+ "way/385487194": {
+  "name": "Banning Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1291",
+  "distance_m": 36.7
+ },
+ "way/389174028": {
+  "name": "Astro Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0712",
+  "distance_m": 5.5
+ },
+ "way/389174031": {
+  "name": "Long Beach Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2630",
+  "distance_m": 11.4
+ },
+ "way/389174034": {
+  "name": "Polypro Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0779",
+  "distance_m": 7.5
+ },
+ "way/389746091": {
+  "name": "Layfair Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0823",
+  "distance_m": 8.6
+ },
+ "way/391394495": {
+  "name": "La Habra Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1168",
+  "distance_m": 2.6
+ },
+ "way/391540189": {
+  "name": "Topaz Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0934",
+  "distance_m": 5.8
+ },
+ "way/391540192": {
+  "name": "Rolling Hills Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0893",
+  "distance_m": 19.3
+ },
+ "way/391717047": {
+  "name": "Brookhurst Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1143",
+  "distance_m": 23.0
+ },
+ "way/391757384": {
+  "name": "Team Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1204",
+  "distance_m": 2.4
+ },
+ "way/393117834": {
+  "name": "Howard Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0801",
+  "distance_m": 16.4
+ },
+ "way/393312264": {
+  "name": "Owill Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0825",
+  "distance_m": 12.5
+ },
+ "way/394895298": {
+  "name": "Airchem Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0698",
+  "distance_m": 4.9
+ },
+ "way/395019806": {
+  "name": "Nelson Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1319",
+  "distance_m": 20.2
+ },
+ "way/395205416": {
+  "name": "Moval Substation",
+  "owner": "Other",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3359",
+  "distance_m": 20.0
+ },
+ "way/395206271": {
+  "name": "Moreno Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1318",
+  "distance_m": 40.7
+ },
+ "way/395352116": {
+  "name": "Railroad Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0879",
+  "distance_m": 8.5
+ },
+ "way/395530785": {
+  "name": "Chase Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1294",
+  "distance_m": 5.9
+ },
+ "way/395965144": {
+  "name": "Valley Ss Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2964",
+  "distance_m": 17.6
+ },
+ "way/400849584": {
+  "name": "Venwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2842",
+  "distance_m": 14.4
+ },
+ "way/417968939": {
+  "name": "Dryden Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS3463",
+  "distance_m": 5.1
+ },
+ "way/426254441": {
+  "name": "Valdez Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0944",
+  "distance_m": 11.4
+ },
+ "way/438371323": {
+  "name": "Pomona Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0785",
+  "distance_m": 7.9
+ },
+ "way/443155333": {
+  "name": "Goldhill Substation",
+  "owner": "SCE",
+  "kv_class": "12kV to 32kV",
+  "cec_id": "SS3584",
+  "distance_m": 5.9
+ },
+ "way/45074901": {
+  "name": "Huntington Beach Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2358",
+  "distance_m": 40.4
+ },
+ "way/452491453": {
+  "name": "Las Pulgas Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1692",
+  "distance_m": 8.5
+ },
+ "way/453332983": {
+  "name": "Southbase Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0598",
+  "distance_m": 9.2
+ },
+ "way/458937631": {
+  "name": "Urban Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1746",
+  "distance_m": 4.8
+ },
+ "way/459420209": {
+  "name": "Barstow Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3058",
+  "distance_m": 2.7
+ },
+ "way/461747107": {
+  "name": "Diamond Bar Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0763",
+  "distance_m": 17.1
+ },
+ "way/463036884": {
+  "name": "Helijet Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0798",
+  "distance_m": 14.8
+ },
+ "way/463127907": {
+  "name": "Oasis Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0856",
+  "distance_m": 24.4
+ },
+ "way/471492134": {
+  "name": "Cal City Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2395",
+  "distance_m": 7.7
+ },
+ "way/477055231": {
+  "name": "Naval Sta.",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2881",
+  "distance_m": 8.6
+ },
+ "way/478729047": {
+  "name": "Arbwind Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2948",
+  "distance_m": 3.9
+ },
+ "way/478730524": {
+  "name": "Zondwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2951",
+  "distance_m": 4.2
+ },
+ "way/478730533": {
+  "name": "Monolith Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0587",
+  "distance_m": 10.2
+ },
+ "way/48802108": {
+  "name": "Movie Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0667",
+  "distance_m": 8.3
+ },
+ "way/492717054": {
+  "name": "Caldwell Substation",
+  "owner": "Other",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2816",
+  "distance_m": 13.8
+ },
+ "way/49715848": {
+  "name": "El Segundo Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0390",
+  "distance_m": 15.0
+ },
+ "way/514658722": {
+  "name": "Running Springs Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3395",
+  "distance_m": 4.3
+ },
+ "way/540098280": {
+  "name": "Montrose Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3568",
+  "distance_m": 4.0
+ },
+ "way/55616710": {
+  "name": "Banwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2856",
+  "distance_m": 8.4
+ },
+ "way/594584355": {
+  "name": "Douglas Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0767",
+  "distance_m": 11.8
+ },
+ "way/597421154": {
+  "name": "Neenach Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0849",
+  "distance_m": 14.8
+ },
+ "way/604773381": {
+  "name": "Ravendale Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0882",
+  "distance_m": 15.1
+ },
+ "way/605263053": {
+  "name": "Alon Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0702",
+  "distance_m": 28.6
+ },
+ "way/62333226": {
+  "name": "Hamilton Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1164",
+  "distance_m": 32.9
+ },
+ "way/626103620": {
+  "name": "Orange Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1187",
+  "distance_m": 23.3
+ },
+ "way/643584280": {
+  "name": "Watson Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0954",
+  "distance_m": 22.7
+ },
+ "way/65481169": {
+  "name": "Arcogen Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0710",
+  "distance_m": 40.3
+ },
+ "way/665178980": {
+  "name": "Morro Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1179",
+  "distance_m": 11.7
+ },
+ "way/668461893": {
+  "name": "Kyocera Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1690",
+  "distance_m": 2.9
+ },
+ "way/675049851": {
+  "name": "Haynes Substation",
+  "owner": "LADWP",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS3334",
+  "distance_m": 120.2
+ },
+ "way/675053427": {
+  "name": "Norseal Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1184",
+  "distance_m": 8.5
+ },
+ "way/676714266": {
+  "name": "Oldfield Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0921",
+  "distance_m": 8.2
+ },
+ "way/677561935": {
+  "name": "Los Cerritos Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0831",
+  "distance_m": 13.1
+ },
+ "way/678813325": {
+  "name": "Wabash Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0950",
+  "distance_m": 19.0
+ },
+ "way/681033327": {
+  "name": "Murphy Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0844",
+  "distance_m": 9.3
+ },
+ "way/682327468": {
+  "name": "Athens Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3133",
+  "distance_m": 7.9
+ },
+ "way/682586346": {
+  "name": "Refinery Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0884",
+  "distance_m": 13.3
+ },
+ "way/686238034": {
+  "name": "Mayflower Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3102",
+  "distance_m": 5.1
+ },
+ "way/686377343": {
+  "name": "Garfield Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0787",
+  "distance_m": 26.0
+ },
+ "way/689816015": {
+  "name": "Tropico Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3614",
+  "distance_m": 7.5
+ },
+ "way/691643525": {
+  "name": "Torrey Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2275",
+  "distance_m": 2.7
+ },
+ "way/692658265": {
+  "name": "Repetto Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0887",
+  "distance_m": 32.8
+ },
+ "way/693993426": {
+  "name": "Gilbert Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1162",
+  "distance_m": 20.4
+ },
+ "way/696976509": {
+  "name": "Hanjin Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2629",
+  "distance_m": 6.4
+ },
+ "way/705873448": {
+  "name": "Chevcentral Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3160",
+  "distance_m": 12.8
+ },
+ "way/707960044": {
+  "name": "Databank Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1298",
+  "distance_m": 5.2
+ },
+ "way/710577547": {
+  "name": "Acacia Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3609",
+  "distance_m": 7.4
+ },
+ "way/717018856": {
+  "name": "Ganesha Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0786",
+  "distance_m": 24.0
+ },
+ "way/718232056": {
+  "name": "Ybarra Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0749",
+  "distance_m": 11.6
+ },
+ "way/718232058": {
+  "name": "Vernon Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0946",
+  "distance_m": 9.9
+ },
+ "way/722834678": {
+  "name": "Rossmoyne Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3612",
+  "distance_m": 18.6
+ },
+ "way/729762849": {
+  "name": "Howard Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3611",
+  "distance_m": 5.3
+ },
+ "way/733442221": {
+  "name": "Burris Pit Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1146",
+  "distance_m": 0.9
+ },
+ "way/734110282": {
+  "name": "Trisonic Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0938",
+  "distance_m": 7.2
+ },
+ "way/74839034": {
+  "name": "Cameron Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0733",
+  "distance_m": 22.7
+ },
+ "way/74839036": {
+  "name": "Mobiloil Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0843",
+  "distance_m": 24.1
+ },
+ "way/74839059": {
+  "name": "Halldale Substation",
+  "owner": "LADWP",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0661",
+  "distance_m": 20.7
+ },
+ "way/75206072": {
+  "name": "El Nido Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0771",
+  "distance_m": 55.8
+ },
+ "way/757393063": {
+  "name": "Holgate Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0578",
+  "distance_m": 19.4
+ },
+ "way/762370931": {
+  "name": "Roadway Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1620",
+  "distance_m": 18.1
+ },
+ "way/766590837": {
+  "name": "Arrowhead Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1565",
+  "distance_m": 21.8
+ },
+ "way/767639517": {
+  "name": "Forge Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3402",
+  "distance_m": 6.1
+ },
+ "way/767714898": {
+  "name": "Santa Ana 3 Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2831",
+  "distance_m": 1.7
+ },
+ "way/773685595": {
+  "name": "Homart Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1597",
+  "distance_m": 30.6
+ },
+ "way/77452154": {
+  "name": "Etiwanda Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0112",
+  "distance_m": 113.1
+ },
+ "way/78488978": {
+  "name": "Oceanview Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1186",
+  "distance_m": 27.2
+ },
+ "way/79123590": {
+  "name": "Castaic Substation",
+  "owner": "LADWP",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0863",
+  "distance_m": 17.8
+ },
+ "way/79440937": {
+  "name": "Peyton Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1613",
+  "distance_m": 8.5
+ },
+ "way/79649407": {
+  "name": "Vail Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0943",
+  "distance_m": 23.6
+ },
+ "way/797577180": {
+  "name": "Little Rock Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0828",
+  "distance_m": 11.5
+ },
+ "way/80213754": {
+  "name": "Station Q (Harbor)",
+  "owner": "LADWP",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS0687",
+  "distance_m": 22.2
+ },
+ "way/80361728": {
+  "name": "Clark Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0743",
+  "distance_m": 2.4
+ },
+ "way/81605626": {
+  "name": "Soport Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2823",
+  "distance_m": 6.1
+ },
+ "way/81605627": {
+  "name": "Tortilla Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1635",
+  "distance_m": 8.9
+ },
+ "way/816993058": {
+  "name": "Carson Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0736",
+  "distance_m": 11.9
+ },
+ "way/817016281": {
+  "name": "Calpeak Power Enterprise 7 Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2876",
+  "distance_m": 7.5
+ },
+ "way/817018401": {
+  "name": "Matherson Trigas Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3561",
+  "distance_m": 53.7
+ },
+ "way/817256051": {
+  "name": "Shellwatt Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0908",
+  "distance_m": 9.8
+ },
+ "way/819500183": {
+  "name": "North Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3562",
+  "distance_m": 12.3
+ },
+ "way/819500187": {
+  "name": "Highgrove Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2381",
+  "distance_m": 17.6
+ },
+ "way/819500191": {
+  "name": "Bloomington Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1568",
+  "distance_m": 7.5
+ },
+ "way/819544699": {
+  "name": "Procal Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0874",
+  "distance_m": 6.2
+ },
+ "way/829906802": {
+  "name": "Claremont Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2328",
+  "distance_m": 11.1
+ },
+ "way/83394044": {
+  "name": "Dock Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0739",
+  "distance_m": 14.5
+ },
+ "way/837612933": {
+  "name": "Nietos Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0958",
+  "distance_m": 20.2
+ },
+ "way/843310749": {
+  "name": "State St. Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0919",
+  "distance_m": 3.7
+ },
+ "way/843310759": {
+  "name": "Serfgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0907",
+  "distance_m": 7.3
+ },
+ "way/846156259": {
+  "name": "Moog Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3298",
+  "distance_m": 1.7
+ },
+ "way/846156261": {
+  "name": "Vapor Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3164",
+  "distance_m": 2.6
+ },
+ "way/846190663": {
+  "name": "Sunnyhills Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1202",
+  "distance_m": 6.8
+ },
+ "way/849783215": {
+  "name": "Northrop Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3156",
+  "distance_m": 8.9
+ },
+ "way/849942151": {
+  "name": "Rivertex Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2818",
+  "distance_m": 9.3
+ },
+ "way/851411394": {
+  "name": "Wilsona Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0959",
+  "distance_m": 20.0
+ },
+ "way/85900473": {
+  "name": "Bain Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1290",
+  "distance_m": 6.2
+ },
+ "way/859766590": {
+  "name": "Pitchgen Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0869",
+  "distance_m": 10.7
+ },
+ "way/86092401": {
+  "name": "Narrows Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0846",
+  "distance_m": 5.4
+ },
+ "way/86094411": {
+  "name": "Finance Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3098",
+  "distance_m": 8.1
+ },
+ "way/86294229": {
+  "name": "Padua Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1610",
+  "distance_m": 47.0
+ },
+ "way/876408580": {
+  "name": "Wrightwood Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3399",
+  "distance_m": 13.8
+ },
+ "way/880487334": {
+  "name": "Mayberry Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1314",
+  "distance_m": 18.9
+ },
+ "way/882886529": {
+  "name": "Pomerado Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2343",
+  "distance_m": 15.9
+ },
+ "way/884736196": {
+  "name": "Riteaid Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3066",
+  "distance_m": 1.8
+ },
+ "way/884826808": {
+  "name": "Tortoise Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0936",
+  "distance_m": 7.7
+ },
+ "way/88777861": {
+  "name": "Del Sur Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0762",
+  "distance_m": 1.8
+ },
+ "way/896491987": {
+  "name": "Lebec Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0462",
+  "distance_m": 16.9
+ },
+ "way/900633889": {
+  "name": "Alhambra Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0701",
+  "distance_m": 18.2
+ },
+ "way/900920910": {
+  "name": "Station P (Market)",
+  "owner": "LADWP",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0686",
+  "distance_m": 41.6
+ },
+ "way/912208396": {
+  "name": "Woodruff Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3115",
+  "distance_m": 26.8
+ },
+ "way/912547121": {
+  "name": "Lincoln Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0693",
+  "distance_m": 6.1
+ },
+ "way/913700442": {
+  "name": "La Mirada Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0816",
+  "distance_m": 20.5
+ },
+ "way/913958762": {
+  "name": "Los Coches Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1694",
+  "distance_m": 129.8
+ },
+ "way/914528908": {
+  "name": "Rivera Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0839",
+  "distance_m": 2.4
+ },
+ "way/915704590": {
+  "name": "La Palma Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1169",
+  "distance_m": 21.7
+ },
+ "way/920574351": {
+  "name": "Lampson Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1173",
+  "distance_m": 13.3
+ },
+ "way/920574352": {
+  "name": "Placentia Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1192",
+  "distance_m": 32.8
+ },
+ "way/921918603": {
+  "name": "Washington Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1208",
+  "distance_m": 11.5
+ },
+ "way/923601234": {
+  "name": "Kirkwall Substation",
+  "owner": "Other",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3335",
+  "distance_m": 11.3
+ },
+ "way/928746140": {
+  "name": "Trophy Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0939",
+  "distance_m": 26.6
+ },
+ "way/929401643": {
+  "name": "Sullivan Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1201",
+  "distance_m": 19.9
+ },
+ "way/932730267": {
+  "name": "Vera Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1206",
+  "distance_m": 3.7
+ },
+ "way/934860492": {
+  "name": "Encina Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1672",
+  "distance_m": 11.1
+ },
+ "way/935669323": {
+  "name": "Ely Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1158",
+  "distance_m": 12.5
+ },
+ "way/936564982": {
+  "name": "Stoddard Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1630",
+  "distance_m": 11.2
+ },
+ "way/936569225": {
+  "name": "Shandin Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS1628",
+  "distance_m": 8.0
+ },
+ "way/94788736": {
+  "name": "Warne Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS0953",
+  "distance_m": 17.3
+ },
+ "way/94788738": {
+  "name": "Colossus Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3295",
+  "distance_m": 4.1
+ },
+ "way/955935746": {
+  "name": "San Marcos Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1729",
+  "distance_m": 18.2
+ },
+ "way/971813152": {
+  "name": "Eastgate Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2345",
+  "distance_m": 5.5
+ },
+ "way/978035670": {
+  "name": "Brea Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1142",
+  "distance_m": 24.7
+ },
+ "way/97903711": {
+  "name": "Ash Substation",
+  "owner": "SDG&E",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS1647",
+  "distance_m": 10.7
+ },
+ "way/990616337": {
+  "name": "Nogales Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0853",
+  "distance_m": 26.4
+ },
+ "way/992557729": {
+  "name": "Quartz Hill Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS0878",
+  "distance_m": 44.6
+ },
+ "way/99497746": {
+  "name": "Batiquitos Substation",
+  "owner": "SDG&E",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS1650",
+  "distance_m": 12.1
+ },
+ "way/99599957": {
+  "name": "Highwind Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2949",
+  "distance_m": 17.4
+ },
+ "way/99599967": {
+  "name": "Flowind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2955",
+  "distance_m": 5.8
+ },
+ "way/99599973": {
+  "name": "Canwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2958",
+  "distance_m": 7.4
+ },
+ "way/99599975": {
+  "name": "Westwind Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2597",
+  "distance_m": 8.0
+ },
+ "way/99599988": {
+  "name": "Oakwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS3286",
+  "distance_m": 2.7
+ },
+ "way/99599991": {
+  "name": "Eastwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2596",
+  "distance_m": 6.3
+ },
+ "way/99599994": {
+  "name": "Varwind Substation",
+  "owner": "SCE",
+  "kv_class": "110kV to 161kV",
+  "cec_id": "SS2956",
+  "distance_m": 8.3
+ },
+ "way/99599999": {
+  "name": "Morwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2595",
+  "distance_m": 6.1
+ },
+ "way/99600003": {
+  "name": "Mojave 17 Substation",
+  "owner": "SCE",
+  "kv_class": "220kV to 287kV",
+  "cec_id": "SS2598",
+  "distance_m": 2.1
+ },
+ "way/99600008": {
+  "name": "Enwind Substation",
+  "owner": "SCE",
+  "kv_class": "33kV to 92kV",
+  "cec_id": "SS2957",
+  "distance_m": 7.9
+ }
+}

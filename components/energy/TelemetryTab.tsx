@@ -2,8 +2,11 @@
 
 import { useMemo, type CSSProperties } from "react";
 import type { DrawerTab } from "@/components/shell/AnalyzerDrawer";
-import { Panel, Sparkline } from "@/components/ui/kit";
+import { Cite, ScenarioTag } from "@/components/evidence/Citations";
+import { Panel, RiskPill, Sparkline } from "@/components/ui/kit";
+import { facilitySubject } from "@/lib/evidence/citation";
 import { compact, fmtNumber, fmtPercent } from "@/lib/format";
+import type { RiskEntry } from "@/lib/risk";
 import { dailyProfile } from "@/lib/simulation";
 import type { FacilityProperties, SimResult, SourceMix } from "@/lib/types";
 
@@ -18,6 +21,7 @@ const MIX: { key: keyof SourceMix; label: string; color: string }[] = [
 interface Props {
   properties: FacilityProperties;
   sim: SimResult;
+  risk: RiskEntry;
   regionalCI: number;
   heatwave: boolean;
   onNavigate: (tab: DrawerTab) => void;
@@ -26,6 +30,7 @@ interface Props {
 export default function TelemetryTab({
   properties,
   sim,
+  risk,
   regionalCI,
   heatwave,
   onNavigate,
@@ -33,6 +38,13 @@ export default function TelemetryTab({
   const infra = properties.infrastructure;
   const energy = properties.energy_profile;
   const mix = energy.source_mix;
+
+  const subject = facilitySubject(properties.id);
+  const cite = (predicate: string) =>
+    heatwave ? <ScenarioTag /> : <Cite subject={subject} predicate={predicate} quiet />;
+  const citeStatic = (predicate: string) => (
+    <Cite subject={subject} predicate={predicate} quiet />
+  );
 
   const profile = useMemo(() => dailyProfile(sim), [sim]);
 
@@ -89,6 +101,107 @@ export default function TelemetryTab({
 
   return (
     <>
+      <Panel title="Risk index" hint="screening">
+        <div className="risk-hero">
+          <svg
+            className="risk-gauge"
+            viewBox="0 0 80 80"
+            role="img"
+            aria-label={`Risk index ${fmtNumber(risk.score, 0)} of 100`}
+          >
+            <circle className="risk-gauge-track" cx="40" cy="40" r="32" />
+            <circle
+              className="risk-gauge-fill"
+              cx="40"
+              cy="40"
+              r="32"
+              pathLength={100}
+              strokeDasharray="100"
+              strokeDashoffset={100 - risk.score}
+              style={{ stroke: risk.color }}
+              transform="rotate(-90 40 40)"
+            />
+            <text className="risk-gauge-value" x="40" y="39" textAnchor="middle">
+              {fmtNumber(risk.score, 0)}
+            </text>
+            <text className="risk-gauge-unit" x="40" y="51" textAnchor="middle">
+              /100
+            </text>
+          </svg>
+
+          <div className="risk-hero-copy">
+            <div className="risk-hero-top">
+              <RiskPill bucket={risk.bucket} />
+              <span className="pill pill-accent">{risk.confidence} confidence</span>
+            </div>
+            <div className="risk-axis">
+              <span>
+                L <b>{fmtNumber(risk.exposure, 1)}</b>
+              </span>
+              <span>
+                C <b>{fmtNumber(risk.criticality, 1)}</b>
+                {risk.criticality_assumed ? <em>assumed</em> : null}
+              </span>
+              <span>
+                R <b>{fmtNumber(risk.score, 1)}</b>
+              </span>
+            </div>
+            <p className="risk-note">
+              {risk.worse_than === null || risk.total === null
+                ? "Regional percentile unavailable."
+                : risk.worse_than === 0
+                  ? "Lowest composite risk in this region."
+                  : `Worse than ${risk.worse_than} of ${risk.total} load centers in this region.`}
+            </p>
+          </div>
+        </div>
+
+        <ul className="risk-factors" aria-label="Risk factor contributions">
+          {risk.factors.map((factor) => {
+            const isScenario =
+              heatwave &&
+              (factor.id === "carbon" ||
+                factor.id === "heatwave" ||
+                factor.id === "overload");
+            return (
+              <li key={factor.id} title={factor.detail}>
+                <span className="risk-factor-label">{factor.label}</span>
+                <span className="risk-factor-bar">
+                  <i
+                    style={{
+                      width: `${(factor.points / factor.max) * 100}%`,
+                      background: risk.color,
+                    }}
+                  />
+                </span>
+                <span className="risk-factor-src">
+                  {isScenario || factor.inputs.length === 0 ? (
+                    <ScenarioTag />
+                  ) : (
+                    factor.inputs.map((predicate) => (
+                      <Cite
+                        key={predicate}
+                        subject={subject}
+                        predicate={predicate}
+                        quiet
+                      />
+                    ))
+                  )}
+                </span>
+                <span className="risk-factor-points">{fmtNumber(factor.points, 1)}</span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <p className="risk-note">
+          Screening index, not a failure probability.{" "}
+          {risk.criticality_assumed
+            ? risk.criticality_basis
+            : `Criticality ${fmtNumber(risk.criticality, 1)} from the loaded consequence layer.`}
+        </p>
+      </Panel>
+
       <Panel title="Operating point" hint={heatwave ? "105 °F scenario" : "Baseline"}>
         <div className="capacity">
           <div className="capacity-track">
@@ -99,7 +212,7 @@ export default function TelemetryTab({
           </div>
           <div className="capacity-legend">
             <span>
-              {fmtNumber(liveMW, 1)} / {fmtNumber(sim.nameplate_mw, 1)} MW
+              {fmtNumber(liveMW, 1)} / {fmtNumber(sim.nameplate_mw, 1)} MW {citeStatic("facility.nameplate_draw_mw")}
             </span>
             <span>{fmtPercent(sim.load_ratio * 100, 1)} of nameplate</span>
           </div>
@@ -111,28 +224,36 @@ export default function TelemetryTab({
               {compact(sim.annual_mwh)}
               <em>MWh</em>
             </b>
-            <span>Annual energy</span>
+            <span>
+              Annual energy {cite("facility.annual_mwh")}
+            </span>
           </div>
           <div className="metric">
             <b>
               {compact(sim.annual_co2_tons)}
               <em>t</em>
             </b>
-            <span>CO₂ per year</span>
+            <span>
+              CO₂ per year {cite("facility.annual_co2_tons")}
+            </span>
           </div>
           <div className="metric">
             <b>
               {compact(sim.homes_equivalent)}
               <em>homes</em>
             </b>
-            <span>Homes equivalent</span>
+            <span>
+              Homes equivalent {cite("facility.homes_equivalent")}
+            </span>
           </div>
           <div className="metric">
             <b>
               {fmtPercent(infra.motor_efficiency_rating * 100)}
               <em>eff</em>
             </b>
-            <span>Motor efficiency</span>
+            <span>
+              Motor efficiency {citeStatic("facility.motor_efficiency_rating")}
+            </span>
           </div>
         </div>
       </Panel>
@@ -162,7 +283,9 @@ export default function TelemetryTab({
             <li key={source.key}>
               <i style={{ background: source.color }} aria-hidden />
               {source.label}
-              <b>{mix[source.key]}%</b>
+              <b>
+                {mix[source.key]}% {citeStatic(`facility.source_mix.${source.key}`)}
+              </b>
             </li>
           ))}
         </ul>

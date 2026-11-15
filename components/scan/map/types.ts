@@ -1,0 +1,31 @@
+import type { GridData, NicheCase, ScanArea, ScanResult } from "@/lib/scan";
+import type { NewsPin, ReportTarget } from "@/lib/scan/target";
+import type { HazardsLive } from "@/lib/live/hazards";
+
+/** A fly-to request from the page. Bump `nonce` to re-trigger the same point. */
+export interface MapFocus {
+  lat: number;
+  lon: number;
+  zoom?: number;
+  nonce: number;
+}
+
+export interface ScanMapProps {
+  data: GridData;
+  area: ScanArea;
+  result: ScanResult | null;
+  selectedCaseId?: string | null;
+  focus: MapFocus | null;
+  /** A story's spot from the Local news tab: one plain pin, cleared by the next map click. The 2D map flies to it. */
+  newsPin?: NewsPin | null;
+  /** Click anywhere on the map → scan at that point (page keeps the radius). */
+  onScan: (lat: number, lon: number) => void;
+  onFocus: (lat: number, lon: number) => void;
+  /** Asset clicked (after it scans there) → select it; empty map clicked → null. */
+  onSelectAsset: (t: ReportTarget | null) => void;
+  /** The selected asset, highlighted on the map. */
+  selected: ReportTarget | null;
+  onSelectCase?: (c: NicheCase) => void;
+  /** Live hazards for the scan circle (polled once by the page). Drawn on the 2D map only. */
+  hazards?: HazardsLive | null;
+}

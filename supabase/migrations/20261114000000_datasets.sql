@@ -1,4 +1,4 @@
--- GridSentinel datasets: schema for everything that used to live in data/ and public/layers/.
+-- Mapergy datasets: schema for everything that used to live in data/ and public/layers/.
 -- Geometry is stored as GeoJSON (jsonb) plus lon/lat for points, so no PostGIS dependency.
 -- All tables are public, read-only reference data: RLS on, anon/authenticated may SELECT.
 

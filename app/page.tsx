@@ -1,4 +1,5 @@
 import Workspace from "@/components/shell/Workspace";
+import { loadEvidenceBundle } from "@/lib/evidence/load";
 import { loadRegionOrThrow } from "@/lib/region";
 
 // Region data comes from Supabase (falling back to data/*.json); re-render
@@ -7,5 +8,6 @@ export const revalidate = 300;
 
 export default async function Page() {
   const region = await loadRegionOrThrow("westminster-100mi");
-  return <Workspace region={region} />;
+  const evidence = await loadEvidenceBundle(region.region.id);
+  return <Workspace region={region} evidence={evidence} />;
 }
