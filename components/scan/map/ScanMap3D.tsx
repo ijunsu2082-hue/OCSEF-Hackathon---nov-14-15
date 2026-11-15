@@ -18,6 +18,7 @@ import {
   NavigationControl,
   Popup,
   ScaleControl,
+  setWorkerUrl,
   type GeoJSONSource,
   type MapGeoJSONFeature,
   type MapMouseEvent,
@@ -50,6 +51,10 @@ import {
   tipHtml,
 } from "./shared";
 import type { MapFocus } from "./types";
+
+// Keep production worker resolution aligned with the 2D MapLibre map. The
+// bundled worker chunk is not emitted at the nested URL MapLibre infers.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 const INITIAL_ZOOM = 10;
 const INITIAL_PITCH = 58;

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import type { PanelTab } from "@/lib/scan/target";
 
-const ORDER: PanelTab[] = ["area", "optimization", "upgrade", "news", "report", "owners"];
+const ORDER: PanelTab[] = ["area", "optimization", "news", "report", "owners"];
 
 export const tabId = (t: PanelTab) => `gs-tab-${t}`;
 export const tabPanelId = (t: PanelTab) => `gs-tabpanel-${t}`;
@@ -22,21 +22,19 @@ export function Tabs({
   const refs = useRef<Record<PanelTab, HTMLButtonElement | null>>({
     area: null,
     optimization: null,
-    upgrade: null,
     news: null,
     report: null,
     owners: null,
   });
   const labels: Record<PanelTab, string> = {
     area: "Area",
-    optimization: "Optimize",
-    upgrade: "Upgrades",
+    optimization: "Optimization",
     news: `Local news (${newsCount})`,
     report: "Report a problem",
     owners: "Owners",
   };
 
-  // Six tabs scroll sideways in the panel: keep the active one in view (e.g. after "Owner filings").
+  // Keep the active tab in view when the strip scrolls sideways.
   useEffect(() => {
     const el = refs.current[tab];
     const list = el?.parentElement;

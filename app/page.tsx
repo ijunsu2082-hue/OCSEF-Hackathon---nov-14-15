@@ -1,13 +1,9 @@
-import Workspace from "@/components/shell/Workspace";
-import { loadEvidenceBundle } from "@/lib/evidence/load";
-import { loadRegionOrThrow } from "@/lib/region";
+import type { Metadata } from "next";
+import ScanWorkspace from "@/components/scan/ScanWorkspace";
+import "./scan/scan.css";
 
-// Region data comes from Supabase (falling back to data/*.json); re-render
-// periodically so a re-seed shows up without a rebuild.
-export const revalidate = 300;
+export const metadata: Metadata = { title: "GridSentinel · Area Scan" };
 
-export default async function Page() {
-  const region = await loadRegionOrThrow("westminster-100mi");
-  const evidence = await loadEvidenceBundle(region.region.id);
-  return <Workspace region={region} evidence={evidence} />;
+export default function Page() {
+  return <ScanWorkspace />;
 }

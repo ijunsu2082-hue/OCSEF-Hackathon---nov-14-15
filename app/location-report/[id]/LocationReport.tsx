@@ -75,7 +75,7 @@ export function InvalidReport({ id }: { id: string }) {
         <span className="lr-code">area_33.7538_-118.0111_5</span> (latitude, longitude, radius in miles).
       </p>
       <p className="lr-actions">
-        <a className="lr-button" href="/scan">Open GridSentinel</a>
+        <a className="lr-button" href="/">Open GridSentinel</a>
       </p>
     </Shell>
   );
@@ -126,7 +126,7 @@ export default function LocationReport({ area }: { area: ScanArea }) {
         <p className="lr-deck">{loadError}</p>
         <p className="lr-actions">
           <button type="button" className="lr-button" onClick={() => window.location.reload()}>Retry</button>
-          <a className="lr-button" href="/scan">Open GridSentinel</a>
+          <a className="lr-button" href="/">Open GridSentinel</a>
         </p>
       </Shell>
     );
@@ -172,7 +172,7 @@ export default function LocationReport({ area }: { area: ScanArea }) {
           <button type="button" className="lr-button lr-button-primary" onClick={() => window.print()}>
             Print / Save PDF
           </button>
-          <a className="lr-button" href={`/scan?lat=${area.lat}&lon=${area.lon}&r=${area.radius_mi}`}>Open in GridSentinel</a>
+          <a className="lr-button" href={`/?lat=${area.lat}&lon=${area.lon}&r=${area.radius_mi}`}>Open in GridSentinel</a>
         </div>
       </header>
 

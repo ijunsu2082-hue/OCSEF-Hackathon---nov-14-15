@@ -24,6 +24,8 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+export type ScanJsonLoader = <T>(path: string) => Promise<T>;
+
 async function getText(path: string): Promise<string> {
   const res = await fetch(`${LAYERS_BASE}/${path}`);
   if (!res.ok) throw new Error(`GET ${LAYERS_BASE}/${path} -> ${res.status}`);
@@ -109,31 +111,33 @@ function toSites(summary: SummaryJson): RatingSiteSummary[] {
 
 let gridPromise: Promise<GridData> | null = null;
 
+export async function loadGridDataWithJson(loadJson: ScanJsonLoader): Promise<GridData> {
+  const [plants, lines, subs, cases, events, summary, subNames] = await Promise.all([
+    loadJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
+    loadJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
+    loadJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
+    loadJson<NicheCase[]>("niche_cases.json"),
+    loadJson<GenEvent[]>("gen_events.json"),
+    loadJson<SummaryJson>("line_ratings/summary.json"),
+    // Optional: a missing or broken names file just leaves OSM names as they are.
+    loadJson<SubstationNames>("substation_names.json").catch(() => null),
+  ]);
+  const data: GridData = {
+    plants: plants.features.filter((f) => f.geometry?.type === "Point").map(toPlant),
+    lines: lines.features.filter((f) => f.geometry?.type === "LineString" && f.geometry.coordinates.length >= 2).map(toLine),
+    substations: subs.features.filter((f) => f.geometry?.type === "Point").map(toSubstation),
+    cases,
+    events,
+    ratingSites: toSites(summary),
+  };
+  enrichGrid(data, subNames);
+  lineIndex(data);
+  return data;
+}
+
 export function loadGridData(): Promise<GridData> {
   if (!gridPromise) {
-    gridPromise = (async () => {
-      const [plants, lines, subs, cases, events, summary, subNames] = await Promise.all([
-        getJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
-        getJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
-        getJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
-        getJson<NicheCase[]>("niche_cases.json"),
-        getJson<GenEvent[]>("gen_events.json"),
-        getJson<SummaryJson>("line_ratings/summary.json"),
-        // Optional: a missing or broken names file just leaves OSM names as they are.
-        getJson<SubstationNames>("substation_names.json").catch(() => null),
-      ]);
-      const data: GridData = {
-        plants: plants.features.filter((f) => f.geometry?.type === "Point").map(toPlant),
-        lines: lines.features.filter((f) => f.geometry?.type === "LineString" && f.geometry.coordinates.length >= 2).map(toLine),
-        substations: subs.features.filter((f) => f.geometry?.type === "Point").map(toSubstation),
-        cases,
-        events,
-        ratingSites: toSites(summary),
-      };
-      enrichGrid(data, subNames); // fill missing voltages / names from connected data, once per load
-      lineIndex(data); // precompute segment lengths so the first scanArea() stays fast
-      return data;
-    })();
+    gridPromise = loadGridDataWithJson(getJson);
     gridPromise.catch(() => { gridPromise = null; }); // allow retry after a failed load
   }
   return gridPromise;

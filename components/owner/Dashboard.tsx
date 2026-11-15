@@ -165,7 +165,7 @@ export function Dashboard() {
           {claims.length === 0 ? (
             <p className="text-[14px] leading-relaxed text-[#556070]">
               You have not claimed any assets yet. Find your plant, substation or line on the{" "}
-              <a href="/scan" className={LINK}>
+              <a href="/" className={LINK}>
                 map
               </a>{" "}
               and choose &quot;Owner filings&quot;, or{" "}
