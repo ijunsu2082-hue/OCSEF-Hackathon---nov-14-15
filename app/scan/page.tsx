@@ -14,6 +14,10 @@ import {
 } from "@/lib/scan";
 import type { DailyRating, GridData, LineRatingNow, NicheCase, ScanArea } from "@/lib/scan";
 import type { NewsPin, PanelTab, ReportTarget } from "@/lib/scan/target";
+import { parseReportId } from "@/lib/scan/reportLink";
+import { usePoll } from "@/lib/live/usePoll";
+import type { HazardsLive } from "@/lib/live/hazards";
+import { liveHazardsUrl } from "@/components/scan/panel/LiveHazards";
 import ScanMap, { type MapFocus } from "@/components/scan/map";
 import { TopBar } from "@/components/scan/shell/TopBar";
 import ScanPanel from "@/components/scan/panel/ScanPanel";
@@ -24,6 +28,19 @@ const LIVE_DEBOUNCE_MS = 300;
 /** How long a radius drag must settle before the region is re-scanned. */
 const RADIUS_SETTLE_MS = 160;
 const EMPTY_CASES: NicheCase[] = [];
+
+/**
+ * Circle from a shared link (?lat=&lon=&r=), checked with the same rules as a report id.
+ * r is optional (default radius). Null when lat/lon are missing or invalid.
+ */
+function areaFromQuery(search: string): ScanArea | null {
+  const q = new URLSearchParams(search);
+  const lat = q.get("lat");
+  const lon = q.get("lon");
+  if (!lat || !lon) return null;
+  const r = q.get("r") || String(DEFAULT_AREA.radius_mi);
+  return parseReportId(`area_${lat.trim()}_${lon.trim()}_${r.trim()}`);
+}
 
 export default function Page() {
   const [data, setData] = useState<GridData | null>(null);
@@ -49,6 +66,16 @@ export default function Page() {
   const [focus, setFocus] = useState<MapFocus | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false); // only matters below lg
   const nonce = useRef(0);
+
+  // ---- shared link: open the circle from ?lat=&lon=&r= once, on first load ----
+  const sharedArea = useRef<ScanArea | null>(null);
+  useEffect(() => {
+    const a = areaFromQuery(window.location.search);
+    if (!a) return;
+    sharedArea.current = a;
+    setArea(a);
+    setScanRadius(a.radius_mi);
+  }, []);
 
   // ---- data -----------------------------------------------------------------
   useEffect(() => {
@@ -78,6 +105,30 @@ export default function Page() {
     () => (data ? scanArea(data, scanTarget, { heatwave }) : null),
     [data, scanTarget, heatwave],
   );
+
+  // ---- live hazards: one poll per scan circle, shared by the panel and the map ----
+  // Debounced so the brief in-between circles on first load (default, then a shared link)
+  // never start a request of their own.
+  const hazardsTarget = liveHazardsUrl(scanTarget.lat, scanTarget.lon, scanTarget.radius_mi);
+  const [hazardsUrl, setHazardsUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => setHazardsUrl(hazardsTarget), LIVE_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [hazardsTarget]);
+  const hazardsPoll = usePoll<HazardsLive>(hazardsUrl, 300);
+  // usePoll keeps the last circle's feed until the new one answers; only show a feed (or
+  // error) once a response for the current circle has arrived, so the panel and map never
+  // label the previous circle's fires with the new circle.
+  const [hazardsAnsweredUrl, setHazardsAnsweredUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (hazardsPoll.feed || hazardsPoll.error) setHazardsAnsweredUrl(hazardsUrl);
+    // Only a new response (feed or error) marks the current URL as answered.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hazardsPoll.feed, hazardsPoll.error]);
+  const hazards =
+    hazardsAnsweredUrl !== null && hazardsAnsweredUrl === hazardsTarget
+      ? hazardsPoll
+      : { ...hazardsPoll, feed: null, error: null, ageSec: null, fetchedAgoSec: null };
 
   // ---- live line rating (debounced, stale-safe) ------------------------------
   const liveReq = useRef(0);
@@ -129,6 +180,31 @@ export default function Page() {
     nonce.current += 1;
     setFocus({ lat, lon, zoom, nonce: nonce.current });
   }, []);
+
+  // Fly to the shared circle once the map is on screen. The map recenters on its
+  // first frames after mounting, so a fly sent before then would be undone.
+  useEffect(() => {
+    const a = sharedArea.current;
+    if (!data || !a) return;
+    let raf = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let tries = 0;
+    const wait = () => {
+      if (document.querySelector(".leaflet-container") || ++tries > 600) {
+        timer = setTimeout(() => {
+          sharedArea.current = null;
+          flyTo(a.lat, a.lon, 10);
+        }, 300);
+        return;
+      }
+      raf = requestAnimationFrame(wait);
+    };
+    raf = requestAnimationFrame(wait);
+    return () => {
+      cancelAnimationFrame(raf);
+      if (timer) clearTimeout(timer);
+    };
+  }, [data, flyTo]);
 
   const onScan = useCallback((lat: number, lon: number) => {
     setArea((a) => ({ lat, lon, radius_mi: a.radius_mi }));
@@ -199,6 +275,7 @@ export default function Page() {
               onFocus={onFocus}
               onSelectAsset={onSelectAsset}
               selected={selected}
+              hazards={hazards.feed?.data ?? null}
             />
           ) : (
             <BootScreen error={loadError} />
@@ -235,6 +312,7 @@ export default function Page() {
             selected={selected}
             onSelectAsset={onSelectAsset}
             onReport={onReport}
+            hazards={hazards}
           />
         </aside>
 

@@ -26,7 +26,7 @@ const line = (color: string, height: number) => (
 );
 
 /** Always-visible key for what each dot and line on the map means. */
-export function MapKey() {
+export function MapKey({ hazards = false }: { hazards?: boolean }) {
   const [open, setOpen] = useState(true);
 
   if (!open) {
@@ -87,6 +87,12 @@ export function MapKey() {
         <Row swatch={<span className="box-border block h-3.5 w-3.5 rounded-full border-2 border-[#0284c7]" />}>
           100-mile study area
         </Row>
+        {hazards && (
+          <>
+            <Row swatch={dot("#dc2626")}>Active wildfire (NIFC)</Row>
+            <Row swatch={dot("#5b7a99")}>Earthquake, last 7 days (USGS)</Row>
+          </>
+        )}
       </ul>
 
       <p className="mt-2 border-t border-[#e6e9ee] pt-2 text-[#6b7583]">Hover a dot or line for details. Click to scan there.</p>

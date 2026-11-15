@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { JSX } from "react";
 import { scanReportMarkdown } from "@/lib/scan";
 import { RISK_COLORS } from "@/lib/scan/colors";
+import { reportUrl } from "@/lib/scan/reportLink";
 import type { DailyRating, LineRatingNow, NicheCase, RiskLevel, ScanResult } from "@/lib/scan";
 import type { PanelTab, ReportTarget } from "@/lib/scan/target";
 import { AreaBrief, areaTakeaway } from "./AreaBrief";
@@ -11,11 +12,15 @@ import { AreaCharts } from "./AreaCharts";
 import { Explainer } from "./Explainer";
 import { GridChain } from "./GridChain";
 import { GridImpact } from "./GridImpact";
+import { HeatStress } from "./HeatStress";
 import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
+import { LiveNow } from "./LiveNow";
+import type { HazardsPoll } from "./LiveHazards";
 import { LocalNews, groupLocalNews } from "./LocalNews";
 import { OptimizationTab, UpgradePlanTab } from "./OptimizationTab";
 import OwnerTab from "./OwnerTab";
+import { Provenance } from "./Provenance";
 import ReportTab from "./ReportTab";
 import { SelectedAsset } from "./SelectedAsset";
 import { Tabs, tabId, tabPanelId } from "./Tabs";
@@ -39,6 +44,7 @@ export interface ScanPanelProps {
   selected: ReportTarget | null; // asset clicked on the map / picked in Top plants
   onSelectAsset: (t: ReportTarget | null) => void;
   onReport: (t: ReportTarget) => void; // "Report a problem" on the selected asset: target = it, switch to the report tab
+  hazards?: HazardsPoll; // live hazards poll owned by the page (shared with the map)
 }
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
@@ -120,6 +126,40 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
   );
 }
 
+/** Text-link buttons next to Copy report: copy the shareable report URL, or open it in a new tab. */
+function ShareReport({ result }: { result: ScanResult }) {
+  const [state, setState] = useState<"idle" | "copied" | "error">("idle");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+  const { lat, lon, radius_mi } = result.area;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(reportUrl(lat, lon, radius_mi, window.location.origin));
+      setState("copied");
+    } catch {
+      setState("error");
+    }
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setState("idle"), 1800);
+  };
+
+  const LINK =
+    "rounded-[6px] text-[13px] font-medium text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]";
+  return (
+    <span className="flex items-center gap-3 px-1">
+      <button type="button" onClick={copy} className={LINK} aria-live="polite">
+        {state === "copied" ? "Link copied" : state === "error" ? "Copy failed" : "Share report link"}
+      </button>
+      <a href={reportUrl(lat, lon, radius_mi)} target="_blank" rel="noopener noreferrer" className={LINK}>
+        Open printable report
+      </a>
+    </span>
+  );
+}
+
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
   const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
   const { reportTarget, onClearTarget, onShowOnMap, onReportArea, selected, onSelectAsset, onReport } = p;
@@ -161,10 +201,17 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
               />
             )}
             <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
+            <LiveNow
+              lat={result.area.lat}
+              lon={result.area.lon}
+              radiusMi={result.area.radius_mi}
+              hazardsFeed={p.hazards}
+            />
             <AreaCharts result={result} />
             <WhatsHere result={result} live={live} />
             <RiskBreakdown factors={result.risk.factors} />
             <GridChain lat={result.area.lat} lon={result.area.lon} heatwave={heatwave} />
+            <HeatStress result={result} heatwave={heatwave} />
             <TopPlants
               result={result}
               onFocus={onFocus}
@@ -173,11 +220,13 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
             <GenEvents result={result} />
             <GridImpact result={result} live={live} />
             <Takeaway result={result} live={live} onBrief={() => setBriefOpen(true)} />
+            <Provenance result={result} live={live} heatwave={heatwave} />
             <Explainer />
 
             <footer className="border-t border-[#e6e9ee] px-6 py-6">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <CopyReport result={result} live={live} />
+                <ShareReport result={result} />
                 <button
                   type="button"
                   onClick={onReportArea}

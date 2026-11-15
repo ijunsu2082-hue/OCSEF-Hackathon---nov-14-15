@@ -4,6 +4,7 @@ import { FUEL_LABELS } from "@/lib/scan/colors";
 import { kvLabel, lineMiles, lineName, substationName } from "@/lib/scan/labels";
 import type { FuelKey, Plant, ScanResult } from "@/lib/scan";
 import type { ReportTarget } from "@/lib/scan/target";
+import { CorridorWeather } from "./CorridorWeather";
 import { fmtNum, fmtPowerText, isNum } from "./format";
 import { Caption } from "./ui";
 
@@ -121,6 +122,7 @@ export function SelectedAsset({
           (target.substation as { name_source?: string | null })?.name_source === "state_list" && (
             <Caption className="mt-1">Name matched by location from California&apos;s state substation list.</Caption>
           )}
+        {target.kind === "line" && <CorridorWeather key={target.line.osm_id} line={target.line} />}
         <div className="mt-4 flex items-center gap-3">
           <button
             type="button"

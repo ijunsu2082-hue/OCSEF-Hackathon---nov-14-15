@@ -10,15 +10,21 @@ export interface LayerVisibility {
   substations: boolean;
   cases: boolean;
   events: boolean;
+  /** Live NIFC fires/perimeters and USGS quakes; only the 2D map draws them. */
+  hazards: boolean;
 }
 
-/** `terrainOnly` toggles exist only in the 3D view (the 2D map has no niche-case pins). */
-const TOGGLES: { key: keyof LayerVisibility; label: string; terrainOnly?: boolean }[] = [
+/**
+ * `terrainOnly` toggles exist only in the 3D view (the 2D map has no niche-case pins);
+ * `flatOnly` toggles only in 2D (the 3D view has no live hazard overlays).
+ */
+const TOGGLES: { key: keyof LayerVisibility; label: string; terrainOnly?: boolean; flatOnly?: boolean }[] = [
   { key: "plants", label: "Power plants" },
   { key: "transmission", label: "Transmission lines" },
   { key: "substations", label: "Substations" },
   { key: "cases", label: "Niche cases", terrainOnly: true },
   { key: "events", label: "Retired & proposed" },
+  { key: "hazards", label: "Live hazards", flatOnly: true },
 ];
 
 const SHADOW = "0 1px 3px rgba(16,24,40,.08)";
@@ -97,7 +103,7 @@ export function LayerPicker({
 
           <p className="mt-3 border-t border-[#e6e9ee] pt-3 font-semibold">Map details</p>
           <div className="mt-1.5 space-y-1">
-            {TOGGLES.filter((t) => terrain || !t.terrainOnly).map((t) => (
+            {TOGGLES.filter((t) => (terrain ? !t.flatOnly : !t.terrainOnly)).map((t) => (
               <label key={t.key} className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"

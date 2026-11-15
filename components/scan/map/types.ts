@@ -1,5 +1,6 @@
 import type { GridData, NicheCase, ScanArea, ScanResult } from "@/lib/scan";
 import type { NewsPin, ReportTarget } from "@/lib/scan/target";
+import type { HazardsLive } from "@/lib/live/hazards";
 
 /** A fly-to request from the page. Bump `nonce` to re-trigger the same point. */
 export interface MapFocus {
@@ -25,4 +26,6 @@ export interface ScanMapProps {
   /** The selected asset, highlighted on the map. */
   selected: ReportTarget | null;
   onSelectCase?: (c: NicheCase) => void;
+  /** Live hazards for the scan circle (polled once by the page). Drawn on the 2D map only. */
+  hazards?: HazardsLive | null;
 }

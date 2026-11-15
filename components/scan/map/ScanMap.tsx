@@ -18,6 +18,7 @@ import {
   esc,
 } from "./layers";
 import { LayerPicker, type LayerVisibility } from "./LayerPicker";
+import { LiveHazardLayers } from "./LiveHazardLayers";
 import { MapKey } from "./MapKey";
 import ScanMap3D from "./ScanMap3D";
 import { basemapById, loadBasemap, saveBasemap, type BasemapId } from "./basemaps";
@@ -38,6 +39,8 @@ const DEFAULT_LAYERS: LayerVisibility = {
   /** Niche-case pins; only the optional 3D view draws them. */
   cases: true,
   events: false,
+  /** Live fires and quakes for the scan circle; 2D only. */
+  hazards: true,
 };
 
 /** 2D (the Leaflet map, default) or the optional 3D terrain view. */
@@ -160,6 +163,7 @@ export default function ScanMap({
   selected,
   selectedCaseId = null,
   onSelectCase = noopCase,
+  hazards = null,
 }: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [mode, setMode] = useState<ViewMode>("2d");
@@ -305,6 +309,9 @@ export default function ScanMap({
           <PlantLayer plants={data.plants} result={result} visible={layers.plants} onAssetClick={handleAssetClick} />
           <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
           <SelectionHighlight selected={selected} />
+          {layers.hazards && hazards && (
+            <LiveHazardLayers fires={hazards.fires} perimeters={hazards.perimeters} quakes={hazards.quakes} />
+          )}
 
           <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
             <Tooltip direction="top" offset={[0, -8]}>
@@ -397,7 +404,7 @@ export default function ScanMap({
         layers={layers}
         onLayers={setLayers}
       />
-      {mode === "2d" && <MapKey />}
+      {mode === "2d" && <MapKey hazards={layers.hazards} />}
     </div>
   );
 }
