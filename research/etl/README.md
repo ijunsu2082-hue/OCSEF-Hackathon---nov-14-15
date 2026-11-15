@@ -76,6 +76,26 @@ npx tsx research/etl/cli.ts backup-weather <snapshot-id> <destination-file>
 npx tsx research/etl/cli.ts restore-weather <backup-file>
 ```
 
+## Supabase state
+
+Collection and `load-assets` write their checksummed JSON to `research/etl-state/`
+as before, and mirror the same documents into a private Supabase Storage bucket
+named `etl-state` at the same paths (`reports/<location-id>.json`,
+`revisions/<id>/<revision>.json`, `loaded-assets/<id>/*.json`, `blobs/<sha256>.json`).
+Reads (`readReport`, `readLocationAssets`) ask the bucket first and fall back to
+disk, so a deployed app with no state directory serves the published revisions.
+Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; without them everything stays
+local and writes never fail because of Supabase. To publish an existing state
+directory:
+
+```powershell
+node node_modules/tsx/dist/cli.mjs scripts/backfill-etl-supabase.ts --from research/etl-state
+```
+
+The bucket is private, so the anon key cannot read it. Updates are not streamed:
+the app reads a revision per request (`Cache-Control: no-store`); a live UI would
+subscribe to the same objects through a Supabase Realtime channel.
+
 ## Request layer
 
 Every collector fetch goes through `research/etl/http.ts`. Inside one process an identical request is fetched once, per-host concurrency is bounded by `ETL_HTTP_HOST_CONCURRENCY` (default `4`), retryable failures back off from `ETL_HTTP_RETRY_BASE_MS` (default `300`) up to `ETL_HTTP_RETRY_ATTEMPTS` (default `3`) and honour `Retry-After`, and a provider `304` reuses the bytes already captured. This state is process-local; see "Shared dedupe" for the cross-process layer.

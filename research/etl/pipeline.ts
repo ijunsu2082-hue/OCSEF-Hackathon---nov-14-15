@@ -10,6 +10,7 @@ import { verifyEvidenceFiles } from "../verify-files";
 import { feedsFor, nwsObservationUrl, type Feed, type LocationQuery } from "./sources";
 import { requestBytes, type RedirectPolicy } from "./http";
 import { validOasisNode } from "./oasis";
+import { getJson, putJson, putText, reportKey } from "./store";
 
 export function stateRoot(): string {
   const suffix = process.env.ETL_STATE_NAMESPACE;
@@ -124,6 +125,8 @@ export async function storeCapture(bytes: Uint8Array) {
   } finally {
     await rm(temporary, { force: true });
   }
+  // Mirror the bytes so replay works on a host without the local blob store.
+  await putText(`blobs/${hash}.json`, Buffer.from(bytes).toString("utf8"));
   return { hash, cachePath };
 }
 
@@ -204,6 +207,13 @@ export function reportRevision(report: LocationReport): string {
 export async function readReport(id: string, revision?: string): Promise<LocationReport | null> {
   if (!/^location-[a-f0-9]{24}$/.test(id)) return null;
   if (revision !== undefined && !/^[a-f0-9]{64}$/.test(revision)) return null;
+  // The deployed app has no ETL state directory: reports are published to a
+  // Supabase bucket, which is the first place to look.
+  const mirrored = await getJson<LocationReport>(reportKey(id, revision));
+  if (mirrored) {
+    if (revision && reportRevision(mirrored) !== revision) throw new Error("Report revision checksum mismatch");
+    return mirrored;
+  }
   try {
     const path = revision
       ? resolve(stateRoot(), "revisions", id, `${revision}.json`)
@@ -425,6 +435,9 @@ export async function runLocation(
     state.attempted_at !== previous.feeds[source]?.attempted_at))) {
     await atomicJson(resolve(stateRoot(), "revisions", id, `${reportRevision(report)}.json`), report);
     await atomicJson(resolve(stateRoot(), "reports", `${id}.json`), report);
+    // Mirror so a deployed app (no state directory) serves this revision.
+    await putJson(reportKey(id, reportRevision(report)), report);
+    await putJson(reportKey(id), report);
   }
   if (live && previous && !rebound && state_hash === previous.state_hash && entries.every(([source, state]) =>
     state.attempted_at === previous.feeds[source]?.attempted_at)) {

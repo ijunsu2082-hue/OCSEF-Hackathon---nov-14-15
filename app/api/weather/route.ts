@@ -2,6 +2,7 @@ import {
   latestPersistedWeather,
   rememberWeatherLocation,
   refreshWeatherLocation,
+  WeatherStoreUnavailable,
 } from "@/lib/scan/weather";
 
 export const runtime = "nodejs";
@@ -13,15 +14,14 @@ const jsonError = (code: string, message: string, status: number) =>
   Response.json({ error: { code, message } }, { status, headers: NO_STORE });
 
 /**
- * Anything that escapes the refresh fallbacks: the local SQLite store
- * (node:sqlite errors carry an ERR_SQLITE_* code) → 503, anything else (an
- * unparseable upstream body, e.g. `SyntaxError: Unexpected end of JSON input`) → 502.
+ * Anything that escapes the refresh fallbacks: an unconfigured Supabase (the
+ * weather tables are the store) → 503, anything else (an unparseable upstream
+ * body, e.g. `SyntaxError: Unexpected end of JSON input`) → 502.
  */
 function failure(error: unknown): Response {
   const detail = error instanceof Error ? error.message : String(error);
-  const code = (error as { code?: unknown } | null)?.code;
-  if (typeof code === "string" && code.startsWith("ERR_SQLITE")) {
-    return jsonError("WEATHER_STORE_UNAVAILABLE", `Weather store could not be read or written: ${detail}`, 503);
+  if (error instanceof WeatherStoreUnavailable) {
+    return jsonError("WEATHER_STORE_UNAVAILABLE", detail, 503);
   }
   return jsonError("WEATHER_UPSTREAM_FAILED", `Weather could not be loaded: ${detail}`, 502);
 }
@@ -42,10 +42,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const location = rememberWeatherLocation(lat, lon);
-    const previous = latestPersistedWeather(location);
+    const location = await rememberWeatherLocation(lat, lon);
+    const previous = await latestPersistedWeather(location);
     const refreshed = await refreshWeatherLocation(location);
-    const current = refreshed.sample ?? latestPersistedWeather(location) ?? previous;
+    const current = refreshed.sample ?? (await latestPersistedWeather(location)) ?? previous;
     const source = refreshed.sample ? refreshed.source : current ? "persisted" : "none";
     return Response.json({
       location: { lat: location.lat, lon: location.lon },

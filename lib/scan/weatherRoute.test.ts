@@ -1,26 +1,60 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { after, beforeEach, test } from "node:test";
+import { beforeEach, afterEach, test } from "node:test";
 import { GET } from "../../app/api/weather/route";
+import {
+  setWeatherStoreForTests,
+  WeatherStoreUnavailable,
+  type WeatherLocation,
+  type WeatherSample,
+  type WeatherStore,
+} from "./weather";
 
 // Every /api/weather response is JSON with Cache-Control: no-store, including
-// errors; a broken store or upstream never surfaces as a bare 500.
+// errors; a broken upstream or store never surfaces as a bare 500. The store is
+// Supabase in production, so these tests inject an in-memory backend instead of
+// writing a database file.
 
-const dir = mkdtempSync(join(tmpdir(), "gs-weather-route-"));
 let upstream: () => Response | Promise<Response> = () => new Response("", { status: 200 });
-let dbCount = 0;
 
 globalThis.fetch = (async () => upstream()) as typeof fetch;
 
+class MemoryStore implements WeatherStore {
+  readonly locations = new Map<string, WeatherLocation>();
+  readonly samples = new Map<string, WeatherSample[]>();
+
+  async remember(location: WeatherLocation): Promise<void> {
+    this.locations.set(location.key, location);
+  }
+
+  async recent(): Promise<WeatherLocation[]> {
+    return [...this.locations.values()];
+  }
+
+  async latest(location: WeatherLocation): Promise<WeatherSample | null> {
+    const rows = (this.samples.get(location.key) ?? []).slice().sort((a, b) => a.time.localeCompare(b.time));
+    return rows.at(-1) ?? null;
+  }
+
+  async persist(location: WeatherLocation, samples: WeatherSample[], refreshEqualTimestamp: boolean): Promise<void> {
+    const rows = this.samples.get(location.key) ?? [];
+    for (const sample of samples) {
+      const index = rows.findIndex((row) => row.time === sample.time);
+      if (index === -1) rows.push(sample);
+      else if (refreshEqualTimestamp) rows[index] = sample;
+    }
+    this.samples.set(location.key, rows);
+  }
+}
+
+let store: WeatherStore = new MemoryStore();
+
 beforeEach(() => {
-  dbCount += 1;
-  process.env.WEATHER_DB_PATH = join(dir, `weather-${dbCount}.sqlite`);
+  store = new MemoryStore();
+  setWeatherStoreForTests(store);
   upstream = () => new Response("", { status: 200 });
 });
 
-after(() => rmSync(dir, { recursive: true, force: true }));
+afterEach(() => setWeatherStoreForTests(null));
 
 async function call(query: string) {
   const res = await GET(new Request(`http://localhost/api/weather${query}`));
@@ -60,11 +94,17 @@ test("a live upstream sample is returned and persisted", async () => {
   assert.equal(again.body.source, "persisted", "upstream now empty → last saved sample");
 });
 
-test("an unreadable weather store is a JSON 503, not an uncaught 500", async () => {
-  writeFileSync(process.env.WEATHER_DB_PATH!, "not a sqlite file");
+test("an unavailable weather store is a JSON 503, not an uncaught 500", async () => {
+  store = {
+    remember: async () => { throw new WeatherStoreUnavailable("Weather store query failed: connection refused"); },
+    recent: async () => [],
+    latest: async () => { throw new WeatherStoreUnavailable("Weather store query failed: connection refused"); },
+    persist: async () => { throw new WeatherStoreUnavailable("Weather store query failed: connection refused"); },
+  };
+  setWeatherStoreForTests(store);
   const { status, body } = await call("?lat=33.7538&lon=-118.0111");
   assert.equal(status, 503);
   const error = body.error as { code: string; message: string };
   assert.equal(error.code, "WEATHER_STORE_UNAVAILABLE");
-  assert.match(error.message, /file is not a database/);
+  assert.match(error.message, /connection refused/);
 });
