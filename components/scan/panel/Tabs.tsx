@@ -31,7 +31,7 @@ export function Tabs({
     optimization: "Optimization",
     news: `Local news (${newsCount})`,
     report: "Report a problem",
-    owners: "Owners",
+    owners: "Compliance",
   };
 
   // Keep the active tab in view when the strip scrolls sideways.

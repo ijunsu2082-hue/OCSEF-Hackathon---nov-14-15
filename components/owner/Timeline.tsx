@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import type { Claim, Deadline, Obligation, Task, TaskStatus } from "@/lib/owner/types";
 import { downloadText, fmtDate, groupByMonth, monthLabel, prefillCsv, slug, urgency, type Urgency } from "./calendar";
-import { BTN, CopyButton, FOCUS, FREQUENCY_WORD, INPUT, LINK, api, ConfidenceText } from "./ui";
+import { BTN, CopyButton, FOCUS, FREQUENCY_WORD, INPUT, LINK, api } from "./ui";
 
 /*
  * 12-month filing timeline across all verified assets, grouped by month.
@@ -136,7 +136,7 @@ function Item({ e, today, onSaved }: { e: TimelineEntry; today: string; onSaved:
         {o.form} · {o.agency}
       </p>
       <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">
-        {e.assetName} · {d.periodLabel} · {FREQUENCY_WORD[o.frequency]} · <ConfidenceText c={o.confidence} />
+        {e.assetName} · {d.periodLabel} · {FREQUENCY_WORD[o.frequency]}
       </p>
 
       <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -242,7 +242,6 @@ export function Undated({ items }: { items: { key: string; assetName: string; ob
         <li key={key} className="py-4">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h4 className="min-w-0 text-[15px] font-semibold leading-snug">{o.title}</h4>
-            <ConfidenceText c={o.confidence} />
           </div>
           <p className="mt-0.5 text-[13px] leading-snug text-[#556070]">
             {o.form} · {o.agency} · {assetName}

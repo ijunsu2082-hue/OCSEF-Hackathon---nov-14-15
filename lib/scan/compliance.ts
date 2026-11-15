@@ -1223,6 +1223,56 @@ export function quickReportText(
   return L.join("\n");
 }
 
+/* ------------------------------------------------------------- who to send it to */
+
+export interface ReportRecipient {
+  id: string;
+  /** Who gets it, e.g. "Send it to SCE". */
+  name: string;
+  /** In plain words: why and when to use this one. */
+  role: string;
+  /** Only when the utility publishes one; otherwise the person fills the address in. */
+  email: string | null;
+  url: string | null;
+  phone: Phone | null;
+}
+
+const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * The people and offices a report can go to, in the order the routing puts them.
+ * No utility in this data set publishes a verified customer-service address, so a
+ * recipient's email stays null: the mailto: opens with the report, and the person
+ * addresses it from their bill or from the page listed with that recipient.
+ */
+export function reportRecipients(routing: QuickRouting): ReportRecipient[] {
+  return routing.steps.map((step, i) => ({
+    id: `step-${i}`,
+    name: step.title,
+    role: step.detail,
+    email: null,
+    url: step.url ?? null,
+    phone: step.phone ?? null,
+  }));
+}
+
+/**
+ * mailto: addressed to the picked people who publish an email address. People without a
+ * published address are named in the body, so the message never silently drops them.
+ */
+export function mailtoToRecipients(
+  subject: string,
+  text: string,
+  recipients: ReportRecipient[],
+): string {
+  const to = recipients.flatMap((r) => (r.email && EMAIL_LIKE.test(r.email) ? [r.email] : []));
+  const names = recipients.map((r) => r.name);
+  const body = names.length ? `${text}\n\nSend to: ${names.join("; ")}` : text;
+  return `mailto:${to.map(encodeURIComponent).join(",")}?subject=${encodeURIComponent(
+    wellFormed(subject),
+  )}&body=${encodeURIComponent(mailBody(body))}`;
+}
+
 /** A filed quick report, saved in the same list (gs-reports-v1) as every other report. */
 export function fileQuickReport(
   draft: ReportDraft,

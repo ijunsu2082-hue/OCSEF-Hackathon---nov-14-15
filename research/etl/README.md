@@ -67,6 +67,35 @@ Every collector fetch goes through `research/etl/http.ts`. Inside one process an
 
 `compare <file>` accepts JSON containing `left`, `right`, and optional `policy` as defined in `reconcile.ts`. Provide values already normalized to equivalent scopes. The result retains candidates and distinguishes same-publisher duplicates from cross-publisher comparisons. The comparison command does not modify reports.
 
+## Compliance forms
+
+`compliance-forms` reads the government form behind every owner filing rule (`lib/owner/rules.ts`) from the agency page named in that rule's citation, and writes `public/compliance/forms.json` for the app's Compliance tab. For each form it records the evidence it relied on (the words it copied from the page), the deadline sentence, whether the filing is filed or signed, and the field labels that actually appear on the page. A field label with no public-data source stays manual, so the UI can list what only a person can fill in.
+
+Pages that cannot be read are recorded honestly: a PDF, a timeout or a block is written as `status: "manual"` with its URL and the reason, never as an extracted field list. `--offline` skips the network entirely and marks every entry manual, so the snapshot still exists for a build without connectivity.
+
+```powershell
+npm run compliance:forms                 # read the live agency pages
+npm run compliance:forms -- --offline    # no network: seeds only, every entry manual
+npm run compliance:forms -- --limit 3    # first three rules, for a quick check
+```
+
+The summary prints how many entries came back `extracted`, `partial` and `manual`, plus how many source pages were read and how many failed. `tests/complianceForms.test.ts` covers the extraction, the manual fallback and the prefill/manual split without any network.
+
+## Compliance applicability
+
+`compliance-applicability` reads the agency lists that decide whether a filing applies, and writes `public/compliance/applicability.json` for the Compliance tab. It currently reads EPA's Greenhouse Gas Reporting Program facility list from Envirofacts (no key needed), county by county for the counties in `public/layers/plants.geojson`, and matches a plant to a facility when the two sit on the same site (within 0.25 mi) or within 1.5 mi with a shared name word. The match keeps the facility name and the distance, so the Compliance tab can show what was matched rather than assert it silently. Reported CO2e is not fetched by default: GHGRP membership by itself already means 25,000 t CO2e or more, and the emissions table costs one rate-limited request per facility (`--with-emissions` turns it on). `lib/owner/applicability.ts` then decides each filing: the GHGRP match settles the greenhouse gas report and both CARB thresholds, the county settles the South Coast AQMD item, and fuel, capacity, owner type and planned retirement settle the rest. A filing that only one fact can settle asks that question once, in place.
+
+The run is rate limited by EPA, so it pauses between counties and between facility lookups. A county whose rows could not be read is recorded in `unavailable` (for example `ghgrp:Los Angeles`), and the app keeps the question for plants in that county instead of deciding either way.
+
+```powershell
+npm run compliance:applicability                    # read EPA's list for live matching
+npm run compliance:applicability -- --offline       # no network: every GHGRP item becomes a question
+npm run compliance:applicability -- --with-emissions  # also fetch each matched facility's CO2e
+npm run compliance:applicability -- --out public/compliance/applicability.json
+```
+
+`tests/applicability.test.ts` covers the decisions, the unanswered question and the saved answer without any network.
+
 ## Coverage
 
 `coverage` inventories fields in the shipped JSON artifacts and lists evidence predicates. Strict coverage intentionally fails until remaining gaps are closed. The working location adapter set covers Census, one NWS station, EIA Atlas plant counts, HIFLD counts, and optional hourly EIA demand and fuel. Full asset regeneration, historical bulk adapters, automated provider reconciliation, and operator imports remain pending.

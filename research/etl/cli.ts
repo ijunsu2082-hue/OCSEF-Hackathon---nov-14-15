@@ -7,6 +7,8 @@ import { backfillWeather } from "./weather-history";
 import { collectAssets, replayAssets } from "./assets";
 import { auditSubstations } from "./substation-audit";
 import { loadLocationAssets } from "./load-assets";
+import { syncComplianceForms } from "./compliance/sync";
+import { syncApplicability } from "./compliance/programs";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -95,6 +97,55 @@ async function main() {
     if (args.length !== 1) throw new Error("Expected comparison JSON file");
     const { left, right, policy } = JSON.parse(await readFile(args[0], "utf8"));
     console.log(JSON.stringify(reconcile(left, right, policy)));
+    return;
+  }
+  if (command === "compliance-forms") {
+    let out: string | undefined;
+    let offline = false;
+    let limit: number | undefined;
+    for (let index = 0; index < args.length; index += 1) {
+      const flag = args[index];
+      if (flag === "--offline") {
+        offline = true;
+        continue;
+      }
+      const value = args[++index];
+      if (flag === "--out" && value && !value.startsWith("--")) {
+        out = value;
+        continue;
+      }
+      if (flag === "--limit" && value && !value.startsWith("--")) {
+        limit = Number(value);
+        if (!Number.isInteger(limit) || limit < 1) throw new Error("Expected a positive --limit");
+        continue;
+      }
+      throw new Error(`Invalid argument: ${flag}`);
+    }
+    console.log(JSON.stringify(await syncComplianceForms({ offline, out, limit })));
+    return;
+  }
+  if (command === "compliance-applicability") {
+    let out: string | undefined;
+    let offline = false;
+    let withEmissions = false;
+    for (let index = 0; index < args.length; index += 1) {
+      const flag = args[index];
+      if (flag === "--offline") {
+        offline = true;
+        continue;
+      }
+      if (flag === "--with-emissions") {
+        withEmissions = true;
+        continue;
+      }
+      const value = args[++index];
+      if (flag === "--out" && value && !value.startsWith("--")) {
+        out = value;
+        continue;
+      }
+      throw new Error(`Invalid argument: ${flag}`);
+    }
+    console.log(JSON.stringify(await syncApplicability({ offline, out, withEmissions })));
     return;
   }
   if (command !== "location" && command !== "collect") throw new Error(`Unknown command: ${command}`);

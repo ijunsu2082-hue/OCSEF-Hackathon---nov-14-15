@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import type { Frequency, Obligation } from "@/lib/owner/types";
+import type { Frequency } from "@/lib/owner/types";
 
 /*
  * Shared pieces for the owner screens. Palette from the design spec: white, borders
@@ -22,14 +22,6 @@ export const FREQUENCY_WORD: Record<Frequency, string> = {
   event: "When something happens",
   once: "One time",
 };
-
-export function ConfidenceText({ c }: { c: Obligation["confidence"] }) {
-  return c === "verified" ? (
-    <span className="text-[13px] font-medium text-[#0369a1]">Verified</span>
-  ) : (
-    <span className="text-[13px] font-medium text-[#556070]">Check if it applies</span>
-  );
-}
 
 /* ---------------------------------------------------------------- API */
 

@@ -136,7 +136,7 @@ export function SelectedAsset({
             onClick={onOwners}
             className={`h-8 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#1d2733] transition-colors hover:bg-[#f6f8fa] ${FOCUS}`}
           >
-            Owner filings
+            Compliance
           </button>
           <button
             type="button"

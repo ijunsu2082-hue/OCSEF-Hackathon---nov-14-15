@@ -15,7 +15,10 @@ import {
   loadBillChoice,
   loadReports,
   mailtoHref,
+  mailtoToRecipients,
+  quickReportText,
   quickRouting,
+  reportRecipients,
   reportFileName,
   resolveUtility,
   saveBillChoice,
@@ -155,6 +158,11 @@ export default function ReportTab({
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Where to submit: who gets it, and how it leaves this page.
+  const [chosenIds, setChosenIds] = useState<string[]>([]);
+  const [mode, setMode] = useState<"email" | "site" | "copy">("email");
+  const [exportState, setExportState] = useState<"idle" | "copied" | "failed">("idle");
+
   const routing = useMemo(() => quickRouting(hazards, utility), [hazards, utility]);
   const emergencyId = hazardEmergency(hazards);
   const emergency = emergencyId ? emergencyInfo(emergencyId, target, result, bill) : null;
@@ -204,6 +212,28 @@ export default function ReportTab({
   };
 
   const picked = HAZARDS.filter((h) => hazards.includes(h.id) && h.emergency).map((h) => h.label);
+
+  // The people this report can go to, and the ones picked right now.
+  const recipients = useMemo(() => reportRecipients(routing), [routing]);
+  const defaultIds = recipients.slice(0, 1).map((r) => r.id);
+  const effectiveIds = chosenIds.length ? chosenIds : defaultIds;
+  const selectedRecipients = recipients.filter((r) => effectiveIds.includes(r.id));
+  const siteUrl = selectedRecipients.find((r) => r.url)?.url ?? routing.url;
+
+  const toggleRecipient = (id: string) => {
+    const current = chosenIds.length ? chosenIds : defaultIds;
+    setChosenIds(current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
+  };
+
+  /** The exact text that Email, Copy and Download hand over, built at the moment it is used. */
+  const reportForSending = () =>
+    quickReportText(draft, hazards, note, routing, new Date().toISOString());
+
+  const copyForSending = async () => {
+    const ok = await copyText(reportForSending());
+    setExportState(ok ? "copied" : "failed");
+    setTimeout(() => setExportState("idle"), 1800);
+  };
 
   return (
     <div className="text-[15px] leading-snug text-[#1d2733]">
@@ -354,39 +384,6 @@ export default function ReportTab({
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-[14px] text-[#556070]">
-              It goes to: <span className="font-semibold text-[#1d2733]">{routing.contactName}</span>
-            </p>
-            {routing.steps[1] && /^If it is not fixed/i.test(routing.steps[1].title) && (
-              <p className="mt-1 text-[14px] text-[#556070]">{routing.steps[1].title}</p>
-            )}
-            <details className="mt-2">
-              <summary className={`cursor-pointer text-[14px] font-medium ${LINK}`}>Where to send it, in order</summary>
-              <ol className="mt-2 flex flex-col gap-2">
-                {routing.steps.map((s, i) => (
-                  <li key={s.title} className="text-[14px] leading-snug">
-                    <p className="font-medium text-[#1d2733]">
-                      {i + 1}. {s.title}
-                    </p>
-                    <p className="text-[#556070]">{s.detail}</p>
-                    {(s.phone || s.url) && (
-                      <p className="flex flex-wrap gap-x-4">
-                        {s.phone && (
-                          <a href={`tel:${s.phone.tel}`} className={LINK}>
-                            Call {s.phone.display}
-                          </a>
-                        )}
-                        {s.url && (
-                          <a href={s.url} target="_blank" rel="noopener noreferrer" className={LINK}>
-                            Open page
-                          </a>
-                        )}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </details>
             <label htmlFor="gs-report-note" className="mt-4 block text-[15px] font-medium text-[#1d2733]">
               Anything else to add? (optional)
             </label>
@@ -401,7 +398,155 @@ export default function ReportTab({
             />
           </Step>
 
-          <Step n={3} title="File it">
+          <Step n={3} title="Where to submit">
+            <p className="text-[15px] text-[#556070]">
+              Send the report yourself. Nothing reaches anyone until you use one of these.
+            </p>
+
+            {/* Section 1: the controls that export, copy and email the report. */}
+            <div className="mt-4 rounded-[6px] border border-[#e6e9ee] px-4 py-4">
+              <h4 className="text-[16px] font-semibold leading-snug text-[#1d2733]">
+                Send, copy or download
+              </h4>
+              <fieldset className="mt-3">
+                <legend className="text-[14px] font-medium text-[#556070]">How to send it</legend>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-5">
+                  {([
+                    { id: "email", label: "Email", hint: "opens your mail app" },
+                    { id: "site", label: "Official page", hint: "opens the recipient's page" },
+                    { id: "copy", label: "Copy the text", hint: "paste it anywhere" },
+                  ] as const).map((option) => (
+                    <label key={option.id} className="flex items-start gap-2 text-[15px] text-[#1d2733]">
+                      <input
+                        type="radio"
+                        name="gs-send-mode"
+                        value={option.id}
+                        checked={mode === option.id}
+                        onChange={() => setMode(option.id)}
+                        className="mt-1 h-4 w-4"
+                      />
+                      <span>
+                        <span className="font-medium">{option.label}</span>
+                        <span className="block text-[13px] leading-snug text-[#6b7583]">{option.hint}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {mode === "email" && (
+                  <a
+                    href={mailtoToRecipients(draft.title, reportForSending(), selectedRecipients)}
+                    className={SMALL_BTN}
+                  >
+                    Email it
+                  </a>
+                )}
+                {mode === "site" && (
+                  <a
+                    href={siteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={SMALL_BTN}
+                  >
+                    Open the official page
+                  </a>
+                )}
+                {mode === "copy" && (
+                  <button
+                    type="button"
+                    onClick={copyForSending}
+                    className={SMALL_BTN}
+                    aria-live="polite"
+                  >
+                    {exportState === "copied"
+                      ? "Copied"
+                      : exportState === "failed"
+                        ? "Copy failed"
+                        : "Copy report"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadTxt(reportForSending(), reportFileName(draft.title, new Date().toISOString()))
+                  }
+                  className={SMALL_BTN}
+                >
+                  Download .txt
+                </button>
+              </div>
+              <p className="mt-2 text-[13px] leading-snug text-[#6b7583]">
+                {mode === "email"
+                  ? selectedRecipients.some((r) => r.email)
+                    ? `Addresses on file: ${selectedRecipients
+                        .filter((r) => r.email)
+                        .map((r) => r.email)
+                        .join(", ")}.`
+                    : "No selected contact publishes an email address, so your mail app opens with the report and an empty recipient. Paste the address from your bill or from the page listed below."
+                  : mode === "site"
+                    ? "The official page is where the utility or agency takes reports itself. Attach or paste the report there."
+                    : "Copy puts the whole report on your clipboard."}
+              </p>
+            </div>
+
+            {/* Section 2: the people and offices it can go to. */}
+            <div className="mt-4 rounded-[6px] border border-[#e6e9ee] px-4 py-4">
+              <h4 className="text-[16px] font-semibold leading-snug text-[#1d2733]">
+                People to send it to
+              </h4>
+              <p className="mt-1 text-[14px] text-[#556070]">
+                Pick any you want included. The first one is already picked.
+              </p>
+              <ul className="mt-3 flex flex-col divide-y divide-[#e6e9ee]">
+                {recipients.map((r) => (
+                  <li key={r.id} className="py-3">
+                    <label className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={effectiveIds.includes(r.id)}
+                        onChange={() => toggleRecipient(r.id)}
+                        className="mt-1 h-4 w-4"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-[15px] font-medium leading-snug text-[#1d2733]">
+                          {r.name}
+                        </span>
+                        <span className="mt-0.5 block text-[14px] leading-snug text-[#556070]">
+                          {r.role}
+                        </span>
+                        <span className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[14px]">
+                          {r.email && (
+                            <a href={`mailto:${r.email}`} className={LINK}>
+                              {r.email}
+                            </a>
+                          )}
+                          {r.phone && (
+                            <a href={`tel:${r.phone.tel}`} className={LINK}>
+                              Call {r.phone.display}
+                            </a>
+                          )}
+                          {r.url && (
+                            <a href={r.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                              Open page
+                            </a>
+                          )}
+                        </span>
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              {selectedRecipients.length === 0 && (
+                <p role="alert" className="mt-3 text-[14px] font-medium text-[#b45309]">
+                  Pick at least one place to send it, or use Copy and send it yourself.
+                </p>
+              )}
+            </div>
+          </Step>
+
+          <Step n={4} title="File it">
             <button
               type="button"
               onClick={file}
