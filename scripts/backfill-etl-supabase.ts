@@ -37,6 +37,17 @@ function arg(name: string, fallback: string): string {
   return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
 }
 
+/** Storage reads can trail an upsert by a moment, so retry before calling it a mismatch. */
+async function readBackMatches(key: string, local: unknown): Promise<boolean> {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const remote = await getJson<unknown>(key);
+    if (remote !== null && JSON.stringify(remote) === JSON.stringify(local)) return true;
+    // A replaced object can take a few seconds to serve its new version.
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(2500, 400 * 2 ** attempt)));
+  }
+  return false;
+}
+
 async function walk(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
   const files = await Promise.all(entries.map(async (entry) => {
@@ -84,10 +95,8 @@ async function main(): Promise<void> {
   for (const [index, key] of keys.entries()) {
     if (!/^(reports|loaded-assets\/[^/]+)\/(latest\.json|[^/]+\.json)$/.test(key)) continue;
     const local = JSON.parse(await readFile(files[index], "utf8")) as unknown;
-    const remote = await getJson<unknown>(key);
-    const same = remote !== null && JSON.stringify(remote) === JSON.stringify(local);
-    if (!same) failed.push(`${key} (read-back mismatch)`);
-    else checked.push(key);
+    if (await readBackMatches(key, local)) checked.push(key);
+    else failed.push(`${key} (read-back mismatch)`);
   }
 
   console.log(`\nuploaded ${uploaded}/${files.length} documents from ${relative(ROOT, from)}`);

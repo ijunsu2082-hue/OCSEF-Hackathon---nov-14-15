@@ -10,7 +10,7 @@ import { verifyEvidenceFiles } from "../verify-files";
 import { feedsFor, nwsObservationUrl, type Feed, type LocationQuery } from "./sources";
 import { requestBytes, type RedirectPolicy } from "./http";
 import { validOasisNode } from "./oasis";
-import { getJson, putJson, reportKey } from "./store";
+import { getJson, putJson, putText, reportKey } from "./store";
 
 export function stateRoot(): string {
   const suffix = process.env.ETL_STATE_NAMESPACE;
@@ -125,6 +125,8 @@ export async function storeCapture(bytes: Uint8Array) {
   } finally {
     await rm(temporary, { force: true });
   }
+  // Mirror the bytes so replay works on a host without the local blob store.
+  await putText(`blobs/${hash}.json`, Buffer.from(bytes).toString("utf8"));
   return { hash, cachePath };
 }
 
