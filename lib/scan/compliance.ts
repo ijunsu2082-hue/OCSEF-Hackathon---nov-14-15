@@ -1234,7 +1234,7 @@ export function buildDraft(
   }
   return {
     title: `Problem report: ${result.area_label} (area)`,
-    assetLabel: `The area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label}`,
+    assetLabel: `The area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label.replace(/\s*·\s*/g, ", ")}`,
     location: { lat: a.lat, lon: a.lon, text: `Center: ${fmtCoord(a.lat, a.lon)}` },
     issues: finish(issues),
     letter: { kind: "area", name: "", place: areaPlace(result.area_label), size: "", by: "", radiusMi: a.radius_mi },
@@ -1244,24 +1244,28 @@ export function buildDraft(
 const SEVERITY_WORD: Record<Severity, string> = { info: "Note", warn: "Watch", danger: "Serious" };
 export const severityWord = (s: Severity) => SEVERITY_WORD[s];
 
-/** How the letter reaches the utility: by email, pasted into its report form, or not yet (pick the utility first). */
-export type Delivery = "email" | "form" | "pick";
+/**
+ * Who the email is addressed to: the utility's published address ("email"); for an investor-owned utility with no
+ * address for this problem, the CPUC Consumer Affairs Branch, asked to forward it ("cpuc"); otherwise nobody yet,
+ * and the email opens with a line telling the sender to paste the address ("paste").
+ */
+export type Delivery = "email" | "cpuc" | "paste";
 
 export interface QuickRouting {
   /** Who gets the report first. */
   contactName: string;
   /** The utility, when we know it (null = the person must check their bill). */
   utility: UtilityInfo | null;
-  /** Published address the letter goes to (the tree team for "Tree touching a wire" when there is one), or null. */
+  /** The To address (the utility, its tree team, or the CPUC), or null when the sender must paste one in. */
   email: string | null;
   /** Where that address is published. */
   emailSource: string | null;
   /** Which team the address reaches, for the greeting ("Vegetation Management", "Customer Service"). */
   team: string;
   delivery: Delivery;
-  /** Report page the letter is pasted into when the utility takes no email (delivery "form"). */
+  /** The utility's report page (also printed in the letter when the email does not go straight to the utility). */
   formUrl: string | null;
-  /** Plain words for the person when there is no email: why, and what happens instead. */
+  /** Plain words for the person when the email does not go straight to the utility. */
   note: string | null;
   /** Best page to open first (the utility's report page, else the CPUC / city route). */
   url: string;
@@ -1285,9 +1289,11 @@ export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting
       email: null,
       emailSource: null,
       team: "Customer Service",
-      delivery: "pick",
+      delivery: "paste",
       formUrl: null,
-      note: "Pick which utility serves this spot so the letter can be addressed to it.",
+      note:
+        "We don't know which utility serves this spot, so the email opens without a recipient. Pick the utility above to fill it in, " +
+        "or paste the address yourself.",
     };
   }
   const util = u.utility;
@@ -1306,6 +1312,22 @@ export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting
       note: null,
     };
   }
+  const formUrl = util.reportUrl ?? filingUrl;
+  if (util.kind === "iou") {
+    return {
+      ...base,
+      contactName: `${util.name}, through the CPUC Consumer Affairs Branch`,
+      utility: util,
+      email: CPUC.email,
+      emailSource: CPUC.emailSource,
+      team: "Consumer Affairs Branch",
+      delivery: "cpuc",
+      formUrl,
+      note:
+        `${util.short} does not publish an email address for this kind of report, so the email goes to the CPUC Consumer Affairs Branch ` +
+        `(the state office that oversees ${util.short}) and asks it to forward the report to ${util.short}.`,
+    };
+  }
   const phone = util.emergency ? ` or call ${util.emergency.display}` : "";
   return {
     ...base,
@@ -1314,11 +1336,11 @@ export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting
     email: null,
     emailSource: null,
     team: "Customer Service",
-    delivery: "form",
-    formUrl: util.reportUrl ?? filingUrl,
+    delivery: "paste",
+    formUrl,
     note:
       `${util.noEmail?.why ?? `${util.short} does not publish an email address for reports.`} ` +
-      `Your letter is copied for you: paste it into ${util.short}'s report page${phone}.`,
+      `The email opens with a line at the top for the address. You can also send the letter through ${util.short}'s report page${phone}.`,
   };
 }
 
@@ -1469,9 +1491,11 @@ export function quickReportLetter(
   const phrases = hazards.map((h) => SUBJECT_PHRASE[h]);
   const topic = phrases.length ? listPhrase(phrases) : "request for inspection";
   const where = area ? (asset.place ? `in ${asset.place}` : `near ${coords}`) : `${asset.kind === "line" ? "on" : "at"} ${phrase}`;
-  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} ${where}`;
-
   const util = routing.utility;
+  const cpuc = routing.delivery === "cpuc" && !!util;
+  const utilName = util ? util.name.replace(/\s*\([^)]*\)$/, "") : "";
+  const kindWord = `${service ? "Service request" : "Safety report"}${cpuc ? ` (${utilName})` : ""}`;
+  const subject = `${kindWord}: ${topic[0].toUpperCase()}${topic.slice(1)} ${where}`;
   const raw = note.trim().replace(/\s+/g, " ");
   const full = raw ? `${raw[0].toUpperCase()}${raw.slice(1)}${/[.!?…]$/.test(raw) ? "" : "."}` : "";
 
@@ -1494,7 +1518,29 @@ export function quickReportLetter(
   const facts = draft.issues.flatMap((i) => (i.letter ? [`- ${i.letter}`] : []));
   const signer = sender.name.trim().replace(/\s+/g, " ") || "A local resident";
   const contact = sender.contact.trim().replace(/\s+/g, " ");
-  const greeting = `Dear ${util ? `${util.short} ` : ""}${routing.team} Team,`;
+  const greeting = cpuc ? "Dear CPUC Consumer Affairs Branch," : `Dear ${util ? `${util.short} ` : ""}${routing.team} Team,`;
+  const ask = cpuc
+    ? `The equipment belongs to ${util!.name}. ${util!.short} does not publish an email address for these reports, so I am sending this to you. ` +
+      `Please forward it to ${util!.short} and let me know that it was received.`
+    : "I would appreciate it if your team could look into it as soon as possible.";
+  // Where the utility can be reached, printed for the CPUC (the paste header already carries it for the sender).
+  const utilContact = cpuc
+    ? [
+        ...(util.emergency ? [`- ${util.short} phone: ${util.emergency.display}`] : []),
+        ...(routing.formUrl ? [`- ${util.short} report page: ${routing.formUrl}`] : []),
+      ]
+    : [];
+  const pasteHead = routing.delivery === "paste"
+    ? [
+        "To send: paste the recipient's email address into the To field: ____________",
+        util
+          ? `Where to find it: ${util.short} does not publish one. Its report page is ${routing.formUrl ?? routing.url}` +
+            `${util.emergency ? ` and its phone number is ${util.emergency.display}` : ""}.`
+          : "Where to find it: your electric utility's name and customer service contact are printed on your electric bill.",
+        "(Delete these lines before sending.)",
+        "",
+      ]
+    : [];
   const placeBit = !area && asset.place && !phrase.includes(asset.place.split(",")[0]) ? ` in ${asset.place}` : "";
   const intro = hazards.length === 0
     ? `I am writing to request an inspection of ${phrase}${placeBit} (${coords}).`
@@ -1502,26 +1548,31 @@ export function quickReportLetter(
     ? `I am writing to report a power outage ${area ? where : `near ${phrase}${placeBit}`} (${coords}).`
     : `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} ${area ? `involving ${phrase}` : `${asset.kind === "line" ? "on" : "at"} ${phrase}${placeBit}`} (${coords}).`;
 
-  const build = (extra: string, withFacts: boolean, compact = false, who = signer, how = contact): string => {
+  const shortAsk = cpuc ? `The equipment belongs to ${util!.name}, which publishes no email address for these reports. Please forward this to ${util!.short}.` : "Please look into it as soon as possible.";
+  const build = (extra: string, withFacts: boolean, level = 0, who = signer, how = contact): string => {
+    const compact = level > 0;
     const L: string[] = [
+      ...pasteHead,
       greeting,
       "",
-      `${intro} I would appreciate it if your team could look into it as soon as possible.`,
+      `${intro} ${level >= (cpuc ? 2 : 1) ? shortAsk : ask}`,
       "",
       "Location",
       ...(compact ? [] : [`- ${assetDescription(asset)}`]),
       `- Coordinates: ${coords}`,
-      `- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
+      ...(level >= 2 ? [] : [`- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`]),
       "",
       "What I observed",
       ...observed,
     ];
     if (extra) L.push(`- Additional details: ${extra}`);
-    L.push("", "What I am requesting", ...asks.map((x, i) => `${i + 1}. ${x}`));
+    L.push("", cpuc ? `What I am asking ${util!.short} to do` : "What I am requesting", ...asks.map((x, i) => `${i + 1}. ${x}`));
+    const contactLines = level >= 2 ? utilContact.filter((x) => /report page/.test(x)) : utilContact;
+    if (contactLines.length) L.push("", `${util!.short} contact`, ...contactLines);
     if (withFacts && facts.length) L.push("", "For reference:", ...facts);
     L.push(
       "",
-      "Thank you for your attention to this matter. Please let me know if you need any more information.",
+      compact ? "Thank you for your attention to this matter." : `Thank you for your ${cpuc ? "help with" : "attention to"} this matter. Please let me know if you need any more information.`,
       "",
       "Sincerely,",
       who,
@@ -1543,17 +1594,40 @@ export function quickReportLetter(
     body = build(lo > 1 ? trimWords(full, lo) : "", false);
   }
   // Still too long (many hazards, long names): drop the description line, then shorten the signature lines.
-  if (encodedLength(body) > MAIL_BODY_MAX) body = build("", false, true);
+  if (encodedLength(body) > MAIL_BODY_MAX) body = build("", false, 1);
+  if (encodedLength(body) > MAIL_BODY_MAX) body = build("", false, 2);
   for (let n = 60; encodedLength(body) > MAIL_BODY_MAX && n >= 0; n -= 10) {
-    body = build("", false, true, trimWords(signer, Math.max(n, 1)), contact ? trimWords(contact, Math.max(n, 1)) : "");
+    body = build("", false, 2, trimWords(signer, Math.max(n, 1)), contact ? trimWords(contact, Math.max(n, 1)) : "");
   }
   return {
     to: routing.email,
     subject,
     body: wellFormed(body),
     ...(routing.formUrl ? { formUrl: routing.formUrl } : {}),
-    ...(util ? { recipient: routing.email && routing.team !== "Customer Service" ? `${util.short}'s tree team` : util.short } : {}),
+    ...(routing.email
+      ? { recipient: cpuc ? "the CPUC" : util && routing.team !== "Customer Service" ? `${util.short}'s tree team` : util?.short ?? "the utility" }
+      : {}),
   };
+}
+
+export const PASTE_LINE = "To send: paste the recipient's email address into the To field: ____________";
+
+/**
+ * The email for any saved report, ready for a mailto: link. Letters with a recipient go as they are; letters saved
+ * without one (and old reports saved before letters existed) open with the paste line on top, so the sender is never
+ * left guessing why the To field is empty.
+ */
+export function sendableEmail(r: SavedReport): ReportEmail {
+  const e = r.email;
+  if (e?.to) return e;
+  if (e) {
+    if (e.body.startsWith(PASTE_LINE)) return e;
+    const where = e.formUrl ?? r.contact.url;
+    const head = [PASTE_LINE, `Where to find it: ${r.contact.name || "your utility"} does not publish one. Its report page is ${where}.`, "(Delete these lines before sending.)", ""];
+    return { ...e, body: [...head, e.body].join("\n") };
+  }
+  const head = [PASTE_LINE, `Where to find it: ${r.contact.name || "your utility"}, ${r.contact.url}`, "(Delete these lines before sending.)", ""];
+  return { to: null, subject: r.subject, body: [...head, r.text].join("\n") };
 }
 
 /** A filed quick report, saved in the same list (gs-reports-v1) as every other report. */

@@ -16,6 +16,7 @@ import {
   isBillChoice,
   loadReports,
   mailtoHref,
+  sendableEmail,
   quickRouting,
   reportFileName,
   resolveUtility,
@@ -142,41 +143,15 @@ async function copyText(text: string): Promise<boolean> {
 const letterText = (e: ReportEmail) => `Subject: ${e.subject}\n\n${e.body}`;
 
 /**
- * How a filed letter is sent: an email addressed to the utility, or (when it publishes no email) copy the letter
- * and open its report page. Old reports saved before letters existed have no send button.
+ * The send button: always an email. It is addressed to the utility (or the CPUC, which forwards it) when there is
+ * a published address; otherwise the email opens with a line at the top telling the sender to paste one in.
  */
 function SendLetter({ r, primary = false }: { r: SavedReport; primary?: boolean }) {
-  const [copied, setCopied] = useState<"idle" | "ok" | "fail">("idle");
-  useEffect(() => {
-    if (copied === "idle") return;
-    const t = setTimeout(() => setCopied("idle"), 6000);
-    return () => clearTimeout(t);
-  }, [copied]);
-  const e = r.email;
-  if (!e) return null;
-  const who = e.recipient ?? "the utility";
-  const cls = primary ? PRIMARY_BTN : SMALL_BTN;
-  if (e.to) {
-    return (
-      <a href={mailtoHref(e.subject, e.body, e.to)} className={cls}>
-        Email {who}
-      </a>
-    );
-  }
-  const url = e.formUrl ?? r.contact.url;
-  // A real link (not window.open) so pop-up blockers never stop the report page; the click also copies the letter.
-  const copy = () => void copyText(letterText(e)).then((ok) => setCopied(ok ? "ok" : "fail"));
-  const cut = /\bthe utility\b/.test(who) ? who : `${who}'s`;
+  const e = sendableEmail(r);
   return (
-    <>
-      <a href={url} target="_blank" rel="noopener noreferrer" onClick={copy} className={cls}>
-        Copy letter and open {cut} report page
-      </a>
-      <span aria-live="polite" className={primary ? "mt-2 block text-[14px] text-[#556070]" : "sr-only"}>
-        {copied === "ok" && "Letter copied. Paste it into the report page in the new tab."}
-        {copied === "fail" && "Could not copy. Use Download, then paste the letter into the report page."}
-      </span>
-    </>
+    <a href={mailtoHref(e.subject, e.body, e.to)} className={primary ? PRIMARY_BTN : SMALL_BTN}>
+      {e.to ? `Email ${e.recipient ?? "the utility"}` : "Email (add recipient)"}
+    </a>
   );
 }
 
@@ -262,12 +237,6 @@ export default function ReportTab({
     }
   };
 
-  // "Not sure" has no address yet: send the person to the utility picker (focus moves there for screen readers too).
-  const pickFirst = () => {
-    const el = document.getElementById("gs-bill-utility");
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    el?.focus();
-  };
   const lastReport = lastId ? reports.find((r) => r.id === lastId) ?? null : null;
   const picked = HAZARDS.filter((h) => hazards.includes(h.id) && h.emergency).map((h) => h.label);
 
@@ -435,9 +404,13 @@ export default function ReportTab({
                 {routing.team !== "Customer Service" && ` (${routing.utility?.short}'s ${routing.team.toLowerCase()} team)`}
               </p>
             )}
-            {routing.delivery === "form" && routing.note && <p className="mt-1 text-[14px] text-[#556070]">{routing.note}</p>}
-            {routing.delivery === "pick" && (
-              <p className="mt-1 text-[14px] font-medium text-[#b45309]">{routing.note}</p>
+            {routing.delivery === "cpuc" && (
+              <p className="mt-1 text-[14px] text-[#556070]">
+                By email to <span className="font-medium text-[#1d2733]">{routing.email}</span>. {routing.note}
+              </p>
+            )}
+            {routing.delivery === "paste" && routing.note && (
+              <p className={`mt-1 text-[14px] ${routing.utility ? "text-[#556070]" : "font-medium text-[#b45309]"}`}>{routing.note}</p>
             )}
             {routing.steps[1] && /^If it is not fixed/i.test(routing.steps[1].title) && (
               <p className="mt-1 text-[14px] text-[#556070]">{routing.steps[1].title}</p>
@@ -507,22 +480,12 @@ export default function ReportTab({
           <Step n={3} title="File it">
             <button
               type="button"
-              onClick={routing.delivery === "pick" ? pickFirst : file}
-              className={`min-h-11 w-full rounded-[6px] px-4 py-2 text-[16px] font-semibold leading-tight text-white transition-colors ${
-                routing.delivery === "pick" ? "bg-[#64748b] hover:bg-[#475569]" : "bg-[#0ea5e9] hover:bg-[#0284c7]"
-              } ${FOCUS}`}
+              onClick={file}
+              className={`min-h-11 w-full rounded-[6px] bg-[#0ea5e9] px-4 py-2 text-[16px] font-semibold leading-tight text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`}
             >
-              {routing.delivery === "pick" ? "Pick the utility first" : "File report"}
+              File report
             </button>
-            {routing.delivery === "pick" && (
-              <>
-                <p className="mt-2 text-[14px] text-[#556070]">
-                  The letter needs to be addressed to the company that serves this spot. Its name is at the top of your
-                  electric bill. If you still can&apos;t tell, call one of these:
-                </p>
-                <EmergencyNumbers contacts={contacts} className="mt-1" />
-              </>
-            )}
+            {!routing.utility && <EmergencyNumbers contacts={contacts} className="mt-2" />}
             <div>
               {status !== "idle" && lastReport && (
                 <div className="mt-3">
@@ -537,11 +500,11 @@ export default function ReportTab({
                 </div>
               )}
             </div>
-            {status === "idle" && routing.delivery !== "pick" && (
+            {status === "idle" && (
               <p className="mt-3 text-[14px] text-[#6b7583]">
-                {routing.delivery === "email"
-                  ? `Filing saves the report on this device. Then press Email to open the finished letter, addressed to ${routing.email}.`
-                  : `Filing saves the report on this device. Then press the button to copy the letter and open ${routing.utility?.short}'s report page.`}
+                {routing.email
+                  ? `Filing saves the report on this device. Then press Email to open the finished letter, addressed to ${routing.email}, and send it.`
+                  : "Filing saves the report on this device. Then press Email: the letter opens with a line at the top for the address."}
               </p>
             )}
           </Step>
@@ -560,7 +523,7 @@ export default function ReportTab({
                 <p className="mt-0.5 text-[14px] text-[#6b7583]">
                   {fmtWhen(r.createdAt)}
                   {r.contact.name ? ` · goes to ${r.contact.name}` : ""}
-                  {r.email?.to ? ` (${r.email.to})` : r.email ? " (report page)" : ""}
+                  {r.email?.to ? ` (${r.email.to})` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <SendLetter r={r} />
@@ -574,11 +537,9 @@ export default function ReportTab({
                   <button type="button" onClick={() => copy(r)} className={SMALL_BTN}>
                     {copiedId === r.id ? "Copied" : r.email ? "Copy letter" : "Copy"}
                   </button>
-                  {!(r.email && !r.email.to) && (
-                    <a href={r.contact.url} target="_blank" rel="noopener noreferrer" className={SMALL_BTN}>
-                      Official site
-                    </a>
-                  )}
+                  <a href={r.contact.url} target="_blank" rel="noopener noreferrer" className={SMALL_BTN}>
+                    Official site
+                  </a>
                   <button
                     type="button"
                     onClick={() => remove(r.id)}
