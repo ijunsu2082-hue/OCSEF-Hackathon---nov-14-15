@@ -39,6 +39,8 @@ export interface Improvement {
   /** One sentence, with this circle's own figures. */
   finding: string;
   metrics: { label: string; value: string }[];
+  /** Named assets in this circle that the claim rests on. */
+  evidence: string[];
   /** What "improved" means, in one line. */
   target: string;
   /** One sentence on the intervention. */
@@ -245,6 +247,11 @@ function wildfireLever(ctx: Ctx): Lever | null {
       { label: "200 kV+ line", value: `${n1(hvMiles)} mi` },
       { label: "Substations", value: n0(result.totals.substation_count) },
     ],
+    evidence: [
+      `Nearest case: ${nearest.title} (${n1(nearest.location.distance_mi)} mi)`,
+      `${n0(fire.length)} wildfire case${fire.length === 1 ? "" : "s"} inside ${n1(result.area.radius_mi)} mi`,
+      `${n0(result.totals.substation_count)} substations, ${n0(result.totals.hv_substation_count)} at 200 kV+`,
+    ],
     target: `Covered conductor on the exposed spans, starting near ${nearest.location.name}.`,
     how: "Covered conductor cuts the ignition path on overhead spans without new right-of-way.",
     tradeoff: "Heavier conductor loads existing poles; cable is the fallback where clearance fails.",
@@ -298,6 +305,11 @@ function storageLever(ctx: Ctx): Lever | null {
       { label: "Batteries", value: `${n0(totals.storage_mw)} MW` },
       { label: "Gap to 50% cover", value: `~${n0(shortfall)} MW / 4 h` },
     ],
+    evidence: [
+      `Solar: ${namedSolarPlants(result).join(", ") || "none mapped"}`,
+      `Battery: ${n0(totals.storage_mw)} MW here`,
+      `Substation: ${sites.join(", ") || "not named in the map data"}`,
+    ],
     target: `Cover half the sunset drop with ~${n0(shortfall)} MW at ${site}.`,
     how: `Batteries at ${site} absorb ${plant} locally instead of pushing it across distant lines.`,
     tradeoff: "Interconnection and fire code at the substation gate, before the battery price.",
@@ -339,8 +351,6 @@ function weatherRatingLever(ctx: Ctx): Lever | null {
   if (!isNum(pctHours)) return null;
   const gain = isNum(aar) ? Math.round((aar - 1) * 100) : null;
   if ((gain === null || gain < 2) && pctHours < 20) return null;
-  const wind = site.summer_4to8pm_median_wind_gain_over_aar;
-  const windGain = isNum(wind) ? Math.round((wind - 1) * 100) : null;
   const score = 42 + Math.min(38, pctHours * 0.4) + Math.min(10, hvMiles / 8);
   const liveLine = live ? ` Right now it is ${n1(live.ratio)}×.` : "";
   return {
@@ -349,14 +359,19 @@ function weatherRatingLever(ctx: Ctx): Lever | null {
     headline: `Use the line capacity the weather allows`,
     severity: severityOf(score),
     score,
-    finding: `${site.name} (${site.distance_mi.toFixed(1)} mi) supports ${gain !== null && gain > 0 ? `${gain}% more` : "more"} headroom in a typical hour, and the weather-based rating beat the fixed one in ${pct0(pctHours)} of 2025 hours.${windGain !== null && windGain > 0 ? ` Summer evenings add ${windGain}% more.` : ""}${liveLine}`,
+    finding: `${site.name} (${site.distance_mi.toFixed(1)} mi) supports ${gain !== null && gain > 0 ? `${gain}% more` : "more"} headroom in a typical hour, and the weather-based rating beat the fixed one in ${pct0(pctHours)} of 2025 hours.${liveLine}`,
     metrics: [
       { label: "200 kV+ line", value: `${n1(hvMiles)} mi` },
       { label: "Hours above fixed", value: pct0(pctHours) },
       { label: "Typical gain", value: gain !== null ? `+${gain}%` : "n/a" },
     ],
+    evidence: [
+      `Rating site: ${site.name}, ${site.distance_mi.toFixed(1)} mi`,
+      `Hottest 2025 hour: ${site.hottest_hour.slice(0, 10)}, ${n1(site.hottest_temp_c)} °C`,
+      `Circuits: ${namedCircuits(result).join(", ") || "not named in the map data"}`,
+    ],
     target: `Run ${n1(hvMiles)} mi of ${dominantVoltage(result)} line on weather-based ratings.`,
-    how: "Order 881 ratings already exist here; the work is applying them and piloting wind on one span.",
+    how: "Order 881 ratings already exist here; the work is applying them circuit by circuit.",
     tradeoff: "Seasonal ratings or protection can bind before weather does.",
     steps: [
       {
@@ -405,6 +420,11 @@ function hotDayLever(ctx: Ctx): Lever | null {
       { label: "Hottest hour", value: isNum(site.hottest_hour_dlr_vs_static) ? `${n1(site.hottest_hour_dlr_vs_static)}×` : "n/a" },
       { label: "200 kV+ line", value: `${n1(hvMiles)} mi` },
     ],
+    evidence: [
+      `Flagged days: ${n0(short.days)} rated days reviewed`,
+      `Worst day: ${pct0(short.pct)} below the fixed rating`,
+      `Rating site: ${site.name}, ${site.distance_mi.toFixed(1)} mi`,
+    ],
     target: `Lift the hot-day limit on ${n1(hvMiles)} mi of ${dominantVoltage(result)} line.`,
     how: "A high-temperature low-sag wire uses the existing towers and right-of-way.",
     tradeoff: "Towers may not carry the new wire, and the swap needs outages.",
@@ -452,6 +472,11 @@ function retirementLever(ctx: Ctx): Lever | null {
       { label: "Proposed", value: `${n0(totals.proposed_mw)} MW` },
       { label: "Nameplate", value: `${n0(totals.nameplate_mw)} MW` },
     ],
+    evidence: [
+      `Retiring units: ${units.join(", ") || "not named in the map data"}`,
+      `Planned retirement: ${n0(totals.planned_retirement_mw)} MW of ${n0(totals.nameplate_mw)} MW`,
+      `Proposed here: ${n0(totals.proposed_mw)} MW`,
+    ],
     target: `Hold ${n0(totals.planned_retirement_mw)} MW of firm capacity through the retirement date.`,
     how: totals.proposed_mw > 0
       ? "Push the proposed projects through interconnection, then repower the retiring site."
@@ -482,7 +507,7 @@ function agingLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
   const age = totals.cap_weighted_age;
-  if (!isNum(age) || age <= 30 || totals.fossil_mw <= 200) return null;
+  if (!isNum(age) || age <= 30 || totals.fossil_mw < 100) return null;
   const oldest = totals.oldest;
   const score = 34 + Math.min(26, (age - 30) * 1.6) + Math.min(14, totals.fossil_mw / 80);
   return {
@@ -496,6 +521,11 @@ function agingLever(ctx: Ctx): Lever | null {
       { label: "Fossil", value: `${n0(totals.fossil_mw)} MW` },
       { label: "Weighted age", value: `${n0(age)} yr` },
       { label: "Oldest unit", value: oldest ? String(oldest.year) : "n/a" },
+    ],
+    evidence: [
+      `Oldest unit: ${oldest ? `${oldest.name} (${oldest.year})` : "not in the plant data"}`,
+      `Gas units: ${gasUnits(result).join(", ") || "not named in the plant data"}`,
+      `Fossil share: ${pct0(totals.nameplate_mw > 0 ? (totals.fossil_mw / totals.nameplate_mw) * 100 : 0)} of nameplate`,
     ],
     target: `A per-unit decision: repower, replace with storage, or keep with a condition basis.`,
     how: "Start with the unit that sets local reliability, not the oldest nameplate.",
@@ -521,6 +551,123 @@ function agingLever(ctx: Ctx): Lever | null {
   };
 }
 
+function gasUnits(result: ScanResult): string[] {
+  return result.plants
+    .filter((plant) => (plant.mw_by_source.natural_gas ?? 0) + (plant.mw_by_source.oil ?? 0) > 0)
+    .sort((a, b) => b.nameplate_mw - a.nameplate_mw)
+    .slice(0, 2)
+    .map((plant) => plant.plant_name);
+}
+
+/** Summer-evening wind cooling, when the rating site measured it. */
+function windRatingLever(ctx: Ctx): Lever | null {
+  const { result } = ctx;
+  const totals = result.totals;
+  const site = result.rating_site;
+  const hvMiles = totals.line_miles_by_kv["200-499"] + totals.line_miles_by_kv["500+"];
+  const wind = site.summer_4to8pm_median_wind_gain_over_aar;
+  if (!isNum(wind) || !isNum(site.distance_mi) || site.distance_mi > 25 || hvMiles < 1) return null;
+  const gain = Math.round((wind - 1) * 100);
+  if (gain < 10) return null;
+  const circuit = namedCircuits(result, 1)[0];
+  const score = 40 + Math.min(30, gain * 0.9) + Math.min(8, hvMiles / 12);
+  return {
+    id: "wind-rating",
+    label: "Evening wind ratings",
+    headline: `Rate ${circuit ?? "the highest-voltage line"} for summer wind`,
+    severity: severityOf(score),
+    score,
+    finding: `At ${site.name} (${site.distance_mi.toFixed(1)} mi), 4-8 pm wind lifts the weather-based rating by ${gain}% on the median summer evening.`,
+    metrics: [
+      { label: "Evening gain", value: `+${gain}%` },
+      { label: "200 kV+ line", value: `${n1(hvMiles)} mi` },
+      { label: "Season", value: "Jun-Sep" },
+    ],
+    evidence: [
+      `Rating site: ${site.name}, ${site.distance_mi.toFixed(1)} mi`,
+      `Median summer gain over the ambient-adjusted rating: +${gain}%`,
+      `Circuits: ${namedCircuits(result).join(", ") || "not named in the map data"}`,
+    ],
+    target: "A filed summer-evening limit on the span with the most open exposure.",
+    how: "Wind cooling is measured on the span, not modelled from a generic curve.",
+    tradeoff: "The gain is seasonal and disappears on still evenings.",
+    steps: [
+      {
+        kind: "ask", title: "Pick the span", who: "Planning lead", when: WHEN[0],
+        detail: `Choose the span on ${circuit ?? "the highest-voltage line"} near ${site.name} with the most open exposure.`,
+        done: "One span with bearing, clearance and span length.",
+      },
+      {
+        kind: "model", title: "Check the wind model", who: "Owner engineer", when: WHEN[1],
+        detail: `Test the ${gain}% evening gain against conductor temperature and the protection settings.`,
+        done: "A validated model with error bounds.",
+      },
+      {
+        kind: "test", title: "Instrument the span", who: "Field crew", when: WHEN[2],
+        detail: "Install an anemometer and conductor temperature sensor for one summer.",
+        done: "One summer of span weather and current.",
+      },
+      {
+        kind: "file", title: "File the seasonal limit", who: ctx.utility, when: WHEN[3],
+        detail: "File the summer-evening limit with an expiry date and a review trigger.",
+        done: "A filed rating with an expiry date.",
+      },
+    ],
+  };
+}
+
+/** Queued capacity that is already proposed but not yet delivering. */
+function queueLever(ctx: Ctx): Lever | null {
+  const { result } = ctx;
+  const totals = result.totals;
+  if (totals.proposed_mw < 50) return null;
+  const storageShare = (totals.proposed_storage_mw / totals.proposed_mw) * 100;
+  const names = result.events
+    .filter((event) => event.kind === "proposed")
+    .sort((a, b) => b.mw - a.mw)
+    .slice(0, 2)
+    .map((event) => event.plant_name);
+  const score = 44 + Math.min(22, totals.proposed_mw / 20) + (totals.planned_retirement_mw > 0 ? 4 : 0);
+  return {
+    id: "queue-conversion",
+    label: "Proposed capacity",
+    headline: `Land ${n0(totals.proposed_mw)} MW already proposed`,
+    severity: severityOf(score),
+    score,
+    finding: `${n0(totals.proposed_mw)} MW is proposed in this circle${names.length ? `, led by ${names.join(" and ")}` : ""}; ${pct0(storageShare)} of it is storage.`,
+    metrics: [
+      { label: "Proposed", value: `${n0(totals.proposed_mw)} MW` },
+      { label: "Storage share", value: pct0(storageShare) },
+      { label: "Retiring", value: `${n0(totals.planned_retirement_mw)} MW` },
+    ],
+    evidence: [
+      `Proposed projects: ${names.join(", ") || "listed without names in the generator data"}`,
+      `Proposed storage: ${n0(totals.proposed_storage_mw)} MW`,
+      `${n0(result.totals.substation_count)} substations to connect through`,
+    ],
+    target: "A dated path from proposed to in service, or an explicit slip.",
+    how: "The capacity is already chosen; the open question is interconnection and delivery date.",
+    tradeoff: "Queue position is not a schedule, and late projects leave the gap open.",
+    steps: [
+      {
+        kind: "ask", title: "Get the queue status", who: ctx.utility, when: WHEN[0],
+        detail: `Ask which of the ${n0(totals.proposed_mw)} MW proposed here has an interconnection agreement and a milestone date.`,
+        done: "A queue table with status per project.",
+      },
+      {
+        kind: "meet", title: "Match the substations", who: "Planning lead", when: WHEN[1],
+        detail: "Name the substations the queued projects connect through and the headroom at each.",
+        done: "A project-to-substation map with headroom.",
+      },
+      {
+        kind: "file", title: "Put dates in the plan", who: ctx.generator, when: WHEN[2],
+        detail: "Add in-service dates to the area plan and flag any that land after the retirement date.",
+        done: "A dated plan with slippage flags.",
+      },
+    ],
+  };
+}
+
 function coverageLever(ctx: Ctx): Lever | null {
   const { result } = ctx;
   const totals = result.totals;
@@ -536,6 +683,10 @@ function coverageLever(ctx: Ctx): Lever | null {
       { label: "Line", value: "0 mi" },
       { label: "Plants", value: "0" },
       { label: "Substations", value: "0" },
+    ],
+    evidence: [
+      `Radius: ${n1(result.area.radius_mi)} mi around ${n1(result.area.lat)}, ${n1(result.area.lon)}`,
+      result.inside_coverage ? "Centre is inside the data footprint" : "Centre is outside the data footprint",
     ],
     target: "A circle over the facility or corridor you actually care about.",
     how: "Widen the radius or re-centre, then reopen this tab.",
@@ -574,14 +725,15 @@ export function buildUpgradePlan(
     wildfireLever(ctx),
     storageLever(ctx),
     weatherRatingLever(ctx),
+    windRatingLever(ctx),
     hotDayLever(ctx),
     retirementLever(ctx),
+    queueLever(ctx),
     agingLever(ctx),
     coverageLever(ctx),
   ]
     .filter((item): item is Lever => item !== null)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .sort((a, b) => b.score - a.score);
 
   const hvMiles = totals.line_miles_by_kv["200-499"] + totals.line_miles_by_kv["500+"];
   const state = stateForArea(result.area.lat, result.area.lon);
@@ -639,6 +791,8 @@ export function upgradePlanMarkdown(
       item.finding,
       "",
       item.metrics.map((metric) => `- ${metric.label}: ${metric.value}`).join("\n"),
+      "",
+      ...item.evidence.map((line) => `· ${line}`),
       "",
       `**Target.** ${item.target}`,
       `**How.** ${item.how}`,

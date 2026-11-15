@@ -115,6 +115,17 @@ function LeverPlan({
         ))}
       </dl>
 
+      <div className="mt-3">
+        <p className={LABEL}>In this circle</p>
+        <ul className="mt-1 flex flex-col gap-0.5">
+          {item.evidence.map((line, index) => (
+            <li key={`${item.id}-evidence-${index}`} className="text-[12px] leading-snug text-[#556070]">
+              · {line}
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div className="mt-3 flex flex-col gap-1 text-[13px] leading-relaxed">
         <p className="text-[#1d2733]">
           <span className="font-semibold">How: </span>

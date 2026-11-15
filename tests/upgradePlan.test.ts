@@ -133,7 +133,7 @@ test("each lever's funding is matched from watched sources, not a shared list", 
   const retirement = plan.improvements.find((item) => item.id === "retirement-gap")!;
   const wildfire = plan.improvements.find((item) => item.id === "wildfire-hardening")!;
 
-  assert.deepEqual(storage.funding.map((match) => match.id), ["cec-deba", "doe-grip"]);
+  assert.ok(storage.funding.some((match) => match.id === "cec-deba"));
   assert.ok(weather.funding.some((match) => match.id === "cec-cerri"));
   assert.ok(!storage.funding.some((match) => match.id === "cec-cerri"));
   assert.ok(retirement.funding.some((match) => match.id === "doe-formula"));
@@ -183,4 +183,48 @@ test("a circle with no mapped assets offers only the re-scan lever", () => {
   assert.equal(plan.improvements[0].id, "no-assets");
   assert.equal(plan.improvements[0].steps.length, 1);
   assert.deepEqual(plan.improvements[0].funding, []);
+  assert.ok(plan.improvements[0].evidence.length >= 2);
+});
+
+test("wind and queue levers appear only when their own measurement does", () => {
+  const windy = fixture();
+  windy.rating_site = { ...windy.rating_site, summer_4to8pm_median_wind_gain_over_aar: 1.19 };
+  const plan = buildUpgradePlan(windy, null, daily());
+
+  const wind = plan.improvements.find((item) => item.id === "wind-rating");
+  assert.ok(wind, "wind lever missing on a site with a 19% evening gain");
+  assert.deepEqual(wind.steps.map((step) => step.kind), ["ask", "model", "test", "file"]);
+  assert.match(wind.finding, /\+?19%/);
+  assert.ok(wind.evidence.some((line) => line.includes("Riverside")));
+
+  const calm = buildUpgradePlan(fixture(), null, daily());
+  assert.ok(!calm.improvements.some((item) => item.id === "wind-rating"));
+
+  const queue = plan.improvements.find((item) => item.id === "queue-conversion");
+  assert.ok(queue, "queue lever missing with 120 MW proposed");
+  assert.match(queue.headline, /120 MW/);
+  assert.equal(queue.metrics.length, 3);
+  assert.ok(queue.evidence.length >= 2);
+
+  const noQueue = fixture();
+  noQueue.totals = { ...noQueue.totals, proposed_mw: 0, proposed_storage_mw: 0 };
+  assert.ok(!buildUpgradePlan(noQueue, null, daily()).improvements.some((item) => item.id === "queue-conversion"));
+});
+
+test("aging gas fires on a smaller, older fleet and every lever has named evidence", () => {
+  const la = fixture();
+  la.totals = { ...la.totals, fossil_mw: 176, cap_weighted_age: 31.6, nameplate_mw: 187 };
+  la.rating_site = { ...la.rating_site, summer_4to8pm_median_wind_gain_over_aar: 1.2 };
+  const plan = buildUpgradePlan(la, null, daily());
+
+  const aging = plan.improvements.find((item) => item.id === "aging-fossil");
+  assert.ok(aging, "aging lever missing for 176 MW at 31.6 years");
+  assert.ok(aging.evidence.length >= 2);
+
+  const ids = plan.improvements.map((item) => item.id);
+  assert.equal(new Set(ids).size, ids.length, "duplicate lever ids");
+  for (const item of plan.improvements) {
+    assert.ok(item.evidence.length >= 2, `${item.id} has no evidence`);
+    assert.ok(item.evidence.every((line) => line.length > 0 && !line.includes("undefined")), `${item.id} evidence is malformed`);
+  }
 });

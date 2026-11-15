@@ -63,7 +63,7 @@ test("searchOpportunities keeps only topic-matching titles and maps dates", asyn
   const payload = {
     errorcode: 0,
     data: {
-      hitCount: 3,
+      hitCount: 4,
       oppHits: [
         { id: "1", title: "Dynamic line rating &amp; transmission capacity", agency: "DOE", number: "DE-1", oppStatus: "posted", openDate: "01/05/2026", closeDate: "03/01/2026" },
         { id: "2", title: "Nuclear workforce scholarship", agency: "DOE", number: "DE-2", oppStatus: "posted", openDate: "01/05/2026", closeDate: "" },
@@ -75,7 +75,7 @@ test("searchOpportunities keeps only topic-matching titles and maps dates", asyn
   const result = await searchOpportunities({
     fetch: (async () => new Response(JSON.stringify(payload), { status: 200 })) as typeof fetch,
   });
-  assert.equal(result.opportunities.length, 2);
+  assert.equal(result.opportunities.length, 1, "a generic grid-resilience title must not be kept");
   const first = result.opportunities.find((item) => item.id === "grants-gov-1")!;
   assert.equal(first.title, "Dynamic line rating & transmission capacity");
   assert.equal(first.status, "open");
@@ -202,10 +202,17 @@ test("grantFeed reports what the watch run covered", () => {
   assert.equal(feed.checkedAt.slice(0, 10), "2026-11-15");
 });
 
-test("leversForTitle maps funding language to levers", () => {
+test("leversForTitle maps a listing only to what the money funds", () => {
   assert.deepEqual(leversForTitle("Energy Storage Deployment Grant"), ["sunset-storage"]);
-  const grid = leversForTitle("Grid Resilience and Transmission Modernization");
-  assert.ok(grid.includes("weather-rating") && grid.includes("wildfire-hardening"));
+  // Regression: GFO-26-503 says "for Grid Reliability" but funds storage only.
+  assert.deepEqual(
+    leversForTitle("GFO-26-503 - Distributed Electricity Backup Assets Program - Distributed Energy Resources (DERs) for Grid Reliability"),
+    ["sunset-storage"],
+  );
+  const grid = leversForTitle("Transmission Line Rating and Substation Modernization");
+  assert.deepEqual(grid.sort(), ["hot-day-capacity", "weather-rating"]);
+  assert.deepEqual(leversForTitle("Grid Reliability Improvements"), []);
+  assert.deepEqual(leversForTitle("Generator Retirement and Repowering"), ["retirement-gap"]);
   assert.deepEqual(leversForTitle("Parking lot resurfacing"), []);
 });
 
@@ -213,7 +220,7 @@ test("federalRegisterOpportunities keeps money notices and reports its feed", as
   const payload = {
     results: [
       {
-        title: "Notice of Funding Opportunity for Grid Resilience Projects",
+        title: "Notice of Funding Opportunity for Transmission Line Rating Upgrades",
         html_url: "https://www.federalregister.gov/documents/2026/11/01/2026-1/grid",
         document_number: "2026-1",
         publication_date: "2026-11-01",
@@ -302,14 +309,14 @@ test("Federal Register keeps only safe official links and sanitizes source text"
   const payload = {
     results: [
       {
-        title: "Notice of Funding Opportunity <img src=x onerror=alert(1)> for Grid Resilience",
+        title: "Notice of Funding Opportunity <img src=x onerror=alert(1)> for Transmission Line Ratings",
         html_url: "https://www.federalregister.gov/documents/2026/11/01/2026-1/grid-resilience",
         document_number: "2026-1",
         publication_date: "2026-11-01",
         agencies: [{ name: "Attacker controlled agency" }],
       },
       {
-        title: "Notice of Funding Opportunity for Grid Resilience",
+        title: "Notice of Funding Opportunity for Transmission Line Ratings",
         html_url: "https://attacker.example/documents/2026/11/01/2026-2/fake",
         document_number: "2026-2",
         publication_date: "2026-11-01",
@@ -321,7 +328,7 @@ test("Federal Register keeps only safe official links and sanitizes source text"
     fetch: (async () => new Response(JSON.stringify(payload), { status: 200 })) as typeof fetch,
   });
   assert.equal(live.opportunities.length, 1);
-  assert.equal(live.opportunities[0].title, "Notice of Funding Opportunity for Grid Resilience");
+  assert.equal(live.opportunities[0].title, "Notice of Funding Opportunity for Transmission Line Ratings");
   assert.equal(live.opportunities[0].agency, "Federal Register notice");
   assert.equal(live.opportunities[0].url, payload.results[0].html_url);
 });

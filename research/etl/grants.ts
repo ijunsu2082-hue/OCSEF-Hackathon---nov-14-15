@@ -168,22 +168,29 @@ export const GRANT_PROGRAMS: GrantProgram[] = [
   },
 ];
 
-/** One saved search per lever topic; `accept` drops keyword noise from the results. */
-export const LEVER_SEARCHES: Record<LeverId, { keyword: string; category: string | null; accept: RegExp }> = {
-  "sunset-storage": { keyword: "energy storage", category: "EN", accept: /storage|batter/i },
-  "weather-rating": { keyword: "transmission", category: "EN", accept: /transmission|dynamic line|grid (resilience|modernization|capacity)/i },
-  "hot-day-capacity": { keyword: "transmission", category: "EN", accept: /transmission|dynamic line|grid (resilience|modernization|capacity)/i },
-  "wildfire-hardening": { keyword: "wildfire", category: "EN", accept: /wildfire|fire (mitigation|risk)|grid (resilience|hardening)/i },
-  "retirement-gap": { keyword: "grid reliability", category: "EN", accept: /generation (replacement|capacity)|retirement|grid (resilience|reliability)/i },
-  "aging-fossil": { keyword: "grid reliability", category: "EN", accept: /generation (replacement|capacity)|retirement|grid (resilience|reliability)/i },
+/** One saved search per lever topic; the title screen decides what is kept. */
+export const LEVER_SEARCHES: Record<LeverId, { keyword: string; category: string | null }> = {
+  "sunset-storage": { keyword: "energy storage", category: "EN" },
+  "weather-rating": { keyword: "transmission", category: "EN" },
+  "hot-day-capacity": { keyword: "transmission", category: "EN" },
+  "wildfire-hardening": { keyword: "wildfire", category: "EN" },
+  "retirement-gap": { keyword: "grid reliability", category: "EN" },
+  "aging-fossil": { keyword: "grid reliability", category: "EN" },
 };
 
-/** Shared title screen for the aggregators that return prose titles, not tags. */
+/**
+ * Shared title screen for the aggregators that return prose titles, not tags.
+ *
+ * Each rule names the thing the money buys, and only that. Generic words such as
+ * "reliability", "resilience" or "grid" are deliberately absent: a storage award
+ * written "for grid reliability" funds storage, not retirement or gas upkeep.
+ */
 const TOPIC_LEVERS: { levers: LeverId[]; pattern: RegExp }[] = [
-  { levers: ["sunset-storage"], pattern: /energy storage|storage (project|system|deploy)|batter(y|ies)|backup asset|distributed energy resource|standby power/i },
-  { levers: ["weather-rating", "hot-day-capacity"], pattern: /transmission|grid (resilience|modernization|capacity|reliability)|dynamic line|line rating/i },
-  { levers: ["wildfire-hardening"], pattern: /wildfire|fire (mitigation|risk)|grid hardening|resilience/i },
-  { levers: ["retirement-gap", "aging-fossil"], pattern: /generation (replacement|capacity)|retirement|repowering|reliab/i },
+  { levers: ["sunset-storage"], pattern: /storage|batter(y|ies)|backup asset|standby|long-duration|pumped (hydro|storage)/i },
+  { levers: ["weather-rating", "hot-day-capacity"], pattern: /transmission|line rating|dynamic line|ambient.adjusted|reconductor|substation|grid (capacity|modernization)/i },
+  { levers: ["wildfire-hardening"], pattern: /wildfire|fire (mitigation|risk|threat)|covered conductor|vegetation management/i },
+  { levers: ["retirement-gap"], pattern: /retirement|retiring|repowering|generation (replacement|capacity)/i },
+  { levers: ["aging-fossil"], pattern: /heat rate|condition assessment|fossil|gas turbine|combustion turbine/i },
 ];
 
 export function leversForTitle(title: string): LeverId[] {
@@ -365,12 +372,12 @@ export async function searchOpportunities(
   const d: Required<GrantsDeps> = { fetch: deps.fetch ?? fetch, timeoutMs: deps.timeoutMs ?? 20_000, now: deps.now ?? (() => new Date()) };
 
   // One request per distinct keyword/category, then reuse the hits across levers.
-  const groups = new Map<string, { keyword: string; category: string | null; levers: LeverId[]; accept: RegExp }>();
+  const groups = new Map<string, { keyword: string; category: string | null; levers: LeverId[] }>();
   for (const [lever, spec] of Object.entries(LEVER_SEARCHES) as [LeverId, (typeof LEVER_SEARCHES)[LeverId]][]) {
     const key = `${spec.keyword}|${spec.category ?? ""}`;
     const group = groups.get(key);
     if (group) group.levers.push(lever);
-    else groups.set(key, { keyword: spec.keyword, category: spec.category, levers: [lever], accept: spec.accept });
+    else groups.set(key, { keyword: spec.keyword, category: spec.category, levers: [lever] });
   }
 
   const searches: GrantSearch[] = [];
@@ -421,9 +428,12 @@ export async function searchOpportunities(
         const status = hit.oppStatus === "posted" ? "open" : hit.oppStatus === "forecasted" ? "forecasted" : null;
         if (!id || !/^\d{1,20}$/.test(id) || !title || !status) continue;
         const clean = title;
-        if (!group.accept.test(clean)) continue;
+        // Same subject screen as the other aggregators: the title must name what
+        // the money buys, not merely repeat the search keyword.
+        const levers = leversForTitle(clean).filter((lever) => group.levers.includes(lever));
+        if (!levers.length) continue;
         const existing = byId.get(id);
-        const levers = existing ? [...new Set([...existing.levers, ...group.levers])] : [...group.levers];
+        const merged = existing ? [...new Set([...existing.levers, ...levers])] : levers;
         byId.set(id, {
           id: `grants-gov-${id}`,
           title: clean,
@@ -434,7 +444,7 @@ export async function searchOpportunities(
           openDate: usDateToIso(hit.openDate),
           closeDate: usDateToIso(hit.closeDate),
           states: [],
-          levers,
+          levers: merged,
           source: "grants-gov",
         });
         kept += 1;
@@ -490,11 +500,11 @@ export async function federalRegisterOpportunities(
   const checkedAt = d.now().toISOString();
   const result = await request(url, { method: "GET", headers: { Accept: "application/json" } }, d, FEDERAL_REGISTER_ORIGINS, MAX_JSON_BYTES);
 
-  const feed = (opportunities: WatchedOpportunity[]): WatchedFeed => ({
+  const feed = (opportunities: WatchedOpportunity[], considered: number): WatchedFeed => ({
     id: "federal-register",
     name: "Federal Register notices",
     url,
-    hitCount: opportunities.length,
+    hitCount: considered,
     kept: opportunities.length,
     watch: {
       status: "ok",
@@ -502,7 +512,7 @@ export async function federalRegisterOpportunities(
       title: null,
       fingerprint: `sha256:${createHash("sha256").update(JSON.stringify(opportunities)).digest("hex").slice(0, 32)}`,
       checkedAt,
-      detail: `Federal Register answered with ${opportunities.length} funding notice${opportunities.length === 1 ? "" : "s"}.`,
+      detail: `Federal Register returned ${considered} notices; ${opportunities.length} matched a lever.`,
     },
   });
 
@@ -571,7 +581,8 @@ export async function federalRegisterOpportunities(
       source: "federal-register",
     });
   }
-  return { opportunities: opportunities.slice(0, 12), feed: feed(opportunities.slice(0, 12)) };
+  const kept = opportunities.slice(0, 12);
+  return { opportunities: kept, feed: feed(kept, parsed.results.length) };
 }
 
 /** The CEC solicitation index: the list the state's energy money opens on. */
