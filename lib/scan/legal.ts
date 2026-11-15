@@ -178,6 +178,9 @@ export const CPUC = {
   cabPhone: { display: "1-800-649-7570", tel: "+18006497570", hours: "Monday to Friday, 8:30 a.m. to 4:30 p.m." },
   cabPhoneUrl:
     "https://www.cpuc.ca.gov/consumer-support/file-a-complaint/utility-complaint/how-the-consumer-affairs-branch-can-help",
+  /** Consumer Affairs Branch email, published on the CPUC public safety complaint page (checked Nov 15, 2026). */
+  email: "consumer-affairs@cpuc.ca.gov",
+  emailSource: "https://www.cpuc.ca.gov/consumer-support/file-a-complaint/public-safety-complaint",
   /** Public safety complaint (dangling wire etc.) after the emergency is handled. */
   safetyComplaintUrl: "https://ia.cpuc.ca.gov/safetyevents/",
   safetyInfoUrl: "https://www.cpuc.ca.gov/consumer-support/file-a-complaint/public-safety-complaint",
