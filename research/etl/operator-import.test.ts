@@ -166,7 +166,7 @@ test("operator inputs sit beside public assets and are never merged into them", 
   assert.equal(empty.operator?.inputs.length, 1);
 
   // A loaded public inventory for the same location, written the way load-assets.ts writes it.
-  const publicData = { schema: "gridsentinel.location-assets/1", location: LOCATION, datasets: [{ source: "hifld-substations", features: { type: "FeatureCollection", features: [] } }] };
+  const publicData = { schema: "mapergy.location-assets/1", location: LOCATION, datasets: [{ source: "hifld-substations", features: { type: "FeatureCollection", features: [] } }] };
   const publicRevision = digest(publicData);
   const assetsDirectory = resolve(stateRoot(), "loaded-assets", LOCATION);
   await atomicJson(resolve(assetsDirectory, `${publicRevision}.json`), publicData);

@@ -13,7 +13,7 @@ export interface WeatherSample {
 
 const CELL_DIGITS = 3;
 const roundCell = (value: number) => Number(value.toFixed(CELL_DIGITS));
-/** Default GridSentinel coverage center: Westminster, CA. */
+/** Default Mapergy coverage center: Westminster, CA. */
 export const WEATHER_BASELINE = { lat: 33.7538, lon: -118.0111 };
 
 function databasePath(): string {

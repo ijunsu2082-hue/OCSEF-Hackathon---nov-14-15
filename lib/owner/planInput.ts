@@ -109,7 +109,7 @@ export interface DataRequirementStatus {
 }
 
 export interface PlanInput {
-  schema: "gridsentinel.plan-input/1";
+  schema: "mapergy.plan-input/1";
   target: PlanTarget;
   /** Lifecycle stage the initiative is in now. */
   stage: StageId;
@@ -207,7 +207,7 @@ function ratingFacts(
       id: evId,
       kind: "model_run",
       title: `Screening line rating from ${live.weather.source} weather (IEEE 738 simplified)`,
-      source: { publisher: "GridSentinel lib/scan/rating.ts", locator: live.weather.time },
+      source: { publisher: "Mapergy lib/scan/rating.ts", locator: live.weather.time },
       retrievedAt: asOf,
       observedAt: live.weather.time,
       freshness: "unknown",
@@ -225,7 +225,7 @@ function ratingFacts(
       id: evId,
       kind: "model_run",
       title: `Historical daily ratings ${sorted[0].date} to ${sorted[sorted.length - 1].date}`,
-      source: { publisher: "GridSentinel line_rating archive", locator: `${sorted.length} days` },
+      source: { publisher: "Mapergy line_rating archive", locator: `${sorted.length} days` },
       retrievedAt: asOf,
       freshness: "unknown",
       provenance: "model",
@@ -245,7 +245,7 @@ function scanEvidence(id: string, title: string, locator: string, scannedAt: str
     id,
     kind: "snapshot",
     title,
-    source: { publisher: "GridSentinel Area Scan (EIA-860 plants, OpenStreetMap grid)", locator, sha256: payloadHash },
+    source: { publisher: "Mapergy Area Scan (EIA-860 plants, OpenStreetMap grid)", locator, sha256: payloadHash },
     retrievedAt: scannedAt,
     freshness: "unknown",
     provenance: "public_source",
@@ -277,7 +277,7 @@ function gridFacts(subject: string, t: RiskTotals, asOf: string, ev: string): Fa
 
 function baseInput(target: PlanTarget, ctx: AdapterContext, origin: PlanInput["origin"], scope: string): PlanInput {
   return {
-    schema: "gridsentinel.plan-input/1",
+    schema: "mapergy.plan-input/1",
     target,
     stage: ctx.stage ?? "feasibility",
     scope,

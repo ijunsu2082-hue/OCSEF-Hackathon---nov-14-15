@@ -6,9 +6,14 @@ import { atomicJson, reportRevision, stateRoot, verifyLocation, type LocationRep
 import { replayAssets, type AssetManifest } from "./assets";
 import { readLocationAssets } from "./load-assets";
 import { replaySnapshot } from "../snapshot";
+import { isWeatherHistorySchema } from "./weather-history";
 
-const FORMAT = "gridsentinel.backup/1";
-const DATA_FORMAT = "gridsentinel.data-backup/1";
+const FORMAT = "mapergy.backup/1";
+const DATA_FORMAT = "mapergy.data-backup/1";
+// Pre-rename formats still restore. The format string is the AES-GCM AAD, so a
+// legacy envelope is opened with its own recorded format, never the current one.
+const FORMATS = [FORMAT, "gridsentinel.backup/1"];
+const DATA_FORMATS = [DATA_FORMAT, "gridsentinel.data-backup/1"];
 
 function key(): Buffer {
   const value = process.env.ETL_BACKUP_KEY ?? "";
@@ -82,10 +87,10 @@ export async function backupReport(report: LocationReport, destination: string):
 
 export async function restoreReport(path: string): Promise<LocationReport> {
   const envelope = JSON.parse(await readFile(path, "utf8"));
-  if (envelope.format !== FORMAT) throw new Error("Unsupported backup format");
+  if (!FORMATS.includes(envelope.format)) throw new Error("Unsupported backup format");
   checkEnvelope(envelope);
   const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"), { authTagLength: 16 });
-  decipher.setAAD(Buffer.from(FORMAT));
+  decipher.setAAD(Buffer.from(envelope.format));
   decipher.setAuthTag(Buffer.from(envelope.tag, "hex"));
   const payload = JSON.parse(Buffer.concat([
     decipher.update(Buffer.from(envelope.ciphertext, "base64")), decipher.final(),
@@ -133,10 +138,10 @@ async function seal(payload: unknown, destination: string): Promise<void> {
 
 async function unseal(path: string): Promise<any> {
   const envelope = JSON.parse(await readFile(path, "utf8"));
-  if (envelope.format !== DATA_FORMAT) throw new Error("Unsupported data backup format");
+  if (!DATA_FORMATS.includes(envelope.format)) throw new Error("Unsupported data backup format");
   checkEnvelope(envelope);
   const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"), { authTagLength: 16 });
-  decipher.setAAD(Buffer.from(DATA_FORMAT));
+  decipher.setAAD(Buffer.from(envelope.format));
   decipher.setAuthTag(Buffer.from(envelope.tag, "hex"));
   return JSON.parse(Buffer.concat([decipher.update(Buffer.from(envelope.ciphertext, "base64")), decipher.final()]).toString("utf8"));
 }
@@ -238,7 +243,7 @@ export async function backupWeather(snapshotId: string, destination: string): Pr
   if (!/^[a-z]+_[a-f0-9]{16}$/.test(snapshotId)) throw new Error("Expected weather snapshot ID");
   const path = resolve(stateRoot(), "weather", `${snapshotId}.json`);
   const archive = JSON.parse(await readFile(path, "utf8"));
-  if (archive.schema !== "gridsentinel.weather-history/1" || archive.snapshot?.id !== snapshotId) throw new Error("Invalid weather archive");
+  if (!isWeatherHistorySchema(archive.schema) || archive.snapshot?.id !== snapshotId) throw new Error("Invalid weather archive");
   await replaySnapshot(archive.snapshot);
   const blob = await readBlob(archive.snapshot.sha256, archive.snapshot.cache_path);
   await seal({ kind: "weather", archive, blob }, destination);
@@ -247,7 +252,7 @@ export async function backupWeather(snapshotId: string, destination: string): Pr
 export async function restoreWeather(path: string): Promise<{ snapshot: string; rows: number }> {
   const payload = await unseal(path) as { kind: string; archive: any; blob: string };
   const archive = payload.archive;
-  if (payload.kind !== "weather" || archive?.schema !== "gridsentinel.weather-history/1" ||
+  if (payload.kind !== "weather" || !isWeatherHistorySchema(archive?.schema) ||
       !/^[a-z]+_[a-f0-9]{16}$/.test(archive.snapshot?.id)) throw new Error("Invalid weather backup");
   const bytes = Buffer.from(payload.blob, "base64");
   if (createHash("sha256").update(bytes).digest("hex") !== archive.snapshot.sha256) throw new Error("Backup blob checksum mismatch");

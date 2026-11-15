@@ -1,4 +1,4 @@
-# GridSentinel Evidence Framework — specification, state, and operating guide
+# Mapergy Evidence Framework — specification, state, and operating guide
 
 **Status:** complete and verified for `westminster-100mi`.
 **Bundle:** `public/evidence/westminster-100mi.json` · `bnd_a25b91fa15ffa1d3`
@@ -50,7 +50,7 @@ not a parallel literal, so the screen and the audit cannot drift.
 
 | Area | State |
 | --- | --- |
-| Evidence contract | `lib/evidence/schema.ts` — claim/source/snapshot/bundle types, `gridsentinel.evidence/1` |
+| Evidence contract | `lib/evidence/schema.ts` — claim/source/snapshot/bundle types, `mapergy.evidence/1` (bundles built before the rename, including the committed one, carry `gridsentinel.evidence/1` and still verify) |
 | Canonical IDs | `lib/evidence/canonical.ts` — SHA-256 over canonical JSON; claim/snapshot/bundle/registry digests |
 | Predicate registry | `lib/evidence/predicates.ts` — closed list, per-predicate unit, type, range, allowed methods, inference gate |
 | Formula registry | `lib/evidence/formulas.ts` — 14 formulas, domain math reuses `lib/risk.ts` / `lib/simulation.ts` semantics |
@@ -226,10 +226,10 @@ fails with `CONFLICT_UNRESOLVED`.
 | `eia-860` | US EIA | primary | bulk |
 | `epa-egrid` | US EPA | primary | bulk |
 | `osm-overpass` | OpenStreetMap contributors | secondary | Overpass |
-| `gs-layer-plants` | GridSentinel (EIA-860 subset) | derived | in-repo layer |
-| `gs-layer-transmission` | GridSentinel / OSM | derived | in-repo layer |
-| `gs-layer-substations` | GridSentinel / OSM | derived | in-repo layer |
-| `gs-seed-nodes` | GridSentinel curated | modeled | seed |
+| `gs-layer-plants` | Mapergy (EIA-860 subset) | derived | in-repo layer |
+| `gs-layer-transmission` | Mapergy / OSM | derived | in-repo layer |
+| `gs-layer-substations` | Mapergy / OSM | derived | in-repo layer |
+| `gs-seed-nodes` | Mapergy curated | modeled | seed |
 | `operator-records` | Operator / agency | primary | manual capture |
 
 The registry is hashed into every bundle (`registry_digest`). Changing an entry invalidates

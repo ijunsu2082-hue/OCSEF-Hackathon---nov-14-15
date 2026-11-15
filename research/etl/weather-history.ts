@@ -3,6 +3,12 @@ import { digest } from "../../lib/evidence/canonical";
 import { buildSnapshot } from "../snapshot";
 import { atomicJson, locationQuery, request, stateRoot, storeCapture } from "./pipeline";
 
+export const WEATHER_HISTORY_SCHEMA = "mapergy.weather-history/1" as const;
+/** Pre-rename id; archives written with it are still read. */
+export const LEGACY_WEATHER_HISTORY_SCHEMA = "gridsentinel.weather-history/1" as const;
+export const isWeatherHistorySchema = (value: unknown): boolean =>
+  value === WEATHER_HISTORY_SCHEMA || value === LEGACY_WEATHER_HISTORY_SCHEMA;
+
 const HOUR = 3600000;
 const FIELDS = { temperature_2m: "°C", wind_speed_10m: "m/s", shortwave_radiation: "W/m²" } as const;
 
@@ -64,7 +70,7 @@ export async function backfillWeather(lat: number, lon: number, start: string, e
       };
     });
     const archive = {
-      schema: "gridsentinel.weather-history/1", center: query.center, start, end, model: "era5",
+      schema: WEATHER_HISTORY_SCHEMA, center: query.center, start, end, model: "era5",
       basis: "modeled_reanalysis", gridCell: [source.latitude, source.longitude], units: FIELDS, snapshot, rows,
     };
     const path = resolve(stateRoot(), "weather", `${snapshot.id}.json`);

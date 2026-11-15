@@ -7,6 +7,7 @@ import { ampacity, rateLine } from "../../lib/scan/rating";
 import { replaySnapshot } from "../snapshot";
 import { csvCell } from "./caiso";
 import { atomicJson, stateRoot } from "./pipeline";
+import { isWeatherHistorySchema, type LEGACY_WEATHER_HISTORY_SCHEMA, type WEATHER_HISTORY_SCHEMA } from "./weather-history";
 
 /**
  * Hourly line-rating CSVs regenerated from an archived, hash-verified weather
@@ -47,7 +48,7 @@ interface ArchiveRow {
 }
 
 export interface WeatherArchive {
-  schema: "gridsentinel.weather-history/1";
+  schema: typeof WEATHER_HISTORY_SCHEMA | typeof LEGACY_WEATHER_HISTORY_SCHEMA;
   center: [number, number];
   start: string;
   end: string;
@@ -80,8 +81,8 @@ const STATIC_EXACT = ampacity(40, 0.61, 1000, 90);
  * prove every archived row equals the capture's own hourly arrays.
  */
 export async function verifyWeatherArchive(archive: WeatherArchive): Promise<WeatherArchive> {
-  if (archive?.schema !== "gridsentinel.weather-history/1" || !Array.isArray(archive.rows)) {
-    throw new Error("Not a gridsentinel.weather-history/1 archive");
+  if (!isWeatherHistorySchema(archive?.schema) || !Array.isArray(archive.rows)) {
+    throw new Error("Not a mapergy.weather-history/1 archive");
   }
   const { data } = await replaySnapshot(archive.snapshot);
   const hourly = (data as { hourly?: Record<string, unknown[]> }).hourly;
@@ -223,7 +224,7 @@ export async function generateRatings(snapshotId: string, siteKey: string, year:
   const csvPath = resolve(directory, `${name}.csv`);
   const engineSource = await readFile(resolve(process.cwd(), ENGINE_MODULE));
   const manifest = {
-    schema: "gridsentinel.line-rating-csv/1",
+    schema: "mapergy.line-rating-csv/1",
     site, year,
     time_basis: { utc_offset_hours: utcOffsetHours, dst: false, column: "time is local standard time, no zone suffix" },
     csv: { file: `${name}.csv`, sha256: sha256(csv), rows: rows.length, columns: RATING_COLUMNS },

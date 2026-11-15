@@ -352,7 +352,7 @@ async function fetchOnce(url: URL, key: string, options: HttpOptions): Promise<H
     if (validator) touch(key, validator);
     const headers: Record<string, string> = {
       accept,
-      "user-agent": options.userAgent ?? "GridSentinel/1.0",
+      "user-agent": options.userAgent ?? "Mapergy/1.0",
     };
     if (validator?.etag) headers["if-none-match"] = validator.etag;
     else if (validator?.lastModified) headers["if-modified-since"] = validator.lastModified;

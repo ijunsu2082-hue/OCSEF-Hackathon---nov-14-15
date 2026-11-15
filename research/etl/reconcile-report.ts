@@ -32,7 +32,9 @@ import {
   POLICIES_VERSION, RECONCILE_POLICIES, type PolicySide, type ReconcilePolicy,
 } from "./reconcile-policies";
 
-export const RECONCILIATION_SCHEMA = "gridsentinel.reconciliation/1";
+export const RECONCILIATION_SCHEMA = "mapergy.reconciliation/1";
+/** Pre-rename id. Stored records carrying it are still served (their digest covers it). */
+export const LEGACY_RECONCILIATION_SCHEMA = "gridsentinel.reconciliation/1";
 
 export interface ReconciliationSide {
   source: string;
@@ -60,7 +62,7 @@ export interface ReconciliationComparison {
 }
 
 export interface Reconciliation {
-  schema: typeof RECONCILIATION_SCHEMA;
+  schema: typeof RECONCILIATION_SCHEMA | typeof LEGACY_RECONCILIATION_SCHEMA;
   location: string;
   report_revision: string;
   policies_version: string;
@@ -453,7 +455,7 @@ export async function readReconciliation(id: string, reportRev: string): Promise
   }
   const record = JSON.parse(text) as Reconciliation;
   const { digest: recorded, ...rest } = record;
-  if (record.schema !== RECONCILIATION_SCHEMA || record.location !== id || record.report_revision !== reportRev ||
+  if ((record.schema !== RECONCILIATION_SCHEMA && record.schema !== LEGACY_RECONCILIATION_SCHEMA) || record.location !== id || record.report_revision !== reportRev ||
       record.policies_version !== POLICIES_VERSION) {
     throw new Error("Reconciliation does not match its report revision");
   }

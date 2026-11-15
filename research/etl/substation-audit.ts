@@ -124,7 +124,7 @@ export async function auditSubstations(osmFile: string, manifestFile: string, cr
     };
   });
   return {
-    schema: "gridsentinel.substation-audit/1",
+    schema: "mapergy.substation-audit/1",
     totals: {
       osm: byOsm.size, hifld: byHifld.size, matched: comparisons.length, unreviewed: unreviewed.length,
       osmNameUnavailable: [...byOsm.values()].filter((record) => !text(record.name)).length,

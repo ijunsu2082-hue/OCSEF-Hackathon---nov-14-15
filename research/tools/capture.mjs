@@ -21,7 +21,7 @@ if (args.length < 2) {
 
 const url = args[0];
 const out = resolve(args[1]);
-const headers = { "user-agent": "GridSentinel-Research/0.1 (+https://github.com/; evidence capture)" };
+const headers = { "user-agent": "Mapergy-Research/0.1 (+https://github.com/; evidence capture)" };
 let method = "GET";
 let body;
 

@@ -67,7 +67,7 @@ export async function request(
   }
   const { bytes, headers } = await requestBytes(target, {
     accept,
-    userAgent: process.env.NWS_USER_AGENT || "GridSentinel/1.0",
+    userAgent: process.env.NWS_USER_AGENT || "Mapergy/1.0",
     maxBytes: MAX_BYTES,
     timeoutMs: 15000,
     ...(redirect ? { redirect } : {}),
@@ -131,7 +131,10 @@ export async function storeCapture(bytes: Uint8Array) {
  * Marker on every report this code writes. Reports without it predate the
  * marker; only those can be in the legacy (pre-observation-time) shape.
  */
-export const LOCATION_REPORT_SCHEMA = "gridsentinel.location-report/2" as const;
+export const LOCATION_REPORT_SCHEMA = "mapergy.location-report/2" as const;
+/** Pre-rename marker. Same rules as the current one; replays keep it so revisions stay deterministic. */
+export const LEGACY_LOCATION_REPORT_SCHEMA = "gridsentinel.location-report/2" as const;
+const LOCATION_REPORT_SCHEMAS: readonly string[] = [LOCATION_REPORT_SCHEMA, LEGACY_LOCATION_REPORT_SCHEMA];
 
 interface FeedState {
   attempted_at: string;
@@ -181,7 +184,7 @@ function observedState(feed: Feed, loaded: LoadedSnapshot, now: Date, attempted_
 
 export interface LocationReport {
   /** Absent only on reports written before the marker existed. */
-  schema?: typeof LOCATION_REPORT_SCHEMA;
+  schema?: typeof LOCATION_REPORT_SCHEMA | typeof LEGACY_LOCATION_REPORT_SCHEMA;
   query: LocationQuery;
   state_hash: string;
   feeds: Record<string, FeedState>;
@@ -219,12 +222,17 @@ export async function runLocation(
 ): Promise<LocationReport> {
   const id = locationId(query);
   const previous = pinned ?? await readReport(id);
-  if (pinned?.schema !== undefined && pinned.schema !== LOCATION_REPORT_SCHEMA) {
+  if (pinned?.schema !== undefined && !LOCATION_REPORT_SCHEMAS.includes(pinned.schema)) {
     throw new Error(`Unsupported location report schema ${String(pinned.schema)}`);
   }
   // New reports, and replays of reports carrying the marker, use the current
   // rules. Unversioned reports replay under the rules they were written with.
-  const versioned = !pinned || pinned.schema === LOCATION_REPORT_SCHEMA;
+  const versioned = !pinned || pinned.schema !== undefined;
+  // A replay rebuilds under the ids the pinned report was written with: the
+  // bundle id hashes the evidence schema id, so a legacy (pre-rename) report
+  // only reproduces under its legacy ids. New reports get the current ids.
+  const reportSchema = pinned?.schema ?? LOCATION_REPORT_SCHEMA;
+  const evidenceSchema = pinned?.evidence.schema ?? EVIDENCE_SCHEMA;
   // Legacy reports recorded no observation-time fields on any feed. An
   // all-unavailable report has the same shape, so only an unversioned report
   // can be legacy (see the state_hash tuple choice below).
@@ -328,7 +336,7 @@ export async function runLocation(
     Math.asin(Math.sin(radiusDegrees * Math.PI / 180) / Math.cos(lat * Math.PI / 180)) * 180 / Math.PI;
   const globalLongitude = lon - lonDelta < -180 || lon + lonDelta > 180;
   const evidence: EvidenceBundle = {
-    schema: EVIDENCE_SCHEMA, bundle_id: "",
+    schema: evidenceSchema, bundle_id: "",
     region: {
       id, name: `Location ${lat}, ${lon}`,
       state: "", center: query.center, radius_miles: query.radius_miles,
@@ -401,14 +409,14 @@ export async function runLocation(
         detectedAt: typeof existing?.detectedAt === "string" ? existing.detectedAt : now.toISOString(),
         lastSeen: now.toISOString(), count: priorCount + 1, issue,
       });
-      console.warn(`GridSentinel: asset inventory ${inventory} rejected (${issue}); report bound to no inventory`);
+      console.warn(`Mapergy: asset inventory ${inventory} rejected (${issue}); report bound to no inventory`);
       assets = null;
     }
   } else {
     assets = previous?.assets;
   }
   const report: LocationReport = {
-    ...(versioned ? { schema: LOCATION_REPORT_SCHEMA } : {}),
+    ...(versioned ? { schema: reportSchema } : {}),
     query, state_hash, feeds: states, evidence, ...(assets === undefined ? {} : { assets }),
   };
   const rebound = !!previous && ((previous.assets?.location ?? null) !== (assets?.location ?? null) ||

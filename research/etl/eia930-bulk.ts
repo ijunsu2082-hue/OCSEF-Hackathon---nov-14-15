@@ -160,7 +160,7 @@ export async function backfillEia930(
     const parsed = parseEia930Balance(data as string, respondent);
     if (!parsed.rows.length) throw new Error(`EIA-930 file has no published demand for ${respondent}`);
     const archive = {
-      schema: "gridsentinel.eia930-bulk/1", basis: "utc_hour_ending",
+      schema: "mapergy.eia930-bulk/1", basis: "utc_hour_ending",
       units: "MW as published in Demand (MW); the EIA API reports the same hourly values as megawatthours", snapshot, ...parsed,
     };
     const path = resolve(stateRoot(), "eia930", `${snapshot.id}-${respondent}.json`);

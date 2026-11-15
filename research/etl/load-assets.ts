@@ -173,7 +173,7 @@ export async function loadLocationAssets(manifestFiles: string[]) {
   }
   manifests.sort((a, b) => a.source.localeCompare(b.source));
   const datasets = await Promise.all(manifests.map(transform));
-  const data = { schema: "gridsentinel.location-assets/1", location: id, datasets };
+  const data = { schema: "mapergy.location-assets/1", location: id, datasets };
   const revision = digest(data);
   const directory = resolve(stateRoot(), "loaded-assets", id);
   await atomicJson(resolve(directory, `${revision}.json`), data);

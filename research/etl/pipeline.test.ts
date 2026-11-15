@@ -411,7 +411,7 @@ test("location reports bind the loaded asset inventory revision they were built 
   assert.equal(warn.mock.callCount(), 1);
   const warning = String(warn.mock.calls[0].arguments[0]);
   assert.match(warning, /asset inventory .* rejected \(Asset revision checksum mismatch\)/);
-  assert.doesNotMatch(warning, /@@GRIDSENTINEL_RESULT@@|\n/);
+  assert.doesNotMatch(warning, /@@MAPERGY_RESULT@@|\n/);
   const quarantineDir = `${stateRoot()}/quarantine/assets/${second.location}`;
   const quarantined = await readdir(quarantineDir);
   assert.equal(quarantined.length, 1);
@@ -451,10 +451,11 @@ test("location reports bind the loaded asset inventory revision they were built 
   const unsealed = async () => {
     const envelope = JSON.parse(await readFile(backup, "utf8"));
     const decipher = createDecipheriv("aes-256-gcm", Buffer.from("ef".repeat(32), "hex"), Buffer.from(envelope.nonce, "hex"));
-    decipher.setAAD(Buffer.from("gridsentinel.backup/1"));
+    decipher.setAAD(Buffer.from("mapergy.backup/1"));
     decipher.setAuthTag(Buffer.from(envelope.tag, "hex"));
     return JSON.parse(Buffer.concat([decipher.update(Buffer.from(envelope.ciphertext, "base64")), decipher.final()]).toString("utf8"));
   };
+  // Re-sealed under the pre-rename format, as a real old backup would be.
   const reseal = async (payload: unknown, destination: string) => {
     const nonce = randomBytes(12);
     const cipher = createCipheriv("aes-256-gcm", Buffer.from("ef".repeat(32), "hex"), nonce);
@@ -515,7 +516,7 @@ test("a corrupt bound inventory returns a JSON integrity error and quarantines o
   const id = locationId(query);
   const start = new Date("2026-11-14T19:00:00Z");
   // A minimal stored inventory: readLocationAssets binds any JSON whose digest is its revision.
-  const inventory = { schema: "gridsentinel.location-assets/1", location: id, datasets: [] };
+  const inventory = { schema: "mapergy.location-assets/1", location: id, datasets: [] };
   const revision = digest(inventory);
   const directory = `${root}/loaded-assets/${id}`;
   await mkdir(directory, { recursive: true });
@@ -661,7 +662,7 @@ test("an all-unavailable report verifies, replays, backs up and restores", async
   });
   await verifyLocation(unversioned as LocationReport);
   // A schema this code does not know is refused rather than guessed.
-  await assert.rejects(verifyLocation({ ...report, schema: "gridsentinel.location-report/99" } as unknown as LocationReport),
+  await assert.rejects(verifyLocation({ ...report, schema: "mapergy.location-report/99" } as unknown as LocationReport),
     /Unsupported location report schema/);
 });
 

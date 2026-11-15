@@ -1,4 +1,4 @@
-# GridSentinel competitive teardown — Part 2
+# Mapergy competitive teardown — Part 2
 
 **The competitors the brainstorm missed, the full gap map, the ranked backlog, and the optimizations.**
 

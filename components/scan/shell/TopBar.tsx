@@ -39,7 +39,7 @@ export function TopBar({ area, heatwave, onJump, onRadius, onHeatwave }: TopBarP
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <Mark />
-        <p className="text-[15px] font-semibold text-[#1d2733]">GridSentinel</p>
+        <p className="text-[15px] font-semibold text-[#1d2733]">Mapergy</p>
         <p className="hidden truncate text-[13px] text-[#556070] sm:block">Westminster, CA · 100-mile radius</p>
       </div>
 

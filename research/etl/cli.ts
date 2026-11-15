@@ -14,7 +14,7 @@ import { runCrosswalkCandidatesCommand } from "./crosswalk-candidates";
 import { runRatingsCommand } from "./ratings";
 import { runOperatorImportCommand } from "./operator-import";
 
-const RESULT_SENTINEL = "@@GRIDSENTINEL_RESULT@@";
+const RESULT_SENTINEL = "@@MAPERGY_RESULT@@";
 
 type RegenCommand = (args: string[]) => Promise<unknown>;
 
@@ -24,7 +24,7 @@ async function main() {
   try {
     enableSharedDedupeFromEnv();
   } catch (error) {
-    console.error(`GridSentinel: shared HTTP dedupe disabled (${error instanceof Error ? error.message : String(error)})`);
+    console.error(`Mapergy: shared HTTP dedupe disabled (${error instanceof Error ? error.message : String(error)})`);
   }
   const args = process.argv.slice(2);
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";

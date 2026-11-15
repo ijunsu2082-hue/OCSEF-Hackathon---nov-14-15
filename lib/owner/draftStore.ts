@@ -9,8 +9,12 @@
 import type { OwnerTask, Sector, TaskStatus } from "./planTypes";
 import { stableHash } from "./lifecycle";
 
-export const DRAFT_SCHEMA = "gridsentinel.owner-draft/1" as const;
-export const DRAFT_NAMESPACE = "gridsentinel.owner-draft";
+export const DRAFT_SCHEMA = "mapergy.owner-draft/1" as const;
+export const DRAFT_NAMESPACE = "mapergy.owner-draft";
+// Pre-rename ids. Drafts saved under them are still loaded (and re-saved under the
+// current ids), so edits made before the rename are not lost.
+export const LEGACY_DRAFT_SCHEMA = "gridsentinel.owner-draft/1" as const;
+export const LEGACY_DRAFT_NAMESPACE = "gridsentinel.owner-draft";
 
 export interface DraftLocation { lat: number; lon: number; radius: number; sector?: Sector | null }
 
@@ -31,7 +35,7 @@ export interface TaskEdit {
 }
 
 export interface Draft {
-  schema: typeof DRAFT_SCHEMA;
+  schema: typeof DRAFT_SCHEMA | typeof LEGACY_DRAFT_SCHEMA;
   key: string;
   selectedOption: string | null;
   edits: Record<string, TaskEdit>;
@@ -149,7 +153,7 @@ export interface LoadResult { draft: Draft; status: "loaded" | "empty" | "corrup
 function isDraft(v: unknown): v is Draft {
   if (!v || typeof v !== "object") return false;
   const d = v as Partial<Draft>;
-  return d.schema === DRAFT_SCHEMA && typeof d.key === "string" && !!d.edits && typeof d.edits === "object";
+  return (d.schema === DRAFT_SCHEMA || d.schema === LEGACY_DRAFT_SCHEMA) && typeof d.key === "string" && !!d.edits && typeof d.edits === "object";
 }
 
 export interface DraftStore {
@@ -161,18 +165,21 @@ export interface DraftStore {
 
 export function createDraftStore(adapter: StorageAdapter, namespace = DRAFT_NAMESPACE): DraftStore {
   const storageKey = (loc: DraftLocation) => `${namespace}:${draftKey(loc)}`;
+  const legacyKey = (loc: DraftLocation) =>
+    namespace === DRAFT_NAMESPACE ? `${LEGACY_DRAFT_NAMESPACE}:${draftKey(loc)}` : null;
   return {
     storageKey,
     load(loc) {
       const key = draftKey(loc);
-      const raw = adapter.getItem(storageKey(loc));
+      const legacy = legacyKey(loc);
+      const raw = adapter.getItem(storageKey(loc)) ?? (legacy === null ? null : adapter.getItem(legacy));
       if (raw === null) return { draft: emptyDraft(key), status: "empty" };
       let parsed: unknown;
       try { parsed = JSON.parse(raw); } catch { return { draft: emptyDraft(key), status: "corrupt" }; }
       if (!isDraft(parsed)) return { draft: emptyDraft(key), status: "corrupt" };
       // A draft stored under one key is never served for another location.
       if (parsed.key !== key) return { draft: emptyDraft(key), status: "key_mismatch" };
-      return { draft: parsed, status: "loaded" };
+      return { draft: { ...parsed, schema: DRAFT_SCHEMA }, status: "loaded" };
     },
     save(loc, draft) {
       const key = draftKey(loc);
@@ -180,7 +187,10 @@ export function createDraftStore(adapter: StorageAdapter, namespace = DRAFT_NAME
       return adapter.setItem(storageKey(loc), JSON.stringify(draft));
     },
     clear(loc) {
-      return adapter.removeItem(storageKey(loc));
+      // Clear the legacy slot too, or the next load would resurrect it.
+      const legacy = legacyKey(loc);
+      const removed = adapter.removeItem(storageKey(loc));
+      return legacy === null ? removed : adapter.removeItem(legacy) && removed;
     },
   };
 }

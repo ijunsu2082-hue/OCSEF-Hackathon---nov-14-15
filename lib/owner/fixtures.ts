@@ -44,7 +44,7 @@ const docEvidence = (caseId: string, section: string): Evidence => ({
   id: `e.case.${caseId}`,
   kind: "document",
   title: `INFRASTRUCTURE-CASES.md: ${section} (synthetic scenario inputs)`,
-  source: { publisher: "GridSentinel docs", locator: `docs/INFRASTRUCTURE-CASES.md#${section.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` },
+  source: { publisher: "Mapergy docs", locator: `docs/INFRASTRUCTURE-CASES.md#${section.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` },
   retrievedAt: FIXTURE_AS_OF,
   freshness: "unknown",
   provenance: "user_assertion",
@@ -67,7 +67,7 @@ const unknownData = (key: string, reason = "Not yet collected (synthetic case st
 
 function caseInput(caseId: string, section: string, target: PlanTarget, scope: string, rest: Partial<PlanInput>): PlanInput {
   return {
-    schema: "gridsentinel.plan-input/1",
+    schema: "mapergy.plan-input/1",
     target,
     stage: "feasibility",
     scope,

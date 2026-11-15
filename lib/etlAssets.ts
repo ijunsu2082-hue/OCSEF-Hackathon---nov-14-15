@@ -1,6 +1,6 @@
 /**
  * Loaded ETL assets (research/etl/load-assets.ts, schema
- * gridsentinel.location-assets/1) adapted to the app's grid-layer shapes.
+ * mapergy.location-assets/1, or legacy gridsentinel.location-assets/1) adapted to the app's grid-layer shapes.
  *
  * The adapter is pure. Fields the provider does not carry stay `null`; nothing
  * is filled from the bundled layers or from defaults (an EIA atlas plant has no
@@ -11,7 +11,9 @@
 
 import type { PlantFeature, SubstationFeature, TransmissionFeature } from "./gridLayers";
 
-export const LOCATION_ASSETS_SCHEMA = "gridsentinel.location-assets/1";
+export const LOCATION_ASSETS_SCHEMA = "mapergy.location-assets/1";
+/** Pre-rename id. Inventories loaded before the rename carry it and still adapt. */
+export const LEGACY_LOCATION_ASSETS_SCHEMA = "gridsentinel.location-assets/1";
 
 // ---- Loaded document (input) -------------------------------------------------
 
@@ -243,7 +245,7 @@ export function adaptSubstations(dataset: EtlDataset, location: string, revision
 /** Throws on a document that is not a loaded-asset inventory. */
 export function adaptLocationAssets(body: LoadedAssetsBody): AdaptedLocationAssets {
   const data = body?.data;
-  if (!data || data.schema !== LOCATION_ASSETS_SCHEMA || !Array.isArray(data.datasets) ||
+  if (!data || (data.schema !== LOCATION_ASSETS_SCHEMA && data.schema !== LEGACY_LOCATION_ASSETS_SCHEMA) || !Array.isArray(data.datasets) ||
       typeof data.location !== "string" || typeof body.revision !== "string") {
     throw new Error(`Expected a ${LOCATION_ASSETS_SCHEMA} document`);
   }

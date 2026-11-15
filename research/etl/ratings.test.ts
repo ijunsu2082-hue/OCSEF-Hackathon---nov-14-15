@@ -29,7 +29,7 @@ async function syntheticArchive(directory: string, mutate?: (archive: WeatherArc
     retrievedAt: "2026-01-01T00:00:00.000Z", bytes, cachePath, parser: "json.object", contentType: "application/json",
   });
   const archive: WeatherArchive = {
-    schema: "gridsentinel.weather-history/1", center: [33.778557, -117.98506], start: "2025-07-01", end: "2025-07-01",
+    schema: "mapergy.weather-history/1", center: [33.778557, -117.98506], start: "2025-07-01", end: "2025-07-01",
     model: "era5", basis: "modeled_reanalysis", gridCell: [33.75, -118], units: FIELDS, snapshot,
     rows: time.map((t, index) => ({
       timestamp: `${t}:00Z`,

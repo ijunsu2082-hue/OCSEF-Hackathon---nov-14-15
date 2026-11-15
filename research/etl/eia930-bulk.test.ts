@@ -99,7 +99,7 @@ test("backfill stores the file, writes an archive and quarantines a file without
   assert.equal(result.skipped_blank_demand, 12);
   assert.deepEqual([result.first, result.last], ["2026-11-13T22", "2026-11-14T08"]);
   const archive = JSON.parse(await readFile(result.path, "utf8"));
-  assert.equal(archive.schema, "gridsentinel.eia930-bulk/1");
+  assert.equal(archive.schema, "mapergy.eia930-bulk/1");
   assert.equal(archive.basis, "utc_hour_ending");
   assert.equal(archive.snapshot.parser, "text.lines");
   assert.equal(archive.snapshot.record_count, 29);

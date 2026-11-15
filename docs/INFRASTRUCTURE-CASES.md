@@ -1,4 +1,4 @@
-# GridSentinel infrastructure owner cases
+# Mapergy infrastructure owner cases
 
 Worked cases for infrastructure owners. Values marked **synthetic** are scenario inputs, not reported project facts or estimates. Dates are scenario dates. Each case follows the portfolio, delivery, disruption, operations, and retirement logic in [Infrastructure Lifecycle](INFRASTRUCTURE-LIFECYCLE.md).
 

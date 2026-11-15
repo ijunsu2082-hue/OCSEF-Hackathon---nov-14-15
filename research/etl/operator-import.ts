@@ -31,8 +31,12 @@ import { digest } from "../../lib/evidence/canonical";
 import { readLocationAssets } from "./load-assets";
 import { atomicJson, locationId, locationQuery, stateRoot } from "./pipeline";
 
-export const OPERATOR_INPUT_SCHEMA = "gridsentinel.operator-input/1" as const;
-export const OPERATOR_MANIFEST_SCHEMA = "gridsentinel.operator-manifest/1" as const;
+export const OPERATOR_INPUT_SCHEMA = "mapergy.operator-input/1" as const;
+export const OPERATOR_MANIFEST_SCHEMA = "mapergy.operator-manifest/1" as const;
+// Pre-rename ids. Records and manifests carrying them are still read and replayed;
+// the revision is a digest over the record, so they replay under their own id.
+export const LEGACY_OPERATOR_INPUT_SCHEMA = "gridsentinel.operator-input/1" as const;
+export const LEGACY_OPERATOR_MANIFEST_SCHEMA = "gridsentinel.operator-manifest/1" as const;
 
 export type OperatorKind = "topology" | "equipment_rating" | "equipment_condition" | "meter_series" | "quote";
 export type Visibility = "private" | "shared" | "public";
@@ -63,7 +67,7 @@ export interface OperatorSource {
 }
 
 export interface OperatorRecord {
-  schema: typeof OPERATOR_INPUT_SCHEMA;
+  schema: typeof OPERATOR_INPUT_SCHEMA | typeof LEGACY_OPERATOR_INPUT_SCHEMA;
   method: "operator";
   label: string;
   location: string;
@@ -79,7 +83,7 @@ export interface OperatorRecord {
 }
 
 export interface OperatorManifest {
-  schema: typeof OPERATOR_MANIFEST_SCHEMA;
+  schema: typeof OPERATOR_MANIFEST_SCHEMA | typeof LEGACY_OPERATOR_MANIFEST_SCHEMA;
   location: string;
   inputs: { revision: string; kind: OperatorKind; visibility: Visibility }[];
 }
@@ -594,9 +598,16 @@ export interface OperatorImportResult {
 
 /** Validate, store raw bytes + normalized revision, and add it to the location manifest. */
 export async function importOperatorInput(envelopeBytes: Uint8Array, csvBytes: Uint8Array | null = null): Promise<OperatorImportResult> {
-  const record = normalizeOperatorInput(envelopeBytes, csvBytes);
-  const revision = digest(record);
+  let record = normalizeOperatorInput(envelopeBytes, csvBytes);
+  let revision = digest(record);
   const directory = directoryFor(record.location);
+  // Bytes already imported under the pre-rename id keep that revision, so a
+  // re-import is still recognised as the same input rather than a new one.
+  const legacy = { ...record, schema: LEGACY_OPERATOR_INPUT_SCHEMA };
+  if (await readJson(resolve(directory, "inputs", `${digest(legacy)}.json`)) !== null) {
+    record = legacy;
+    revision = digest(legacy);
+  }
   for (const source of record.sources) {
     await storeRaw(resolve(directory, source.path), source.role === "envelope" ? envelopeBytes : csvBytes!, source.sha256);
   }
@@ -702,6 +713,7 @@ export async function replayOperatorInput(location: string, revision: string): P
   const envelope = await bytesFor("envelope");
   if (!envelope) throw new Error("Operator revision has no envelope source");
   const rebuilt = normalizeOperatorInput(envelope, await bytesFor("readings_csv"));
+  if (record.schema === LEGACY_OPERATOR_INPUT_SCHEMA) rebuilt.schema = LEGACY_OPERATOR_INPUT_SCHEMA;
   if (digest(rebuilt) !== revision) throw new Error(`Operator revision ${revision} does not replay from its raw bytes`);
   return { revision, replayed: true };
 }

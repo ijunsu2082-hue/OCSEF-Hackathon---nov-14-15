@@ -49,8 +49,8 @@ export function assetsForSite(point: LonLat): RealGridAssets | null {
 //
 // `assetsForSite` above is unchanged and always reads the bundled layers. The
 // async variant below reads a location's loaded ETL assets when a source is
-// passed, or when GRIDSENTINEL_ASSETS_LOCATION (+ optional
-// GRIDSENTINEL_ASSETS_REVISION) is set, and otherwise behaves like
+// passed, or when MAPERGY_ASSETS_LOCATION (+ optional
+// MAPERGY_ASSETS_REVISION) is set, and otherwise behaves like
 // assetsForSite. Plants stay bundled: the loaded EIA atlas inventory has no
 // nameplate MW or fuel mix, which the generation summary sums.
 
@@ -81,12 +81,21 @@ interface EtlIndex {
 /** Built once per location + loaded revision. */
 const etlIndexes = new Map<string, EtlIndex | null>();
 
-function envSource(): SiteAssetSource | undefined {
-  const locationId = process.env.GRIDSENTINEL_ASSETS_LOCATION;
+/**
+ * Asset source from MAPERGY_ASSETS_LOCATION (+ optional MAPERGY_ASSETS_REVISION).
+ * The pre-rename GRIDSENTINEL_ASSETS_* pair is still read when the new location is
+ * unset, so existing deployments keep working. The pair is taken together, never
+ * a new location with a legacy revision.
+ */
+export function assetsSourceFromEnv(env: Record<string, string | undefined> = process.env): SiteAssetSource | undefined {
+  const legacy = !env.MAPERGY_ASSETS_LOCATION;
+  const locationId = legacy ? env.GRIDSENTINEL_ASSETS_LOCATION : env.MAPERGY_ASSETS_LOCATION;
   if (!locationId) return undefined;
-  const revision = process.env.GRIDSENTINEL_ASSETS_REVISION;
+  const revision = legacy ? env.GRIDSENTINEL_ASSETS_REVISION : env.MAPERGY_ASSETS_REVISION;
   return revision ? { locationId, revision } : { locationId };
 }
+
+const envSource = () => assetsSourceFromEnv();
 
 function bundledResult(point: LonLat, reasons: string[]): SourcedSiteAssets {
   return {

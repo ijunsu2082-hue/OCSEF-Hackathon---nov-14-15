@@ -21,7 +21,7 @@ redis.call('SET', KEYS[1], ARGV[1])
 redis.call('PUBLISH', KEYS[2], ARGV[1])
 return 1
 """
-RESULT_SENTINEL = "@@GRIDSENTINEL_RESULT@@"
+RESULT_SENTINEL = "@@MAPERGY_RESULT@@"
 
 
 class Location(BaseModel):

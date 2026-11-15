@@ -16,7 +16,7 @@
 
 import { createDraftStore, type Draft, type DraftStore, type StorageAdapter } from "../../lib/owner/draftStore";
 import { createLifecycle, replay, type LifecycleEvent, type LifecycleState, type TriggerState } from "../../lib/owner/lifecycle";
-import { draftStorageKey, planKey, type BuiltOwnerPlan } from "../../lib/owner/ownerPlan";
+import { draftStorageKey, legacyDraftStorageKey, planKey, type BuiltOwnerPlan } from "../../lib/owner/ownerPlan";
 import { STAGE_ORDER, TRIGGER_IDS } from "../../lib/owner/procedures";
 import type { DraftEdits, Evidence, Fact, FactValue, PlanTarget, Provenance, StageId, TaskEdit } from "../../lib/owner/planTypes";
 import { isUnknown } from "../../lib/owner/planTypes";
@@ -77,7 +77,7 @@ export function evidenceJson(plan: BuiltOwnerPlan, asOf: string): string {
   for (const f of plan.facts) for (const e of f.evidence) note(e, f.id);
   for (const id of Object.keys(usedBy)) usedBy[id] = [...new Set(usedBy[id])].sort();
   const body = {
-    schema: "gridsentinel.owner-evidence/1",
+    schema: "mapergy.owner-evidence/1",
     planKey: planKey(plan.target),
     asOf,
     outputHash: plan.outputHash,
@@ -151,7 +151,11 @@ export function icsStamp(asOf: string): string {
   return new Date(t).toISOString().replace(/\.\d{3}Z$/, "Z").replace(/[-:]/g, "");
 }
 
-/** Stable UID. Readable, restricted to [A-Za-z0-9._-], unique per planKey + task + deadline kind. */
+/**
+ * Stable UID. Readable, restricted to [A-Za-z0-9._-], unique per planKey + task + deadline kind.
+ * The `@gridsentinel` domain predates the Mapergy rename and is kept on purpose: changing it
+ * would make calendars treat every re-imported deadline as a new event.
+ */
 export function icsUid(key: string, taskId: string, kind: string): string {
   const clean = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_");
   return `${clean(taskId)}.${clean(kind)}.${clean(key)}@gridsentinel`;
@@ -165,7 +169,7 @@ export function deadlinesIcs(plan: BuiltOwnerPlan, asOf: string): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//GridSentinel//Owner Plan//EN",
+    "PRODID:-//Mapergy//Owner Plan//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${icsEscape(`Owner plan deadlines, ${label}`)}`,
@@ -276,10 +280,15 @@ export function draftToEdits(draft: Draft, target: PlanTarget): DraftEdits {
 /** A draftStore whose single slot is ownerPlan.draftStorageKey(target). load/save keep draftStore's schema and key checks. */
 export function draftStoreFor(adapter: StorageAdapter, target: PlanTarget): { store: DraftStore; storageKey: string } {
   const storageKey = draftStorageKey(target);
+  // A draft saved before the rename is read from its legacy key until the next save.
+  const legacyKey = legacyDraftStorageKey(target);
   const slot: StorageAdapter = {
-    getItem: () => adapter.getItem(storageKey),
+    getItem: () => adapter.getItem(storageKey) ?? adapter.getItem(legacyKey),
     setItem: (_k, v) => adapter.setItem(storageKey, v),
-    removeItem: () => adapter.removeItem(storageKey),
+    removeItem: () => {
+      const removed = adapter.removeItem(storageKey);
+      return adapter.removeItem(legacyKey) && removed;
+    },
   };
   return { store: createDraftStore(slot), storageKey };
 }

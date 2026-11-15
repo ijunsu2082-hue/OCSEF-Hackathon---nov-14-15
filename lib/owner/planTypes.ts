@@ -38,7 +38,7 @@ export interface ProcedureStep {
   followUpAcceptance?: string[];
 }
 export interface PlanTarget { lat: number; lon: number; radius_miles: number; sector: Sector; label?: string }
-export interface OwnerPlan { schema: "gridsentinel.owner-plan/1"; target: PlanTarget; scenario: "baseline" | "heatwave"; findings: Finding[]; options: PlanOption[]; selectedOption: string | null; tasks: OwnerTask[]; nextAction: string | null; waitingOn: string[]; deadlines: { taskId: string; due: string; kind: string }[]; facts: Fact[]; evidence: Evidence[]; inputsHash: string; outputHash: string }
+export interface OwnerPlan { schema: "mapergy.owner-plan/1"; target: PlanTarget; scenario: "baseline" | "heatwave"; findings: Finding[]; options: PlanOption[]; selectedOption: string | null; tasks: OwnerTask[]; nextAction: string | null; waitingOn: string[]; deadlines: { taskId: string; due: string; kind: string }[]; facts: Fact[]; evidence: Evidence[]; inputsHash: string; outputHash: string }
 
 // ---- Additive types (not part of the frozen names above) ----
 

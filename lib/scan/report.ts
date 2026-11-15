@@ -32,11 +32,11 @@ export function scanReportMarkdown(
   const s = r.rating_site;
   const unscored = new Set(r.unscored_factors ?? []);
   const L: string[] = [];
-  L.push(`# GridSentinel Area Scan — ${r.area_label}`);
+  L.push(`# Mapergy Area Scan — ${r.area_label}`);
   L.push("");
   L.push(`**Area:** ${r.area.lat.toFixed(4)}, ${r.area.lon.toFixed(4)} · radius ${r.area.radius_mi} mi${r.inside_coverage ? "" : " · OUTSIDE the 100-mi coverage area (data may be incomplete)"}`);
   L.push("");
-  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level}) (GridSentinel's own index, not an official rating)`);
+  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level}) (Mapergy's own index, not an official rating)`);
   for (const f of r.risk.factors) {
     L.push(`- ${f.label}: ${unscored.has(f.key) ? "not scored" : n0(f.score)} (weight ${Math.round(f.weight * 100)}%) — ${f.detail}`);
   }

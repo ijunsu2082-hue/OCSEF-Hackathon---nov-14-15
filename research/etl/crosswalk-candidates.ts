@@ -226,7 +226,7 @@ export async function crosswalkCandidates(osmFile: string, manifestFile: string,
   };
 
   const data = {
-    schema: "gridsentinel.substation-crosswalk-candidates/1",
+    schema: "mapergy.substation-crosswalk-candidates/1",
     notice: "Candidates only. None is corroborated until a person reviews it: set review.status to \"reviewed\", " +
       "add review.reviewer and an identity `evidence` string, keep one row per OSM and HIFLD record, and pass the " +
       "resulting array to audit-substations. Absence of a candidate does not imply a missing asset in either source.",

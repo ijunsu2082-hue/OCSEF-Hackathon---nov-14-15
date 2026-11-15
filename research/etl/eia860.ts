@@ -1101,7 +1101,7 @@ export async function runEia860Command(args: string[]): Promise<void> {
     const radiusCodes = new Set(radiusPlants.map((plant) => plant.plant_code));
     const radiusGenerators = data.generators.filter((generator) => radiusCodes.has(generator.plant_code));
     const normalized = {
-      schema: "gridsentinel.eia860-normalized/1",
+      schema: "mapergy.eia860-normalized/1",
       reporting_year: data.reporting_year, archive, workbooks: data.workbooks, sheets: data.sheets,
       totals: {
         plants: data.plants.size,

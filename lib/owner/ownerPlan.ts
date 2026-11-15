@@ -72,6 +72,11 @@ export function planKey(target: PlanTarget): string {
 
 /** Suggested localStorage key for a draft. */
 export function draftStorageKey(target: PlanTarget): string {
+  return `mapergy.owner-draft/1:${planKey(target)}`;
+}
+
+/** Pre-rename key; drafts saved under it are still read. */
+export function legacyDraftStorageKey(target: PlanTarget): string {
   return `gridsentinel.owner-draft/1:${planKey(target)}`;
 }
 
@@ -567,7 +572,7 @@ export function buildOwnerPlan(input: PlanInput, opts: BuildOptions): BuiltOwner
 
   const draft: DraftReport = { planKey: edits?.planKey ?? opts.edits?.planKey ?? key, applied, orphaned, rejected };
   const body = {
-    schema: "gridsentinel.owner-plan/1" as const,
+    schema: "mapergy.owner-plan/1" as const,
     target: input.target,
     scenario,
     findings,

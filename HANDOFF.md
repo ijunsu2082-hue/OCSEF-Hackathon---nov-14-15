@@ -1,4 +1,4 @@
-# GridSentinel ETL handoff
+# Mapergy ETL handoff
 
 Owner of Git: whoever picks this up. Implementation was paused mid-tranche, so read
 "Implemented" and "Half-finished" before assuming anything works end to end.
@@ -97,7 +97,7 @@ command was run and its output observed; anything else is called out.
 - Service: `research/etl/service.py` runs separate opt-in telemetry and inventory
   workers. Telemetry has a per-location fixed-rate cadence (300 s with CAISO,
   600 s otherwise), no self-overlap, a shared concurrency cap, and reads the
-  result from the last `@@GRIDSENTINEL_RESULT@@` stderr line. Redis Pub/Sub on a
+  result from the last `@@MAPERGY_RESULT@@` stderr line. Redis Pub/Sub on a
   per-location channel, separate latest keys for state and inventory, both
   replayed to reconnecting clients. 19 pytest cases.
 - Coverage: `research/etl/coverage.ts` computes every gap from evidence on disk
@@ -224,7 +224,7 @@ Each item is marked fixed (with how it was verified) or open (with why).
 4. Fixed. Redirects fail closed by default; a feed opts in with an HTTPS origin
    allowlist. Verified by `http.test.ts` "redirects are refused by default" and
    "follow policy walks allowlisted hops and rejects others".
-5. Fixed. `service.py` reads the last `@@GRIDSENTINEL_RESULT@@` stderr line
+5. Fixed. `service.py` reads the last `@@MAPERGY_RESULT@@` stderr line
    (and still accepts the legacy JSON line). Verified by `test_service.py`
    sentinel and noisy-stderr backup tests (19 passed, Python 3.13).
 6. Fixed. Telemetry cadence moved into the worker: per-location fixed-rate

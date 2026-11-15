@@ -318,7 +318,7 @@ export interface LifecycleConfig {
 // State.
 
 export interface LifecycleState {
-  schema: "gridsentinel.owner-lifecycle/1";
+  schema: "mapergy.owner-lifecycle/1";
   config: LifecycleConfig;
   revision: number;
   lastEventAt: string | null;
@@ -354,7 +354,7 @@ export function createLifecycle(init: { caseId: string; title: string; sector?: 
     nextAction: null, nextActionDate: null, sourceEvidence: [], parentCaseId: init.parentCaseId ?? null,
   };
   return {
-    schema: "gridsentinel.owner-lifecycle/1", config: init.config, revision: 0, lastEventAt: null, log: [],
+    schema: "mapergy.owner-lifecycle/1", config: init.config, revision: 0, lastEventAt: null, log: [],
     case: [{ revision: 0, eventId: "init", at: "", by: "system", record: c }],
     facts: {}, evidence: {}, decisions: {}, authorizations: {}, submissions: {}, conditions: {}, assets: {},
     ncrs: {}, tests: {}, baselines: {}, land: {}, funding: {}, budgets: {}, suppliers: {}, packages: {},

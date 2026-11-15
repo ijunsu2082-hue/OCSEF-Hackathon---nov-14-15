@@ -4,7 +4,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { beforeEach, test } from "node:test";
 import { digest } from "./evidence/canonical";
-import { assetsForSiteFromSource } from "./gridAssets.server";
+import { assetsForSiteFromSource, assetsSourceFromEnv } from "./gridAssets.server";
 import { stateRoot } from "../research/etl/pipeline";
 import {
   adaptLocationAssets, clearEtlAssetCache, etlAssetsUrl, etlCacheKey, LOCATION_ASSETS_SCHEMA,
@@ -180,6 +180,13 @@ test("adapter attaches per-feature provenance beside geometry/properties", () =>
 
 test("adapter rejects a document that is not a loaded inventory", () => {
   assert.throws(() => adaptLocationAssets({ revision: REVISION, data: { schema: "other/1", location: LOCATION, datasets: [] } }));
+});
+
+test("asset env: MAPERGY_* wins; legacy GRIDSENTINEL_* pair is the fallback", () => {
+  const rev = "b".repeat(64);
+  assert.deepEqual(assetsSourceFromEnv({ GRIDSENTINEL_ASSETS_LOCATION: LOCATION, GRIDSENTINEL_ASSETS_REVISION: rev }), { locationId: LOCATION, revision: rev });
+  assert.deepEqual(assetsSourceFromEnv({ MAPERGY_ASSETS_LOCATION: LOCATION, GRIDSENTINEL_ASSETS_LOCATION: "x", GRIDSENTINEL_ASSETS_REVISION: rev }), { locationId: LOCATION });
+  assert.equal(assetsSourceFromEnv({}), undefined);
 });
 
 test("no selector: loaders return the bundled collection untouched", async () => {

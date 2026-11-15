@@ -67,7 +67,9 @@ export interface SharedDedupeMetrics {
 
 type Env = Record<string, string | undefined>;
 
-const SCHEMA = "gridsentinel.http-shared/2";
+const SCHEMA = "mapergy.http-shared/2";
+// Pre-rename id. Entries a not-yet-upgraded worker wrote still verify, under their own id.
+const LEGACY_SCHEMA = "gridsentinel.http-shared/2";
 const MIN_HMAC_KEY_BYTES = 32;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -80,7 +82,7 @@ function setting(env: Env, name: string, fallback: number): number {
 }
 
 interface Stored {
-  schema: typeof SCHEMA;
+  schema: typeof SCHEMA | typeof LEGACY_SCHEMA;
   status: number;
   headers: [string, string][];
   length: number;
@@ -106,12 +108,12 @@ export function parseSharedHmacKey(raw: string | undefined): Buffer | null {
 /** HMAC over the canonical record (every field but `hmac`) bound to its request key id. */
 function recordMac(hmacKey: Uint8Array, id: string, stored: Omit<Stored, "hmac">): Buffer {
   return createHmac("sha256", hmacKey).update(JSON.stringify([
-    SCHEMA, id, stored.status, stored.headers, stored.length, stored.sha256, stored.meta, stored.body,
+    stored.schema, id, stored.status, stored.headers, stored.length, stored.sha256, stored.meta, stored.body,
   ])).digest();
 }
 
-function metaDigest(status: number, headers: [string, string][], length: number, bodySha: string): string {
-  return sha256(JSON.stringify([SCHEMA, status, headers, length, bodySha]));
+function metaDigest(schema: Stored["schema"], status: number, headers: [string, string][], length: number, bodySha: string): string {
+  return sha256(JSON.stringify([schema, status, headers, length, bodySha]));
 }
 
 /** Encode a response for `etl:resp:<id>`, signed with `hmacKey` and bound to `id`. */
@@ -124,7 +126,7 @@ export function encodeStored(response: HttpResponse, hmacKey: Uint8Array, id: st
     headers,
     length: response.bytes.length,
     sha256: bodySha,
-    meta: metaDigest(response.status, headers, response.bytes.length, bodySha),
+    meta: metaDigest(SCHEMA, response.status, headers, response.bytes.length, bodySha),
     body: Buffer.from(response.bytes).toString("base64"),
   };
   const stored: Stored = { ...unsigned, hmac: recordMac(hmacKey, id, unsigned).toString("hex") };
@@ -139,7 +141,7 @@ export function decodeStored(raw: Buffer, hmacKey: Uint8Array, id: string): Http
   } catch {
     return "corrupt";
   }
-  if (typeof stored !== "object" || stored === null || stored.schema !== SCHEMA ||
+  if (typeof stored !== "object" || stored === null || (stored.schema !== SCHEMA && stored.schema !== LEGACY_SCHEMA) ||
       !Number.isInteger(stored.status) || !Number.isInteger(stored.length) ||
       typeof stored.sha256 !== "string" || typeof stored.meta !== "string" || typeof stored.body !== "string" ||
       typeof stored.hmac !== "string" || !/^[0-9a-f]{64}$/.test(stored.hmac) ||
@@ -153,7 +155,7 @@ export function decodeStored(raw: Buffer, hmacKey: Uint8Array, id: string): Http
   if (!timingSafeEqual(Buffer.from(hmac, "hex"), recordMac(hmacKey, id, unsigned))) return "corrupt";
   const bytes = Buffer.from(stored.body, "base64");
   if (bytes.length !== stored.length || sha256(bytes) !== stored.sha256 ||
-      metaDigest(stored.status, stored.headers, stored.length, stored.sha256) !== stored.meta) {
+      metaDigest(stored.schema, stored.status, stored.headers, stored.length, stored.sha256) !== stored.meta) {
     return "corrupt";
   }
   let headers: Headers;
@@ -283,7 +285,7 @@ export function sharedDedupeFromEnv(env: Env = process.env): RedisSharedDedupe |
   if (!url) return null;
   const hmacKey = parseSharedHmacKey(env.ETL_HTTP_SHARED_HMAC_KEY);
   if (!hmacKey) {
-    console.warn(`GridSentinel: shared HTTP dedupe disabled (ETL_HTTP_SHARED_HMAC_KEY must be hex or base64 decoding to at least ${MIN_HMAC_KEY_BYTES} bytes)`);
+    console.warn(`Mapergy: shared HTTP dedupe disabled (ETL_HTTP_SHARED_HMAC_KEY must be hex or base64 decoding to at least ${MIN_HMAC_KEY_BYTES} bytes)`);
     return null;
   }
   return new RedisSharedDedupe(new RespClient(url), {

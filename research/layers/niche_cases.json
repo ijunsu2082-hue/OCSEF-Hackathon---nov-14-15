@@ -872,7 +872,7 @@
    "distance_mi": 8.3
   },
   "one_liner": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
-  "problem": "On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for GridSentinel: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.",
+  "problem": "On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for Mapergy: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.",
   "fix": "See research/NICHE_CASES.md (map node values and upgrade potential).",
   "shock_line": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
   "stats": [

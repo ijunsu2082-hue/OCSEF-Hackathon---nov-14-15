@@ -43,10 +43,10 @@ const truncated = ({ nonce, tag }: { nonce: Buffer; tag: Buffer }) => ({ nonce, 
 test("a GCM tag truncated to 4 bytes is rejected before decryption", async (t) => {
   const root = scratch(t);
   const report = resolve(root, "report.backup.json");
-  await envelope(report, "gridsentinel.backup/1", { report: {}, blobs: {} }, truncated);
+  await envelope(report, "mapergy.backup/1", { report: {}, blobs: {} }, truncated);
   await assert.rejects(restoreReport(report), /Invalid backup authentication tag/);
   const weather = resolve(root, "weather.backup.json");
-  await envelope(weather, "gridsentinel.data-backup/1", { kind: "nope" }, truncated);
+  await envelope(weather, "mapergy.data-backup/1", { kind: "nope" }, truncated);
   await assert.rejects(restoreWeather(weather), /Invalid backup authentication tag/);
   await assert.rejects(restoreAssets(weather), /Invalid backup authentication tag/);
 });
@@ -54,17 +54,17 @@ test("a GCM tag truncated to 4 bytes is rejected before decryption", async (t) =
 test("a nonce that is not 12 bytes is rejected before decryption", async (t) => {
   const root = scratch(t);
   const path = resolve(root, "nonce.backup.json");
-  await envelope(path, "gridsentinel.data-backup/1", { kind: "nope" }, ({ tag }) => ({ nonce: Buffer.alloc(16), tag }));
+  await envelope(path, "mapergy.data-backup/1", { kind: "nope" }, ({ tag }) => ({ nonce: Buffer.alloc(16), tag }));
   await assert.rejects(restoreWeather(path), /Invalid backup nonce/);
   const report = resolve(root, "report-nonce.backup.json");
-  await envelope(report, "gridsentinel.backup/1", { report: {}, blobs: {} }, ({ tag }) => ({ nonce: Buffer.alloc(8), tag }));
+  await envelope(report, "mapergy.backup/1", { report: {}, blobs: {} }, ({ tag }) => ({ nonce: Buffer.alloc(8), tag }));
   await assert.rejects(restoreReport(report), /Invalid backup nonce/);
 });
 
 test("an untruncated tag still restores (the data path is unchanged)", async (t) => {
   const root = scratch(t);
   const path = resolve(root, "weather.backup.json");
-  await envelope(path, "gridsentinel.data-backup/1", { kind: "nope" });
+  await envelope(path, "mapergy.data-backup/1", { kind: "nope" });
   // Decryption succeeds; the payload check is what rejects it.
   await assert.rejects(restoreWeather(path), /Invalid weather backup/);
 });
@@ -80,8 +80,8 @@ test("asset restore rejects a manifest source that would escape the location dir
   const data = { datasets: [] };
   const path = resolve(root, "assets.backup.json");
   for (const source of ["../../x", "..", "a/b", "A", "x".repeat(65), ""]) {
-    const manifest = { schema: "gridsentinel.asset-manifest/1", query: {}, source, index: snapshot, pages: [] };
-    await envelope(path, "gridsentinel.data-backup/1", {
+    const manifest = { schema: "mapergy.asset-manifest/1", query: {}, source, index: snapshot, pages: [] };
+    await envelope(path, "mapergy.data-backup/1", {
       kind: "assets", location, revision: digest(data), data, manifests: [manifest],
       blobs: { [snapshot.sha256]: Buffer.from(bytes).toString("base64") },
     });

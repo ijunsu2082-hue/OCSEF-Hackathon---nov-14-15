@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { compactUSD, fmtNumber, fmtYears, fmtPercent } from "../format";
 import { gridChain } from "../grid";
-import { assetsForSite, assetsForSiteFromSource } from "../gridAssets.server";
+import { assetsForSite, assetsForSiteFromSource, assetsSourceFromEnv } from "../gridAssets.server";
 import { listFacilities } from "../region";
 import { layerSourceLabel } from "../scan/sourceLabel";
 import type { BriefResponse, FacilityProperties, SimResult } from "../types";
@@ -37,12 +37,12 @@ interface ChainContext {
 }
 
 /**
- * With GRIDSENTINEL_ASSETS_LOCATION set the chain reads that location's loaded
+ * With MAPERGY_ASSETS_LOCATION (or legacy GRIDSENTINEL_ASSETS_LOCATION) set the chain reads that location's loaded
  * ETL assets (falling back to bundled, with the reason) and the memo labels
  * which it used. Unset, this is exactly chainFor().
  */
 async function chainContext(properties: FacilityProperties, sim: SimResult): Promise<ChainContext> {
-  if (!process.env.GRIDSENTINEL_ASSETS_LOCATION) return { chain: chainFor(properties, sim), layerSource: null };
+  if (!assetsSourceFromEnv()) return { chain: chainFor(properties, sim), layerSource: null };
   const point = pointFor(properties);
   if (!point) {
     return {
@@ -103,7 +103,7 @@ export function fallbackBrief(
 
   return [
     `To: ${properties.provider.utility_name} — Energy & Sustainability`,
-    `From: GridSentinel Audit Desk`,
+    `From: Mapergy Audit Desk`,
     `Re: ${properties.name} (${properties.type}, ${age} yr) — grid-risk and decarbonization screen`,
     ``,
     `RECOMMENDATION  ${u.recommended_intervention}. The bundle adds ${fmtNumber(
