@@ -23,6 +23,9 @@ prcheck-out
 build-ui
 # Agent scratch: parallel-session worktrees and handoff notes
 .worktrees
+.merge-wt
+.playwright-cli
+shots
 graphify-out
 final-check
 final-check*

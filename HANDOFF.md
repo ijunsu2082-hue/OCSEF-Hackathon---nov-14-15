@@ -158,6 +158,115 @@ Env: `EIA_API_KEY`, `NWS_USER_AGENT` (contact-bearing), `ETL_LOCATIONS`,
 `ETL_STATE_NAMESPACE`, `REDIS_URL`, `ETL_BROWSER_ORIGINS`, `ETL_HTTP_*`.
 See `research/etl/README.md` for semantics.
 
+## Concerns found while landing this branch (fix these)
+
+### Bugs
+
+1. `research/etl/http.ts` retry classification is too narrow. A timeout or abort
+   from `fetch` rejects with messages like "The operation was aborted due to
+   timeout", which `/^(fetch failed|aborted)/i` does not match, so DNS failures
+   and timeouts are never retried. Match on the error `name`
+   (`TimeoutError`/`AbortError`/`TypeError`) instead of prose.
+2. `research/etl/http.ts` holds the per-host slot while it backs off: the
+   `await sleep(wait)` sits in `catch`, which runs before the `finally` that
+   releases the slot. One rate-limited request therefore blocks every other
+   request to that host for the whole backoff. Release first, then wait.
+3. `research/etl/http.ts` revalidates every request by URL + `accept` but keeps
+   up to 256 response bodies in memory with no byte accounting; worst case is
+   hundreds of MiB on a long inventory run. Cap by total bytes, not entries.
+4. `research/etl/http.ts` now forces `redirect: "error"` for all providers. A
+   provider that answers with a 302 (CAISO in particular) fails the capture
+   outright. Decide per source whether redirects are followed and to which
+   allowlisted origin, instead of one global policy.
+5. `research/etl/service.py` recovers the published revision with
+   `json.loads(stderr.decode().strip().splitlines()[-1])`. Any extra stderr line
+   (Node warning, retry notice) breaks the backup step. Parse the whole stderr
+   for the last line that is valid JSON, or print the revision on stdout behind
+   a delimiter.
+6. `research/etl/service.py` spawns one `node` subprocess per location per
+   60-second tick, sequentially and without an overlap guard. A slow location
+   delays every later one, and per-feed intervals are enforced inside the CLI
+   rather than by the scheduler. Move cadence into the worker and bound
+   concurrency the way the inventory worker already does.
+7. `app/api/location-report/[id]/assets/route.ts` ignores the report's own
+   revision linkage: any `?revision=` of that location is served. Acceptable for
+   the pilot, wrong for a shared citation: bind the served revision to the one
+   the report was built against.
+
+### Data correctness and provenance
+
+1. 799 of 1,271 bundled OSM substations have no name, and no live HIFLD capture
+   has ever succeeded on this machine, so nothing has been corroborated. Do not
+   present an OSM name or operator as verified, and do not infer a missing asset
+   from a missing record.
+2. No live provider collection has been proven from here: CAISO, NWS and ArcGIS
+   returned `ENOTFOUND`, no `EIA_API_KEY` existed, and Docker/Redis were
+   unavailable. Everything time-series is replay-tested only.
+3. The CAISO adapter has never parsed a real file. Only `Time` and the demand
+   columns are certain; other supply columns are matched by documented header
+   name and an unrecognized header is silently unreported, so a CAISO rename
+   would under-report instead of failing. Add a minimum-recognized-column check.
+4. EIA hourly telemetry still has an unverified clock basis, so it reports
+   `local-unknown` and can never be called fresh. Verify the API convention
+   before showing an age for it.
+5. `coverage --strict` exits 1 by design: hourly rating CSV regeneration,
+   field-level seed/case provenance, simulator input inventory and operator
+   imports are all still open.
+6. `load-assets` publishes whole provider geometry and no clipped mileage, so
+   any mileage computed from an asset revision today overstates length for lines
+   that only cross the study circle.
+7. CAISO values are system-wide telemetry and CAISO states they do not reconcile
+   to OASIS. Never present them as local demand, local mix, or market price.
+
+### Merge and coordination risk
+
+1. `lib/scan` exists on both PR #2 (`app/area-scan`) and this branch with
+   different contents. PR #2 additionally has `areaScan.ts`, `compliance.ts`,
+   `locationReport.ts`, `target.ts`, `useWeatherSample.ts`, `weather.ts` and
+   `wire.ts` which this branch does not, while `types.ts`, `sources.ts`,
+   `rating.ts` and `risk.ts` are separate copies. `app/location-report/*` is
+   edited on both. The copy here came from `.merge-wt` at `6726835`, **not** from
+   the PR #2 tip `27a2f02`. Expect a manual reconciliation, not a clean merge.
+2. PR #3 (`data/eia860-hifld-pipeline`) ships 50 Python-pipeline paths plus
+   `research/clean/*.csv`, `research/layers/*.geojson` and
+   `research/manifest.json`. That is a second EIA-860/HIFLD ingest next to
+   `research/etl`. Pick one owner before merging; until then those cleaned CSVs
+   and layers are the best available fixture set for proving regeneration.
+3. `origin/main` is 6 commits behind local `main`, and PR #1/#2/#3 are unmerged.
+   Anything merged from this branch lands without PR #2's scan work, so check
+   merge order before the app is assumed whole.
+4. Local worktrees `.worktrees/pr2`, `.worktrees/pr2-optimization`,
+   `.worktrees/pr2-upstream` and `.merge-wt` (~140 MB) still exist and hold
+   branch checkouts. They are untracked; `.merge-wt`, `.playwright-cli` and
+   `shots` are now gitignored. Removing the worktrees is the owner's call.
+
+### Unverified
+
+1. `npm run build` was not run after this tranche; the previous session stalled
+   at "Creating an optimized production build ...". Typecheck passes and no
+   client component imports ETL runtime code (`LocationClaims.tsx` imports the
+   report type only), but the build is the actual gate. Use a dedicated
+   `NEXT_DIST_DIR` so build output cannot re-enter git.
+2. `/location-report/<id>` has not been opened in a browser against live ETL
+   state, and Redis→WebSocket delivery has never been exercised. Reconnect,
+   skipped-event recovery and stale/fallback banners are untested in practice.
+3. `http.ts`, `caiso.ts` and `geometry.ts` have no tests. Only `tsc` covers them.
+4. The app reads ETL state from local disk (`research/etl-state`), so a deployed
+   serverless build serves no reports. The pilot needs a persistent host or a
+   state bucket before any public link.
+
+### Expectations to state out loud
+
+1. Updates are source-paced, not real time: CAISO 5 minutes, NWS 10 minutes, EIA
+   hourly (typically about an hour after the operating hour), inventory daily.
+   Site-level telemetry requires an authorized operator feed and does not exist
+   here.
+2. The WebSocket gateway authenticates by Origin allowlist only
+   (`ETL_BROWSER_ORIGINS`, default localhost) and any valid location id can be
+   subscribed. It is not multi-tenant safe.
+3. `http.ts` deduplication is process-local. Two collectors still fetch the same
+   URL; cross-location dedupe needs shared state.
+
 ## Known limitations to keep visible
 
 - Strict coverage exits 1: full asset regeneration, field-level seed/case
