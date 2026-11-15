@@ -12,7 +12,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The scan and workspace use bundled data when optional services are not configured. Add credentials in `.env.local` only for features that need them; never commit secrets.
+Open [http://localhost:3000](http://localhost:3000) or https://gridsentinel-area-scan.netlify.app. The scan and workspace use bundled data when optional services are not configured. Add credentials in `.env.local` only for features that need them; never commit secrets.
 
 ## Main pages
 
