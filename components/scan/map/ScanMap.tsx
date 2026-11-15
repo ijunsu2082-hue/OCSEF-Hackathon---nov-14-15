@@ -27,15 +27,19 @@ export type ViewMode = "2d" | "3d";
 
 const SHADOW = "0 1px 3px rgba(16,24,40,.08)";
 
+/** The news-pin flow selects a story through the panel instead. */
+const noopCase = () => {};
+
 export default function ScanMap({
   data,
   area,
   result,
-  selectedCaseId,
+  selectedCaseId = null,
   focus,
+  newsPin,
   onScan,
   onFocus,
-  onSelectCase,
+  onSelectCase = noopCase,
 }: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [mode, setMode] = useState<ViewMode>("2d");
@@ -99,6 +103,7 @@ export default function ScanMap({
           layers={layers}
           basemap={basemap}
           label={label}
+          newsPin={newsPin}
           onScan={handleScan}
           onFocus={onFocus}
           onSelectCase={onSelectCase}

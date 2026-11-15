@@ -28,6 +28,7 @@ import { EventLayer, MAP_COLORS, PlantLayer, SubstationLayer, TransmissionLayer,
 import { basemapById, type BasemapId } from "./basemaps";
 import type { LayerVisibility } from "./LayerPicker";
 import { MI_PER_DEG_LAT } from "./shared";
+import type { NewsPin } from "@/lib/scan/target";
 import type { MapFocus } from "./types";
 
 const COVERAGE_M = 160934;
@@ -43,6 +44,25 @@ function ClickToScan({ onClick }: { onClick: (lat: number, lon: number) => void 
       onClick(e.latlng.lat, e.latlng.lng);
     },
   });
+  return null;
+}
+
+const newsPinIcon = L.divIcon({
+  className: "gs-icon",
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+  html: '<div class="gs-news-pin"></div>',
+});
+
+/** Flies to a story's spot from the Local news tab (nonce re-triggers a repeat). */
+function NewsPinFly({ pin }: { pin: NewsPin | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!pin) return;
+    map.flyTo([pin.lat, pin.lon], 12, { duration: 0.8 });
+    // nonce is the trigger; the same story clicked twice still flies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin?.nonce, map]);
   return null;
 }
 
@@ -171,6 +191,7 @@ export interface ScanMap2DProps {
   layers: LayerVisibility;
   basemap: BasemapId;
   label: string;
+  newsPin?: NewsPin | null;
   onScan: (lat: number, lon: number) => void;
   onFocus: (lat: number, lon: number) => void;
   onSelectCase: (c: NicheCase) => void;
@@ -185,6 +206,7 @@ export default function ScanMap2D({
   layers,
   basemap,
   label,
+  newsPin,
   onScan,
   onFocus,
   onSelectCase,
@@ -215,6 +237,16 @@ export default function ScanMap2D({
       <AutoResize />
       <ClickToScan onClick={onScan} />
       <FlyTo focus={focus} />
+      <NewsPinFly pin={newsPin ?? null} />
+      {newsPin && (
+        <Marker
+          key={newsPin.nonce}
+          position={[newsPin.lat, newsPin.lon]}
+          icon={newsPinIcon}
+          interactive={false}
+          keyboard={false}
+        />
+      )}
 
       {/* Coverage ring — 100 mi around Westminster HS */}
       <Circle
