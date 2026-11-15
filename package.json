@@ -1,5 +1,5 @@
 {
-  "name": "gridsentinel",
+  "name": "mapergy",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,8 +13,12 @@
     "grants:verify": "tsx research/etl/cli.ts grants verify data/grants.json",
     "predev": "node scripts/sync-layers.mjs",
     "prebuild": "node scripts/sync-layers.mjs",
+    "pretest": "node scripts/sync-layers.mjs",
     "test": "tsx --test tests/*.test.ts",
     "verify:physics": "tsx scripts/verify-physics.ts",
+    "verify:owner": "for script in scripts/verify-owner-*.ts; do tsx \"$script\" || exit 1; done",
+    "test:etl": "tsx --test \"research/etl/*.test.ts\" \"lib/**/*.test.ts\" \"components/**/*.test.ts\"",
+    "test:service": "${PYTHON:-python3} -m pytest research/etl/test_service.py",
     "typecheck": "tsc --noEmit",
     "evidence:build": "tsx research/cli.ts build --profile westminster-100mi",
     "evidence:verify": "tsx research/cli.ts verify --bundle public/evidence/westminster-100mi.json",

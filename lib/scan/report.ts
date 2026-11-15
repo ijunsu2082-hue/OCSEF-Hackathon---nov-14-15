@@ -1,20 +1,45 @@
 import type { LineRatingNow, ScanResult } from "./types";
 import { FUEL_KEYS, FUEL_LABELS } from "./colors";
 import { aarRatio, conductorRange, ratioRange, windSentence } from "./rating";
+import { gridLayerProvider } from "./sourceLabel";
+
+type LayerOrigin = "etl" | "bundled";
+
+/** Footer attribution for the line and substation layers, by provider. */
+function gridAttribution(lines: LayerOrigin, substations: LayerOrigin, long: boolean): string {
+  const name = (layer: LayerOrigin) => gridLayerProvider(layer) === "HIFLD"
+    ? "HIFLD"
+    : long ? "OpenStreetMap contributors, ODbL" : "OpenStreetMap";
+  return lines === substations
+    ? long ? `${name(lines)} (lines, substations)` : `Lines/substations: ${name(lines)}.`
+    : long ? `${name(lines)} (lines); ${name(substations)} (substations)` : `Lines: ${name(lines)}. Substations: ${name(substations)}.`;
+}
 
 const n0 = (x: number) => Math.round(x).toLocaleString("en-US");
 const n1 = (x: number) => (Math.round(x * 10) / 10).toLocaleString("en-US");
 
-export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): string {
+/**
+ * `rating_unavailable` / `unscored_factors` come from scanArea(); a plain
+ * ScanResult without them is rendered as before. `layers` is LoadedGridData's
+ * per-layer origin; without it lines and substations are labelled as bundled OSM.
+ */
+export function scanReportMarkdown(
+  r: ScanResult & { rating_unavailable?: string | null; unscored_factors?: string[] },
+  live: LineRatingNow | null,
+  layers: { lines: LayerOrigin; substations: LayerOrigin } = { lines: "bundled", substations: "bundled" },
+): string {
   const t = r.totals;
   const s = r.rating_site;
+  const unscored = new Set(r.unscored_factors ?? []);
   const L: string[] = [];
-  L.push(`# GridSentinel Area Scan — ${r.area_label}`);
+  L.push(`# Mapergy Area Scan — ${r.area_label}`);
   L.push("");
   L.push(`**Area:** ${r.area.lat.toFixed(4)}, ${r.area.lon.toFixed(4)} · radius ${r.area.radius_mi} mi${r.inside_coverage ? "" : " · OUTSIDE the 100-mi coverage area (data may be incomplete)"}`);
   L.push("");
-  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level}) (GridSentinel's own index, not an official rating)`);
-  for (const f of r.risk.factors) L.push(`- ${f.label}: ${n0(f.score)} (weight ${Math.round(f.weight * 100)}%) — ${f.detail}`);
+  L.push(`## Risk: ${r.risk.score}/100 (${r.risk.level}) (Mapergy's own index, not an official rating)`);
+  for (const f of r.risk.factors) {
+    L.push(`- ${f.label}: ${unscored.has(f.key) ? "not scored" : n0(f.score)} (weight ${Math.round(f.weight * 100)}%) — ${f.detail}`);
+  }
   L.push("");
   L.push("## Sources: renewable vs current");
   const mix = FUEL_KEYS.filter((k) => t.mw_by_source[k] > 0).map((k) => `${FUEL_LABELS[k]} ${n1(t.mw_by_source[k])} MW`);
@@ -26,8 +51,9 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   if (r.plants.length) {
     for (const p of r.plants.slice(0, 5)) L.push(`- ${p.plant_name} (${p.city || p.county}): ${n1(p.nameplate_mw)} MW, ${FUEL_LABELS[p.primary_source] ?? p.primary_source}`);
   } else L.push("- No EIA-860 plants in this circle");
-  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, no voltage listed ${n1(t.line_miles_by_kv.unknown)}) (OSM${r.lines.some((l) => l.kv_inferred) ? "; some voltages filled in from connected lines" : ""})`);
-  L.push(`- Substations: ${t.substation_count} (${t.hv_substation_count} at >=200 kV) (OSM)`);
+  const inferred = r.lines.some((l) => l.kv_inferred) ? "; some voltages filled in from connected lines" : "";
+  L.push(`- Lines: ${n1(t.line_miles)} mi (500+ kV ${n1(t.line_miles_by_kv["500+"])}, 200-499 kV ${n1(t.line_miles_by_kv["200-499"])}, 100-199 kV ${n1(t.line_miles_by_kv["100-199"])}, <100 kV ${n1(t.line_miles_by_kv["<100"])}, no voltage listed ${n1(t.line_miles_by_kv.unknown)}) (${gridLayerProvider(layers.lines)}${inferred})`);
+  L.push(`- Substations: ${t.substation_count} (${t.hv_substation_count} at >=200 kV) (${gridLayerProvider(layers.substations)})`);
   L.push("");
   L.push("## Energy cycle");
   L.push(t.evening_cover_pct === null
@@ -53,14 +79,18 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
     if (aar !== null && aar > 0 && live.ratio > 0) L.push(`- ${windSentence(aar, live.ratio)}`);
     L.push(`- Across common wire types (${range.rows.map((x) => x.name).join(", ")}), each against its own fixed rating: temperature-adjusted ${ratioRange(range.aar_min, range.aar_max)}, with wind ${ratioRange(range.dlr_min, range.dlr_max)}`);
   }
-  const yr: string[] = [];
-  if (typeof s.median_aar_vs_static === "number") yr.push(`typical hour ${s.median_aar_vs_static}x from temperature alone`);
-  yr.push(`typical hour ${s.median_conservative_dlr_vs_static}x with wind halved`);
-  if (Number.isFinite(s.summer_4to8pm_median_wind_gain_over_aar)) {
-    const g = Math.round((s.summer_4to8pm_median_wind_gain_over_aar - 1) * 100);
-    yr.push(g >= 1 ? `wind adds about ${g}% over temperature alone on summer evenings (4-8 pm)` : "wind adds nothing over temperature alone on summer evenings (4-8 pm)");
+  if (r.rating_unavailable) {
+    L.push(`- 2025 rating summary: unavailable (${r.rating_unavailable})`);
+  } else {
+    const yr: string[] = [];
+    if (typeof s.median_aar_vs_static === "number") yr.push(`typical hour ${s.median_aar_vs_static}x from temperature alone`);
+    yr.push(`typical hour ${s.median_conservative_dlr_vs_static}x with wind halved`);
+    if (Number.isFinite(s.summer_4to8pm_median_wind_gain_over_aar)) {
+      const g = Math.round((s.summer_4to8pm_median_wind_gain_over_aar - 1) * 100);
+      yr.push(g >= 1 ? `wind adds about ${g}% over temperature alone on summer evenings (4-8 pm)` : "wind adds nothing over temperature alone on summer evenings (4-8 pm)");
+    }
+    L.push(`- 2025 at ${s.name}: ${yr.join("; ")}. With wind halved the rating beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x`);
   }
-  L.push(`- 2025 at ${s.name}: ${yr.join("; ")}. With wind halved the rating beat static in ${s.pct_hours_conservative_dlr_above_static}% of hours; hottest hour ${s.hottest_hour} (${s.hottest_temp_c} C) only ${s.hottest_hour_dlr_vs_static}x`);
   L.push("- Rules: FERC Order 881 requires US transmission providers to use temperature-adjusted ratings (general deadline July 2025; FERC extended CAISO to Dec 17, 2026, and the utilities that own lines in its grid (e.g., SCE, SDG&E, PG&E) have up to Oct 15, 2027). Applies only to FERC-regulated utilities. Wind-based ratings are not required.");
   L.push("- Screening estimate for a typical wire. Real limits also depend on the exact wire, its worst span, and equipment like breakers, so a utility must confirm.");
   L.push("");
@@ -73,7 +103,7 @@ export function scanReportMarkdown(r: ScanResult, live: LineRatingNow | null): s
   for (const u of r.upgrade_ideas) L.push(`- ${u}`);
   L.push("");
   L.push("---");
-  L.push("Sources: EIA-860 final 2025, released Sep 2026 (plants, retired & proposed generators); OpenStreetMap contributors, ODbL (lines, substations); Open-Meteo live + 2025 reanalysis (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings; wire sizes from the Prysmian TransPowr ACSR data sheet.");
+  L.push(`Sources: EIA-860 final 2025, released Sep 2026 (plants, retired & proposed generators); ${gridAttribution(layers.lines, layers.substations, true)}; Open-Meteo live + 2025 reanalysis (weather). Line ratings are MODELED screening estimates (simplified IEEE 738), not operating ratings; wire sizes from the Prysmian TransPowr ACSR data sheet.`);
   L.push("FERC Order 881: https://www.federalregister.gov/documents/2022/01/13/2021-27735/managing-transmission-line-ratings ; CAISO extension: https://www.caiso.com/documents/apr-30-2025-order-accepting-motion-for-extension-order-no-881-er22-2362.pdf");
   return L.join("\n");
 }

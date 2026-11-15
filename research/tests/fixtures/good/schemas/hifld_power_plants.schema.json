@@ -1,0 +1,44 @@
+{
+  "dataset": "hifld_power_plants",
+  "primary_key": [
+    "hifld_id"
+  ],
+  "geometry_type": "Point",
+  "source": {
+    "name": "Fixture source",
+    "url": "https://example.invalid/fixture",
+    "vintage": "2025"
+  },
+  "fields": [
+    {
+      "name": "hifld_id",
+      "type": "string",
+      "nullable": false,
+      "description": "hifld id",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "eia_plant_code",
+      "type": "integer",
+      "nullable": true,
+      "description": "eia plant code",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "distance mi",
+      "unit": "mi",
+      "enum": null,
+      "min": null,
+      "max": null
+    }
+  ]
+}

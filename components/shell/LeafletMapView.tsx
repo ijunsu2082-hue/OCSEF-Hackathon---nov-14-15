@@ -12,13 +12,13 @@ import {
   loadTransmission,
   plantRadius,
   sourceClass,
-  sourceLabel,
   transmissionWeight,
   type LayerVisibility,
   type PlantFeature,
   type SubstationFeature,
   type TransmissionFeature,
 } from "@/lib/gridLayers";
+import { plantTooltipHtml, type MapPlant } from "@/lib/scan/sourceLabel";
 import { basemapById, type BasemapId } from "@/lib/basemaps";
 import type { NicheCase } from "@/lib/niche";
 import type { RiskEntry } from "@/lib/risk";
@@ -116,7 +116,7 @@ export default function MapView({
 
   // Real-grid layers fetch lazily: a layer loads the first time it is switched
   // on, and never again (lib/gridLayers caches the promise per file).
-  const [plants, setPlants] = useState<PlantFeature[] | null>(null);
+  const [plants, setPlants] = useState<MapPlant[] | null>(null);
   const [transmission, setTransmission] = useState<TransmissionFeature[] | null>(null);
   const [substations, setSubstations] = useState<SubstationFeature[] | null>(null);
 
@@ -436,28 +436,16 @@ export default function MapView({
     for (const feature of plants) {
       const [lon, lat] = feature.geometry.coordinates;
       const props = feature.properties;
-      const years = props.oldest_year
-        ? props.newest_year && props.newest_year !== props.oldest_year
-          ? `${props.oldest_year}–${props.newest_year}`
-          : `${props.oldest_year}`
-        : "in-service year untagged";
-      const retirement =
-        props.planned_retirement_mw > 0
-          ? `<br/>planned retirement ${props.planned_retirement_mw.toFixed(1)} MW`
-          : "";
 
       L.circleMarker([lat, lon], {
         pane: "gs-plants",
-        radius: plantRadius(props.nameplate_mw),
+        radius: plantRadius(props.nameplate_mw ?? Number.NaN),
         weight: 1,
         color: "rgba(5,7,12,0.85)",
         fillOpacity: 0.85,
-        className: `plant-dot ${sourceClass(props.primary_source)}`,
+        className: `plant-dot ${sourceClass(props.primary_source ?? "")}`,
       })
-        .bindTooltip(
-          `<b>${escapeHtml(props.plant_name)}</b><br/>${props.nameplate_mw.toFixed(1)} MW · ${sourceLabel(props.primary_source)}<br/>in service ${years}${retirement}<br/><span class="tt-src">EIA-860 2025</span>`,
-          { direction: "top", className: "grid-tooltip" },
-        )
+        .bindTooltip(plantTooltipHtml(feature), { direction: "top", className: "grid-tooltip" })
         .addTo(group);
     }
   }, [layers.plants, plants]);

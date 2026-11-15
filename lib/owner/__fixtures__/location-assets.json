@@ -1,0 +1,219 @@
+{
+ "revision": "5a48e8def149b603fd347dbfd81b18212c86642a09ef5d60cb3a5ee3595a9b9a",
+ "data": {
+  "schema": "gridsentinel.location-assets/1",
+  "location": "location-efbcbbb3b5a7622692eb80ec",
+  "datasets": [
+   {
+    "source": "hifld-transmission",
+    "scope": {
+     "center": [
+      34,
+      -118
+     ],
+     "radius_miles": 10
+    },
+    "snapshots": [
+     {
+      "id": "snp_8bd869bf64d22939",
+      "source_id": "hifld-transmission",
+      "url": "https://services1.arcgis.com/oS5ru2iHb8I5vlTv/ArcGIS/rest/services/Transmission_Lines/FeatureServer/0/query?f=json&where=VOLTAGE+%3E%3D+69&geometry=-118%2C34&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=10&units=esriSRUnit_StatuteMile&returnIdsOnly=true",
+      "method": "GET",
+      "request_digest": null,
+      "retrieved_at": "2026-11-15T01:12:06.827Z",
+      "http": {
+       "status": 200,
+       "content_type": "application/json",
+       "etag": null,
+       "last_modified": null
+      },
+      "bytes": 52,
+      "sha256": "a33dd3b19e2d20ec7bcd21de8369d68b9390df63927f24a7a71d5b5d7db01fd5",
+      "cache_path": "research/etl-state/test-8432895f-06c8-454b-83cb-6a2826820354/blobs/a33dd3b19e2d20ec7bcd21de8369d68b9390df63927f24a7a71d5b5d7db01fd5.json",
+      "parser": "json.object",
+      "parser_version": "1",
+      "record_count": 2,
+      "notes": []
+     },
+     {
+      "id": "snp_863def8b088805ae",
+      "source_id": "hifld-transmission",
+      "url": "https://services1.arcgis.com/oS5ru2iHb8I5vlTv/ArcGIS/rest/services/Transmission_Lines/FeatureServer/0/query?f=geojson&objectIds=1%2C2%2C3&outFields=*&returnGeometry=true&outSR=4326",
+      "method": "GET",
+      "request_digest": null,
+      "retrieved_at": "2026-11-15T01:12:06.827Z",
+      "http": {
+       "status": 200,
+       "content_type": "application/json",
+       "etag": null,
+       "last_modified": null
+      },
+      "bytes": 476,
+      "sha256": "d86627a31a41df5757dafe720a8e929da7748eb47abe70788722f81437205ba4",
+      "cache_path": "research/etl-state/test-8432895f-06c8-454b-83cb-6a2826820354/blobs/d86627a31a41df5757dafe720a8e929da7748eb47abe70788722f81437205ba4.json",
+      "parser": "json.object",
+      "parser_version": "1",
+      "record_count": 2,
+      "notes": []
+     }
+    ],
+    "counts": {
+     "features": 3,
+     "missing": {
+      "owner": 2,
+      "voltage_kv": 1,
+      "status": 3
+     }
+    },
+    "features": {
+     "type": "FeatureCollection",
+     "features": [
+      {
+       "id": "hifld-transmission:1",
+       "type": "Feature",
+       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+         [
+          -118.5,
+          34
+         ],
+         [
+          -117.5,
+          34
+         ]
+        ]
+       },
+       "geometryCitation": {
+        "snapshot": "snp_863def8b088805ae",
+        "locator": "/features/0/geometry"
+       },
+       "properties": {
+        "owner": "Utility A",
+        "voltage_kv": 230,
+        "status": null
+       },
+       "citations": {
+        "owner": {
+         "snapshot": "snp_863def8b088805ae",
+         "locator": "/features/0/properties/OWNER"
+        },
+        "voltage_kv": {
+         "snapshot": "snp_863def8b088805ae",
+         "locator": "/features/0/properties/VOLTAGE"
+        }
+       },
+       "study_clip": {
+        "inside_miles": 20,
+        "total_miles": 57.28,
+        "segments": 1,
+        "status": "crossing",
+        "voltage_band": "230-345"
+       }
+      },
+      {
+       "id": "hifld-transmission:2",
+       "type": "Feature",
+       "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+         [
+          [
+           -118,
+           34
+          ],
+          [
+           -118.05,
+           34.02
+          ]
+         ]
+        ]
+       },
+       "geometryCitation": {
+        "snapshot": "snp_863def8b088805ae",
+        "locator": "/features/1/geometry"
+       },
+       "properties": {
+        "owner": null,
+        "voltage_kv": null,
+        "status": null
+       },
+       "citations": {
+        "voltage_kv": {
+         "snapshot": "snp_863def8b088805ae",
+         "locator": "/features/1/properties/VOLTAGE"
+        }
+       },
+       "study_clip": {
+        "inside_miles": 3.18,
+        "total_miles": 3.18,
+        "segments": 1,
+        "status": "inside",
+        "voltage_band": "unknown"
+       }
+      },
+      {
+       "id": "hifld-transmission:3",
+       "type": "Feature",
+       "geometry": {
+        "type": "LineString",
+        "coordinates": [
+         [
+          -118.2,
+          35
+         ],
+         [
+          -117.8,
+          35
+         ]
+        ]
+       },
+       "geometryCitation": {
+        "snapshot": "snp_863def8b088805ae",
+        "locator": "/features/2/geometry"
+       },
+       "properties": {
+        "owner": null,
+        "voltage_kv": 500,
+        "status": null
+       },
+       "citations": {
+        "voltage_kv": {
+         "snapshot": "snp_863def8b088805ae",
+         "locator": "/features/2/properties/VOLTAGE"
+        }
+       },
+       "study_clip": {
+        "inside_miles": 0,
+        "total_miles": 22.64,
+        "segments": 0,
+        "status": "outside",
+        "voltage_band": "500-765"
+       }
+      }
+     ]
+    },
+    "mileage": {
+     "method": "geodesic inside-radius length via local tangent plane clip (geometry.ts)",
+     "radius_miles": 10,
+     "center": [
+      34,
+      -118
+     ],
+     "inside_miles_total": 23.18,
+     "provider_miles_total": 83.1,
+     "by_voltage_band": {
+      "230-345": 20,
+      "500-765": 0,
+      "unknown": 3.18
+     },
+     "counts": {
+      "inside": 1,
+      "crossing": 1,
+      "outside": 1
+     }
+    }
+   }
+  ]
+ }
+}

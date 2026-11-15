@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { clerkConfigured, OWNER_HOME_PATH, OWNER_SIGN_IN_PATH, OWNER_SIGN_UP_PATH } from "@/lib/owner/config";
 
-export const metadata: Metadata = { title: "GridSentinel · Owner portal" };
+export const metadata: Metadata = { title: "Mapergy · Owner portal" };
 
 // Decide on ClerkProvider per request, matching /api/owner/config, so keys added after the
 // build (or set only at runtime) still mount the provider.
@@ -27,7 +27,7 @@ function Chrome({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <a href="/" className={`flex items-center gap-2 rounded-[6px] text-[15px] font-semibold ${FOCUS}`}>
               <span aria-hidden className="inline-block h-3 w-3 rounded-[3px] bg-[#0ea5e9]" />
-              GridSentinel
+              Mapergy
             </a>
             <a href={OWNER_HOME_PATH} className={`rounded-[6px] text-[14px] text-[#556070] hover:text-[#1d2733] ${FOCUS}`}>
               Owner portal

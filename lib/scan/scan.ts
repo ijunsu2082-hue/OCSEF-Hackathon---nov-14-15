@@ -1,15 +1,55 @@
-import type { FuelKey, GridData, KvBand, Line, NicheCase, Plant, ScanArea, ScanResult } from "./types";
+import type { FuelKey, GridData, KvBand, Line, NicheCase, Plant, RatingSiteSummary, ScanArea, ScanResult } from "./types";
 import { CENTER, COVERAGE_MI, degSpan, haversineMi, kvBand, round } from "./geo";
 import { FUEL_KEYS } from "./colors";
-import { nearestSite } from "./data";
+import { LAYERS_BASE, nearestSite } from "./data";
 import { computeRisk } from "./risk";
 import { lineIndex } from "./lineIndex";
+
+// ---------- rating-summary availability ----------
+
+const RATING_SUMMARY = `${LAYERS_BASE}/line_ratings/summary.json`;
+
+/**
+ * Why the 2025 rating-site summary is unavailable, or null when it loaded.
+ * loadGridData() lists absent files in `unavailable`; plain GridData (no list)
+ * is taken as complete.
+ */
+export function ratingSummaryUnavailable(data: GridData): string | null {
+  const missing = (data as { unavailable?: unknown }).unavailable;
+  if (!Array.isArray(missing) || !missing.includes(RATING_SUMMARY)) return null;
+  return `${RATING_SUMMARY} not found`;
+}
+
+/** Site with its summary figures blanked, so no placeholder value can pass as measured. */
+function withoutSummary(site: RatingSiteSummary & { distance_mi: number }): RatingSiteSummary & { distance_mi: number } {
+  return {
+    ...site,
+    median_conservative_dlr_vs_static: Number.NaN,
+    pct_hours_conservative_dlr_above_static: Number.NaN,
+    summer_4to8pm_median_wind_gain_over_aar: Number.NaN,
+    median_aar_vs_static: Number.NaN,
+    median_wind_gain_over_aar: Number.NaN,
+    hottest_hour: "",
+    hottest_temp_c: Number.NaN,
+    hottest_hour_dlr_vs_static: Number.NaN,
+  };
+}
+
+/**
+ * ScanResult plus which inputs were unavailable. When `rating_unavailable` is
+ * set, `rating_site` keeps its name/location but every summary figure is NaN,
+ * and `unscored_factors` lists risk factors scored 0 for lack of data.
+ */
+export type ScanResultWithGaps = ScanResult & {
+  rating_unavailable: string | null;
+  unscored_factors: string[];
+};
 
 // ---------- scan ----------
 
 const emptyBands = (): Record<KvBand, number> => ({ "500+": 0, "200-499": 0, "100-199": 0, "<100": 0, unknown: 0 });
 
-export function scanArea(data: GridData, area: ScanArea, opts?: { heatwave?: boolean }): ScanResult {
+export function scanArea(data: GridData, area: ScanArea, opts?: { heatwave?: boolean }): ScanResultWithGaps {
   const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
   const { lat, lon } = area;
   const r = Number.isFinite(area.radius_mi) && area.radius_mi > 0 ? area.radius_mi : 0.1;
@@ -111,13 +151,26 @@ export function scanArea(data: GridData, area: ScanArea, opts?: { heatwave?: boo
     evening_cover_pct: mw_by_source.solar > 0 ? round((storage / mw_by_source.solar) * 100, 1) : null,
   };
 
-  const rating_site = nearestSite(data.ratingSites, lat, lon);
+  const rating_unavailable = ratingSummaryUnavailable(data);
+  const nearest = nearestSite(data.ratingSites, lat, lon);
+  const rating_site = rating_unavailable ? withoutSummary(nearest) : nearest;
   const risk = computeRisk(totals, rating_site, cases, events, lines.length, opts);
+  const unscored_factors: string[] = [];
+  if (rating_unavailable && opts?.heatwave !== true) {
+    // computeRisk scores a non-finite hottest-hour ratio as no heat stress; say so
+    // instead of printing its stand-in ratio as the measured one.
+    const heat = risk.factors.find((f) => f.key === "heat");
+    if (heat) {
+      heat.score = 0;
+      heat.detail = `Unavailable (${rating_unavailable}); not scored.`;
+      unscored_factors.push("heat");
+    }
+  }
 
   const area_label = areaLabel(data.plants, plants, lat, lon, r, rating_site);
 
   const upgrade_ideas = upgradeIdeas({
-    totals, rating_site, cases, radius: r, hvLineMiles: round(hvLineMiles, 1),
+    totals, rating_site, rating_unavailable, cases, radius: r, hvLineMiles: round(hvLineMiles, 1),
     fossilAge: fossilAgeMw > 0 ? fossilAgeW / fossilAgeMw : null,
   });
 
@@ -129,6 +182,7 @@ export function scanArea(data: GridData, area: ScanArea, opts?: { heatwave?: boo
     plants, lines, substations, cases, events,
     totals, risk, rating_site, upgrade_ideas,
     elapsed_ms: round(t1 - t0, 2),
+    rating_unavailable, unscored_factors,
   };
 }
 
@@ -187,8 +241,8 @@ function lineRatingIdea(s: ScanResult["rating_site"], what: string | null): stri
 }
 
 function upgradeIdeas(a: {
-  totals: ScanResult["totals"]; rating_site: ScanResult["rating_site"]; cases: NicheCase[];
-  radius: number; hvLineMiles: number; fossilAge: number | null;
+  totals: ScanResult["totals"]; rating_site: ScanResult["rating_site"]; rating_unavailable: string | null;
+  cases: NicheCase[]; radius: number; hvLineMiles: number; fossilAge: number | null;
 }): string[] {
   const { totals: t, rating_site: s, cases } = a;
   const ideas: string[] = [];
@@ -202,8 +256,13 @@ function upgradeIdeas(a: {
     const z = a.fossilAge ?? t.cap_weighted_age ?? 0;
     ideas.push(`Repower ${n0(t.fossil_mw)} MW of gas averaging ${n0(z)} years old.`);
   }
-  const rateIdea = lineRatingIdea(s, a.hvLineMiles > 0 ? `${n0(a.hvLineMiles)} mi of 200 kV+ lines` : t.line_miles > 0 ? `${t.line_miles.toFixed(1)} mi of mapped lines` : null);
-  if (rateIdea) ideas.push(rateIdea);
+  const rateWhat = a.hvLineMiles > 0 ? `${n0(a.hvLineMiles)} mi of 200 kV+ lines` : t.line_miles > 0 ? `${t.line_miles.toFixed(1)} mi of mapped lines` : null;
+  if (a.rating_unavailable) {
+    if (rateWhat) ideas.push(`Rate the ${rateWhat} here by real air temperature (FERC Order 881): capacity headroom unavailable (${a.rating_unavailable}).`);
+  } else {
+    const rateIdea = lineRatingIdea(s, rateWhat);
+    if (rateIdea) ideas.push(rateIdea);
+  }
   if (t.proposed_mw > 0) {
     const st = t.proposed_storage_mw > 0 ? `, ${n0(t.proposed_storage_mw)} MW of it storage` : "";
     ideas.push(`${n0(t.proposed_mw)} MW is already proposed${st}. Prioritize its grid connection.`);
@@ -221,9 +280,11 @@ function upgradeIdeas(a: {
     ideas.push(`No power plants within ${a.radius} mi. Rooftop solar plus home batteries are the main local supply option.`);
   }
   if (ideas.length < 2) {
-    ideas.push(`Pilot wind-based ratings (dynamic line rating) using ${s.name} weather (${s.distance_mi} mi away). With wind halved for safety, the rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2025 hours.`);
+    ideas.push(a.rating_unavailable
+      ? `Pilot wind-based ratings (dynamic line rating) using ${s.name} weather (${s.distance_mi} mi away). Its 2025 rating summary is unavailable (${a.rating_unavailable}).`
+      : `Pilot wind-based ratings (dynamic line rating) using ${s.name} weather (${s.distance_mi} mi away). With wind halved for safety, the rating beat the fixed rating in ${s.pct_hours_conservative_dlr_above_static}% of 2025 hours.`);
   }
-  if (ideas.length < 2) {
+  if (ideas.length < 2 && !a.rating_unavailable) {
     ideas.push(`Add sensors at the hottest-hour bottleneck. On ${s.hottest_hour.slice(0, 10) || "the hottest 2025 day"} the safe rating near ${s.name} was ${s.hottest_hour_dlr_vs_static.toFixed(2)}× the fixed rating.`);
   }
   return ideas.slice(0, 5);

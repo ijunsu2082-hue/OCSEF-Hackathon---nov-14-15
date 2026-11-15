@@ -77,7 +77,7 @@ export function RiskBreakdown({
         </ul>
       )}
       <Caption className="mt-4">
-        Each factor is scored 0 to 100. The area score is their weighted average. This is GridSentinel's own index, not an official utility or regulator rating.
+        Each factor is scored 0 to 100. The area score is their weighted average. This is Mapergy's own index, not an official utility or regulator rating.
       </Caption>
       <details className="mt-3 text-[13px] text-[#556070]">
         <summary className="cursor-pointer text-[13px] font-medium text-[#0369a1]">How this score works</summary>

@@ -1,0 +1,50 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.09913,
+          33.764741
+        ]
+      },
+      "properties": {
+        "hifld_id": "A1",
+        "eia_plant_code": 400,
+        "distance_mi": 5.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.8,
+          33.7
+        ]
+      },
+      "properties": {
+        "hifld_id": "B2",
+        "eia_plant_code": 99999,
+        "distance_mi": 12.7
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.7,
+          33.6
+        ]
+      },
+      "properties": {
+        "hifld_id": "C3",
+        "eia_plant_code": null,
+        "distance_mi": 20.8
+      }
+    }
+  ]
+}

@@ -113,7 +113,7 @@ export function buildIcs(events: IcsEvent[], now: Date = new Date()): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//GridSentinel//Owner filings//EN",
+    "PRODID:-//Mapergy//Owner filings//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "X-WR-CALNAME:Owner filings",

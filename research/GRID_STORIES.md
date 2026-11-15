@@ -1,4 +1,4 @@
-# Niche Cases: real, local, sourced
+# Grid Stories: real, local, sourced
 
 Real energy-infrastructure stories inside **100 miles of Westminster High School** (33.7538, -118.0111), found by 10 parallel research agents on 14 Nov 2026 and checked against web sources. Every fact carries its source and a confidence tag:
 
@@ -421,7 +421,7 @@ When a cargo or cruise ship docks, it still needs electricity for lights, cranes
 **Operator:** California ISO (grid operator); Southern California Edison is the local utility in the SCE-TAC area; Cal OES sent the phone alert  
 **Location:** 33.7442, -117.8667 · **8.3 mi** from Westminster HS
 
-On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for GridSentinel: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.
+On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for Mapergy: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.
 
 **Say on stage:** On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.
 

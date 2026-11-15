@@ -1,4 +1,4 @@
-# GridSentinel — Regional Energy Infrastructure Intelligence
+# Mapergy — Regional Energy Infrastructure Intelligence
 
 A dark-mode "command center" for **electrical** infrastructure: it maps every major load center in a region, scores its grid-risk exposure, simulates a 105 °F heatwave demand shock, models solar + drive-retrofit upgrades with live ROI, and drafts + dispatches an AI energy-audit memo.
 
@@ -525,7 +525,7 @@ Validate: `node_id` exists (404), `added_solar_mw` finite 0–100 (422). Default
 
 ```
 To: <operator> — Energy & Sustainability
-From: GridSentinel Audit Desk
+From: Mapergy Audit Desk
 Re: <site name> (<load type>, <age> yr) — grid-risk and decarbonization screen
 
 RECOMMENDATION  <the intervention, one sentence, with MW and % named>
@@ -542,7 +542,7 @@ If no key or the call fails: return `source: "fallback"` with a template-built m
 ### 5.4 `POST /api/send-audit` — body `AuditRequest` → `AuditResponse`
 - No `RESEND_API_KEY` → **200** `{ delivered: false, mode: "simulated", ... }` with a detail telling the operator to add the key. The UI shows a "simulated dispatch" receipt so the demo never dead-ends.
 - Key present → `resend.emails.send({ from: AUDIT_FROM_EMAIL, to, subject, html, text })`; handle `{ error }` as 502 with a sanitized message; `provider_id = data.id`.
-- `from` defaults to `GridSentinel Audits <audits@resend.dev>`; without a verified domain Resend only delivers to the account owner's address — say so in the UI under the recipient field.
+- `from` defaults to `Mapergy Audits <audits@resend.dev>`; without a verified domain Resend only delivers to the account owner's address — say so in the UI under the recipient field.
 - Only send to addresses matching a sane email regex; reject otherwise (400). One recipient, no CC/BCC, no arrays.
 
 ### 5.5 UI-side fallback values (so shell work never blocks)
@@ -631,9 +631,9 @@ cp .env.example .env.local
 | `GEMINI_API_KEY` | Memo falls back to the deterministic template, banner reads "template memo" |
 | `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
 | `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` |
-| `AUDIT_FROM_EMAIL` | `GridSentinel Audits <audits@resend.dev>` |
+| `AUDIT_FROM_EMAIL` | `Mapergy Audits <audits@resend.dev>` |
 | `DEMO_INBOX_EMAIL` | Recipient field starts empty with a placeholder |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Datasets are read from `data/` and `public/layers/` instead of Supabase |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`) | Datasets are read from `data/` and `public/layers/` instead of Supabase |
 
 Secrets stay server-side and out of git.
 

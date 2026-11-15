@@ -687,6 +687,18 @@ const TELEMETRY: PredicateDefinition[] = [
     allowed_methods: ["observed"], subject_prefix: "region",
     description: "CAISO system-wide supply for one resource type, five-minute average. Negative values are published battery charging or net imports.",
   })),
+  ...(["rtm", "dam"] as const).flatMap((market) => ([
+    ["lmp", "locational marginal price"],
+    ["energy", "marginal energy component (MCE)"],
+    ["congestion", "marginal congestion component (MCC)"],
+    ["loss", "marginal loss component (MCL)"],
+  ] as const).map(([component, label]) => def({
+    id: `caiso.oasis.${market}.${component}_usd_mwh`,
+    label: `CAISO OASIS ${market.toUpperCase()} ${label}`, unit: "$/MWh",
+    value_type: "number", min: -100000, max: 100000,
+    allowed_methods: ["observed"], subject_prefix: "region",
+    description: `CAISO OASIS ${market === "rtm" ? "real-time five-minute" : "day-ahead hourly"} nodal price for one explicit pricing node and interval. Not system demand, not a local retail price. Components can be negative.`,
+  }))),
   ...([
     ["weather.temperature_c", "Station air temperature", "°C"],
     ["weather.wind_kmh", "Station wind speed", "km/h"],

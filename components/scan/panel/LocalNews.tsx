@@ -1,7 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { haversineMi } from "@/lib/scan";
 import type { NicheCase, ScanResult } from "@/lib/scan";
+import { matchUtility, UTILITIES, type UtilityKey } from "@/lib/scan/legal";
+import { MAX_PLACES, MAX_UTILITIES, type NewsLive } from "@/lib/live/news";
+import { agoLabel, usePoll } from "@/lib/live/usePoll";
 import { DASH, fmtNum, isNum } from "./format";
 import { Caption, Section } from "./ui";
 
@@ -63,6 +67,97 @@ export function groupLocalNews(result: ScanResult, cases: NicheCase[]): LocalNew
   return { within, related };
 }
 
+/** Place names to search news for: the area's own name, then the cities of the nearest plants. */
+export function newsPlaces(result: ScanResult): string[] {
+  const { lat, lon } = result.area;
+  const out: string[] = [];
+  const add = (t: string | null | undefined) => {
+    const v = (t ?? "").replace(/^\s*near\s+/i, "").trim();
+    if (v && !out.some((o) => o.toLowerCase() === v.toLowerCase())) out.push(v);
+  };
+  add((result.area_label || "").split("·")[0]);
+  const plants = [...result.plants].sort(
+    (a, b) => haversineMi(lat, lon, a.lat, a.lon) - haversineMi(lat, lon, b.lat, b.lon),
+  );
+  for (const p of plants) add(p.city);
+  return out.slice(0, MAX_PLACES);
+}
+
+/** Utilities that run the substations in the circle, nearest first, by full name without the "(SCE)" part. */
+export function newsUtilities(result: ScanResult): string[] {
+  const { lat, lon } = result.area;
+  const subs = [...result.substations].sort(
+    (a, b) => haversineMi(lat, lon, a.lat, a.lon) - haversineMi(lat, lon, b.lat, b.lon),
+  );
+  const keys: UtilityKey[] = [];
+  for (const s of subs) {
+    const k = matchUtility(s.operator);
+    if (k && !keys.includes(k)) keys.push(k);
+  }
+  return keys.slice(0, MAX_UTILITIES).map((k) => UTILITIES[k].name.replace(/\s*\([^)]*\)\s*$/, ""));
+}
+
+export function liveNewsUrl(places: string[], utilities: string[]): string | null {
+  if (places.length === 0) return null;
+  const q = new URLSearchParams({ places: places.join("|") });
+  if (utilities.length) q.set("utilities", utilities.join("|"));
+  return `/api/live/news?${q.toString()}`;
+}
+
+function articleAge(iso: string | null, now: number): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? agoLabel(Math.max(0, Math.round((now - t) / 1000))) : "";
+}
+
+function LiveHeadlines({ result }: { result: ScanResult }) {
+  const places = useMemo(() => newsPlaces(result), [result]);
+  const utilities = useMemo(() => newsUtilities(result), [result]);
+  const { feed, error, fetchedAgoSec } = usePoll<NewsLive>(liveNewsUrl(places, utilities), 600);
+  const data = feed?.data ?? null;
+  const now = Date.now();
+  const provider = feed?.providers[0]?.name ?? "Google News";
+  return (
+    <Section title="Live headlines" subtitle={`Power and grid news naming ${places.join(", ") || "this area"}`}>
+      {!feed && !error && <p className="text-[14px] text-[#556070]">Loading the latest news…</p>}
+      {(feed?.status === "error" || (!feed && error)) && (
+        <p className="text-[14px] text-[#556070]">Live news is unavailable right now. It will retry on its own.</p>
+      )}
+      {data && data.articles.length === 0 && (
+        <p className="text-[14px] text-[#556070]">
+          No power or grid news for these places in the last {data.windowDays} days.
+        </p>
+      )}
+      {data && data.articles.length > 0 && (
+        <ul className="-my-2 flex flex-col">
+          {data.articles.map((a) => (
+            <li key={a.url} className="py-2">
+              <a
+                href={a.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[14px] font-medium leading-snug text-[#1d2733] hover:text-[#0369a1] hover:underline"
+              >
+                {a.title}
+              </a>
+              <p className="mt-0.5 text-[12px] text-[#6b7583]">
+                {a.source}
+                {a.source && a.publishedAt ? " · " : ""}
+                {articleAge(a.publishedAt, now)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Caption className="mt-3">
+        {feed && feed.status !== "error"
+          ? `Live · ${provider}, last ${data?.windowDays ?? 14} days · checked ${agoLabel(fetchedAgoSec)}. Refreshes every 10 minutes.`
+          : "Searches news from the last 14 days. Refreshes every 10 minutes."}
+      </Caption>
+    </Section>
+  );
+}
+
 function isUrl(s: string): boolean {
   return /^https?:\/\//i.test(s);
 }
@@ -117,7 +212,8 @@ export function LocalNews({
   const label = result.area_label || "this spot";
   return (
     <>
-      <Section title={`Within ${rText} mi of ${label}`} sources={["news"]}>
+      <LiveHeadlines result={result} />
+      <Section title={`Within ${rText} mi of ${label}`} subtitle="Researched grid stories" sources={["news"]}>
         {groups.within.length === 0 ? (
           <p className="text-[14px] text-[#556070]">No local news within {rText} mi. Try a bigger radius.</p>
         ) : (

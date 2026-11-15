@@ -11,6 +11,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NicheCase } from "./niche";
 import { getSupabase, selectAll } from "./supabase";
+import {
+  fetchEtlAssets,
+  type AdaptedLocationAssets,
+  type EtlLayer,
+  type EtlLayerMeta,
+  type EtlPlantFeature,
+  type EtlSourceSelector,
+  type EtlSubstationFeature,
+  type EtlTransmissionFeature,
+} from "./etlAssets";
 
 // ---- Shapes -----------------------------------------------------------------
 
@@ -224,6 +234,44 @@ async function withFallback<T>(
   return local();
 }
 
+// ---- Optional loaded-ETL source ----------------------------------------------
+//
+// Called with no argument, each loader returns the bundled layer (Supabase,
+// else the public/layers file) exactly as before. Called with a selector, it
+// reads the location's loaded ETL assets
+// (/api/location-report/[id]/assets) and falls back to the bundled layer when
+// they are unavailable; `source` says which one the caller got.
+
+export type EtlSource = EtlSourceSelector;
+
+export type SourcedLayer<Bundled, Etl> =
+  | { source: "etl"; features: Etl[]; etl: EtlLayerMeta & { report_revision: string | null }; fallback_reason: null }
+  | { source: "bundled"; features: Bundled[]; etl: null; fallback_reason: string };
+
+async function sourced<Bundled, Etl>(
+  selector: EtlSourceSelector,
+  pick: (assets: AdaptedLocationAssets) => EtlLayer<Etl> | null,
+  layerName: string,
+  bundled: () => Promise<LayerCollection<Bundled>>,
+): Promise<SourcedLayer<Bundled, Etl>> {
+  const loaded = await fetchEtlAssets(selector);
+  let reason: string;
+  if (loaded.ok) {
+    const layer = pick(loaded.assets);
+    if (layer) {
+      return {
+        source: "etl", features: layer.features,
+        etl: { ...layer.meta, report_revision: loaded.reportRevision }, fallback_reason: null,
+      };
+    }
+    reason = `loaded assets have no ${layerName} dataset`;
+  } else {
+    reason = loaded.reason;
+  }
+  const collection = await bundled();
+  return { ...collection, source: "bundled", features: collection.features, etl: null, fallback_reason: reason };
+}
+
 type LayerName = "plants" | "transmission" | "substations";
 
 async function layerMetadata(
@@ -306,7 +354,7 @@ const TRANSMISSION_COLUMNS = [
   "line",
 ] as const;
 
-export function loadPlants(): Promise<LayerCollection<PlantFeature>> {
+function loadBundledPlants(): Promise<LayerCollection<PlantFeature>> {
   return cached<Collection<PlantProperties>>("plants", () =>
     withFallback(
       "plants",
@@ -316,7 +364,7 @@ export function loadPlants(): Promise<LayerCollection<PlantFeature>> {
   ) as Promise<LayerCollection<PlantFeature>>;
 }
 
-export function loadTransmission(): Promise<LayerCollection<TransmissionFeature>> {
+function loadBundledTransmission(): Promise<LayerCollection<TransmissionFeature>> {
   return cached<Collection<TransmissionProperties>>("transmission", () =>
     withFallback(
       "transmission",
@@ -350,7 +398,7 @@ export function loadTransmission(): Promise<LayerCollection<TransmissionFeature>
   ) as Promise<LayerCollection<TransmissionFeature>>;
 }
 
-export function loadSubstations(): Promise<LayerCollection<SubstationFeature>> {
+function loadBundledSubstations(): Promise<LayerCollection<SubstationFeature>> {
   return cached<Collection<SubstationProperties>>("substations", () =>
     withFallback(
       "substations",
@@ -359,6 +407,27 @@ export function loadSubstations(): Promise<LayerCollection<SubstationFeature>> {
       () => fetchJson<Collection<SubstationProperties>>("/layers/substations.geojson"),
     ),
   ) as Promise<LayerCollection<SubstationFeature>>;
+}
+
+export function loadPlants(): Promise<LayerCollection<PlantFeature>>;
+export function loadPlants(source: EtlSource): Promise<SourcedLayer<PlantFeature, EtlPlantFeature>>;
+export function loadPlants(source?: EtlSource) {
+  if (!source) return loadBundledPlants();
+  return sourced(source, (a) => a.plants, "plant", loadBundledPlants);
+}
+
+export function loadTransmission(): Promise<LayerCollection<TransmissionFeature>>;
+export function loadTransmission(source: EtlSource): Promise<SourcedLayer<TransmissionFeature, EtlTransmissionFeature>>;
+export function loadTransmission(source?: EtlSource) {
+  if (!source) return loadBundledTransmission();
+  return sourced(source, (a) => a.transmission, "transmission", loadBundledTransmission);
+}
+
+export function loadSubstations(): Promise<LayerCollection<SubstationFeature>>;
+export function loadSubstations(source: EtlSource): Promise<SourcedLayer<SubstationFeature, EtlSubstationFeature>>;
+export function loadSubstations(source?: EtlSource) {
+  if (!source) return loadBundledSubstations();
+  return sourced(source, (a) => a.substations, "substation", loadBundledSubstations);
 }
 
 const NICHE_COLUMNS = [

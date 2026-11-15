@@ -1,0 +1,305 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-11-14",
+  "region": {
+    "name": "100 mi radius around Westminster High School, Westminster CA",
+    "center": {
+      "lat": 33.7538,
+      "lon": -118.0111
+    },
+    "radius_mi": 100.0,
+    "earth_radius_mi": 3958.8,
+    "bbox": {
+      "lon_min": -119.76,
+      "lon_max": -116.26,
+      "lat_min": 32.29,
+      "lat_max": 35.21
+    }
+  },
+  "validation_ok": true,
+  "datasets": [
+    {
+      "dataset": "eia860_generators",
+      "primary_key": [
+        "plant_code",
+        "generator_id"
+      ],
+      "geometry_type": null,
+      "source": {
+        "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+        "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+        "vintage": "2025 final (released 2026-09-10)"
+      },
+      "vintage": "2025 final (released 2026-09-10)",
+      "row_count": 1549,
+      "csv_rows": 1549,
+      "feature_count": null,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/eia860_generators.schema.json",
+          "bytes": 5678,
+          "sha256": "203c4a372c99f3054935d24f64a7d79965e412582cb270548abf652dc5fde933"
+        },
+        {
+          "role": "csv",
+          "path": "clean/eia860_generators.csv",
+          "bytes": 165892,
+          "sha256": "585968a899c2f28c50711b4c9fdf07a70ee4539390d166155b2190d4de8ad050"
+        },
+        {
+          "role": "notes",
+          "path": "notes/eia860_generators.md",
+          "bytes": 2919,
+          "sha256": "d3f0d7f40bc003dd319dfd5a14ef2b6ea503ddb387317b19b33de71973c680d1"
+        }
+      ],
+      "validation": {
+        "status": "pass",
+        "errors": 0,
+        "warnings": 0,
+        "error_codes": [],
+        "warning_codes": []
+      }
+    },
+    {
+      "dataset": "eia860_plants",
+      "primary_key": [
+        "plant_code"
+      ],
+      "geometry_type": null,
+      "source": {
+        "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+        "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+        "vintage": "2025 final (released 2026-09-10)"
+      },
+      "vintage": "2025 final (released 2026-09-10)",
+      "row_count": 868,
+      "csv_rows": 868,
+      "feature_count": null,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/eia860_plants.schema.json",
+          "bytes": 7955,
+          "sha256": "ad10b704edf3a5dfd16955629cddacc9796c82b93561b7ce8159664fb0eced5f"
+        },
+        {
+          "role": "csv",
+          "path": "clean/eia860_plants.csv",
+          "bytes": 224863,
+          "sha256": "edf71d14f7df2abea19625f7fccc69972e9ca86e3325c379c7a139c4ce8116b2"
+        },
+        {
+          "role": "notes",
+          "path": "notes/eia860_plants.md",
+          "bytes": 7113,
+          "sha256": "27cfb29cba6901b3fd1dcffb9e99b408ab77ccaa9950fb274e976821abee067f"
+        }
+      ],
+      "validation": {
+        "status": "pass",
+        "errors": 0,
+        "warnings": 0,
+        "error_codes": [],
+        "warning_codes": []
+      }
+    },
+    {
+      "dataset": "eia860_plants_layer",
+      "primary_key": [
+        "plant_code"
+      ],
+      "geometry_type": "Point",
+      "source": {
+        "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+        "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+        "vintage": "2025 final (released 2026-09-10)"
+      },
+      "vintage": "2025 final (released 2026-09-10)",
+      "row_count": 697,
+      "csv_rows": null,
+      "feature_count": 697,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/eia860_plants_layer.schema.json",
+          "bytes": 6203,
+          "sha256": "cf0de87edfaf2d94c393168fb921245030ca526b6730a854e784a9ae1fa238e7"
+        },
+        {
+          "role": "geojson",
+          "path": "layers/eia860_plants.geojson",
+          "bytes": 483991,
+          "sha256": "35fb5f80684f17d1f8e8a4ae3224b5b069020db2243caf869f430a50fb0de132"
+        },
+        {
+          "role": "notes",
+          "path": "notes/eia860_plants.md",
+          "bytes": 7113,
+          "sha256": "27cfb29cba6901b3fd1dcffb9e99b408ab77ccaa9950fb274e976821abee067f"
+        }
+      ],
+      "validation": {
+        "status": "pass",
+        "errors": 0,
+        "warnings": 0,
+        "error_codes": [],
+        "warning_codes": []
+      }
+    },
+    {
+      "dataset": "hifld_power_plants",
+      "primary_key": [
+        "hifld_id"
+      ],
+      "geometry_type": "Point",
+      "source": {
+        "name": "HIFLD Open 'Power Plants' (Plants_gdb; final HIFLD Open release, re-hosted on ArcGIS Online item 6e0bdfea762046988469da10407f844f)",
+        "url": "https://services7.arcgis.com/2hYXmwteFLemN5bW/arcgis/rest/services/Plants_gdb__8907007659940948974/FeatureServer/0",
+        "vintage": "HIFLD Open Power Plants, final HIFLD Open release (official service last edited 2023-09-21, 13,233 features; max SOURCEDATE 2022-06-02, max VAL_DATE 2022-07-18)"
+      },
+      "vintage": "HIFLD Open Power Plants, final HIFLD Open release (official service last edited 2023-09-21, 13,233 features; max SOURCEDATE 2022-06-02, max VAL_DATE 2022-07-18)",
+      "row_count": 804,
+      "csv_rows": 804,
+      "feature_count": 804,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/hifld_power_plants.schema.json",
+          "bytes": 7994,
+          "sha256": "f5809a93968cedb65aa8cb55cbf843fa58b92ea7363e2a74efc9a065eb7af43b"
+        },
+        {
+          "role": "csv",
+          "path": "clean/hifld_power_plants.csv",
+          "bytes": 140518,
+          "sha256": "5caa77c8e867ee677a2dfa736ccbb982438809e124e293b03350c1f4e4aaa09c"
+        },
+        {
+          "role": "geojson",
+          "path": "layers/hifld_power_plants.geojson",
+          "bytes": 393485,
+          "sha256": "7cd858354f9ffbbd231ad72b5495e6aae79dff9472a4cc77a4ca95e776feded5"
+        },
+        {
+          "role": "notes",
+          "path": "notes/hifld_power_plants.md",
+          "bytes": 5014,
+          "sha256": "3e1278035e17ecb2b5bfed81ad459920dc6ba8d612db0c65541b74454cb2f2c3"
+        }
+      ],
+      "validation": {
+        "status": "warn",
+        "errors": 0,
+        "warnings": 1,
+        "error_codes": [],
+        "warning_codes": [
+          "ref.match_rate"
+        ]
+      }
+    },
+    {
+      "dataset": "hifld_substations",
+      "primary_key": [
+        "hifld_id"
+      ],
+      "geometry_type": "Point",
+      "source": {
+        "name": "HIFLD Open 'Electric Substations' (last public release, re-hosted on ArcGIS Online item ef04dc8231c9491e804a008e5faa7d3a)",
+        "url": "https://services6.arcgis.com/OO2s4OoyCZkYJ6oE/arcgis/rest/services/Substations/FeatureServer/0",
+        "vintage": "HIFLD Open Electric Substations, final public release before the 2022 move to HIFLD Secure (copy published 2022-02-14; max SOURCEDATE/VAL_DATE 2021-06-01)"
+      },
+      "vintage": "HIFLD Open Electric Substations, final public release before the 2022 move to HIFLD Secure (copy published 2022-02-14; max SOURCEDATE/VAL_DATE 2021-06-01)",
+      "row_count": 1421,
+      "csv_rows": 1421,
+      "feature_count": 1421,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/hifld_substations.schema.json",
+          "bytes": 6163,
+          "sha256": "ee60d6924d14dad4d1cdc6b2d1a4f57753b5f47e2e340a38b42aa1b6ed723cac"
+        },
+        {
+          "role": "csv",
+          "path": "clean/hifld_substations.csv",
+          "bytes": 338439,
+          "sha256": "a39c979217efc1b7c0038276914cfc28e0eacf4d4a0b46abafcdca69d182235f"
+        },
+        {
+          "role": "geojson",
+          "path": "layers/hifld_substations.geojson",
+          "bytes": 833929,
+          "sha256": "bceda7c7df10dd3a5b0bc56ce173885f5d9298406f99d4d238472d9d408b890e"
+        },
+        {
+          "role": "notes",
+          "path": "notes/hifld_substations.md",
+          "bytes": 7942,
+          "sha256": "3672a8d9d5c1ea64674bf38e886a1d507f4854cf2689febc42bacbce99fa3b4c"
+        }
+      ],
+      "validation": {
+        "status": "warn",
+        "errors": 0,
+        "warnings": 1,
+        "error_codes": [],
+        "warning_codes": [
+          "value.cross_field"
+        ]
+      }
+    },
+    {
+      "dataset": "hifld_transmission",
+      "primary_key": [
+        "hifld_id"
+      ],
+      "geometry_type": "LineString|MultiLineString",
+      "source": {
+        "name": "HIFLD Electric Power Transmission Lines via Esri Living Atlas (Federal User Community) 'U.S. Electric Power Transmission Lines (Archive)'",
+        "url": "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/US_Electric_Power_Transmission_Lines/FeatureServer/0",
+        "vintage": "2024-09-30"
+      },
+      "vintage": "2024-09-30",
+      "row_count": 1695,
+      "csv_rows": 1695,
+      "feature_count": 1695,
+      "files": [
+        {
+          "role": "schema",
+          "path": "schemas/hifld_transmission.schema.json",
+          "bytes": 5193,
+          "sha256": "5c2766d3fd51ac212bb75bc0411aff6901f8d8afa0dd93de42f538371797eed2"
+        },
+        {
+          "role": "csv",
+          "path": "clean/hifld_transmission.csv",
+          "bytes": 384651,
+          "sha256": "041d72b2e3f9078cf05d0c33b12d6ea493fde781ad4c13d146bd7e10f31788e9"
+        },
+        {
+          "role": "geojson",
+          "path": "layers/hifld_transmission.geojson",
+          "bytes": 2501889,
+          "sha256": "f4853c15498c4b6052234fe91ebecc8a836cced02d64bb8b75dfd811c601b063"
+        },
+        {
+          "role": "notes",
+          "path": "notes/hifld_transmission.md",
+          "bytes": 6638,
+          "sha256": "6efa763569fb76ddafcf02f7c5687d61fbd2054e4ecd7c10eaa2739ef4da7885"
+        }
+      ],
+      "validation": {
+        "status": "warn",
+        "errors": 0,
+        "warnings": 1,
+        "error_codes": [],
+        "warning_codes": [
+          "geo.bounds_line"
+        ]
+      }
+    }
+  ]
+}

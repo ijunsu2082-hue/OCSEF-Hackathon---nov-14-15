@@ -6,10 +6,22 @@
  * mileage must reflect the part inside the study radius, not the whole way.
  *
  * The work happens in a local tangent plane around the analysis point. That
- * keeps circle/segment intersection exact instead of iterative, and the
- * projection error is second order in (distance / Earth radius): about 0.03%
- * at 100 miles, well below the precision of a source geometry. Every reported
- * mileage is therefore a derived quantity and never a provider-published one.
+ * keeps circle/segment intersection exact instead of iterative. The plane is
+ * equirectangular about the analysis point, so its distortion grows with
+ * distance and with tan(latitude): mapping the 100-mile local circle back to
+ * WGS84 at Westminster (33.75 N) and sampling 3,600 bearings gives great-circle
+ * distances of 99.67 to 100.32 miles (about +/-0.33%; extremes near bearings
+ * 55 and 125 degrees). The same check gives about +/-0.49% at 45 N and +/-0.23%
+ * at 25 N. Every reported mileage is therefore a derived quantity and never a
+ * provider-published one.
+ *
+ * `studyRing` (the provider query polygon) is built on the great-circle circle
+ * instead, so it encloses every point within the true radius. The two circles
+ * therefore differ by that same +/-0.33% at Westminster: a line the ring fetches
+ * can clip to zero miles, and at bearings where the local circle reaches past
+ * the true radius (up to about 100.32 miles there) a line `clipLine` would
+ * keep, but that lies wholly beyond the ring, is not fetched. Both effects sit
+ * in that band just outside the true radius; `clipLine` is unchanged.
  */
 
 export type Position = [number, number];
@@ -83,6 +95,94 @@ function clipSegment(a: Local, b: Local, radius: number): [number, number] | nul
   return end > start ? [start, end] : null;
 }
 
+/**
+ * Default vertex count for `studyRing`. The polygon overshoots the circle by
+ * about 0.13% of the radius at 100 miles, and the ring stays short enough
+ * (about 1.3 kB of JSON) for a GET query string: ArcGIS Online's IIS front end
+ * answered a 128-vertex, 6-decimal ring (about 4.3 kB URL) with an HTML 404.
+ */
+export const STUDY_RING_VERTICES = 64;
+
+/** Spherical direct problem: the point `metres` from `center` along initial `bearing` (radians from north). */
+function destination(center: Position, bearing: number, metres: number): Position {
+  const lat1 = center[1] * RADIANS;
+  const lon1 = center[0] * RADIANS;
+  const angle = metres / EARTH_METERS;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angle) + Math.cos(lat1) * Math.sin(angle) * Math.cos(bearing));
+  const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(angle) * Math.cos(lat1),
+    Math.cos(angle) - Math.sin(lat1) * Math.sin(lat2));
+  return [lon2 / RADIANS, lat2 / RADIANS];
+}
+
+/**
+ * Smallest great-circle distance, in metres, from `center` to the straight
+ * lon/lat edge a→b (how a 4326 polygon edge is read): a coarse scan, then a
+ * ternary search around its best sample.
+ */
+function edgeMinMetres(center: Position, a: Position, b: Position): number {
+  const at = (t: number) =>
+    greatCircleMiles(center, [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]) * METRES_PER_MILE;
+  const steps = 16;
+  let best = 0;
+  let min = Infinity;
+  for (let step = 0; step <= steps; step += 1) {
+    const value = at(step / steps);
+    if (value < min) [min, best] = [value, step / steps];
+  }
+  let low = Math.max(0, best - 1 / steps);
+  let high = Math.min(1, best + 1 / steps);
+  for (let round = 0; round < 80; round += 1) {
+    const left = low + (high - low) / 3;
+    const right = high - (high - low) / 3;
+    if (at(left) < at(right)) high = right;
+    else low = left;
+  }
+  return Math.min(min, at((low + high) / 2));
+}
+
+/**
+ * Closed WGS84 ring ([lon, lat], rounded to 4 decimals) that encloses the
+ * great-circle study circle: every point within `radiusMiles` (as
+ * `greatCircleMiles` measures it) is inside, and every edge stays at or beyond
+ * the radius.
+ *
+ * It exists for providers whose server-side `distance` buffer cannot be
+ * trusted (HIFLD Transmission_Lines, stored in a US-feet state plane, inflates
+ * a statute-mile or metre distance about 3.28 times). An intersects query with
+ * this polygon involves no linear unit and so never misses a record within the
+ * radius. Vertices are placed with the spherical direct formula at a common
+ * distance, starting from radius * sec(pi / vertices) and widened until the
+ * nearest point of every straight lon/lat edge (after rounding) is at least
+ * 1 m beyond the radius. The excess is about 0.13% of the radius at 100 miles
+ * (at most about 0.16% plus 15 m across the latitudes and radii tested). See
+ * the module note for how this differs from `clipLine`'s local-plane circle.
+ * Vertices run clockwise, as Esri JSON requires for an outer ring.
+ */
+export function studyRing(center: Position, radiusMiles: number, vertices = STUDY_RING_VERTICES): Position[] {
+  if (!Number.isFinite(radiusMiles) || radiusMiles <= 0) throw new Error("Study radius must be positive");
+  if (!Number.isSafeInteger(vertices) || vertices < 8) throw new Error("Study ring needs at least 8 vertices");
+  projector(center); // Same pole guard as the clip plane.
+  const target = radiusMiles * METRES_PER_MILE + 1;
+  const round = (value: number) => Math.round(value * 1e4) / 1e4;
+  let distance = target / Math.cos(Math.PI / vertices);
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const ring: Position[] = [];
+    for (let index = 0; index < vertices; index += 1) {
+      const [lon, lat] = destination(center, (2 * Math.PI * index) / vertices, distance);
+      ring.push([round(lon), round(lat)]);
+    }
+    ring.push([...ring[0]] as Position);
+    let nearest = Infinity;
+    for (let index = 1; index < ring.length; index += 1) {
+      nearest = Math.min(nearest, edgeMinMetres(center, ring[index - 1], ring[index]));
+    }
+    if (nearest >= target) return ring;
+    // Widen in proportion to the shortfall, plus half a metre so rounding cannot stall it.
+    distance *= (target + 0.5) / nearest;
+  }
+  throw new Error("Study ring did not converge");
+}
+
 export interface ClippedLine {
   coordinates: Position[];
   miles: number;
@@ -143,8 +243,14 @@ const VOLTAGE_BANDS: [number, number, string][] = [
   [765, Number.POSITIVE_INFINITY, "765-plus"],
 ];
 
-/** Published voltage to a reporting band. Unknown stays unknown. */
-export function voltageBand(voltageKv: number | null): string {
+/**
+ * Published voltage to a reporting band. Unknown stays unknown. A line the
+ * caller identifies as direct current is banded "dc" whatever its voltage, so
+ * an HVDC pole voltage (or HIFLD's 1000 for a ±500 kV bipole) never lands in
+ * an AC band.
+ */
+export function voltageBand(voltageKv: number | null, options: { dc?: boolean } = {}): string {
+  if (options.dc) return "dc";
   if (voltageKv === null || !Number.isFinite(voltageKv)) return "unknown";
   for (const [low, high, label] of VOLTAGE_BANDS) if (voltageKv >= low && voltageKv < high) return label;
   return "unknown";

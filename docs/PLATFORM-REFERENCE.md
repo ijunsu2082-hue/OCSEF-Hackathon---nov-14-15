@@ -323,13 +323,13 @@ Legend: ✅ documented; — not found in the cited public material. A dash is no
 
 ---
 
-## 7. What this means for GridSentinel
+## 7. What this means for Mapergy
 
 ### 7.1 Positioning
 
 We are a **system of insight**, not a system of record or control. The defensible sentence:
 
-> "GridSentinel is the first-day screening layer over public grid, census and asset data: what is here, who is exposed, what breaks first, and what to fund — with every number traceable to a source or a named model."
+> "Mapergy is the first-day screening layer over public grid, census and asset data: what is here, who is exposed, what breaks first, and what to fund — with every number traceable to a source or a named model."
 
 ### 7.2 Integration roadmap (honest)
 

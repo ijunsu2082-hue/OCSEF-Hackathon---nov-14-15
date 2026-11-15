@@ -52,8 +52,11 @@ import {
 } from "./shared";
 import type { MapFocus } from "./types";
 
-// Keep production worker resolution aligned with the 2D MapLibre map. The
-// bundled worker chunk is not emitted at the nested URL MapLibre infers.
+// Same fix as components/shell/MapView.tsx: the bundler points MapLibre's
+// worker at a chunk the production build never emits, so GeoJSON layers
+// (lines, plants, substations, scan circle) never draw ("Worker failed to
+// load"). Serve the copy in /public instead; re-copy
+// node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs if maplibre-gl changes.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 const INITIAL_ZOOM = 10;
@@ -179,7 +182,7 @@ function buildStyle(basemap: BasemapId): StyleSpecification {
 
   return {
     version: 8,
-    name: "GridSentinel 3D",
+    name: "Mapergy 3D",
     sources,
     layers,
     terrain: { source: "dem", exaggeration: TERRAIN_EXAGGERATION },

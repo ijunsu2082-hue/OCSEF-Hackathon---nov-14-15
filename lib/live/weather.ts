@@ -28,7 +28,7 @@ export interface WeatherLive {
   hourly: { time: string; tempC: number; windMs: number | null }[];
 }
 
-export const NWS_UA = "GridSentinel (hackathon demo)";
+export const NWS_UA = "Mapergy (hackathon demo)";
 const NWS = "https://api.weather.gov";
 const OM = "https://api.open-meteo.com/v1/forecast";
 const TIMEOUT_MS = 8000;

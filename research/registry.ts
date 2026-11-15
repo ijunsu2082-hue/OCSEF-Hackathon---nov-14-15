@@ -17,7 +17,7 @@
 
 import type { SourceDefinition } from "../lib/evidence/schema";
 
-const GRID_SENTINEL_LICENSE = "Internal artifact — see upstream license and caveats";
+const MAPERGY_LICENSE = "Internal artifact — see upstream license and caveats";
 
 export const SOURCE_REGISTRY: SourceDefinition[] = [
   {
@@ -107,10 +107,10 @@ export const SOURCE_REGISTRY: SourceDefinition[] = [
   },
   {
     id: "gs-layer-plants",
-    title: "GridSentinel generation layer (in-repo)",
-    publisher: "GridSentinel",
+    title: "Mapergy generation layer (in-repo)",
+    publisher: "Mapergy",
     homepage: "https://www.eia.gov/electricity/data/eia860/",
-    license: GRID_SENTINEL_LICENSE,
+    license: MAPERGY_LICENSE,
     authority: "derived",
     access: {
       kind: "layer",
@@ -128,8 +128,8 @@ export const SOURCE_REGISTRY: SourceDefinition[] = [
   },
   {
     id: "gs-layer-transmission",
-    title: "GridSentinel transmission layer (in-repo)",
-    publisher: "GridSentinel / OpenStreetMap contributors",
+    title: "Mapergy transmission layer (in-repo)",
+    publisher: "Mapergy / OpenStreetMap contributors",
     homepage: "https://www.openstreetmap.org/",
     license: "ODbL-1.0 (upstream OpenStreetMap)",
     authority: "derived",
@@ -149,8 +149,8 @@ export const SOURCE_REGISTRY: SourceDefinition[] = [
   },
   {
     id: "gs-layer-substations",
-    title: "GridSentinel substation layer (in-repo)",
-    publisher: "GridSentinel / OpenStreetMap contributors",
+    title: "Mapergy substation layer (in-repo)",
+    publisher: "Mapergy / OpenStreetMap contributors",
     homepage: "https://www.openstreetmap.org/",
     license: "ODbL-1.0 (upstream OpenStreetMap)",
     authority: "derived",
@@ -170,8 +170,8 @@ export const SOURCE_REGISTRY: SourceDefinition[] = [
   },
   {
     id: "gs-seed-nodes",
-    title: "GridSentinel curated load-center records (in-repo)",
-    publisher: "GridSentinel",
+    title: "Mapergy curated load-center records (in-repo)",
+    publisher: "Mapergy",
     homepage: "https://github.com/",
     license: "Internal curated dataset",
     authority: "modeled",

@@ -3,6 +3,10 @@ import type {
 } from "./types";
 import { haversineMi } from "./geo";
 import { lineIndex } from "./lineIndex";
+import {
+  fetchEtlAssets, type EtlProvenance, type EtlSourceSelector,
+  type EtlSubstationFeature, type EtlTransmissionFeature,
+} from "../etlAssets";
 import { enrichGrid, type SubstationNames } from "./enrich";
 
 export const LAYERS_BASE = "/layers";
@@ -24,12 +28,12 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export type ScanJsonLoader = <T>(path: string) => Promise<T>;
-
-async function getText(path: string): Promise<string> {
+/** Like getJson, but a 404 means "not shipped on this branch" and yields null. */
+async function getJsonIfPresent<T>(path: string): Promise<T | null> {
   const res = await fetch(`${LAYERS_BASE}/${path}`);
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GET ${LAYERS_BASE}/${path} -> ${res.status}`);
-  return res.text();
+  return (await res.json()) as T;
 }
 
 interface Feature<G, P> { geometry: G; properties: P }
@@ -109,38 +113,131 @@ function toSites(summary: SummaryJson): RatingSiteSummary[] {
   });
 }
 
-let gridPromise: Promise<GridData> | null = null;
+type LayerSource = "etl" | "bundled";
 
-export async function loadGridDataWithJson(loadJson: ScanJsonLoader): Promise<GridData> {
-  const [plants, lines, subs, cases, events, summary, subNames] = await Promise.all([
-    loadJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
-    loadJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
-    loadJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
-    loadJson<NicheCase[]>("niche_cases.json"),
-    loadJson<GenEvent[]>("gen_events.json"),
-    loadJson<SummaryJson>("line_ratings/summary.json"),
+/** GridData plus where each layer came from and which bundled files are absent. */
+export interface LoadedGridData extends GridData {
+  /** "etl" when at least one layer came from the location's loaded assets. */
+  source: LayerSource;
+  layers: { plants: LayerSource; lines: LayerSource; substations: LayerSource };
+  /**
+   * Bundled files that 404 (gen_events.json, line_ratings/summary.json are not
+   * shipped on this branch). Absent events → `events: []`; absent summary →
+   * `ratingSites` carry toSites() placeholder figures, not measured ones.
+   */
+  unavailable: string[];
+  /** Why a selected ETL layer was not used. Empty without a selector. */
+  fallback_reasons: string[];
+  etl: { location: string; revision: string; report_revision: string | null } | null;
+}
+
+/**
+ * ETL lines carry no OSM id or circuit tag; `osm_id` is NaN, `circuits` null.
+ * HIFLD OWNER stays `owner`; `operator` is null (HIFLD publishes no operator).
+ */
+function etlLine(f: EtlTransmissionFeature): Line & { owner: string | null; etl: EtlProvenance } {
+  return {
+    osm_id: Number.NaN,
+    voltage_kv: f.properties.voltage_kv,
+    operator: f.properties.operator,
+    owner: f.properties.owner,
+    name: f.properties.name,
+    circuits: null,
+    coords: f.geometry.coordinates.map(([lon, lat]) => [lat, lon] as [number, number]),
+    etl: f.etl,
+  };
+}
+
+/** HIFLD substations carry no OSM id, `substation=*` class, owner or operator; `osm_id` is "". */
+function etlSubstation(f: EtlSubstationFeature): Substation & { owner: string | null; etl: EtlProvenance } {
+  const [lon, lat] = f.geometry.coordinates;
+  return {
+    osm_id: "",
+    name: f.properties.name,
+    operator: f.properties.operator,
+    owner: f.properties.owner,
+    voltage_kv: f.properties.voltage_kv,
+    substation: null,
+    lat, lon,
+    etl: f.etl,
+  };
+}
+
+const gridCache = new Map<string, Promise<LoadedGridData>>();
+const BUNDLED_KEY = "bundled";
+
+async function buildGridData(selector: EtlSourceSelector | undefined): Promise<LoadedGridData> {
+  const [plants, lines, subs, cases, events, summary, subNames, loaded] = await Promise.all([
+    getJson<FC<PointG, Record<string, unknown>>>("plants.geojson"),
+    getJson<FC<LineG, Record<string, unknown>>>("transmission.geojson"),
+    getJson<FC<PointG, Record<string, unknown>>>("substations.geojson"),
+    getJson<NicheCase[]>("niche_cases.json"),
+    getJsonIfPresent<GenEvent[]>("gen_events.json"),
+    getJsonIfPresent<SummaryJson>("line_ratings/summary.json"),
     // Optional: a missing or broken names file just leaves OSM names as they are.
-    loadJson<SubstationNames>("substation_names.json").catch(() => null),
+    getJson<SubstationNames>("substation_names.json").catch(() => null),
+    selector ? fetchEtlAssets(selector) : Promise.resolve(null),
   ]);
-  const data: GridData = {
+  const unavailable: string[] = [];
+  if (events === null) unavailable.push(`${LAYERS_BASE}/gen_events.json`);
+  if (summary === null) unavailable.push(`${LAYERS_BASE}/line_ratings/summary.json`);
+  const data: LoadedGridData = {
     plants: plants.features.filter((f) => f.geometry?.type === "Point").map(toPlant),
     lines: lines.features.filter((f) => f.geometry?.type === "LineString" && f.geometry.coordinates.length >= 2).map(toLine),
     substations: subs.features.filter((f) => f.geometry?.type === "Point").map(toSubstation),
     cases,
-    events,
-    ratingSites: toSites(summary),
+    events: events ?? [],
+    ratingSites: toSites(summary ?? {}),
+    source: "bundled",
+    layers: { plants: "bundled", lines: "bundled", substations: "bundled" },
+    unavailable,
+    fallback_reasons: [],
+    etl: null,
   };
+  // Fill missing voltages / names in the bundled OSM layers, once per load. It runs
+  // before the ETL swap so provider (HIFLD) nulls stay null instead of being inferred.
   enrichGrid(data, subNames);
-  lineIndex(data);
+  if (loaded && !loaded.ok) data.fallback_reasons.push(loaded.reason);
+  if (loaded?.ok) {
+    const { assets } = loaded;
+    data.etl = { location: assets.location, revision: assets.revision, report_revision: loaded.reportRevision };
+    if (assets.transmission) {
+      data.lines = assets.transmission.features.map(etlLine);
+      data.layers.lines = "etl";
+    } else data.fallback_reasons.push("loaded assets have no transmission dataset");
+    if (assets.substations) {
+      data.substations = assets.substations.features.map(etlSubstation);
+      data.layers.substations = "etl";
+    } else data.fallback_reasons.push("loaded assets have no substation dataset");
+    // Scan scoring sums nameplate MW and fuel mix, which the loaded plant
+    // inventory does not carry; mapping it would score every plant as 0 MW.
+    data.fallback_reasons.push(assets.plants
+      ? "loaded plant dataset has no nameplate MW or fuel mix; bundled plants kept for scoring"
+      : "loaded assets have no plant dataset");
+    if (data.layers.lines === "etl" || data.layers.substations === "etl") data.source = "etl";
+  }
+  lineIndex(data); // precompute segment lengths so the first scanArea() stays fast
   return data;
 }
 
-export function loadGridData(): Promise<GridData> {
-  if (!gridPromise) {
-    gridPromise = loadGridDataWithJson(getJson);
-    gridPromise.catch(() => { gridPromise = null; }); // allow retry after a failed load
+/**
+ * Grid data for the scan. With no selector this reads the bundled layers; with
+ * `{ locationId, reportRevision? }` lines and substations come from that
+ * location's loaded ETL assets when available. Cached per location + revision.
+ */
+export function loadGridData(selector?: EtlSourceSelector): Promise<LoadedGridData> {
+  const key = selector ? `etl:${selector.locationId ?? ""}:${selector.reportRevision ?? "latest"}` : BUNDLED_KEY;
+  let pending = gridCache.get(key);
+  if (!pending) {
+    pending = buildGridData(selector);
+    gridCache.set(key, pending);
+    pending.then(
+      // An unavailable ETL load is not pinned, so a later call can pick up assets loaded since.
+      (data) => { if (selector && data.etl === null) gridCache.delete(key); },
+      () => { gridCache.delete(key); }, // allow retry after a failed load
+    );
   }
-  return gridPromise;
+  return pending;
 }
 
 export function nearestSite(sites: RatingSiteSummary[], lat: number, lon: number): RatingSiteSummary & { distance_mi: number } {
@@ -160,12 +257,38 @@ export interface RatingRow {
   static_A: number; aar_A: number; dlr_A: number; dlr_conservative_A: number;
 }
 
+/**
+ * The one place the committed hourly line-rating archive URL is built. Files
+ * ship flat in `public/layers/` (`line_rating_<year>_<site>.csv`); only
+ * `westminster_hs` is committed, so other sites 404 here.
+ */
+export function ratingCsvUrl(siteKey: string, year: 2024 | 2025 = 2025): string {
+  return `${LAYERS_BASE}/line_rating_${year}_${siteKey}.csv`;
+}
+
+/** Per-site 2025 archive that scripts/sync-layers.mjs copies into `public/layers/line_ratings/` (gitignored). */
+function syncedRatingCsvUrl(siteKey: string): string {
+  return `${LAYERS_BASE}/line_ratings/line_rating_2025_${siteKey}.csv`;
+}
+
 const csvCache = new Map<string, Promise<RatingRow[]>>();
+
+/** Committed flat file first; on a 404, the synced per-site copy (every rating site once sync-layers has run). */
+async function getRatingCsvText(siteKey: string): Promise<string> {
+  const url = ratingCsvUrl(siteKey);
+  const res = await fetch(url);
+  if (res.ok) return res.text();
+  if (res.status !== 404) throw new Error(`GET ${url} -> ${res.status}`);
+  const synced = syncedRatingCsvUrl(siteKey);
+  const res2 = await fetch(synced);
+  if (!res2.ok) throw new Error(`GET ${synced} -> ${res2.status}`);
+  return res2.text();
+}
 
 export function loadRatingCsv(siteKey: string): Promise<RatingRow[]> {
   let p = csvCache.get(siteKey);
   if (!p) {
-    p = getText(`line_ratings/line_rating_2025_${siteKey}.csv`).then((text) => {
+    p = getRatingCsvText(siteKey).then((text) => {
       const out: RatingRow[] = [];
       const lines = text.split(/\r?\n/);
       for (let i = 1; i < lines.length; i++) {

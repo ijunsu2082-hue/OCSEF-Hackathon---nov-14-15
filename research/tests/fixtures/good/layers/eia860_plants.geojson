@@ -1,0 +1,60 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.09913,
+          33.764741
+        ]
+      },
+      "properties": {
+        "plant_code": 400,
+        "plant_name": "Haynes",
+        "nameplate_mw": 1739.1,
+        "technologies": [
+          "Natural Gas Fired Combined Cycle"
+        ],
+        "distance_mi": 5.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.9,
+          33.85
+        ]
+      },
+      "properties": {
+        "plant_code": 7000,
+        "plant_name": "Fixture Solar",
+        "nameplate_mw": 20.5,
+        "technologies": [],
+        "distance_mi": 9.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.25,
+          34.05
+        ]
+      },
+      "properties": {
+        "plant_code": 56000,
+        "plant_name": "Downtown Battery",
+        "nameplate_mw": 100,
+        "technologies": [
+          "Batteries"
+        ],
+        "distance_mi": 24.6
+      }
+    }
+  ]
+}

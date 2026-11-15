@@ -1,8 +1,6 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { jsonError, type OwnerContext } from "@/lib/owner/db";
-import { loadGridDataWithJson } from "@/lib/scan/data";
+import { loadGridData } from "@/lib/scan/data";
 import { scanArea } from "@/lib/scan/scan";
 import type { ScanResult } from "@/lib/scan/types";
 import { parseArea, parseWorkspaceId, type AreaInput } from "./validation";
@@ -51,8 +49,6 @@ export async function resolveWorkflowWorkspace(
 export async function loadWorkflowArea(area: AreaInput): Promise<ScanResult> {
   const valid = parseArea(area);
   if (!valid) throw new Error("invalid_workflow_area");
-  const data = await loadGridDataWithJson(async <T>(path: string): Promise<T> =>
-    JSON.parse(await readFile(join(process.cwd(), "public", "layers", path), "utf8")) as T,
-  );
+  const data = await loadGridData();
   return scanArea(data, { lat: valid.lat, lon: valid.lon, radius_mi: valid.radius_mi });
 }

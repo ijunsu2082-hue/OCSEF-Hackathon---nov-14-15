@@ -1,0 +1,329 @@
+{
+  "dataset": "eia860_plants",
+  "primary_key": [
+    "plant_code"
+  ],
+  "geometry_type": null,
+  "source": {
+    "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+    "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+    "vintage": "2025 final (released 2026-09-10)"
+  },
+  "fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "EIA plant code (ORISPL); primary key.",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "plant_name",
+      "type": "string",
+      "nullable": false,
+      "description": "Plant name as reported on EIA-860 Schedule 2.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "utility_id",
+      "type": "integer",
+      "nullable": true,
+      "description": "EIA utility ID of the reporting operator.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "utility_name",
+      "type": "string",
+      "nullable": true,
+      "description": "Operating utility name.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "street_address",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant street address. Placeholders 'N/A', 'NA', 'TBD' and 'TBA' (used for proposed sites) -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant city. Placeholders 'N/A', 'NA', 'TBD' and 'TBA' -> null.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "county",
+      "type": "string",
+      "nullable": true,
+      "description": "Plant county.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "nullable": true,
+      "description": "Two-letter state code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "zip",
+      "type": "string",
+      "nullable": true,
+      "description": "5-digit ZIP code (string, zero-padded).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Plant latitude (WGS84), 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -90,
+      "max": 90
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Plant longitude (WGS84), 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -180,
+      "max": 180
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance from the region center, 1 decimal.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100.0
+    },
+    {
+      "name": "nerc_region",
+      "type": "string",
+      "nullable": true,
+      "description": "NERC region code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "balancing_authority_code",
+      "type": "string",
+      "nullable": true,
+      "description": "Balancing authority code (e.g. CISO, LDWP, IID).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "balancing_authority_name",
+      "type": "string",
+      "nullable": true,
+      "description": "Balancing authority name.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sector_name",
+      "type": "string",
+      "nullable": true,
+      "description": "EIA sector name (e.g. Electric Utility, IPP Non-CHP).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "grid_voltage_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "Primary grid interconnection voltage.",
+      "unit": "kV",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "primary_source",
+      "type": "string",
+      "nullable": true,
+      "description": "source_category with the most operable nameplate MW (null if no operable generators).",
+      "unit": null,
+      "enum": [
+        "natural_gas",
+        "solar",
+        "battery",
+        "wind",
+        "hydro",
+        "biogas",
+        "other_gas",
+        "waste_heat",
+        "oil",
+        "nuclear",
+        "geothermal",
+        "coal",
+        "biomass",
+        "other"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Sum of nameplate capacity of operable generators.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "summer_capacity_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Sum of net summer capacity of operable generators (blanks count as 0).",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "winter_capacity_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Sum of net winter capacity of operable generators (blanks count as 0).",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "operable_generator_count",
+      "type": "integer",
+      "nullable": false,
+      "description": "Number of operable generators (status OP/SB/OS/OA).",
+      "unit": null,
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "proposed_generator_count",
+      "type": "integer",
+      "nullable": false,
+      "description": "Number of proposed generators.",
+      "unit": null,
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "proposed_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Sum of nameplate capacity of proposed generators.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "planned_retirement_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "Nameplate MW of operable generators that report a planned retirement year.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "oldest_operating_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Earliest operating year among operable generators.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "newest_operating_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Latest operating year among operable generators.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "capacity_weighted_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Nameplate-weighted mean operating year of operable generators, rounded.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "capacity_weighted_age_years",
+      "type": "number",
+      "nullable": true,
+      "description": "Nameplate-weighted mean age of operable generators relative to report year 2025, 1 decimal.",
+      "unit": "years",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "technologies",
+      "type": "string",
+      "nullable": true,
+      "description": "Pipe-joined, sorted unique EIA technology names of operable generators.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    }
+  ]
+}

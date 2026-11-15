@@ -453,7 +453,7 @@ function scanReport(result: Omit<ScanResult, "report">): string {
     .filter(([, value]) => value > 0)
     .map(([key, value]) => `${sourceLabel(key)} ${value} MW`);
 
-  lines.push(`# GridSentinel Area Scan — ${result.label}`);
+  lines.push(`# Mapergy Area Scan — ${result.label}`);
   lines.push("");
   lines.push(`**At:** ${result.point.lat}, ${result.point.lon} · radius ${result.point.radius_mi} mi`);
   if (!result.inside_coverage) {

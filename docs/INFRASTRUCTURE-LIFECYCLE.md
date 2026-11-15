@@ -1,8 +1,8 @@
-# GridSentinel infrastructure lifecycle
+# Mapergy infrastructure lifecycle
 
 Status: implementation specification. This document defines a screening and project-delivery system; a modeled result is not a permit, engineering opinion, utility commitment, or regulatory clearance.
 
-GridSentinel’s current app is an energy-focused regional screening prototype. Its existing contracts in `lib/types.ts`, Area Scan in `lib/scan/areaScan.ts`, physics engine under `lib/physics/`, and source-backed evidence layer under `lib/evidence/` are useful inputs, not a project-delivery data model. Keep this roadmap additive; do not silently reinterpret the frozen facility and simulation contracts.
+Mapergy’s current app is an energy-focused regional screening prototype. Its existing contracts in `lib/types.ts`, Area Scan in `lib/scan/areaScan.ts`, physics engine under `lib/physics/`, and source-backed evidence layer under `lib/evidence/` are useful inputs, not a project-delivery data model. Keep this roadmap additive; do not silently reinterpret the frozen facility and simulation contracts.
 
 Related contracts: [Infrastructure workflows](INFRASTRUCTURE-WORKFLOWS.md) defines the 12 modules and their user actions. [Infrastructure cases](INFRASTRUCTURE-CASES.md) defines six cases and the coverage matrix. Those documents should map every module to lifecycle entities and every case to required evidence, authority, decision, and output.
 
@@ -129,4 +129,4 @@ Add sector-specific vocabularies and rule packs only with named domain review, o
 
 ## 9. Non-goals and safe language
 
-GridSentinel organizes evidence, models scenarios, tracks internal decisions, and prepares project workflows. It does not establish property rights, verify engineering adequacy, determine legal applicability, issue permits, or guarantee utility interconnection. Use phrases such as “candidate,” “screening result,” “owner-verified as of [date],” “rule-pack coverage,” and “authority response recorded.” Reserve “approved,” “permitted,” and “cleared” for a cited, current external instrument whose issuing authority and scope are shown.
+Mapergy organizes evidence, models scenarios, tracks internal decisions, and prepares project workflows. It does not establish property rights, verify engineering adequacy, determine legal applicability, issue permits, or guarantee utility interconnection. Use phrases such as “candidate,” “screening result,” “owner-verified as of [date],” “rule-pack coverage,” and “authority response recorded.” Reserve “approved,” “permitted,” and “cleared” for a cited, current external instrument whose issuing authority and scope are shown.

@@ -69,7 +69,7 @@ export const SOURCES = {
   },
   ieee738: {
     name: "Line rating model (IEEE Std 738)",
-    publisher: "GridSentinel, based on IEEE Std 738",
+    publisher: "Mapergy, based on IEEE Std 738",
     url: "https://standards.ieee.org/ieee/738/5765/",
     asOf: "Computed at scan time from live and 2025 weather",
     what: "Our port of the IEEE Std 738 heat balance: how much current a bare wire can carry before it heats past 75 °C.",
@@ -85,8 +85,8 @@ export const SOURCES = {
     note: "Drake keeps the IEEE Std 738 worked-example values, within about 1.5% of this sheet.",
   },
   risk: {
-    name: "GridSentinel risk index",
-    publisher: "GridSentinel",
+    name: "Mapergy risk index",
+    publisher: "Mapergy",
     asOf: "Computed at scan time",
     what: "Our own composite score, not an official rating.",
     method: "Weighted average of factors scored 0 to 100: age 25%, fossil 20%, turnover 15%, heat stress 15%, hazard history 15%, grid thinness 10%.",

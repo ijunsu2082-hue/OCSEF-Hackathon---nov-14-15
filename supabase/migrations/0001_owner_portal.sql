@@ -1,4 +1,4 @@
--- GridSentinel owner portal: claims, tasks, admins, evidence storage.
+-- Mapergy owner portal: claims, tasks, admins, evidence storage.
 -- Auth: Clerk session tokens via Supabase third-party auth. The Clerk user id is the
 -- JWT "sub" claim, read with auth.jwt()->>'sub'. Shapes match lib/owner/types.ts.
 -- Run once in the Supabase SQL editor (or `supabase db push`). Safe to re-run.

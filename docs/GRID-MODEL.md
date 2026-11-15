@@ -1,4 +1,4 @@
-# GridSentinel physical grid model
+# Mapergy physical grid model
 
 Status: implemented, type-clean and numerically verified on 2026-11-14.
 Scope: additive physics layer for municipality load, infrastructure buildout,

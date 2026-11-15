@@ -1,0 +1,169 @@
+{
+  "dataset": "eia860_plants",
+  "primary_key": [
+    "plant_code"
+  ],
+  "geometry_type": "Point",
+  "source": {
+    "name": "Fixture source",
+    "url": "https://example.invalid/fixture",
+    "vintage": "2025"
+  },
+  "fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "plant code",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "plant_name",
+      "type": "string",
+      "nullable": false,
+      "description": "plant name",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "utility_name",
+      "type": "string",
+      "nullable": true,
+      "description": "utility name",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "operating",
+      "type": "boolean",
+      "nullable": false,
+      "description": "operating",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "start_date",
+      "type": "date",
+      "nullable": true,
+      "description": "start date",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "nullable": false,
+      "description": "status",
+      "unit": null,
+      "enum": [
+        "OP",
+        "SB"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "nameplate mw",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "nullable": false,
+      "description": "latitude",
+      "unit": "degrees",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "nullable": false,
+      "description": "longitude",
+      "unit": "degrees",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "distance mi",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100
+    }
+  ],
+  "geojson_fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "plant code",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "plant_name",
+      "type": "string",
+      "nullable": false,
+      "description": "plant name",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "nameplate mw",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "technologies",
+      "type": "array",
+      "nullable": false,
+      "description": "technologies",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "distance mi",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

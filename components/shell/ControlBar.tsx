@@ -51,7 +51,7 @@ export default function ControlBar({
           </svg>
         </span>
         <div className="brand-text">
-          <strong>GridSentinel</strong>
+          <strong>Mapergy</strong>
           <span>Infrastructure energy intelligence</span>
         </div>
       </div>

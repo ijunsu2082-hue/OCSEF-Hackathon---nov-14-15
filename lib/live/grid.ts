@@ -70,7 +70,7 @@ const GRID_MONITOR_TIMEOUT_MS = 7_000; // still capped by the route budget
 export const SOURCE_TOL_PCT = 1;
 // EIA updates hourly. DEMO_KEY allows ~10 calls an hour, so hold EIA results longer without a real key.
 const EIA_CACHE_MS = process.env.EIA_API_KEY ? 5 * 60_000 : 15 * 60_000;
-const UA = "GridSentinel (hackathon demo)";
+const UA = "Mapergy (hackathon demo)";
 
 export const DEMAND_TOL_PCT = 3;
 export const SHARE_TOL_PTS = 5;

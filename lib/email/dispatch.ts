@@ -3,7 +3,7 @@ import type { AuditResponse } from "../types";
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-const DEFAULT_FROM = "GridSentinel Audits <audits@resend.dev>";
+const DEFAULT_FROM = "Mapergy Audits <audits@resend.dev>";
 
 export function buildAuditEmail(to: string, subject: string, brief: string) {
   const lines = brief.split("\n");

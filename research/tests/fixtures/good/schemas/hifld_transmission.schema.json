@@ -1,0 +1,54 @@
+{
+  "dataset": "hifld_transmission",
+  "primary_key": [
+    "hifld_id"
+  ],
+  "geometry_type": "LineString|MultiLineString",
+  "source": {
+    "name": "Fixture source",
+    "url": "https://example.invalid/fixture",
+    "vintage": "2025"
+  },
+  "fields": [
+    {
+      "name": "hifld_id",
+      "type": "integer",
+      "nullable": false,
+      "description": "hifld id",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "voltage_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "voltage kv",
+      "unit": "kV",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "owner",
+      "type": "string",
+      "nullable": true,
+      "description": "owner",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "distance mi",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

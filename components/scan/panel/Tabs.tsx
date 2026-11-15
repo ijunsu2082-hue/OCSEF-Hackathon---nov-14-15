@@ -34,7 +34,7 @@ export function Tabs({
     owners: "Owners",
   };
 
-  // Keep the active tab in view when the strip scrolls sideways.
+  // The tabs scroll sideways in the panel: keep the active one in view (e.g. after "Owner filings").
   useEffect(() => {
     const el = refs.current[tab];
     const list = el?.parentElement;
