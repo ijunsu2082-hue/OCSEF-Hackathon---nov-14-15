@@ -17,9 +17,10 @@
 import { conductorForKv, thermalScreen } from "../gridAssets";
 import type { ConductorSpec } from "../physics/network";
 import { conductorAmpacity } from "../physics/thermal";
+import { ratingCsvUrl } from "./data";
 
-export const RATING_CSV_URL = "/layers/line_rating_2025_westminster_hs.csv";
-export const RATING_FALLBACK_CSV_URL = "/layers/line_rating_2024_westminster_hs.csv";
+export const RATING_CSV_URL = ratingCsvUrl("westminster_hs", 2025);
+export const RATING_FALLBACK_CSV_URL = ratingCsvUrl("westminster_hs", 2024);
 export const RATING_SITE_LABEL = "Westminster HS";
 
 /** IEEE 738 light-wind assumption the fixed rating is based on, m/s. */

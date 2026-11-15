@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { EvidenceProvider } from "@/components/evidence/EvidenceProvider";
 import {
   CENTER,
   fetchWeatherNow,
@@ -8,12 +9,15 @@ import {
   rateLine,
   scanArea,
   scanReportMarkdown,
-  type GridData,
   type LineRatingNow,
   type ScanArea,
 } from "@/lib/scan";
+import type { LoadedGridData } from "@/lib/scan/data";
 import { SOURCES, type SourceId } from "@/lib/scan/sources";
 import { locationReportUrl } from "@/lib/scan/locationReport";
+import { gridDataSourceLabel, layerSourceLabel } from "@/lib/scan/sourceLabel";
+import type { LocationReport as EtlLocationReport } from "@/research/etl/pipeline";
+import { LocationClaims } from "./LocationClaims";
 import styles from "./location-report.module.css";
 
 const SOURCE_IDS: SourceId[] = [
@@ -86,6 +90,23 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/**
+ * ETL location id for this exact area: `location-` + first 24 hex of the
+ * sha256 of the canonical `{center, radius_miles}` query (research/etl/pipeline
+ * locationId with no respondent / CAISO / OASIS options).
+ */
+async function locationIdFor(area: ScanArea): Promise<string> {
+  const canonical = `{"center":[${JSON.stringify(area.lat)},${JSON.stringify(area.lon)}],"radius_miles":${JSON.stringify(area.radius_mi)}}`;
+  const bytes = new TextEncoder().encode(canonical);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return `location-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 24)}`;
+}
+
+type BoundReport =
+  | { status: "loading" }
+  | { status: "ready"; locationId: string; report: EtlLocationReport; revision: string }
+  | { status: "missing"; reason: string };
+
 function formatNum(value: number, digits = 0): string {
   return Number.isFinite(value)
     ? value.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits })
@@ -93,19 +114,45 @@ function formatNum(value: number, digits = 0): string {
 }
 
 export default function LocationReport({ area, socketOrigin }: { area: ScanArea; socketOrigin: string }) {
-  const [data, setData] = useState<GridData | null>(null);
+  const [data, setData] = useState<LoadedGridData | null>(null);
+  const [bound, setBound] = useState<BoundReport>({ status: "loading" });
   const [live, setLive] = useState<LineRatingNow | null>(null);
   const [inventoryRevision, setInventoryRevision] = useState<string | null>(null);
   const [inventoryLocationId, setInventoryLocationId] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [actionStatus, setActionStatus] = useState("");
 
+  // The ETL location report for this area, if one has been collected. Its
+  // revision selects the asset inventory bound to it for the scan layers.
   useEffect(() => {
+    let current = true;
+    setBound({ status: "loading" });
+    (async () => {
+      const locationId = await locationIdFor(area);
+      const res = await fetch(`/api/location-report/${locationId}`, { cache: "no-store" });
+      if (!res.ok) return { status: "missing", reason: `no location report for ${locationId} (${res.status})` } as const;
+      const report = (await res.json()) as EtlLocationReport;
+      const revision = res.headers.get("X-Report-Revision");
+      if (!revision) return { status: "missing", reason: "location report has no revision header" } as const;
+      return { status: "ready", locationId, report, revision } as const;
+    })()
+      .then((next) => { if (current) setBound(next); })
+      .catch((error: unknown) => {
+        if (current) setBound({ status: "missing", reason: error instanceof Error ? error.message : "location report unreadable" });
+      });
+    return () => { current = false; };
+  }, [area.lat, area.lon, area.radius_mi]);
+
+  const selectorLocation = bound.status === "ready" ? bound.locationId : undefined;
+  const selectorRevision = bound.status === "ready" ? bound.revision : undefined;
+
+  useEffect(() => {
+    if (bound.status === "loading") return;
     let current = true;
     setStatus("loading");
     setData(null);
     setLive(null);
-    loadGridData()
+    loadGridData(selectorLocation ? { locationId: selectorLocation, reportRevision: selectorRevision } : undefined)
       .then(async (grid) => {
         if (!current) return;
         setData(grid);
@@ -118,7 +165,7 @@ export default function LocationReport({ area, socketOrigin }: { area: ScanArea;
         if (current) setStatus("error");
       });
     return () => { current = false; };
-  }, [area.lat, area.lon, area.radius_mi, inventoryRevision]);
+  }, [area.lat, area.lon, area.radius_mi, inventoryRevision, bound.status, selectorLocation, selectorRevision]);
 
   useEffect(() => {
     let stopped = false;
@@ -127,10 +174,7 @@ export default function LocationReport({ area, socketOrigin }: { area: ScanArea;
     let delay = 1000;
     if (!socketOrigin) return;
     async function connect() {
-      const canonical = `{"center":[${JSON.stringify(area.lat)},${JSON.stringify(area.lon)}],"radius_miles":${JSON.stringify(area.radius_mi)}}`;
-      const bytes = new TextEncoder().encode(canonical);
-      const digest = await crypto.subtle.digest("SHA-256", bytes);
-      const locationId = `location-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 24)}`;
+      const locationId = await locationIdFor(area);
       if (stopped) return;
       const endpoint = new URL(`/ws/location/${locationId}`, socketOrigin);
       if (endpoint.protocol === "https:") endpoint.protocol = "wss:";
@@ -163,7 +207,14 @@ export default function LocationReport({ area, socketOrigin }: { area: ScanArea;
   }, [area.lat, area.lon, area.radius_mi, socketOrigin]);
 
   const result = useMemo(() => data ? scanArea(data, area) : null, [data, area]);
-  const markdown = useMemo(() => result ? scanReportMarkdown(result, live) : "", [result, live]);
+  const layerLabel = useMemo(() => {
+    if (!data) return "";
+    if (bound.status === "missing" && data.source === "bundled") {
+      return layerSourceLabel({ source: "bundled", fallbackReasons: [bound.reason, ...data.fallback_reasons] });
+    }
+    return gridDataSourceLabel(data);
+  }, [data, bound]);
+  const markdown = useMemo(() => result && data ? scanReportMarkdown(result, live, data.layers) : "", [result, live, data]);
   const sourceIds = useMemo(() => {
     const ids: SourceId[] = [...SOURCE_IDS];
     return result?.cases.length ? ids : ids.filter((id) => id !== "news");
@@ -224,10 +275,12 @@ export default function LocationReport({ area, socketOrigin }: { area: ScanArea;
               <div><span>Weather screen</span><strong>{live ? `${formatNum(live.ratio, 2)}× static · ${live.weather.source}` : "Unavailable"}</strong></div>
             </section>
 
+            <p className={styles.coverage} data-testid="grid-layer-source">Grid layers: {layerLabel}</p>
+
             {inventoryRevision && inventoryLocationId ? (
               <p className={styles.coverage}>
                 Inventory snapshot <code>{inventoryRevision}</code> ·{" "}
-                <a href={`/api/location-report/${inventoryLocationId}/assets?revision=${inventoryRevision}`}>
+                <a href={`/api/location-assets/${inventoryLocationId}?revision=${inventoryRevision}`}>
                   Open pinned inventory JSON
                 </a>
               </p>
@@ -241,7 +294,22 @@ export default function LocationReport({ area, socketOrigin }: { area: ScanArea;
               <h2>Area scan</h2>
               <ReportText markdown={markdown} />
             </section>
+          </>
+        ) : null}
 
+        {/* The location report's claims stand on its own evidence bundle, so they
+            render whether or not the grid layers loaded. */}
+        {bound.status === "ready" ? (
+          <section className={styles.section} aria-label="Location evidence claims">
+            {/* Cite reads claim detail from the report's own evidence bundle. */}
+            <EvidenceProvider bundle={bound.report.evidence}>
+              <LocationClaims report={bound.report} socketOrigin={socketOrigin} />
+            </EvidenceProvider>
+          </section>
+        ) : null}
+
+        {result ? (
+          <>
             <section className={styles.section}>
               <h2>Sources and methods</h2>
               <p className={styles.sourceIntro}>Links and limits for the inputs used in this report.</p>

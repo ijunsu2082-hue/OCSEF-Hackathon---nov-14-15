@@ -21,6 +21,7 @@ redis.call('SET', KEYS[1], ARGV[1])
 redis.call('PUBLISH', KEYS[2], ARGV[1])
 return 1
 """
+RESULT_SENTINEL = "@@GRIDSENTINEL_RESULT@@"
 
 
 class Location(BaseModel):
@@ -28,6 +29,9 @@ class Location(BaseModel):
     lon: float = Field(ge=-180, le=180)
     radius: float = Field(default=100, ge=1, le=500)
     respondent: str | None = Field(default=None, pattern=r"^[A-Z0-9]{2,8}$")
+    caiso: bool = False
+    # CAISO OASIS pricing node; same rule as research/etl/oasis.ts OASIS_NODE.
+    oasis_node: str | None = Field(default=None, pattern=r"^[A-Z0-9_\-.]{3,64}$")
 
 
 async def etl(*arguments: str, timeout: int = 120):
@@ -46,6 +50,31 @@ async def etl(*arguments: str, timeout: int = 120):
     return stdout, stderr
 
 
+def collect_result(stderr: bytes) -> dict:
+    """Return the collect result object from stderr, ignoring unrelated lines.
+
+    Prefers the last sentinel-prefixed line; falls back to the last line that is a
+    JSON object carrying a string "revision" (output of older CLI builds).
+    """
+    lines = [line.strip() for line in stderr.decode(errors="replace").splitlines()]
+    for line in reversed(lines):
+        if line.startswith(RESULT_SENTINEL):
+            try:
+                value = json.loads(line[len(RESULT_SENTINEL):])
+            except ValueError:
+                continue
+            if isinstance(value, dict) and isinstance(value.get("revision"), str):
+                return value
+    for line in reversed(lines):
+        try:
+            value = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(value, dict) and isinstance(value.get("revision"), str):
+            return value
+    raise RuntimeError("Collection stderr carried no result line with a revision")
+
+
 async def refresh(redis: Redis, location: Location):
     arguments = [
         "collect", "--lat", str(location.lat), "--lon", str(location.lon),
@@ -53,6 +82,10 @@ async def refresh(redis: Redis, location: Location):
     ]
     if location.respondent:
         arguments += ["--respondent", location.respondent]
+    if location.caiso:
+        arguments.append("--caiso")
+    if location.oasis_node:
+        arguments += ["--oasis-node", location.oasis_node]
     stdout, stderr = await etl(*arguments)
     report = json.loads(stdout)
     location_id = report["evidence"]["region"]["id"]
@@ -67,21 +100,50 @@ async def refresh(redis: Redis, location: Location):
     )
     backup_root = os.environ.get("ETL_BACKUP_DIRECTORY")
     if backup_root:
-        revision = json.loads(stderr.decode().strip().splitlines()[-1])["revision"]
+        revision = collect_result(stderr)["revision"]
         destination = Path(backup_root) / location_id / f"{revision}.json"
         if not destination.is_file():
             await etl("backup", location_id, revision, str(destination))
 
 
-async def worker(redis: Redis, locations: list[Location]):
-    # One scheduled writer. Multiple WebSocket processes can share Redis.
-    while True:
-        for location in locations:
-            try:
+def telemetry_interval(location: Location, override: float | None = None) -> float:
+    # Match the fastest source cadence: CAISO telemetry and OASIS RTM intervals
+    # are 5-minute, NWS observations 10-minute.
+    if override is not None:
+        return override
+    return 300 if location.caiso or location.oasis_node else 600
+
+
+async def telemetry_worker(redis: Redis, location: Location, interval: float, semaphore: asyncio.Semaphore):
+    # One task per location on a fixed-rate tick; the CLI's per-feed freshness reuse still applies.
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    tick = 0
+    running: asyncio.Task | None = None
+
+    async def run_once():
+        try:
+            async with semaphore:
                 await refresh(redis, location)
-            except Exception:
-                LOGGER.exception("Location refresh failed")
-        await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            LOGGER.exception("Location refresh failed for %s,%s; retrying next tick", location.lat, location.lon)
+
+    try:
+        while True:
+            if running is not None and not running.done():
+                LOGGER.warning("Location refresh for %s,%s still running after %ss; skipping tick",
+                               location.lat, location.lon, interval)
+            else:
+                running = asyncio.create_task(run_once())
+            # Next tick stays on start + k*interval; ticks already missed are skipped, not replayed.
+            tick = max(tick + 1, int((loop.time() - start) // interval) + 1)
+            await asyncio.sleep(max(0.0, start + tick * interval - loop.time()))
+    finally:
+        if running is not None and not running.done():
+            running.cancel()
+            await asyncio.gather(running, return_exceptions=True)
 
 
 class AssetLocation(BaseModel):
@@ -128,6 +190,12 @@ async def refresh_assets(redis: Redis, location: AssetLocation):
         PUBLISH_CHANGED, 2,
         f"location-report:inventory:{location_id}", f"location-report:{location_id}", event,
     )
+    backup_root = os.environ.get("ETL_BACKUP_DIRECTORY")
+    if backup_root:
+        # backup-assets writes exactly this path; an existing file means this revision is archived.
+        destination = Path(backup_root) / location_id / "assets" / f"{revision}.json"
+        if not destination.is_file():
+            await etl("backup-assets", location_id, revision, str(destination), timeout=1800)
 
 
 async def asset_worker(redis: Redis, location: AssetLocation, interval: int, retry_delay: int, semaphore: asyncio.Semaphore):
@@ -164,10 +232,17 @@ async def lifespan(app: FastAPI):
     asset_scopes = [(location.lat, location.lon, location.radius) for location in asset_locations]
     if len(set(asset_scopes)) != len(asset_scopes):
         raise ValueError("ETL_ASSET_LOCATIONS must not repeat coordinate/radius scopes")
+    telemetry_concurrency = int(os.environ.get("ETL_TELEMETRY_CONCURRENCY", "4"))
+    raw_telemetry_interval = os.environ.get("ETL_TELEMETRY_INTERVAL_SECONDS")
+    telemetry_override = int(raw_telemetry_interval) if raw_telemetry_interval else None
+    if telemetry_concurrency < 1 or (telemetry_override is not None and telemetry_override < 1):
+        raise ValueError("Telemetry interval and concurrency settings must be positive")
     app.state.redis = redis
     tasks = []
-    if locations:
-        tasks.append(asyncio.create_task(worker(redis, locations)))
+    telemetry_semaphore = asyncio.Semaphore(telemetry_concurrency)
+    tasks.extend(asyncio.create_task(telemetry_worker(
+        redis, location, telemetry_interval(location, telemetry_override), telemetry_semaphore,
+    )) for location in locations)
     asset_semaphore = asyncio.Semaphore(asset_concurrency)
     tasks.extend(asyncio.create_task(asset_worker(redis, location, asset_interval, asset_retry, asset_semaphore))
                   for location in asset_locations)

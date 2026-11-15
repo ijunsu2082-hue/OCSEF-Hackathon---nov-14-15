@@ -4,6 +4,15 @@ import type { ReactNode } from "react";
 import { formatClaimValue, methodLabel, METHOD_COLOR } from "@/lib/evidence/citation";
 import type { Claim } from "@/lib/evidence/schema";
 import { useEvidence } from "./EvidenceProvider";
+import { ReconciliationBadge, type ReconciliationMark } from "./ReconciliationBadge";
+
+/** Badges for optional reconciliation marks; null when none were passed. */
+function reconciliationBadges(reconciliation?: ReconciliationMark | ReconciliationMark[]): ReactNode {
+  if (!reconciliation) return null;
+  const marks = Array.isArray(reconciliation) ? reconciliation : [reconciliation];
+  if (!marks.length) return null;
+  return marks.map((mark, index) => <ReconciliationBadge key={`${mark.policy ?? ""}:${index}`} {...mark} />);
+}
 
 /**
  * Inline citation chip. Resolves `(subject, predicate)` against the verified
@@ -16,19 +25,23 @@ export function Cite({
   predicate,
   label,
   quiet,
+  reconciliation,
 }: {
   claim?: Claim | null;
   subject?: string;
   predicate?: string;
   label?: string;
   quiet?: boolean;
+  /** Optional provider reconciliation outcome(s) shown after the chip. */
+  reconciliation?: ReconciliationMark | ReconciliationMark[];
 }) {
   const evidence = useEvidence();
   const resolved =
     claim ?? (subject && predicate ? evidence.claim(subject, predicate) : null);
-  if (!evidence.bundle) return null;
+  const badges = reconciliationBadges(reconciliation);
+  if (!evidence.bundle) return badges ? <>{badges}</> : null;
   if (!resolved) {
-    return (
+    const missing = (
       <span
         className="cite cite-missing"
         title={`No verified claim for ${subject ?? "?"}/${predicate ?? "?"}`}
@@ -36,11 +49,12 @@ export function Cite({
         ?
       </span>
     );
+    return badges ? <>{missing}{badges}</> : missing;
   }
   const code = resolved.source_id
     ? evidence.codes.get(resolved.source_id) ?? resolved.source_id
     : "∂";
-  return (
+  const chip = (
     <button
       type="button"
       className={`cite ${quiet ? "is-quiet" : ""}`}
@@ -54,6 +68,7 @@ export function Cite({
       {label ?? code}
     </button>
   );
+  return badges ? <>{chip}{badges}</> : chip;
 }
 
 /**
@@ -70,6 +85,7 @@ export function ClaimValue({
   format,
   className,
   showCite = true,
+  reconciliation,
 }: {
   claim?: Claim | null;
   subject?: string;
@@ -80,6 +96,8 @@ export function ClaimValue({
   format?: (value: number) => string;
   className?: string;
   showCite?: boolean;
+  /** Optional provider reconciliation outcome(s) shown after the citation. */
+  reconciliation?: ReconciliationMark | ReconciliationMark[];
 }) {
   const evidence = useEvidence();
   const resolved =
@@ -90,8 +108,8 @@ export function ClaimValue({
       <span className={className}>
         {fallback ?? "—"}
         {showCite && evidence.bundle ? (
-          <Cite subject={subject} predicate={predicate} />
-        ) : null}
+          <Cite subject={subject} predicate={predicate} reconciliation={reconciliation} />
+        ) : reconciliationBadges(reconciliation)}
       </span>
     );
   }
@@ -105,7 +123,7 @@ export function ClaimValue({
     <span className={className}>
       {rendered}
       {suffix ?? ""}
-      {showCite ? <Cite claim={resolved} /> : null}
+      {showCite ? <Cite claim={resolved} reconciliation={reconciliation} /> : reconciliationBadges(reconciliation)}
     </span>
   );
 }

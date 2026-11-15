@@ -8,6 +8,16 @@
  */
 
 import type { NicheCase } from "./niche";
+import {
+  fetchEtlAssets,
+  type AdaptedLocationAssets,
+  type EtlLayer,
+  type EtlLayerMeta,
+  type EtlPlantFeature,
+  type EtlSourceSelector,
+  type EtlSubstationFeature,
+  type EtlTransmissionFeature,
+} from "./etlAssets";
 
 // ---- Shapes -----------------------------------------------------------------
 
@@ -164,16 +174,64 @@ function loadJson<T>(url: string): Promise<T> {
   return pending;
 }
 
-export function loadPlants(): Promise<FeatureCollection<PlantFeature>> {
-  return loadJson("/layers/plants.geojson");
+// ---- Optional loaded-ETL source ----------------------------------------------
+//
+// Called with no argument, each loader returns the bundled layer exactly as
+// before. Called with a selector, it reads the location's loaded ETL assets
+// (/api/location-report/[id]/assets) and falls back to the bundled layer when
+// they are unavailable; `source` says which one the caller got.
+
+export type EtlSource = EtlSourceSelector;
+
+export type SourcedLayer<Bundled, Etl> =
+  | { source: "etl"; features: Etl[]; etl: EtlLayerMeta & { report_revision: string | null }; fallback_reason: null }
+  | { source: "bundled"; features: Bundled[]; etl: null; fallback_reason: string };
+
+async function sourced<Bundled, Etl>(
+  selector: EtlSourceSelector,
+  pick: (assets: AdaptedLocationAssets) => EtlLayer<Etl> | null,
+  layerName: string,
+  bundled: () => Promise<FeatureCollection<Bundled>>,
+): Promise<SourcedLayer<Bundled, Etl>> {
+  const loaded = await fetchEtlAssets(selector);
+  let reason: string;
+  if (loaded.ok) {
+    const layer = pick(loaded.assets);
+    if (layer) {
+      return {
+        source: "etl", features: layer.features,
+        etl: { ...layer.meta, report_revision: loaded.reportRevision }, fallback_reason: null,
+      };
+    }
+    reason = `loaded assets have no ${layerName} dataset`;
+  } else {
+    reason = loaded.reason;
+  }
+  const collection = await bundled();
+  return { ...collection, source: "bundled", features: collection.features, etl: null, fallback_reason: reason };
 }
 
-export function loadTransmission(): Promise<FeatureCollection<TransmissionFeature>> {
-  return loadJson("/layers/transmission.geojson");
+export function loadPlants(): Promise<FeatureCollection<PlantFeature>>;
+export function loadPlants(source: EtlSource): Promise<SourcedLayer<PlantFeature, EtlPlantFeature>>;
+export function loadPlants(source?: EtlSource) {
+  if (!source) return loadJson<FeatureCollection<PlantFeature>>("/layers/plants.geojson");
+  return sourced(source, (a) => a.plants, "plant", () => loadJson<FeatureCollection<PlantFeature>>("/layers/plants.geojson"));
 }
 
-export function loadSubstations(): Promise<FeatureCollection<SubstationFeature>> {
-  return loadJson("/layers/substations.geojson");
+export function loadTransmission(): Promise<FeatureCollection<TransmissionFeature>>;
+export function loadTransmission(source: EtlSource): Promise<SourcedLayer<TransmissionFeature, EtlTransmissionFeature>>;
+export function loadTransmission(source?: EtlSource) {
+  if (!source) return loadJson<FeatureCollection<TransmissionFeature>>("/layers/transmission.geojson");
+  return sourced(source, (a) => a.transmission, "transmission",
+    () => loadJson<FeatureCollection<TransmissionFeature>>("/layers/transmission.geojson"));
+}
+
+export function loadSubstations(): Promise<FeatureCollection<SubstationFeature>>;
+export function loadSubstations(source: EtlSource): Promise<SourcedLayer<SubstationFeature, EtlSubstationFeature>>;
+export function loadSubstations(source?: EtlSource) {
+  if (!source) return loadJson<FeatureCollection<SubstationFeature>>("/layers/substations.geojson");
+  return sourced(source, (a) => a.substations, "substation",
+    () => loadJson<FeatureCollection<SubstationFeature>>("/layers/substations.geojson"));
 }
 
 export function loadNicheCases(): Promise<NicheCase[]> {

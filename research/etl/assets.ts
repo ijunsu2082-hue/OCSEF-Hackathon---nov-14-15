@@ -73,9 +73,13 @@ export async function replayAssets(manifest: AssetManifest) {
 export async function collectAssets(query: LocationQuery, source: string) {
   const feed = feedsFor(query).find((item) => item.source.id === source && item.source.access.kind === "arcgis");
   if (!feed) throw new Error("Expected eia-atlas-plants, hifld-substations, or hifld-transmission");
+  // Swap the flag in the query string itself: re-serializing through
+  // searchParams would percent-encode a study polygon past the GET limit.
   const indexUrl = new URL(feed.url);
-  indexUrl.searchParams.delete("returnCountOnly");
-  indexUrl.searchParams.set("returnIdsOnly", "true");
+  indexUrl.search = feed.url.search.replace(/([?&])returnCountOnly=true(?=&|$)/, "$1returnIdsOnly=true");
+  if (indexUrl.searchParams.get("returnIdsOnly") !== "true" || indexUrl.searchParams.has("returnCountOnly")) {
+    throw new Error("Expected an ArcGIS count query");
+  }
   const index = await capture(source, indexUrl);
   const { ids } = inventory(index.data);
   if (ids.length > 20000) throw new Error("Asset inventory exceeds 20,000 features. Reduce the radius.");

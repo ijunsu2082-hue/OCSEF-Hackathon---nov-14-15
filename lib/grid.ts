@@ -302,7 +302,7 @@ function phaseTransmission(sim: SimResult, assets: RealGridAssets | null): Phase
       id: "coverage",
       label: "Voltage coverage at the site",
       detail: `${t.line_count} tagged circuits inside ${t.radius_mi} mi; the highest is ${kv} kV.${
-        nearest ? ` Nearest: ${nearest.name}${nearest.operator ? ` (${nearest.operator})` : ""}, ${nearest.distance_mi} mi.` : ""
+        nearest ? ` Nearest: ${nearest.name}${nearest.operator ? ` (${nearest.operator})` : nearest.owner ? ` (owned by ${nearest.owner})` : ""}, ${nearest.distance_mi} mi.` : ""
       }`,
       severity: coverage,
     },
@@ -373,7 +373,7 @@ function phaseSubstation(p: FacilityProperties, sim: SimResult, assets: RealGrid
       label: "Nearest transmission-class substation",
       detail: nearest
         ? `${nearest.name}${nearest.voltage_kv !== null ? ` at ${nearest.voltage_kv} kV` : ""}${
-            nearest.operator ? `, operated by ${nearest.operator}` : ""
+            nearest.operator ? `, operated by ${nearest.operator}` : nearest.owner ? `, owned by ${nearest.owner}` : ""
           }, ${nf(nearest.distance_mi, 1)} mi from the site. ${s.transmission_count} transmission-class substations sit inside ${s.radius_mi} mi.`
         : `No named transmission substation inside ${s.radius_mi} mi; OSM tags ${s.count} substation outlines nearby without a name or voltage.`,
       severity:

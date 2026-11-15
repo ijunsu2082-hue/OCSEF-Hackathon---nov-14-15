@@ -1,5 +1,5 @@
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { createCipheriv, createDecipheriv, randomBytes, randomUUID, createHash } from "node:crypto";
+import { link, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { digest } from "../../lib/evidence/canonical";
 import { atomicJson, reportRevision, stateRoot, verifyLocation, type LocationReport } from "./pipeline";
@@ -16,16 +16,64 @@ function key(): Buffer {
   return Buffer.from(value, "hex");
 }
 
+/**
+ * AES-256-GCM envelope fields must be a 12-byte nonce and a full 16-byte tag.
+ * Checked before decryption: without `authTagLength`, Node accepts a truncated
+ * tag (as short as 4 bytes) and verifies only that prefix (DEP0182).
+ */
+function checkEnvelope(envelope: { nonce?: unknown; tag?: unknown }): void {
+  if (typeof envelope.nonce !== "string" || !/^[a-fA-F0-9]{24}$/.test(envelope.nonce)) throw new Error("Invalid backup nonce");
+  if (typeof envelope.tag !== "string" || !/^[a-fA-F0-9]{32}$/.test(envelope.tag)) throw new Error("Invalid backup authentication tag");
+}
+
+/** Asset source ids become a directory name on restore. */
+const ASSET_SOURCE = /^[a-z0-9_-]{1,64}$/;
+
+interface BoundInventory { location: string; revision: string; sha256: string; bytes: string }
+
+/** Exact stored bytes of the inventory revision a report is bound to. */
+async function boundInventory({ location, revision }: { location: string; revision: string }): Promise<BoundInventory> {
+  if (!await readLocationAssets(location, revision)) throw new Error("Bound asset inventory missing");
+  const bytes = await readFile(resolve(stateRoot(), "loaded-assets", location, `${revision}.json`));
+  if (digest(JSON.parse(bytes.toString("utf8"))) !== revision) throw new Error("Bound asset inventory checksum mismatch");
+  return { location, revision, sha256: createHash("sha256").update(bytes).digest("hex"), bytes: bytes.toString("base64") };
+}
+
+/** Republish a backed-up inventory revision; keeps an existing latest pointer. */
+async function republishInventory(binding: { location: string; revision: string }, inventory: BoundInventory): Promise<void> {
+  if (inventory.location !== binding.location || inventory.revision !== binding.revision ||
+      !/^location-[a-f0-9]{24}$/.test(inventory.location) || !/^[a-f0-9]{64}$/.test(inventory.revision)) {
+    throw new Error("Backup inventory does not match report binding");
+  }
+  const bytes = Buffer.from(inventory.bytes, "base64");
+  if (createHash("sha256").update(bytes).digest("hex") !== inventory.sha256) throw new Error("Backup inventory checksum mismatch");
+  const data: unknown = JSON.parse(bytes.toString("utf8"));
+  if (digest(data) !== inventory.revision) throw new Error("Backup inventory revision mismatch");
+  const directory = resolve(stateRoot(), "loaded-assets", inventory.location);
+  await atomicJson(resolve(directory, `${inventory.revision}.json`), data);
+  // Point latest at the restored revision only if no pointer exists; link() never clobbers.
+  const temporary = resolve(directory, `latest.json.${randomUUID()}.tmp`);
+  try {
+    await writeFile(temporary, JSON.stringify({ revision: inventory.revision }) + "\n", { flag: "wx" });
+    await link(temporary, resolve(directory, "latest.json"));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+  } finally {
+    await rm(temporary, { force: true });
+  }
+}
+
 export async function backupReport(report: LocationReport, destination: string): Promise<void> {
   await verifyLocation(report);
   const blobs: Record<string, string> = {};
   for (const snapshot of report.evidence.snapshots) {
     blobs[snapshot.sha256] = (await readFile(snapshot.cache_path)).toString("base64");
   }
+  const inventory = report.assets ? await boundInventory(report.assets) : undefined;
   const nonce = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key(), nonce);
   cipher.setAAD(Buffer.from(FORMAT));
-  const bytes = Buffer.concat([cipher.update(JSON.stringify({ report, blobs }), "utf8"), cipher.final()]);
+  const bytes = Buffer.concat([cipher.update(JSON.stringify({ report, blobs, ...(inventory ? { inventory } : {}) }), "utf8"), cipher.final()]);
   await atomicJson(destination, {
     format: FORMAT, nonce: nonce.toString("hex"), tag: cipher.getAuthTag().toString("hex"),
     ciphertext: bytes.toString("base64"),
@@ -35,12 +83,13 @@ export async function backupReport(report: LocationReport, destination: string):
 export async function restoreReport(path: string): Promise<LocationReport> {
   const envelope = JSON.parse(await readFile(path, "utf8"));
   if (envelope.format !== FORMAT) throw new Error("Unsupported backup format");
-  const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"));
+  checkEnvelope(envelope);
+  const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"), { authTagLength: 16 });
   decipher.setAAD(Buffer.from(FORMAT));
   decipher.setAuthTag(Buffer.from(envelope.tag, "hex"));
   const payload = JSON.parse(Buffer.concat([
     decipher.update(Buffer.from(envelope.ciphertext, "base64")), decipher.final(),
-  ]).toString("utf8")) as { report: LocationReport; blobs: Record<string, string> };
+  ]).toString("utf8")) as { report: LocationReport; blobs: Record<string, string>; inventory?: BoundInventory };
   const root = stateRoot();
   const id = payload.report.evidence.region.id;
   if (!/^location-[a-f0-9]{24}$/.test(id)) throw new Error("Invalid backup location");
@@ -66,6 +115,8 @@ export async function restoreReport(path: string): Promise<LocationReport> {
     }
   }
   await verifyLocation(payload.report);
+  // Backups written before inventory embedding carry no `inventory` and restore as before.
+  if (payload.report.assets && payload.inventory) await republishInventory(payload.report.assets, payload.inventory);
   const revision = reportRevision(payload.report);
   await atomicJson(resolve(root, "revisions", id, `${revision}.json`), payload.report);
   return payload.report;
@@ -83,7 +134,8 @@ async function seal(payload: unknown, destination: string): Promise<void> {
 async function unseal(path: string): Promise<any> {
   const envelope = JSON.parse(await readFile(path, "utf8"));
   if (envelope.format !== DATA_FORMAT) throw new Error("Unsupported data backup format");
-  const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"));
+  checkEnvelope(envelope);
+  const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(envelope.nonce, "hex"), { authTagLength: 16 });
   decipher.setAAD(Buffer.from(DATA_FORMAT));
   decipher.setAuthTag(Buffer.from(envelope.tag, "hex"));
   return JSON.parse(Buffer.concat([decipher.update(Buffer.from(envelope.ciphertext, "base64")), decipher.final()]).toString("utf8"));
@@ -152,6 +204,9 @@ export async function restoreAssets(path: string): Promise<{ location: string; r
   const payload = await unseal(path) as { kind: string; location: string; revision: string; data: unknown; manifests: AssetManifest[]; blobs: Record<string, string> };
   if (payload.kind !== "assets" || !/^location-[a-f0-9]{24}$/.test(payload.location) || digest(payload.data) !== payload.revision) {
     throw new Error("Invalid asset backup revision");
+  }
+  for (const manifest of payload.manifests) {
+    if (typeof manifest?.source !== "string" || !ASSET_SOURCE.test(manifest.source)) throw new Error("Invalid asset backup source");
   }
   const paths = await writeBlobs(payload.blobs);
   const restoredSnapshots = new Map<string, string>();

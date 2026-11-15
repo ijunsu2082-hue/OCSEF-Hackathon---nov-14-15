@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { Cite, ScenarioTag } from "@/components/evidence/Citations";
 import { RiskPill } from "@/components/ui/kit";
 import { facilitySubject } from "@/lib/evidence/citation";
@@ -20,6 +20,8 @@ const TABS = [
 
 export type DrawerTab = (typeof TABS)[number]["id"];
 
+export const DRAWER_ID = "analysis-drawer";
+
 interface Props {
   properties: FacilityProperties;
   risk: RiskEntry;
@@ -29,6 +31,10 @@ interface Props {
   onCloseNiche: () => void;
   tab: DrawerTab;
   onTab: (tab: DrawerTab) => void;
+  /** False collapses the drawer on phones (globals.css ≤620px); desktop ignores it. */
+  open: boolean;
+  onClose: () => void;
+  closeRef?: Ref<HTMLButtonElement>;
   children: ReactNode;
 }
 
@@ -40,6 +46,9 @@ export default function AnalyzerDrawer({
   onCloseNiche,
   tab,
   onTab,
+  open,
+  onClose,
+  closeRef,
   children,
 }: Props) {
   const subject = facilitySubject(properties.id);
@@ -50,8 +59,23 @@ export default function AnalyzerDrawer({
       <Cite subject={subject} predicate={predicate} quiet />
     );
 
+  // Only shown at ≤620px, where the drawer covers the whole map and scan panel.
+  const close = (
+    <button
+      ref={closeRef}
+      type="button"
+      className="drawer-close"
+      aria-label="Close facility analysis"
+      aria-controls={DRAWER_ID}
+      aria-expanded={open}
+      onClick={onClose}
+    >
+      ✕
+    </button>
+  );
+
   return (
-    <aside className="drawer" aria-label="Facility analysis">
+    <aside id={DRAWER_ID} className="drawer" aria-label="Facility analysis" data-collapsed={open ? undefined : "true"}>
       <header className="drawer-head">
         {nicheCase ? (
           <>
@@ -62,6 +86,7 @@ export default function AnalyzerDrawer({
                 <button type="button" className="drawer-back" onClick={onCloseNiche}>
                   ← Back
                 </button>
+                {close}
               </span>
             </div>
             <h2>{nicheCase.title}</h2>
@@ -77,6 +102,7 @@ export default function AnalyzerDrawer({
               <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 {sim.overload ? <span className="pill pill-critical">overload</span> : null}
                 <RiskPill bucket={risk.bucket} score={risk.score} large />
+                {close}
               </span>
             </div>
             <h2>{properties.name}</h2>

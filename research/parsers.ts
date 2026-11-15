@@ -6,6 +6,9 @@
  * `artifact.count` claim built from it — reproducible without re-fetching.
  */
 
+import { csvTable } from "./etl/caiso";
+import { readZip } from "./etl/zip";
+
 export interface ParsedSnapshot {
   data: unknown;
   recordCount: number | null;
@@ -23,6 +26,12 @@ function decode(bytes: Uint8Array): string {
 
 function asArray(value: unknown): unknown[] | null {
   return Array.isArray(value) ? value : null;
+}
+
+/** Text of the first `<tag>` element, ignoring any namespace prefix. */
+function xmlText(xml: string, tag: string): string | null {
+  const match = new RegExp(`<(?:[A-Za-z_][\\w.-]*:)?${tag}>([^<]*)</`).exec(xml);
+  return match ? match[1].trim() : null;
 }
 
 export const PARSERS: Record<string, ParserDefinition> = {
@@ -130,6 +139,41 @@ export const PARSERS: Record<string, ParserDefinition> = {
       const text = decode(bytes);
       const lines = text.length === 0 ? [] : text.split(/\r?\n/);
       return { data: text, recordCount: lines.length };
+    },
+  },
+  "csv.table": {
+    id: "csv.table",
+    version: "1",
+    // RFC 4180 subset, header matched by name downstream; cells typed by caiso.csvCell.
+    parse: (bytes) => {
+      const data = csvTable(decode(bytes));
+      return { data, recordCount: data.rows.length };
+    },
+  },
+  "zip.csv": {
+    id: "zip.csv",
+    version: "1",
+    /**
+     * A ZIP holding exactly one `.csv` entry (CAISO OASIS SingleZip). The entry is
+     * typed like `csv.table` and exposed as `{ entry, header, rows }`. OASIS answers
+     * a failed query with a ZIP holding one `.xml` report instead; that fails here
+     * with the report's ERR_CODE / ERR_DESC rather than parsing as data.
+     */
+    parse: (bytes) => {
+      const entries = readZip(bytes);
+      if (entries.length !== 1) throw new Error(`zip.csv: expected exactly one entry, found ${entries.length}`);
+      const [{ name, data: inner }] = entries;
+      if (/\.xml$/i.test(name)) {
+        const xml = decode(inner);
+        const code = xmlText(xml, "ERR_CODE");
+        const description = xmlText(xml, "ERR_DESC");
+        throw new Error(description || code
+          ? `zip.csv: provider returned an error report (ERR_CODE ${code ?? "?"}): ${description ?? "no description"}`
+          : `zip.csv: archive holds XML (${name}), not CSV`);
+      }
+      if (!/\.csv$/i.test(name)) throw new Error(`zip.csv: entry ${name} is not a .csv file`);
+      const table = csvTable(decode(inner));
+      return { data: { entry: name, ...table }, recordCount: table.rows.length };
     },
   },
 };

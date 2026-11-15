@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ActionTab from "@/components/outreach/ActionTab";
 import { EvidenceProvider } from "@/components/evidence/EvidenceProvider";
 import EvidenceTab from "@/components/evidence/EvidenceTab";
@@ -23,7 +23,7 @@ import { simulate } from "@/lib/simulation";
 import { facilitySubject } from "@/lib/evidence/citation";
 import type { EvidenceBundle } from "@/lib/evidence/schema";
 import type { RegionPayload, SimResult } from "@/lib/types";
-import AnalyzerDrawer, { type DrawerTab } from "./AnalyzerDrawer";
+import AnalyzerDrawer, { DRAWER_ID, type DrawerTab } from "./AnalyzerDrawer";
 import ControlBar from "./ControlBar";
 import FacilityRail from "./FacilityRail";
 import MapCanvas from "./MapCanvas";
@@ -31,6 +31,8 @@ import MapCanvas from "./MapCanvas";
 export type Plan = { solar: number; vfd: boolean };
 
 const DEFAULT_NODE = "node-la-05";
+/** Must match the globals.css breakpoint where the drawer covers the whole stage. */
+const PHONE_QUERY = "(max-width: 620px)";
 
 function seedPlans(region: RegionPayload): Record<string, Plan> {
   const out: Record<string, Plan> = {};
@@ -60,6 +62,11 @@ export default function Workspace({
   const [assetIndex, setAssetIndex] = useState<AssetIndex | null>(null);
   // A niche case takes over the drawer while it is open; null means the asset view.
   const [nicheCaseId, setNicheCaseId] = useState<string | null>(null);
+  // Phones only: a full-width drawer hides the map and area scan until closed.
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const drawerReopenRef = useRef<HTMLButtonElement>(null);
+  const drawerFocus = useRef<"close" | "reopen" | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.stress = heatwave ? "true" : "false";
@@ -183,6 +190,45 @@ export default function Workspace({
     setTab(next);
   }, []);
 
+  const closeDrawer = useCallback(() => {
+    drawerFocus.current = "reopen";
+    setDrawerOpen(false);
+  }, []);
+  const openDrawer = useCallback(() => {
+    drawerFocus.current = "close";
+    setDrawerOpen(true);
+  }, []);
+  // Picking a facility or case on the map brings its analysis back.
+  const selectNode = useCallback((id: string) => {
+    setSelectedId(id);
+    setDrawerOpen(true);
+  }, []);
+  const selectNiche = useCallback((id: string) => {
+    setNicheCaseId(id);
+    setDrawerOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const target = drawerFocus.current;
+    drawerFocus.current = null;
+    if (target === "reopen") drawerReopenRef.current?.focus();
+    else if (target === "close") drawerCloseRef.current?.focus();
+  }, [drawerOpen]);
+
+  // Escape closes the phone drawer first; capture + stopImmediatePropagation
+  // keeps the same keypress from also leaving scan mode in MapCanvas.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const phone = window.matchMedia(PHONE_QUERY);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !phone.matches) return;
+      event.stopImmediatePropagation();
+      closeDrawer();
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [drawerOpen, closeDrawer]);
+
   const setPlan = useCallback((id: string, next: Plan) => {
     setPlans((prev) => ({ ...prev, [id]: next }));
   }, []);
@@ -226,8 +272,8 @@ export default function Workspace({
             onView3d={setView3d}
             nicheCases={nicheCases}
             selectedNicheId={selectedNiche?.id ?? null}
-            onSelect={setSelectedId}
-            onSelectNiche={setNicheCaseId}
+            onSelect={selectNode}
+            onSelectNiche={selectNiche}
           />
           <FacilityRail
             regionName={region.region.name}
@@ -236,9 +282,22 @@ export default function Workspace({
             sims={sims}
             selectedId={selected.properties.id}
             heatwave={heatwave}
-            onSelect={setSelectedId}
+            onSelect={selectNode}
           />
         </section>
+
+        <button
+          ref={drawerReopenRef}
+          type="button"
+          className="drawer-reopen"
+          aria-label="Open facility analysis"
+          aria-controls={DRAWER_ID}
+          aria-expanded={false}
+          hidden={drawerOpen}
+          onClick={openDrawer}
+        >
+          Analysis
+        </button>
 
         <AnalyzerDrawer
           properties={selected.properties}
@@ -248,6 +307,9 @@ export default function Workspace({
           onCloseNiche={() => setNicheCaseId(null)}
           tab={tab}
           onTab={selectTab}
+          open={drawerOpen}
+          onClose={closeDrawer}
+          closeRef={drawerCloseRef}
         >
           {selectedNiche ? <NicheCaseTab nicheCase={selectedNiche} /> : null}
           {!selectedNiche && tab === "telemetry" ? (

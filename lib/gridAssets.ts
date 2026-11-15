@@ -99,18 +99,25 @@ export interface IndexedLine {
 }
 
 /** Layer arrays prepared once and reused for every load center. */
+/** Layers whose source loaded successfully, so zero features means confirmed empty. */
+export type ConfirmedLayers = Partial<Record<"plants" | "lines" | "substations", boolean>>;
+
 export interface AssetIndex {
   plants: PlantFeature[];
   lines: IndexedLine[];
   substations: SubstationFeature[];
+  /** Absent or false: an empty layer is unavailable, not confirmed empty. */
+  confirmed?: ConfirmedLayers;
 }
 
 export function buildAssetIndex(
   plants: PlantFeature[],
   transmission: TransmissionFeature[],
   substations: SubstationFeature[],
+  confirmed?: ConfirmedLayers,
 ): AssetIndex {
   return {
+    ...(confirmed ? { confirmed } : {}),
     plants,
     lines: transmission.map((feature) => ({
       feature,
@@ -347,9 +354,19 @@ export function reconductorScreen(voltageKv: number): ReconductorScreen {
   };
 }
 
+/**
+ * Owner as published by a source that carries one (HIFLD OWNER). Never read
+ * as, or merged into, the operator.
+ */
+function ownerOf(properties: object): string | null {
+  const owner = (properties as { owner?: unknown }).owner;
+  return typeof owner === "string" && owner !== "" ? owner : null;
+}
+
 export interface LineDigest {
   name: string;
   operator: string | null;
+  owner: string | null;
   voltage_kv: number;
   distance_mi: number;
 }
@@ -391,6 +408,7 @@ function summarizeTransmission(
           line.feature.properties.name?.trim() ||
           `${kv} kV circuit (OSM ${line.feature.properties.osm_id ?? "way"})`,
         operator,
+        owner: ownerOf(line.feature.properties),
         voltage_kv: kv,
         distance_mi: Math.round(distance * 10) / 10,
       },
@@ -425,6 +443,7 @@ function summarizeTransmission(
 export interface SubstationDigest {
   name: string;
   operator: string | null;
+  owner: string | null;
   voltage_kv: number | null;
   distance_mi: number;
   kind: string | null;
@@ -495,6 +514,7 @@ function summarizeSubstations(
           feature.properties.name?.trim() ||
           `${kind ?? "substation"} (OSM ${feature.properties.osm_id})`,
         operator: feature.properties.operator,
+        owner: ownerOf(feature.properties),
         voltage_kv: kv,
         distance_mi: Math.round(distance * 10) / 10,
         kind,
@@ -531,7 +551,9 @@ export interface AssetRadii {
 
 /**
  * One pass over the real layers around a single load center. Each summary is
- * `null` only when its layer is empty, never when a value is merely missing.
+ * `null` only when its layer is unavailable (empty and not confirmed loaded),
+ * never when a value is merely missing. A confirmed-empty layer (loaded
+ * successfully with 0 features) yields a zero-count summary.
  */
 export function summarizeAssets(
   index: AssetIndex,
@@ -542,11 +564,10 @@ export function summarizeAssets(
   const transmissionMi = radii.transmission_mi ?? 8;
   const substationsMi = radii.substations_mi ?? 10;
 
-  const generation = index.plants.length > 0 ? summarizeGeneration(index, point, plantsMi) : null;
-  const transmission =
-    index.lines.length > 0 ? summarizeTransmission(index, point, transmissionMi) : null;
-  const substations =
-    index.substations.length > 0 ? summarizeSubstations(index, point, substationsMi) : null;
+  const has = (layer: keyof ConfirmedLayers) => index[layer].length > 0 || index.confirmed?.[layer] === true;
+  const generation = has("plants") ? summarizeGeneration(index, point, plantsMi) : null;
+  const transmission = has("lines") ? summarizeTransmission(index, point, transmissionMi) : null;
+  const substations = has("substations") ? summarizeSubstations(index, point, substationsMi) : null;
 
   return { generation, transmission, substations };
 }
