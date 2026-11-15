@@ -23,11 +23,13 @@ export interface GrantMatch {
   why: string;
   /** The next action, screened from public listing text only. */
   next: string;
-  status: "open" | "forecasted" | "program";
-  /** ISO date the listing closes, when Grants.gov published one. */
+  status: "open" | "forecasted" | "notice" | "program";
+  /** ISO date the listing closes, when the feed published one. */
   deadline: string | null;
   checkedAt: string;
   source: "program" | "opportunity";
+  /** Short label for where an opportunity came from. */
+  via: string;
 }
 
 export interface GrantFeed {
@@ -37,8 +39,12 @@ export interface GrantFeed {
   watched: number;
   /** Pages in the catalog, including ones that did not answer. */
   total: number;
-  /** Listings kept across all saved searches. */
+  /** Listings kept across every aggregator. */
   listings: number;
+  /** Aggregators watched during the run. */
+  feeds: number;
+  /** Aggregators that answered and passed their shape check. */
+  feedsWatched: number;
 }
 
 interface Watch {
@@ -68,10 +74,21 @@ interface Opportunity {
   url: string;
   agency: string;
   number: string;
-  status: "open" | "forecasted";
+  status: "open" | "forecasted" | "notice";
   openDate: string | null;
   closeDate: string | null;
+  states: string[];
   levers: string[];
+  source: string;
+}
+
+interface Feed {
+  id: string;
+  name: string;
+  url: string;
+  hitCount: number;
+  kept: number;
+  watch: Watch;
 }
 
 export interface GrantsArtifact {
@@ -79,8 +96,15 @@ export interface GrantsArtifact {
   generatedAt: string;
   programs: Program[];
   opportunities: Opportunity[];
+  feeds: Feed[];
   searches: { keyword: string; hitCount: number; kept: number; detail: string }[];
 }
+
+const VIA: Record<string, string> = {
+  "grants-gov": "Grants.gov",
+  "federal-register": "Federal Register",
+  "cec-solicitations": "CEC solicitation index",
+};
 
 const ARTIFACT = grantsJson as unknown as GrantsArtifact;
 
@@ -101,22 +125,25 @@ export function stateForArea(lat: number, lon: number): string | null {
 }
 
 export function grantFeed(artifact: GrantsArtifact = ARTIFACT): GrantFeed {
+  const feeds = artifact.feeds ?? [];
   return {
     checkedAt: artifact.generatedAt,
     watched: artifact.programs.filter((program) => program.watch.status === "ok").length,
     total: artifact.programs.length,
     listings: artifact.opportunities.length,
+    feeds: feeds.length,
+    feedsWatched: feeds.filter((feed) => feed.watch.status === "ok").length,
   };
 }
 
-const STATUS_ORDER: Record<GrantMatch["status"], number> = { open: 0, program: 1, forecasted: 2 };
+const STATUS_ORDER: Record<GrantMatch["status"], number> = { open: 0, program: 1, notice: 2, forecasted: 3 };
 
 /** Funding for one lever, from sources watched for this lever and this state. */
 export function matchGrants(
   leverIds: string[],
   state: string | null,
   artifact: GrantsArtifact = ARTIFACT,
-  limit = 3,
+  limit = 4,
 ): GrantMatch[] {
   const levers = new Set(leverIds);
   if (!levers.size) return [];
@@ -136,23 +163,30 @@ export function matchGrants(
       deadline: null,
       checkedAt: program.watch.checkedAt,
       source: "program",
+      via: program.funder,
     }));
 
   // Grants.gov results are national: the search API carries no geography, so the
   // notice decides. They are offered after a matching programme page.
   const opportunities: GrantMatch[] = artifact.opportunities
     .filter((opportunity) => opportunity.levers.some((lever) => levers.has(lever)))
+    .filter((opportunity) => !opportunity.states?.length || (state !== null && opportunity.states.includes(state)))
     .map((opportunity) => ({
       id: opportunity.id,
       title: opportunity.title,
       funder: opportunity.agency,
       url: opportunity.url,
-      why: `Grants.gov ${opportunity.status === "open" ? "listing, currently open" : "forecast"}; geography is in the notice, not in the listing feed.`,
-      next: `Open the listing, confirm it covers ${state ?? "this area"}, and check eligibility: ${opportunity.number}.`,
+      why: opportunity.source === "cec-solicitations"
+        ? "Listed on the California Energy Commission's solicitation index; California projects only."
+        : opportunity.source === "federal-register"
+          ? "Federal Register notice announcing funding; the notice carries the geography and eligibility."
+          : `${VIA[opportunity.source] ?? "Aggregator"} ${opportunity.status === "open" ? "listing, currently open" : "forecast"}; geography is in the notice, not in the listing feed.`,
+      next: `Open the ${VIA[opportunity.source] ?? "listing"} entry, confirm it covers ${state ?? "this area"}, and check eligibility: ${opportunity.number}.`,
       status: opportunity.status,
       deadline: opportunity.closeDate,
       checkedAt: artifact.generatedAt,
       source: "opportunity",
+      via: VIA[opportunity.source] ?? "Aggregator",
     }));
 
   return [...programs, ...opportunities]

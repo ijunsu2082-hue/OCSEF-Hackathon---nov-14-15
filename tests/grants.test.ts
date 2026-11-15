@@ -1,13 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { watchProgram, searchOpportunities, verifyGrants, type GrantProgram } from "../research/etl/grants";
+import {
+  watchProgram,
+  searchOpportunities,
+  federalRegisterOpportunities,
+  cecSolicitations,
+  leversForTitle,
+  verifyGrants,
+  type GrantProgram,
+} from "../research/etl/grants";
 import { matchGrants, grantFeed, type GrantsArtifact } from "../lib/scan/grants";
 
 const PROGRAM: GrantProgram = {
   id: "p1",
   title: "Programme one",
   funder: "Agency",
-  url: "https://example.gov/programme",
+  url: "https://www.energy.gov/oe/grid-resilience-state-and-tribal-formula-grants-program",
   states: [],
   levers: ["weather-rating"],
   kind: "grant",
@@ -103,14 +111,15 @@ test("verifyGrants fails an artifact that outlived its watch, and honours the ag
   assert.throws(() => verifyGrants(fresh, { maxAgeDays: 0 }), /Invalid max age/);
 });
 
-test("verifyGrants reports unwatched programmes and rejects an ok watch without a fingerprint", () => {
+test("verifyGrants reports unwatched programmes and aggregators, and rejects an ok watch without a fingerprint", () => {
   const artifact = {
-    schema: "mapergy.grants/1",
+    schema: "mapergy.grants/2",
     generatedAt: "2026-11-15T00:00:00.000Z",
     programs: [
       { ...PROGRAM, watch: { status: "ok", httpStatus: 200, title: "t", fingerprint: null, checkedAt: "2026-11-15T00:00:00.000Z", detail: "" } },
     ],
     opportunities: [],
+    feeds: [{ id: "grants-gov", name: "Grants.gov Search2", url: "https://api.grants.gov/v1/api/search2", hitCount: 0, kept: 0, watch: OK_WATCH }],
     searches: [],
   };
   assert.throws(() => verifyGrants(artifact), /without a fingerprint/);
@@ -123,19 +132,29 @@ test("verifyGrants reports unwatched programmes and rejects an ok watch without 
     url: "https://example.gov/two",
     watch: { status: "unreachable", httpStatus: null, title: null, fingerprint: null, checkedAt: "2026-11-15T00:00:00.000Z", detail: "down" },
   });
+  mixed.feeds.push({
+    id: "cec-solicitations", name: "CEC solicitation index", url: "https://www.energy.ca.gov/funding-opportunities/solicitations",
+    hitCount: 0, kept: 0,
+    watch: { status: "unreachable", httpStatus: 200, title: null, fingerprint: null, checkedAt: "2026-11-15T00:00:00.000Z", detail: "no cards" },
+  });
   const report = verifyGrants(mixed);
   assert.equal(report.programs, 2);
   assert.equal(report.watched, 1);
   assert.deepEqual(report.unreachable, ["p2"]);
+  assert.equal(report.feeds, 2);
+  assert.deepEqual(report.unreachableFeeds, ["cec-solicitations"]);
   assert.deepEqual(report.leversWithFunding, ["weather-rating"]);
   assert.match(report.problems.join(" "), /p2/);
-  assert.throws(() => verifyGrants({ schema: "other" }), /mapergy\.grants\/1/);
+  assert.match(report.problems.join(" "), /aggregator did not answer: cec-solicitations/);
+  assert.throws(() => verifyGrants({ schema: "other" }), /mapergy\.grants\/2/);
 });
 
+const OK_WATCH = { status: "ok" as const, httpStatus: 200, fingerprint: "sha256:0123456789abcdef0123456789abcdef", checkedAt: "2026-11-15T00:00:00.000Z", detail: "" };
+
 function artifact(): GrantsArtifact {
-  const watch = { status: "ok" as const, httpStatus: 200, fingerprint: "sha256:0123456789abcdef0123456789abcdef", checkedAt: "2026-11-15T00:00:00.000Z", detail: "" };
+  const watch = OK_WATCH;
   return {
-    schema: "mapergy.grants/1",
+    schema: "mapergy.grants/2",
     generatedAt: "2026-11-15T00:00:00.000Z",
     programs: [
       { ...PROGRAM, id: "ca-storage", states: ["CA"], levers: ["sunset-storage"], watch },
@@ -143,8 +162,13 @@ function artifact(): GrantsArtifact {
       { ...PROGRAM, id: "dead-programme", states: ["CA"], levers: ["sunset-storage"], watch: { ...watch, status: "unreachable", fingerprint: null } },
     ],
     opportunities: [
-      { id: "grants-gov-9", title: "Battery demonstration", url: "https://www.grants.gov/search-results-detail/9", agency: "DOE", number: "DE-9", status: "forecasted", openDate: null, closeDate: "2027-01-01", levers: ["sunset-storage"] },
-      { id: "grants-gov-8", title: "Storage deployment", url: "https://www.grants.gov/search-results-detail/8", agency: "DOE", number: "DE-8", status: "open", openDate: null, closeDate: "2026-12-01", levers: ["sunset-storage"] },
+      { id: "grants-gov-9", title: "Battery demonstration", url: "https://www.grants.gov/search-results-detail/9", agency: "DOE", number: "DE-9", status: "forecasted", openDate: null, closeDate: "2027-01-01", states: [], levers: ["sunset-storage"], source: "grants-gov" },
+      { id: "grants-gov-8", title: "Storage deployment", url: "https://www.grants.gov/search-results-detail/8", agency: "DOE", number: "DE-8", status: "open", openDate: null, closeDate: "2026-12-01", states: [], levers: ["sunset-storage"], source: "grants-gov" },
+      { id: "cec-GFO-26-503", title: "Backup assets", url: "https://www.energy.ca.gov/solicitations/gfo-26-503", agency: "California Energy Commission", number: "GFO-26-503", status: "open", openDate: null, closeDate: null, states: ["CA"], levers: ["sunset-storage"], source: "cec-solicitations" },
+    ],
+    feeds: [
+      { id: "grants-gov", name: "Grants.gov Search2", url: "https://api.grants.gov/v1/api/search2", hitCount: 2, kept: 2, watch: watch },
+      { id: "cec-solicitations", name: "CEC solicitation index", url: "https://www.energy.ca.gov/funding-opportunities/solicitations", hitCount: 3, kept: 1, watch: watch },
     ],
     searches: [],
   };
@@ -152,9 +176,10 @@ function artifact(): GrantsArtifact {
 
 test("matchGrants filters by lever, state and watch status, then orders by availability", () => {
   const ca = matchGrants(["sunset-storage"], "CA", artifact());
-  assert.deepEqual(ca.map((match) => match.id), ["grants-gov-8", "ca-storage", "national-grid"]);
-  assert.deepEqual(ca.map((match) => match.status), ["open", "program", "program"]);
+  assert.deepEqual(ca.map((match) => match.id), ["grants-gov-8", "cec-GFO-26-503", "ca-storage", "national-grid"]);
+  assert.deepEqual(ca.map((match) => match.status), ["open", "open", "program", "program"]);
   assert.equal(ca[0].deadline, "2026-12-01");
+  assert.equal(ca[1].via, "CEC solicitation index");
 
   const nevada = matchGrants(["sunset-storage"], "NV", artifact());
   assert.deepEqual(nevada.map((match) => match.id), ["grants-gov-8", "national-grid", "grants-gov-9"]);
@@ -171,6 +196,132 @@ test("grantFeed reports what the watch run covered", () => {
   const feed = grantFeed(artifact());
   assert.equal(feed.total, 3);
   assert.equal(feed.watched, 2);
-  assert.equal(feed.listings, 2);
+  assert.equal(feed.listings, 3);
+  assert.equal(feed.feeds, 2);
+  assert.equal(feed.feedsWatched, 2);
   assert.equal(feed.checkedAt.slice(0, 10), "2026-11-15");
+});
+
+test("leversForTitle maps funding language to levers", () => {
+  assert.deepEqual(leversForTitle("Energy Storage Deployment Grant"), ["sunset-storage"]);
+  const grid = leversForTitle("Grid Resilience and Transmission Modernization");
+  assert.ok(grid.includes("weather-rating") && grid.includes("wildfire-hardening"));
+  assert.deepEqual(leversForTitle("Parking lot resurfacing"), []);
+});
+
+test("federalRegisterOpportunities keeps money notices and reports its feed", async () => {
+  const payload = {
+    results: [
+      {
+        title: "Notice of Funding Opportunity for Grid Resilience Projects",
+        html_url: "https://www.federalregister.gov/documents/2026/11/01/2026-1/grid",
+        document_number: "2026-1",
+        publication_date: "2026-11-01",
+        agencies: [{ name: "Department of Energy" }],
+      },
+      {
+        title: "Environmental Impact Statement for a Transmission Line",
+        html_url: "https://www.federalregister.gov/documents/2026/10/01/2026-2/eis",
+        document_number: "2026-2",
+        publication_date: "2026-10-01",
+        agencies: [{ name: "Department of Energy" }],
+      },
+    ],
+  };
+  const live = await federalRegisterOpportunities({
+    fetch: (async () => new Response(JSON.stringify(payload), { status: 200 })) as typeof fetch,
+  });
+  assert.equal(live.opportunities.length, 1);
+  const notice = live.opportunities[0];
+  assert.equal(notice.source, "federal-register");
+  assert.equal(notice.status, "notice");
+  assert.equal(notice.openDate, "2026-11-01");
+  assert.equal(notice.agency, "Department of Energy");
+  assert.ok(notice.levers.includes("weather-rating"));
+  assert.deepEqual(notice.states, []);
+  assert.equal(live.feed.watch.status, "ok");
+  assert.match(live.feed.watch.fingerprint ?? "", /^sha256:/);
+
+  const down = await federalRegisterOpportunities({
+    fetch: (async () => new Response("nope", { status: 500 })) as typeof fetch,
+  });
+  assert.deepEqual(down.opportunities, []);
+  assert.equal(down.feed.watch.status, "unreachable");
+  assert.equal(down.feed.watch.httpStatus, 500);
+});
+
+test("cecSolicitations parses index cards, keeps lever topics, and fails closed on a layout change", async () => {
+  const html = `
+    <div class="abstract">
+      <a href="/solicitations/2026-10/gfo-26-503-distributed-electricity-backup-assets-program">
+        <div class="abstract-header"><div class="abstract-title"><h3 itemprop="name">GFO-26-503 - Distributed Electricity Backup Assets Program</h3></div></div>
+      </a>
+    </div>
+    <div class="abstract">
+      <a href="/solicitations/2026-11/zero-emission-school-bus">
+        <div class="abstract-title"><h3 itemprop="name">Zero-Emission School Bus and Infrastructure Incentive Project</h3></div>
+      </a>
+    </div>`;
+  const live = await cecSolicitations({ fetch: (async () => new Response(html, { status: 200 })) as typeof fetch });
+  assert.equal(live.opportunities.length, 1);
+  const solicitation = live.opportunities[0];
+  assert.equal(solicitation.source, "cec-solicitations");
+  assert.equal(solicitation.status, "open");
+  assert.deepEqual(solicitation.states, ["CA"]);
+  assert.equal(solicitation.number, "GFO-26-503");
+  assert.equal(solicitation.url, "https://www.energy.ca.gov/solicitations/2026-10/gfo-26-503-distributed-electricity-backup-assets-program");
+  assert.ok(solicitation.levers.includes("sunset-storage"));
+  assert.equal(live.feed.hitCount, 2);
+  assert.equal(live.feed.kept, 1);
+  assert.equal(live.feed.watch.status, "ok");
+
+  const changed = await cecSolicitations({ fetch: (async () => new Response("<html>redesigned</html>", { status: 200 })) as typeof fetch });
+  assert.equal(changed.feed.watch.status, "unreachable");
+  assert.match(changed.feed.watch.detail, /layout may have changed/);
+});
+
+test("provider fetch blocks cross-origin redirects and oversized pages", async () => {
+  let calls = 0;
+  const redirected = await watchProgram(PROGRAM, {
+    fetch: (async () => {
+      calls++;
+      return new Response("", { status: 302, headers: { location: "https://attacker.example/credential" } });
+    }) as typeof fetch,
+  });
+  assert.equal(redirected.watch.status, "unreachable");
+  assert.equal(calls, 1);
+
+  const oversized = await watchProgram(PROGRAM, {
+    fetch: (async () => new Response("", { status: 200, headers: { "content-length": "4000001" } })) as typeof fetch,
+  });
+  assert.equal(oversized.watch.status, "unreachable");
+  assert.match(oversized.watch.detail, /size limit/);
+});
+
+test("Federal Register keeps only safe official links and sanitizes source text", async () => {
+  const payload = {
+    results: [
+      {
+        title: "Notice of Funding Opportunity <img src=x onerror=alert(1)> for Grid Resilience",
+        html_url: "https://www.federalregister.gov/documents/2026/11/01/2026-1/grid-resilience",
+        document_number: "2026-1",
+        publication_date: "2026-11-01",
+        agencies: [{ name: "Attacker controlled agency" }],
+      },
+      {
+        title: "Notice of Funding Opportunity for Grid Resilience",
+        html_url: "https://attacker.example/documents/2026/11/01/2026-2/fake",
+        document_number: "2026-2",
+        publication_date: "2026-11-01",
+        agencies: [{ name: "Department of Energy" }],
+      },
+    ],
+  };
+  const live = await federalRegisterOpportunities({
+    fetch: (async () => new Response(JSON.stringify(payload), { status: 200 })) as typeof fetch,
+  });
+  assert.equal(live.opportunities.length, 1);
+  assert.equal(live.opportunities[0].title, "Notice of Funding Opportunity for Grid Resilience");
+  assert.equal(live.opportunities[0].agency, "Federal Register notice");
+  assert.equal(live.opportunities[0].url, payload.results[0].html_url);
 });

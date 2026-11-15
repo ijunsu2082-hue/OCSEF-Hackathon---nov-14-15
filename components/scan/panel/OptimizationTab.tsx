@@ -84,6 +84,7 @@ function LeverChooser({
 const FUNDING_STATUS: Record<GrantMatch["status"], string> = {
   open: "Open listing",
   forecasted: "Forecast",
+  notice: "Funding notice",
   program: "Programme page",
 };
 
@@ -176,14 +177,15 @@ function LeverPlan({
                   rel="noopener noreferrer"
                   className="text-[12px] text-[#0369a1] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
                 >
-                  {match.source === "opportunity" ? "Grants.gov listing" : "Official programme page"}
+                  {match.source === "opportunity" ? `${match.via} entry` : "Official programme page"}
                 </a>
               </li>
             ))}
           </ul>
           <Caption>
             Matched from {grants.watched}/{grants.total} watched programmes and {grants.listings} live listing
-            {grants.listings === 1 ? "" : "s"}, last checked {grants.checkedAt.slice(0, 10)}.
+            {grants.listings === 1 ? "" : "s"} across {grants.feedsWatched}/{grants.feeds} aggregators, last checked{" "}
+            {grants.checkedAt.slice(0, 10)}.
           </Caption>
         </div>
       )}
