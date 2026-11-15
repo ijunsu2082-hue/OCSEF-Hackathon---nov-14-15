@@ -46,6 +46,9 @@ const MAX_CACHE_ENTRIES = 256;
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const MAX_RETRY_AFTER_MS = 60_000;
 
+/** Failure names that mean the request was cut off before a response arrived. */
+const RETRYABLE_ERROR_NAMES = new Set(["TimeoutError", "AbortError", "HeadersTimeoutError", "BodyTimeoutError"]);
+
 interface Validator {
   etag: string | null;
   lastModified: string | null;
@@ -163,65 +166,91 @@ class RetryableError extends Error {
   }
 }
 
-function isRetryable(error: unknown): error is RetryableError {
-  return error instanceof RetryableError;
+/**
+ * Decide whether a failure is worth retrying, and how long to wait if the
+ * provider said so.
+ *
+ * Retry decisions key off the error *name*, not its prose: `AbortSignal.timeout`
+ * rejects with a message like "The operation was aborted due to timeout", which
+ * no message-prefix check reliably catches, and a DNS failure surfaces as
+ * `TypeError: fetch failed`. Reading `name` means a timeout, an abort and a
+ * transport failure all retry, while a bug in our own code (a plain `Error`,
+ * e.g. the capture size limit) fails immediately.
+ */
+function classify(error: unknown): { retryable: boolean; waitMs: number | null } {
+  if (error instanceof RetryableError) return { retryable: true, waitMs: error.waitMs };
+  if (error instanceof Error) {
+    const name = error.name ?? "";
+    if (RETRYABLE_ERROR_NAMES.has(name)) return { retryable: true, waitMs: null };
+    // undici reports DNS/socket/connection resets as TypeError("fetch failed").
+    if (name === "TypeError" && /fetch failed|network|socket|other side closed/i.test(error.message)) {
+      return { retryable: true, waitMs: null };
+    }
+  }
+  return { retryable: false, waitMs: null };
+}
+
+/** One attempt inside an acquired host slot. The caller owns release(). */
+async function once(url: URL, key: string, options: HttpOptions): Promise<HttpResponse> {
+  const timeoutMs = options.timeoutMs ?? 15_000;
+  const maxBytes = options.maxBytes ?? 8 * 1024 * 1024;
+  const accept = options.accept ?? "application/json";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const validator = validators.get(key);
+    const headers: Record<string, string> = {
+      accept,
+      "user-agent": options.userAgent ?? "GridSentinel/1.0",
+    };
+    if (validator?.etag) headers["if-none-match"] = validator.etag;
+    else if (validator?.lastModified) headers["if-modified-since"] = validator.lastModified;
+    metrics.requests += 1;
+    const response = await fetch(url, { redirect: "error", signal: controller.signal, headers });
+    if (response.status === 304 && validator) {
+      metrics.revalidated += 1;
+      return {
+        bytes: validator.bytes,
+        status: validator.status,
+        headers: validator.headers,
+        revalidated: true,
+      };
+    }
+    if (RETRYABLE_STATUS.has(response.status)) {
+      await response.body?.cancel().catch(() => {});
+      throw new RetryableError(`Upstream HTTP ${response.status}`, retryAfterMs(response.headers));
+    }
+    if (!response.ok) throw new Error(`Upstream HTTP ${response.status}`);
+    const bytes = await readCapped(response, maxBytes);
+    remember(key, response, bytes);
+    return { bytes, status: response.status, headers: new Headers(response.headers), revalidated: false };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function attempt(url: URL, key: string, options: HttpOptions): Promise<HttpResponse> {
   const retries = options.retries ?? setting("ETL_HTTP_RETRY_ATTEMPTS", 3);
-  const timeoutMs = options.timeoutMs ?? 15_000;
-  const maxBytes = options.maxBytes ?? 8 * 1024 * 1024;
-  const accept = options.accept ?? "application/json";
   let lastError: unknown;
   for (let round = 0; round <= retries; round += 1) {
     await acquire(url.hostname);
+    let outcome: HttpResponse | null = null;
+    let failure: { retryable: boolean; waitMs: number | null } = { retryable: false, waitMs: null };
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const validator = validators.get(key);
-        const headers: Record<string, string> = {
-          accept,
-          "user-agent": options.userAgent ?? "GridSentinel/1.0",
-        };
-        if (validator?.etag) headers["if-none-match"] = validator.etag;
-        else if (validator?.lastModified) headers["if-modified-since"] = validator.lastModified;
-        metrics.requests += 1;
-        const response = await fetch(url, { redirect: "error", signal: controller.signal, headers });
-        if (response.status === 304 && validator) {
-          metrics.revalidated += 1;
-          return {
-            bytes: validator.bytes,
-            status: validator.status,
-            headers: validator.headers,
-            revalidated: true,
-          };
-        }
-        if (RETRYABLE_STATUS.has(response.status)) {
-          await response.body?.cancel().catch(() => {});
-          throw new RetryableError(`Upstream HTTP ${response.status}`, retryAfterMs(response.headers));
-        }
-        if (!response.ok) throw new Error(`Upstream HTTP ${response.status}`);
-        const bytes = await readCapped(response, maxBytes);
-        remember(key, response, bytes);
-        return { bytes, status: response.status, headers: new Headers(response.headers), revalidated: false };
-      } finally {
-        clearTimeout(timer);
-      }
+      outcome = await once(url, key, options);
     } catch (error) {
-      const retryable = isRetryable(error) || (error instanceof Error && /^(fetch failed|aborted)/i.test(error.message));
-      lastError = retryable && !(error instanceof RetryableError)
-        ? new RetryableError(error instanceof Error ? error.message : "Network failure", null)
-        : error;
-      if (!retryable || round === retries) break;
-      metrics.retries += 1;
-      const wait = isRetryable(lastError) && lastError.waitMs !== null
-        ? lastError.waitMs
-        : setting("ETL_HTTP_RETRY_BASE_MS", 300) * 2 ** round;
-      await sleep(Math.max(0, wait));
+      lastError = error;
+      failure = classify(error);
     } finally {
+      // Release before the backoff sleep: holding the slot while waiting would
+      // stall every other request to this provider for the whole delay.
       release(url.hostname);
     }
+    if (outcome) return outcome;
+    if (!failure.retryable || round === retries) break;
+    metrics.retries += 1;
+    const wait = failure.waitMs ?? setting("ETL_HTTP_RETRY_BASE_MS", 300) * 2 ** round;
+    await sleep(Math.max(0, wait));
   }
   throw lastError instanceof Error ? lastError : new Error("Upstream request failed");
 }
