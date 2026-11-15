@@ -59,6 +59,14 @@ export function assetKey(kind: AssetKind, id: string | number): string {
   return `${kind}:${id}`;
 }
 
+/**
+ * File name for an asset record. Substation ids look like "way/767650531", so anything
+ * that is not a letter or digit is folded to a dash: substation-way-767650531.json.
+ */
+export function assetFileName(kind: AssetKind, id: string | number): string {
+  return `${kind}-${String(id).replace(/[^A-Za-z0-9]+/g, "-").replace(/-+$/, "")}.json`;
+}
+
 /** Stable id for an owned asset, matching the ETL's keys. */
 export function keyForAsset(asset: OwnedAsset): string {
   if (asset.kind === "plant") return assetKey("plant", asset.plant.plant_code);
@@ -76,7 +84,7 @@ export function loadAssetRecord(kind: AssetKind, id: string | number): Promise<A
   const key = assetKey(kind, id);
   let pending = cache.get(key);
   if (!pending) {
-    pending = fetch(`/compliance/assets/${key.replace(":", "-")}.json`)
+    pending = fetch(`/compliance/assets/${assetFileName(kind, id)}`)
       .then(async (res) => {
         if (!res.ok) return null;
         const data = (await res.json()) as AssetComplianceRecord;

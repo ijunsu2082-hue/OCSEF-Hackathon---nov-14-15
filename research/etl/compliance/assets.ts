@@ -25,6 +25,7 @@ import { determineAll, type ProgramIndex } from "../../../lib/owner/applicabilit
 import { resolveWorksheet, type FormCatalog } from "../../../lib/owner/forms";
 import {
   ASSETS_SCHEMA,
+  assetFileName,
   assetKey,
   type AssetComplianceRecord,
   type AssetComplianceIndex,
@@ -159,7 +160,7 @@ export async function syncAssetCompliance(options: AssetsOptions = {}): Promise<
       if (record.filings.length === 0) continue;
       const id = asset.kind === "plant" ? asset.plant.plant_code : asset.kind === "substation" ? asset.substation.osm_id : asset.line.osm_id;
       const body = JSON.stringify(record);
-      const path = `${outDir}/${assetKey(kind, id).replace(":", "-")}.json`;
+      const path = `${outDir}/${assetFileName(kind, id)}`;
       await atomicJson(path, record);
       written += 1;
       bytes += Buffer.byteLength(body);
