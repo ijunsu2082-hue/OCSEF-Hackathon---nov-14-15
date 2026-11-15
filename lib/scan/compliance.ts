@@ -378,6 +378,13 @@ export interface AssetInfo {
 }
 
 const OSM = "OpenStreetMap";
+
+/** City from a scan's area label ("Long Beach · near Haynes", "Anaheim area"); null for "Remote area · ...". */
+export function areaPlace(label: string): string | null {
+  const head = label.split("·")[0].trim();
+  if (!head || /^remote area$/i.test(head)) return null;
+  return head.replace(/\s+area$/i, "").trim() || null;
+}
 const EIA = "EIA-860 (2025)";
 
 export function osmUrl(lat: number, lon: number): string {
@@ -833,12 +840,29 @@ export interface SavedReport {
   email?: ReportEmail;
 }
 
-export interface ReportEmail { to: string | null; subject: string; body: string }
+/**
+ * The letter and how it reaches the utility. `to` is the published address; when the utility takes reports only by
+ * phone or web form, `to` is null and `formUrl` is the report page the letter is pasted into.
+ */
+export interface ReportEmail { to: string | null; subject: string; body: string; formUrl?: string; recipient?: string }
 
 function isReportEmail(x: unknown): x is ReportEmail {
   if (!x || typeof x !== "object") return false;
   const e = x as Record<string, unknown>;
-  return (e.to === null || typeof e.to === "string") && typeof e.subject === "string" && typeof e.body === "string";
+  return (
+    (e.to === null || typeof e.to === "string") && typeof e.subject === "string" && typeof e.body === "string" &&
+    (e.formUrl === undefined || typeof e.formUrl === "string") && (e.recipient === undefined || typeof e.recipient === "string")
+  );
+}
+
+function copyEmail(e: ReportEmail): ReportEmail {
+  return {
+    to: e.to,
+    subject: e.subject,
+    body: e.body,
+    ...(e.formUrl ? { formUrl: e.formUrl } : {}),
+    ...(e.recipient ? { recipient: e.recipient } : {}),
+  };
 }
 
 export function toSaved(doc: ComplianceDoc, now = new Date()): SavedReport {
@@ -938,7 +962,7 @@ function normalize(x: unknown): SavedReport | null {
       contact: { name: typeof contact.name === "string" ? contact.name : "", url: contact.url },
       text: r.text,
       ...(typeof r.situationId === "string" ? { situationId: r.situationId as SituationId } : {}),
-      ...(isReportEmail(r.email) ? { email: { to: r.email.to, subject: r.email.subject, body: r.email.body } } : {}),
+      ...(isReportEmail(r.email) ? { email: copyEmail(r.email) } : {}),
     };
   }
   if (isLegacy(r)) {
@@ -991,7 +1015,12 @@ export function saveReports(reports: SavedReport[]): boolean {
 
 export type Severity = "info" | "warn" | "danger";
 
-export interface ReportIssue { text: string; severity: Severity }
+export interface ReportIssue {
+  text: string;
+  severity: Severity;
+  /** The same finding as a formal sentence for the letter to the utility. Absent = left out of the letter. */
+  letter?: string;
+}
 
 export type HazardId = "tree" | "wire_down" | "sparks" | "outage" | "old_broken" | "other";
 
@@ -1018,6 +1047,23 @@ export interface ReportDraft {
   assetLabel: string;
   location: { lat: number; lon: number; text: string };
   issues: ReportIssue[];
+  /** What is reported, as plain parts for the formal letter (no display labels to parse). */
+  letter?: LetterAsset;
+}
+
+/** The reported thing, in parts the letter can phrase: "the 220 kV power line near La Mirada, operated by SCE". */
+export interface LetterAsset {
+  kind: "plant" | "substation" | "line" | "area";
+  /** Its name, or "" when public records give none. */
+  name: string;
+  /** Nearby city or "City, County", when known. */
+  place: string | null;
+  /** "66 kV", "1.61 GW natural gas", or "". */
+  size: string;
+  /** "operated by Southern California Edison" / "owned by ...", or "". */
+  by: string;
+  /** Area scans: radius in miles. */
+  radiusMi?: number;
 }
 
 const pctOf = (ratio: number) => fmtNum(ratio * 100, 0);
@@ -1045,6 +1091,9 @@ function liveIssue(live: LineRatingNow | null, heatwave: boolean, subject: strin
     text:
       `Right now it is ${fmtNum(cToF(live.weather.temp_c), 0)} °F here. ${subject} can safely carry only about ` +
       `${pctOf(live.ratio)}% of normal in this weather. (Computer estimate for a typical wire.)`,
+    letter:
+      `It is currently about ${fmtNum(cToF(live.weather.temp_c), 0)} °F here, and a screening estimate from public weather data ` +
+      `suggests nearby lines can safely carry only about ${pctOf(live.ratio)}% of their normal load in these conditions.`,
   };
 }
 
@@ -1078,6 +1127,7 @@ export function buildDraft(
       issues.push({
         severity: age >= 60 ? "danger" : "warn",
         text: `Most of this plant's machines are about ${fmtNum(age, 0)} years old. That is ${age >= 60 ? "very old" : "old"} for a power plant.`,
+        letter: `According to federal EIA-860 data, the plant's generating units average about ${fmtNum(age, 0)} years old.`,
       });
     }
     if (isNum(p.planned_retirement_mw) && p.planned_retirement_mw > 0) {
@@ -1097,6 +1147,13 @@ export function buildDraft(
       assetLabel: `${name} (${fmtPowerText(p.nameplate_mw)} ${fuel.toLowerCase()} power plant${owner})`,
       location: { lat: p.lat, lon: p.lon, text: place ? `${place} (${fmtCoord(p.lat, p.lon)})` : fmtCoord(p.lat, p.lon) },
       issues: finish(issues),
+      letter: {
+        kind: "plant",
+        name: p.plant_name.trim(),
+        place: place || null,
+        size: [isNum(p.nameplate_mw) ? fmtPowerText(p.nameplate_mw) : "", fuel === "Other" ? "" : fuel.toLowerCase()].filter(Boolean).join(" "),
+        by: p.utility_name?.trim() ? `owned by ${p.utility_name.trim()}` : "",
+      },
     };
   }
 
@@ -1113,6 +1170,13 @@ export function buildDraft(
       assetLabel: `${name} (${kv ? `${kv} ` : ""}substation${op})`,
       location: { lat: s.lat, lon: s.lon, text: fmtCoord(s.lat, s.lon) },
       issues: finish([missingIssue("substation", missing)]),
+      letter: {
+        kind: "substation",
+        name: s.name?.trim() ?? "",
+        place: s.near ?? nearestCity(result, s.lat, s.lon),
+        size: kv ?? "",
+        by: s.operator?.trim() ? `operated by ${s.operator.trim()}` : "",
+      },
     };
   }
 
@@ -1134,6 +1198,13 @@ export function buildDraft(
         liveIssue(live, heatwave, "This power line"),
         missingIssue("power line", missing),
       ]),
+      letter: {
+        kind: "line",
+        name: l.name?.trim() ?? "",
+        place: l.near ?? nearestCity(result, mid[0], mid[1]),
+        size: kv ?? "",
+        by: l.operator?.trim() ? `operated by ${l.operator.trim()}` : "",
+      },
     };
   }
 
@@ -1166,19 +1237,32 @@ export function buildDraft(
     assetLabel: `The area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label}`,
     location: { lat: a.lat, lon: a.lon, text: `Center: ${fmtCoord(a.lat, a.lon)}` },
     issues: finish(issues),
+    letter: { kind: "area", name: "", place: areaPlace(result.area_label), size: "", by: "", radiusMi: a.radius_mi },
   };
 }
 
 const SEVERITY_WORD: Record<Severity, string> = { info: "Note", warn: "Watch", danger: "Serious" };
 export const severityWord = (s: Severity) => SEVERITY_WORD[s];
 
+/** How the letter reaches the utility: by email, pasted into its report form, or not yet (pick the utility first). */
+export type Delivery = "email" | "form" | "pick";
+
 export interface QuickRouting {
   /** Who gets the report first. */
   contactName: string;
   /** The utility, when we know it (null = the person must check their bill). */
   utility: UtilityInfo | null;
-  /** Published customer-service email for that utility, or null (report by phone or web form instead). */
+  /** Published address the letter goes to (the tree team for "Tree touching a wire" when there is one), or null. */
   email: string | null;
+  /** Where that address is published. */
+  emailSource: string | null;
+  /** Which team the address reaches, for the greeting ("Vegetation Management", "Customer Service"). */
+  team: string;
+  delivery: Delivery;
+  /** Report page the letter is pasted into when the utility takes no email (delivery "form"). */
+  formUrl: string | null;
+  /** Plain words for the person when there is no email: why, and what happens instead. */
+  note: string | null;
   /** Best page to open first (the utility's report page, else the CPUC / city route). */
   url: string;
   /** Where to send it, in order: the utility, then the CPUC (SCE, SDG&E, PG&E...), the city, or the co-op board. */
@@ -1192,12 +1276,49 @@ function hazardRoute(hazards: HazardId[]): Route {
 
 export function quickRouting(hazards: HazardId[], u: UtilityMatch): QuickRouting {
   const { steps, filingUrl } = stepsFor({ route: hazardRoute(hazards) }, u);
+  const base = { steps, url: filingUrl };
+  if (!u.known) {
+    return {
+      ...base,
+      contactName: "Your local electric utility (its name is on your electric bill)",
+      utility: null,
+      email: null,
+      emailSource: null,
+      team: "Customer Service",
+      delivery: "pick",
+      formUrl: null,
+      note: "Pick which utility serves this spot so the letter can be addressed to it.",
+    };
+  }
+  const util = u.utility;
+  const tree = hazards.includes("tree") && util.treeEmail;
+  const email = tree ? util.treeEmail! : util.email ?? null;
+  if (email) {
+    return {
+      ...base,
+      contactName: util.name,
+      utility: util,
+      email,
+      emailSource: (tree ? util.treeEmailSource : util.emailSource) ?? null,
+      team: tree ? "Vegetation Management" : "Customer Service",
+      delivery: "email",
+      formUrl: null,
+      note: null,
+    };
+  }
+  const phone = util.emergency ? ` or call ${util.emergency.display}` : "";
   return {
-    contactName: u.known ? u.utility.name : "Your local electric utility (its name is on your electric bill)",
-    utility: u.known ? u.utility : null,
-    email: u.known ? u.utility.email ?? null : null,
-    url: filingUrl,
-    steps,
+    ...base,
+    contactName: util.name,
+    utility: util,
+    email: null,
+    emailSource: null,
+    team: "Customer Service",
+    delivery: "form",
+    formUrl: util.reportUrl ?? filingUrl,
+    note:
+      `${util.noEmail?.why ?? `${util.short} does not publish an email address for reports.`} ` +
+      `Your letter is copied for you: paste it into ${util.short}'s report page${phone}.`,
   };
 }
 
@@ -1243,7 +1364,7 @@ export function quickReportText(
   return L.join("\n");
 }
 
-/** Who is sending the letter. Both optional; blanks become placeholders the person fills in their email app. */
+/** Who is sending the letter. Both optional: a blank name signs as "A local resident", a blank contact is left out. */
 export interface ReportSender { name: string; contact: string }
 
 export const EMPTY_SENDER: ReportSender = { name: "", contact: "" };
@@ -1251,8 +1372,8 @@ export const EMPTY_SENDER: ReportSender = { name: "", contact: "" };
 const OBSERVED: Record<HazardId, string> = {
   tree: "A tree or branch appears to be touching a power line.",
   old_broken: "The equipment appears to be old, damaged or broken.",
-  outage: "The power is out at this location.",
-  other: "There is a problem with the equipment here (details below).",
+  outage: "The power is out in the area.",
+  other: "Something about the equipment does not look right.",
   wire_down: "A power line is down or hanging low.",
   sparks: "There are sparks or fire at the equipment.",
 };
@@ -1266,25 +1387,70 @@ const SUBJECT_PHRASE: Record<HazardId, string> = {
   sparks: "sparks or fire at equipment",
 };
 
-/** The asset's short name: the draft title without its "Problem report:" prefix. */
-function shortName(draft: ReportDraft): string {
-  const raw = (draft.title.replace(/^(problem|compliance) report:\s*/i, "").trim() || draft.assetLabel)
-    .replace(/\s*\((area|plant|substation|line)\)$/i, "");
-  // Area labels look like "Anaheim · near AT&T Anaheim": say "AT&T Anaheim, Anaheim".
-  const m = raw.match(/^(.+?)\s*·\s*near\s+(.+)$/i);
-  return m ? `${m[2]}, ${m[1]}` : raw.replace(/\s*·\s*/g, ", ");
+/** "a", "a and b", "a, b and c". */
+function listPhrase(items: string[]): string {
+  if (items.length < 2) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-/** "Anaheim, Orange County (33.8° N, ...)" as is; "Center: 33.8° N, ..." without the prefix, in parentheses. */
-function placePhrase(text: string): string {
-  const t = text.replace(/^center:\s*/i, "").trim();
-  return /^-?\d/.test(t) ? ` (${t})` : `, ${t}`;
+/** Location text without its "Center:" / "Middle of the line:" prefix. */
+function placeText(text: string): string {
+  return text.replace(/^(center|middle of the line):\s*/i, "").trim();
 }
+
+/** Older drafts without `letter` parts: rebuild the parts from the title (best effort). */
+function letterAsset(draft: ReportDraft): LetterAsset {
+  if (draft.letter) return draft.letter;
+  const name = draft.title.replace(/^(problem|compliance) report:\s*/i, "").replace(/\s*\((area|plant|substation|line)\)$/i, "").trim();
+  const area = /\(area\)$/i.test(draft.title);
+  return { kind: area ? "area" : "substation", name: area ? "" : name, place: area ? areaPlace(name) : null, size: "", by: "" };
+}
+
+const KIND_WORD = { plant: "power plant", substation: "substation", line: "power line" } as const;
 
 /**
- * The formal letter a person sends to the utility: greeting, location, what they observed, what they ask for,
- * relevant public-record facts and a signature. Instructions meant for the person (who to call next, disclaimers)
- * stay out of it; they live in the app and in the downloadable report.
+ * The reported thing as a noun phrase: "Marion Substation", "the Pipeline Easement power line",
+ * "the 220 kV power line near La Mirada", "the substation near Long Beach", "the Ormond Beach power plant".
+ */
+function assetPhrase(a: LetterAsset): string {
+  if (a.kind === "area") return a.place ? `the power lines and equipment in ${a.place}` : "the power lines and equipment in this area";
+  const word = KIND_WORD[a.kind];
+  if (!a.name) {
+    const sized = a.kind === "plant" ? word : [a.size, word].filter(Boolean).join(" ");
+    return `the ${sized}${a.place ? ` near ${a.place.split(",")[0]}` : ""}`;
+  }
+  // Names that already say what they are: "Marion Substation", "Haynes Generating Station", "Lugo 500 kV Line".
+  const says = a.kind === "substation" ? /substation/i : a.kind === "line" ? /\bline\b/i : /plant|station|center|facility|project|farm|park/i;
+  if (says.test(a.name)) return /^the\b/i.test(a.name) ? a.name : a.kind === "substation" ? a.name : `the ${a.name}`;
+  return `the ${a.name} ${word}`;
+}
+
+/** First "Location" line: what it is, size and operator, as a sentence fragment. */
+function assetDescription(a: LetterAsset): string {
+  if (a.kind === "area") return `Power lines and equipment within ${fmtNum(a.radiusMi ?? 0, 0)} miles of the point below${a.place ? `, in ${a.place}` : ""}`;
+  const phrase = assetPhrase(a);
+  const what = [a.size, KIND_WORD[a.kind]].filter(Boolean).join(" ");
+  const parts = [a.name ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, a ${what}` : `${phrase[0].toUpperCase()}${phrase.slice(1)}`];
+  if (!a.by) return parts[0];
+  return a.name ? `${parts[0]} ${a.by}` : `${parts[0]}, ${a.by}`;
+}
+
+/** Whole-word trim to fit `max` characters (never inside a surrogate pair), ending with an ellipsis. */
+function trimWords(t: string, max: number): string {
+  const chars = Array.from(t);
+  if (chars.length <= max) return t;
+  const head = chars.slice(0, Math.max(1, max - 1)).join("");
+  const cut = head.replace(/\s+\S*$/, "");
+  return `${(cut || head).replace(/[\s.,;:!?-]+$/, "")}…`;
+}
+
+const encodedLength = (t: string) => encodeURIComponent(wellFormed(t)).length;
+
+/**
+ * The formal letter a person sends to the utility: greeting, location, what they observed, numbered requests,
+ * relevant public-record facts and a signature. Instructions meant for the person (who to call next, disclaimers,
+ * app branding) stay out of it; they live in the app and in the downloadable report. The body always fits in a
+ * mailto: link (MAIL_BODY_MAX) without being cut: the reference facts go first, then the person's note is shortened.
  */
 export function quickReportLetter(
   draft: ReportDraft,
@@ -1294,49 +1460,100 @@ export function quickReportLetter(
   sender: ReportSender = EMPTY_SENDER,
 ): ReportEmail {
   const service = hazardRoute(hazards) === "service";
-  const name = shortName(draft);
+  const asset = letterAsset(draft);
+  const phrase = assetPhrase(asset);
+  const area = asset.kind === "area";
+  const coords = placeText(draft.location.text).replace(/^.*\((.+)\)$/, "$1");
+  const outageOnly = hazards.length > 0 && hazards.every((h) => h === "outage");
+
   const phrases = hazards.map((h) => SUBJECT_PHRASE[h]);
-  const topic = phrases.length ? phrases.join(" and ") : "request for inspection";
-  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} near ${name}`;
+  const topic = phrases.length ? listPhrase(phrases) : "request for inspection";
+  const where = area ? (asset.place ? `in ${asset.place}` : `near ${coords}`) : `${asset.kind === "line" ? "on" : "at"} ${phrase}`;
+  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} ${where}`;
 
   const util = routing.utility;
+  const raw = note.trim().replace(/\s+/g, " ");
+  const full = raw ? `${raw[0].toUpperCase()}${raw.slice(1)}${/[.!?…]$/.test(raw) ? "" : "."}` : "";
+
   const asks: string[] = [];
-  if (!service || hazards.length === 0) asks.push("Send a crew to inspect the equipment and make it safe.");
-  if (hazards.includes("tree")) asks.push("Trim the vegetation back to the clearances required by CPUC General Order 95.");
+  if (hazards.length === 0) asks.push("Inspect the equipment at this location and let me know whether any work is needed.");
+  else if (!service) asks.push("Send a crew to inspect the equipment and make it safe.");
+  if (hazards.includes("tree")) asks.push("Trim the vegetation back to the clearances required by CPUC General Order 95, Rule 35.");
   if (hazards.includes("old_broken")) asks.push("Repair or replace any damaged equipment.");
-  if (hazards.includes("outage")) asks.push("Restore service, and let me know the cause and the expected restoration time.");
-  if (hazards.includes("other") && asks.length === 0) asks.push("Look into the problem described below.");
-  asks.push("Reply with a reference number and the expected date of the work.");
-
-  const observed = hazards.length ? hazards.map((h) => `- ${OBSERVED[h]}`) : ["- I would like the equipment at this location inspected."];
-  const facts = draft.issues.filter((i) => i.severity !== "info").map((i) => `- ${i.text}`);
-
-  const L: string[] = [
-    util ? `Dear ${util.name} Customer Service Team,` : "Dear Customer Service Team,",
-    "",
-    `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} involving electrical equipment near ${name}${placePhrase(draft.location.text)}. I would appreciate it if your team could look into it as soon as possible.`,
-    "",
-    "Location",
-    `- ${draft.assetLabel}`,
-    `- ${draft.location.text}`,
-    `- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
-    "",
-    "What I observed",
-    ...observed,
-  ];
-  const extra = note.trim().replace(/\s+/g, " ");
-  if (extra) L.push(`- Additional details: ${extra[0].toUpperCase()}${extra.slice(1)}${/[.!?]$/.test(extra) ? "" : "."}`);
-  L.push("", "What I am requesting", ...asks.map((a, i) => `${i + 1}. ${a}`));
-  if (facts.length) L.push("", "For reference, public records show", ...facts);
-  L.push(
-    "",
-    "Thank you for your attention to this matter. Please contact me if you need any more information.",
-    "",
-    "Sincerely,",
-    sender.name.trim() || "[Your name]",
-    sender.contact.trim() || "[Your phone number or email]",
+  if (hazards.includes("outage")) asks.push("Restore power, and let me know the cause and when service is expected to be restored.");
+  if (hazards.includes("other") && service) asks.push("Inspect the equipment I described and fix any problem you find.");
+  asks.push(
+    service || hazards.length === 0
+      ? "Reply with a reference number for this report."
+      : "Reply with a reference number for this report and the expected date of the work.",
   );
-  return { to: routing.email, subject, body: L.join("\n") };
+
+  const observed = hazards.length
+    ? hazards.map((h) => `- ${OBSERVED[h]}`)
+    : ["- I did not see a specific fault, but I am concerned about this equipment and would like it checked."];
+  const facts = draft.issues.flatMap((i) => (i.letter ? [`- ${i.letter}`] : []));
+  const signer = sender.name.trim().replace(/\s+/g, " ") || "A local resident";
+  const contact = sender.contact.trim().replace(/\s+/g, " ");
+  const greeting = `Dear ${util ? `${util.short} ` : ""}${routing.team} Team,`;
+  const placeBit = !area && asset.place && !phrase.includes(asset.place.split(",")[0]) ? ` in ${asset.place}` : "";
+  const intro = hazards.length === 0
+    ? `I am writing to request an inspection of ${phrase}${placeBit} (${coords}).`
+    : outageOnly
+    ? `I am writing to report a power outage ${area ? where : `near ${phrase}${placeBit}`} (${coords}).`
+    : `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} ${area ? `involving ${phrase}` : `${asset.kind === "line" ? "on" : "at"} ${phrase}${placeBit}`} (${coords}).`;
+
+  const build = (extra: string, withFacts: boolean, compact = false, who = signer, how = contact): string => {
+    const L: string[] = [
+      greeting,
+      "",
+      `${intro} I would appreciate it if your team could look into it as soon as possible.`,
+      "",
+      "Location",
+      ...(compact ? [] : [`- ${assetDescription(asset)}`]),
+      `- Coordinates: ${coords}`,
+      `- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
+      "",
+      "What I observed",
+      ...observed,
+    ];
+    if (extra) L.push(`- Additional details: ${extra}`);
+    L.push("", "What I am requesting", ...asks.map((x, i) => `${i + 1}. ${x}`));
+    if (withFacts && facts.length) L.push("", "For reference:", ...facts);
+    L.push(
+      "",
+      "Thank you for your attention to this matter. Please let me know if you need any more information.",
+      "",
+      "Sincerely,",
+      who,
+      ...(how ? [how] : []),
+    );
+    return L.join("\n");
+  };
+
+  let body = build(full, true);
+  if (encodedLength(body) > MAIL_BODY_MAX) body = build(full, false);
+  if (encodedLength(body) > MAIL_BODY_MAX && full) {
+    let lo = 0;
+    let hi = Array.from(full).length;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (encodedLength(build(trimWords(full, mid), false)) <= MAIL_BODY_MAX) lo = mid;
+      else hi = mid - 1;
+    }
+    body = build(lo > 1 ? trimWords(full, lo) : "", false);
+  }
+  // Still too long (many hazards, long names): drop the description line, then shorten the signature lines.
+  if (encodedLength(body) > MAIL_BODY_MAX) body = build("", false, true);
+  for (let n = 60; encodedLength(body) > MAIL_BODY_MAX && n >= 0; n -= 10) {
+    body = build("", false, true, trimWords(signer, Math.max(n, 1)), contact ? trimWords(contact, Math.max(n, 1)) : "");
+  }
+  return {
+    to: routing.email,
+    subject,
+    body: wellFormed(body),
+    ...(routing.formUrl ? { formUrl: routing.formUrl } : {}),
+    ...(util ? { recipient: routing.email && routing.team !== "Customer Service" ? `${util.short}'s tree team` : util.short } : {}),
+  };
 }
 
 /** A filed quick report, saved in the same list (gs-reports-v1) as every other report. */

@@ -221,7 +221,16 @@ export interface UtilityInfo {
   email?: string;
   /** Where the email was published (checked Nov 15, 2026). */
   emailSource?: string;
+  /** Published email of the team that handles trees near power lines (used for "Tree touching a wire"). */
+  treeEmail?: string;
+  treeEmailSource?: string;
+  /** Why there is no customer email, with its source, when the utility says it takes reports only by phone or web. */
+  noEmail?: { why: string; source: string };
 }
+
+/** California Department of Community Services and Development, CAPP utility customer service contact lists. */
+const CSD_CAPP_2022 = "https://www.csd.ca.gov/Shared%20Documents/CAPP-Utility-Customer-Service-Contact-List.pdf";
+const CSD_CAPP_2023 = "https://www.csd.ca.gov/Shared%20Documents/2022-CAPP-Utility-Customer-Service-Contact-List.pdf";
 
 const CITY_OVERSIGHT = "It is run by its city, so the city council (or the utility's board) oversees it, not the CPUC.";
 
@@ -236,6 +245,9 @@ export const UTILITIES = {
     reportUrl: "https://www.sce.com/outages-safety/report-outage-safety-issue",
     claimsUrl: "https://www.sce.com/customer-service-center/help-center/request-support/claims",
     claimsTiming: "SCE says it aims to decide most claims within 30 days.",
+    treeEmail: "safetrees@sce.com",
+    treeEmailSource: "https://www.sce.com/factsheet/vegetation-management",
+    noEmail: { why: "SCE has no customer email address for other problems; it takes them by phone or on its website.", source: CSD_CAPP_2023 },
   },
   sdge: {
     key: "sdge",
@@ -247,6 +259,9 @@ export const UTILITIES = {
     reportUrl: "https://www.sdge.com/safety/power-outage-safety",
     claimsUrl: "https://www.sdge.com/residential/customer-service/assistance-help/claims",
     claimsTiming: "SDG&E says a claims representative contacts you in 3 to 5 business days and it aims to decide in 30 to 45 days.",
+    treeEmail: "VegetationManagementHelpDesk1@sdge.com",
+    treeEmailSource: "https://www.sdge.com/landservices",
+    noEmail: { why: "SDG&E takes other problems by phone or on its website, not by email.", source: CSD_CAPP_2023 },
   },
   pge: {
     key: "pge",
@@ -258,13 +273,18 @@ export const UTILITIES = {
     reportUrl: "https://www.pge.com/en/contact-us/report-an-issue/report-electric-issue.html",
     claimsUrl: "https://www.pge.com/en/account/customer-service/claims.html",
     claimsTiming: "PG&E says it aims to decide claims within 30 days.",
+    treeEmail: "treesafety@pge.com",
+    treeEmailSource: "https://www.pge.com/en/outages-and-safety/safety/vegetation-management.html",
+    noEmail: { why: "PG&E has no customer email address for other problems; it takes them by phone or on its website.", source: CSD_CAPP_2023 },
   },
   bves: {
     key: "bves",
     name: "Bear Valley Electric Service",
     short: "Bear Valley Electric",
     kind: "iou",
-    reportUrl: "https://www.bvesinc.com/",
+    reportUrl: "https://www.bvesinc.com/care",
+    email: "customerservice@bvesinc.com",
+    emailSource: "https://www.bvesinc.com/care",
   },
   ladwp: {
     key: "ladwp",
@@ -276,6 +296,7 @@ export const UTILITIES = {
     reportUrl: "https://www.ladwp.com/account/report-problem",
     claimsUrl: "https://www.ladwp.com/account/report-problem/claims",
     claimsTiming: "LADWP says it aims to decide claims in 30 to 45 days.",
+    noEmail: { why: "LADWP takes reports by phone or on its website, not by email.", source: CSD_CAPP_2023 },
     oversight: CITY_OVERSIGHT,
   },
   anaheim: {
@@ -323,7 +344,9 @@ export const UTILITIES = {
     kind: "public",
     emergency: { display: "(951) 782-0330", tel: "+19517820330", note: "24 hours" },
     emergencyUrl: "https://riversideca.gov/utilities/outage-types",
-    reportUrl: "https://riversideca.gov/utilities/outage-types",
+    reportUrl: "https://riversideca.gov/utilities/residents/contact-us",
+    email: "CallCenter@RiversideCA.gov",
+    emailSource: "https://riversideca.gov/utilities/residents/contact-us",
     oversight: CITY_OVERSIGHT,
   },
   pasadena: {
@@ -338,14 +361,45 @@ export const UTILITIES = {
     emailSource: "https://pwp.cityofpasadena.net/contactus/",
     oversight: CITY_OVERSIGHT,
   },
-  azusa: { key: "azusa", name: "Azusa Light & Power", short: "Azusa Light & Power", kind: "public", oversight: CITY_OVERSIGHT },
-  colton: { key: "colton", name: "Colton Electric Utility", short: "Colton Electric", kind: "public", oversight: CITY_OVERSIGHT },
-  vernon: { key: "vernon", name: "Vernon Public Utilities", short: "Vernon Public Utilities", kind: "public", reportUrl: "https://www.cityofvernonca.gov/", oversight: CITY_OVERSIGHT },
+  azusa: {
+    key: "azusa",
+    name: "Azusa Light & Water",
+    short: "Azusa Light & Water",
+    kind: "public",
+    reportUrl: "https://www.azusaca.gov/212/Contact-Us",
+    // The city's contact page still links customerservice@ci.azusa.ca.us, a retired domain with no mail server.
+    email: "customerservice@azusaca.gov",
+    emailSource: CSD_CAPP_2022,
+    oversight: CITY_OVERSIGHT,
+  },
+  colton: {
+    key: "colton",
+    name: "Colton Electric Utility",
+    short: "Colton Electric",
+    kind: "public",
+    reportUrl: "https://coltonca.gov/166",
+    email: "customer.service@coltonca.gov",
+    emailSource: "https://coltonca.gov/166",
+    oversight: CITY_OVERSIGHT,
+  },
+  vernon: {
+    key: "vernon",
+    name: "Vernon Public Utilities",
+    short: "Vernon Public Utilities",
+    kind: "public",
+    reportUrl: "https://www.cityofvernonca.gov/government/public-utilities/customer-service/contact-us",
+    email: "CustomerService@cityofvernon.org",
+    emailSource: "https://www.cityofvernonca.gov/government/public-utilities/customer-service/contact-us",
+    oversight: CITY_OVERSIGHT,
+  },
   iid: {
     key: "iid",
     name: "Imperial Irrigation District (IID)",
     short: "IID",
     kind: "public",
+    reportUrl: "https://www.iid.com/customer-service/contact-us",
+    email: "customerservice@iid.com",
+    emailSource: "https://www.iid.com/customer-service/contact-us",
     oversight: "It is a public district run by an elected board, not the CPUC.",
   },
   anza: {
@@ -353,6 +407,9 @@ export const UTILITIES = {
     name: "Anza Electric Cooperative",
     short: "Anza Electric",
     kind: "coop",
+    reportUrl: "https://www.anzaelectric.org/contact-usdays-were-closed",
+    email: "aec@anzaelectric.org",
+    emailSource: "https://www.anzaelectric.org/contact-usdays-were-closed",
     oversight: "It is a member-owned cooperative run by a board of directors.",
   },
 } as const satisfies Record<string, UtilityInfo>;
