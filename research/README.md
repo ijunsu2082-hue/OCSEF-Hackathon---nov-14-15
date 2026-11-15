@@ -9,9 +9,9 @@ Everything here is centered on **Westminster High School (33.7538, -118.0111), 1
 | `layers/plants.geojson` | 697 operating power plants, ≈39.5 GW (MW by fuel, in-service years, capacity-weighted age, planned retirements) | EIA-860 2025 annual | Real |
 | `layers/transmission.geojson` | 5,331 power lines ≥ 69 kV (or untagged), with voltage | OpenStreetMap (ODbL) | Real geometry; tags incomplete |
 | `layers/substations.geojson` | 1,271 substations (472 named), point = outline centroid, with voltage where tagged | OpenStreetMap (ODbL) | Real; tags incomplete |
-| `layers/niche_cases.json` | 38 niche cards in the README §4.7 `NicheCase` shape (Wire That Breathes first) | `NICHE_CASES.md` | Verified facts only |
+| `layers/niche_cases.json` | 38 niche cards in the README §4.7 `NicheCase` shape (Wire That Breathes first) | `GRID_STORIES.md` | Verified facts only |
 | `layers/line_rating_2024_westminster_hs.csv` | Hourly line rating at the school for the Wire That Breathes chart | `scripts/line_rating.py` | Modeled |
-| `NICHE_CASES.md` | All niche cases with every fact, source link and confidence tag, plus the datasets they found | 10 research agents, web-checked | Sourced |
+| `GRID_STORIES.md` | All grid stories with every fact, source link and confidence tag, plus the datasets they found | 10 research agents, web-checked | Sourced |
 | `data/plants/` | Per-plant and per-generator CSVs, plus **retired** (421) and **proposed** (113) generators | EIA-860 2025 | Real |
 | `data/line_ratings/` | Hourly 2024 static / ambient-adjusted / dynamic ratings for 7 locations + `summary.json` | `scripts/line_rating.py` | Modeled |
 | `data/weather/` | Hourly 2024 temperature, wind, solar radiation for 7 locations | Open-Meteo archive (ERA5-based) | Real (reanalysis) |

@@ -51,7 +51,7 @@ Four sessions work in this repo at once. **The only way this stays mergeable is 
 | **Dev 2 — Data & simulation** | `data/**`, `lib/simulation.ts`, `lib/risk.ts`, `lib/region.ts`, `lib/format.ts`, `app/api/region/**`, `app/api/simulate/**`, `components/energy/**` (`TelemetryTab.tsx`, `UpgradeSimulatorTab.tsx`, `charts/**`) | `nodes.json`/`regions.json` for `westminster-100mi`, all math, Recharts energy-mix + payback charts, region/simulate APIs |
 | **Dev 3 — AI & outreach** | `lib/ai/**`, `lib/email/**`, `app/api/generate-brief/**`, `app/api/send-audit/**`, `components/outreach/**` (`ProviderActionTab.tsx`, `MemoPreview.tsx`, `DispatchForm.tsx`) | Gemini memo generation with offline fallback, Resend dispatch with simulated fallback, memo UI |
 | **Dev 4 — Design & pitch** | `components/primitives/**`, `design/tokens.css`, `docs/**` | Tokens + primitives (**done**), `docs/DEMO.md` + `docs/PITCH.md`, final consistency pass (report, not edits) |
-| **Research — real-grid data & niche cases** | `research/**` | Real plant / line / substation layers (GeoJSON), weather + line-rating data, `research/NICHE_CASES.md`, `research/layers/niche_cases.json` |
+| **Research — real-grid data & niche cases** | `research/**` | Real plant / line / substation layers (GeoJSON), weather + line-rating data, `research/GRID_STORIES.md`, `research/layers/niche_cases.json` |
 
 Rendering the new layers and niche cases is split along the existing lines: **Dev 1** draws the layers and the niche-case markers on the map (`components/shell/**`); **Dev 2** owns `components/energy/NicheCaseTab.tsx` (the drawer view of one case) and any math on the layer data.
 
@@ -115,7 +115,7 @@ research/                                                       Research
     transmission.geojson    OSM power lines (≥ 69 kV)
     substations.geojson     OSM substations
     niche_cases.json        Niche-case cards (§4.7)
-  NICHE_CASES.md          every niche case, with sources
+  GRID_STORIES.md         every grid story, with sources
   data/                   full CSVs (generators, retirements, proposed, hourly line ratings, weather)
   scripts/                Python that rebuilds every file from the public sources
 ```
@@ -515,7 +515,7 @@ interface NicheCase {
 - **Honesty line:** these are screening estimates for a typical conductor, not utility operating ratings. Real ratings need line-specific conductor, clearance surveys and at-line sensors.
 - **Physical demo (optional):** a 1 m nichrome "line" over an LED city sags into a "tree" under load and lifts when a fan blows on it. The sag goes from about 10 mm to about 40 mm, enough to see.
 
-More cases with sources are in `research/NICHE_CASES.md`; promote the best 2–3 into `niche_cases.json`.
+More cases with sources are in `research/GRID_STORIES.md`; promote the best 2–3 into `niche_cases.json`.
 
 ---
 
