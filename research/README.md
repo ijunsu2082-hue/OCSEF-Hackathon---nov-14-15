@@ -1,3 +1,5 @@
+> The evidence-framework specification lives in [EVIDENCE-FRAMEWORK.md](EVIDENCE-FRAMEWORK.md).
+
 # research/: real-grid data and niche cases
 
 Everything here is centered on **Westminster High School (33.7538, -118.0111), 100-mile radius**, matching the main README.

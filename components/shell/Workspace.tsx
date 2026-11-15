@@ -2,16 +2,26 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ActionTab from "@/components/outreach/ActionTab";
+import { EvidenceProvider } from "@/components/evidence/EvidenceProvider";
+import EvidenceTab from "@/components/evidence/EvidenceTab";
 import GridChainTab from "@/components/grid/GridChainTab";
 import NicheCaseTab from "@/components/energy/NicheCaseTab";
 import ProcessTab from "@/components/method/ProcessTab";
 import TelemetryTab from "@/components/energy/TelemetryTab";
 import UpgradeSimulatorTab from "@/components/energy/UpgradeSimulatorTab";
-import { corridorLoadings, gridChain, phaseExposure } from "@/lib/grid";
-import { loadNicheCases } from "@/lib/gridLayers";
+import { gridChain, phaseExposure } from "@/lib/grid";
+import {
+  buildAssetIndex,
+  summarizeAssets,
+  type AssetIndex,
+  type RealGridAssets,
+} from "@/lib/gridAssets";
+import { loadNicheCases, loadPlants, loadSubstations, loadTransmission } from "@/lib/gridLayers";
 import type { NicheCase } from "@/lib/niche";
-import { energyRisk, RISK_COLORS, riskBucket, type RiskEntry } from "@/lib/risk";
+import { assessRisk, rankRisks, RISK_COLORS, type RiskEntry } from "@/lib/risk";
 import { simulate } from "@/lib/simulation";
+import { facilitySubject } from "@/lib/evidence/citation";
+import type { EvidenceBundle } from "@/lib/evidence/schema";
 import type { RegionPayload, SimResult } from "@/lib/types";
 import AnalyzerDrawer, { type DrawerTab } from "./AnalyzerDrawer";
 import ControlBar from "./ControlBar";
@@ -21,7 +31,6 @@ import MapCanvas from "./MapCanvas";
 export type Plan = { solar: number; vfd: boolean };
 
 const DEFAULT_NODE = "node-la-05";
-const DEFAULT_NICHE = "wire-that-breathes";
 
 function seedPlans(region: RegionPayload): Record<string, Plan> {
   const out: Record<string, Plan> = {};
@@ -34,14 +43,23 @@ function seedPlans(region: RegionPayload): Record<string, Plan> {
   return out;
 }
 
-export default function Workspace({ region }: { region: RegionPayload }) {
+export default function Workspace({
+  region,
+  evidence,
+}: {
+  region: RegionPayload;
+  evidence: EvidenceBundle | null;
+}) {
   const [heatwave, setHeatwave] = useState(false);
   const [view3d, setView3d] = useState(false);
   const [selectedId, setSelectedId] = useState(DEFAULT_NODE);
   const [tab, setTab] = useState<DrawerTab>("telemetry");
   const [plans, setPlans] = useState<Record<string, Plan>>(() => seedPlans(region));
   const [nicheCases, setNicheCases] = useState<NicheCase[]>([]);
-  const [selectedNicheId, setSelectedNicheId] = useState<string>(DEFAULT_NICHE);
+  // Real grid layers, indexed once; the chain reads only what these contain.
+  const [assetIndex, setAssetIndex] = useState<AssetIndex | null>(null);
+  // A niche case takes over the drawer while it is open; null means the asset view.
+  const [nicheCaseId, setNicheCaseId] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.stress = heatwave ? "true" : "false";
@@ -59,17 +77,33 @@ export default function Workspace({ region }: { region: RegionPayload }) {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    Promise.all([loadPlants(), loadTransmission(), loadSubstations()])
+      .then(([plants, transmission, substations]) => {
+        if (alive) {
+          setAssetIndex(
+            buildAssetIndex(plants.features, transmission.features, substations.features),
+          );
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const nodes = region.nodes.features;
 
-  const risks = useMemo<Record<string, RiskEntry>>(() => {
-    const out: Record<string, RiskEntry> = {};
+  const assets = useMemo<Record<string, RealGridAssets>>(() => {
+    const out: Record<string, RealGridAssets> = {};
+    if (!assetIndex) return out;
     for (const f of nodes) {
-      const score = energyRisk(f.properties, { heatwave });
-      const bucket = riskBucket(score);
-      out[f.properties.id] = { score, bucket, color: RISK_COLORS[bucket] };
+      const [lon, lat] = f.geometry.coordinates;
+      out[f.properties.id] = summarizeAssets(assetIndex, [lon, lat]);
     }
     return out;
-  }, [nodes, heatwave]);
+  }, [assetIndex, nodes]);
 
   const sims = useMemo<Record<string, SimResult>>(() => {
     const out: Record<string, SimResult> = {};
@@ -84,20 +118,38 @@ export default function Workspace({ region }: { region: RegionPayload }) {
     return out;
   }, [nodes, plans, heatwave]);
 
+  const risks = useMemo<Record<string, RiskEntry>>(() => {
+    const assessments = nodes.map((f) => ({
+      id: f.properties.id,
+      assessment: assessRisk(f.properties, {
+        heatwave,
+        overload: sims[f.properties.id]?.overload ?? false,
+      }),
+    }));
+    const ranked = rankRisks(
+      assessments.map((entry) => ({ id: entry.id, score: entry.assessment.score })),
+    );
+    const out: Record<string, RiskEntry> = {};
+    for (const entry of assessments) {
+      out[entry.id] = {
+        ...entry.assessment,
+        ...ranked[entry.id],
+        color: RISK_COLORS[entry.assessment.bucket],
+      };
+    }
+    return out;
+  }, [nodes, sims, heatwave]);
+
   const exposure = useMemo(() => {
-    const ctx = { flows: region.flows, sims };
     return phaseExposure(
       nodes.map((f) => ({
         draw_mw: sims[f.properties.id].effective_draw_mw,
-        states: gridChain(f.properties, sims[f.properties.id], ctx),
+        states: gridChain(f.properties, sims[f.properties.id], {
+          assets: assets[f.properties.id] ?? null,
+        }),
       })),
     );
-  }, [nodes, sims, region.flows]);
-
-  const corridors = useMemo(
-    () => corridorLoadings(region.flows, sims, heatwave),
-    [region.flows, sims, heatwave],
-  );
+  }, [nodes, sims, assets]);
 
   const kpis = useMemo(() => {
     let draw = 0;
@@ -124,11 +176,11 @@ export default function Workspace({ region }: { region: RegionPayload }) {
   const selectedSim = sims[selected.properties.id];
   const plan = plans[selected.properties.id] ?? { solar: 0, vfd: false };
   const selectedNiche =
-    nicheCases.find((entry) => entry.id === selectedNicheId) ?? nicheCases[0] ?? null;
+    nicheCases.find((entry) => entry.id === nicheCaseId) ?? null;
 
-  const openNicheCase = useCallback((id: string) => {
-    setSelectedNicheId(id);
-    setTab("niche");
+  const selectTab = useCallback((next: DrawerTab) => {
+    setNicheCaseId(null);
+    setTab(next);
   }, []);
 
   const setPlan = useCallback((id: string, next: Plan) => {
@@ -146,9 +198,11 @@ export default function Workspace({ region }: { region: RegionPayload }) {
   );
 
   return (
-    <div className="app">
+    <EvidenceProvider bundle={evidence}>
+      <div className="app">
       <ControlBar
         regionName={region.region.name}
+        regionId={region.region.id}
         kpis={kpis}
         heatwave={heatwave}
         onHeatwave={setHeatwave}
@@ -169,11 +223,11 @@ export default function Workspace({ region }: { region: RegionPayload }) {
             selectedId={selected.properties.id}
             heatwave={heatwave}
             view3d={view3d}
-            corridors={corridors}
+            onView3d={setView3d}
             nicheCases={nicheCases}
             selectedNicheId={selectedNiche?.id ?? null}
             onSelect={setSelectedId}
-            onSelectNiche={openNicheCase}
+            onSelectNiche={setNicheCaseId}
           />
           <FacilityRail
             regionName={region.region.name}
@@ -191,48 +245,59 @@ export default function Workspace({ region }: { region: RegionPayload }) {
           risk={selectedRisk}
           sim={selectedSim}
           nicheCase={selectedNiche}
+          onCloseNiche={() => setNicheCaseId(null)}
           tab={tab}
-          onTab={setTab}
+          onTab={selectTab}
         >
-          {tab === "telemetry" ? (
+          {selectedNiche ? <NicheCaseTab nicheCase={selectedNiche} /> : null}
+          {!selectedNiche && tab === "telemetry" ? (
             <TelemetryTab
               properties={selected.properties}
               sim={selectedSim}
+              risk={selectedRisk}
               regionalCI={region.grid.carbon_intensity_gco2_kwh}
               heatwave={heatwave}
-              onNavigate={setTab}
+              onNavigate={selectTab}
             />
           ) : null}
-          {tab === "grid" ? (
+          {!selectedNiche && tab === "grid" ? (
             <GridChainTab
               properties={selected.properties}
               sim={selectedSim}
-              ctx={{ flows: region.flows, sims }}
+              ctx={{ assets: assets[selected.properties.id] ?? null }}
               exposure={exposure}
             />
           ) : null}
-          {tab === "upgrade" ? (
+          {!selectedNiche && tab === "upgrade" ? (
             <UpgradeSimulatorTab
               properties={selected.properties}
               sim={selectedSim}
+              risk={selectedRisk}
               plan={plan}
               onPlan={(next) => setPlan(selected.properties.id, next)}
-              onNavigate={setTab}
+              onNavigate={selectTab}
             />
           ) : null}
-          {tab === "action" ? (
+          {!selectedNiche && tab === "action" ? (
             <ActionTab properties={selected.properties} sim={selectedSim} />
           ) : null}
-          {tab === "niche" ? <NicheCaseTab nicheCase={selectedNiche} /> : null}
-          {tab === "process" ? (
+          {!selectedNiche && tab === "process" ? (
             <ProcessTab
               entries={entries}
               flowCount={region.flows.length}
               heatwave={heatwave}
             />
           ) : null}
+          {!selectedNiche && tab === "evidence" ? (
+            <EvidenceTab
+              subject={facilitySubject(selected.properties.id)}
+              regionId={region.region.id}
+              title={selected.properties.name}
+            />
+          ) : null}
         </AnalyzerDrawer>
       </main>
-    </div>
+      </div>
+    </EvidenceProvider>
   );
 }

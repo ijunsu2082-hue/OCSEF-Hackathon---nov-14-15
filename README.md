@@ -8,6 +8,22 @@ A dark-mode "command center" for **electrical** infrastructure: it maps every ma
 
 Swapping `data/nodes.json` + `data/regions.json` and the region id relocates the whole platform; every formula, endpoint and component is region-agnostic.
 
+### Evidence framework — every number has a citation
+
+A deterministic, source-backed evidence layer sits under the UI. Every displayed claim is
+one of **observed / derived / modeled / inferred**, is content-addressed, and is re-verified
+from the exact bytes or formula that produce it. The UI reads claim values (not parallel
+literals) and shows an **Evidence** tab in the analyzer drawer with verification status,
+sources, snapshots and disclosures. Click any `S1`/`∂` chip for the provenance chain.
+
+```bash
+npm run evidence:build          # offline, deterministic, committed inputs only
+npm run evidence:verify:files   # re-hash snapshots + re-resolve every locator (strict)
+```
+
+Full contract, architecture, commands, extension rules and restore paths:
+**[`research/README.md`](research/README.md)**.
+
 ---
 
 ## 0. Parallel work: read this first
@@ -320,7 +336,7 @@ Anyone still on the old field names is unblocked by §4.2: `loadRatio` replaces 
 // data/nodes.json — FeatureCollection + the region it belongs to + grid ties
 { "region_id": "westminster-100mi", "type": "FeatureCollection",
   "features": [ /* 11 features, §4.1 */ ],
-  "flows": [ /* 9 PowerFlow segments */ ] }
+  "flows": [ /* 10 PowerFlow segments, one an explicitly modeled tie */ ] }
 ```
 
 Eleven real sites, every one inside 100 miles of Westminster High School (**farthest** is Carlsbad at ~58 mi). Coordinates and in-service years were verified against operator/agency records.
@@ -374,9 +390,9 @@ node -e "const d=require('./data/nodes.json');for(const f of d.features){const p
 
 **Power flows** (`flows` in `nodes.json`, MVA sizes the line — one directed segment per tie, no reverse duplicates):
 
-`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
+`oc-02 → oc-01` Fountain Valley 69 kV tie (30) · `oc-02 → la-07` **Fountain Valley–Harbor 69 kV tie (45, modeled)** · `la-08 → la-02` Castaic 230 kV (60) · `la-02 → la-01` East Branch 230 kV trunk (180) · `la-03 → la-04` Rampart 230 kV trunk (120) · `la-03 → la-01` Upper feeder 230 kV (140) · `la-01 → la-05` Sylmar–Playa del Rey 230 kV (150) · `la-05 → la-06` West Basin 69 kV tie (40) · `la-05 → la-07` Harbor 115 kV trunk (45) · `la-04 → sd-01` SDCWA emergency intertie 230 kV (90).
 
-That is **9 segments over 11 nodes**, one connected component, no pair linked twice. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
+That is **10 segments over 11 nodes**, one connected component, no pair linked twice. The `oc-02 → la-07` tie is **modeled**, not an operator-published circuit; it exists to connect the Orange County pair to the LA/San Diego tree so the graph is one network instead of two islands. `la-04 → sd-01` is the long southern leg that keeps Carlsbad on the network instead of floating alone on the map.
 
 ### 4.2 Formulas (§3 of the spec, energy units — `lib/simulation.ts`, pure)
 
@@ -424,6 +440,22 @@ risk = 40 * fossilShare                                        // (100 - solar -
 // heatwave: recompute with the stressed CI, then add a flat +8 stress penalty.
 // Display-only escalation — never mutate the stored properties.
 ```
+
+`energyRisk()` remains the legacy exposure score and is unchanged for `/api/simulate` and the evidence formulas. The UI uses **Risk Index v2** from `assessRisk()`:
+
+```ts
+L = energyRisk factors + overload penalty (0–10)
+C = criticality 1–5; default 3, `assumed = true` until a customer/CFI layer exists
+R = clamp(L × C / 3, 0, 100)
+```
+
+Both scores come from **one** builder: `buildRiskFactors()` returns the weighted factors, `energyRisk()` sums them and returns the unchanged legacy exposure (so `/api/simulate` and §4.4 keep their exact values), and `assessRisk()` adds the overload penalty and applies the consequence multiplier. The old inline formula and the v2 decomposition cannot drift because there is only one place that computes a factor.
+
+Each factor carries the evidence predicates it is computed from, and the telemetry panel renders those citations beside the bar: `source_mix.natural_gas` + `source_mix.other` for fossil exposure, `carbon_intensity_gco2_kwh`, `motor_efficiency_rating`, and `age_years` — itself a `derived` claim with no upstream source, which is why it shows the `∂` marker rather than a source code. Under heatwave the stressed carbon factor and the two penalties are tagged `scenario`, because those values are computed at render time and are not stored claims.
+
+The weights (40/25/20/15), the 200 gCO₂/kWh carbon floor, the 0.85 motor benchmark and the 20-year age floor are **platform screening constants**, not an external standard. Maximo, FEMA's National Risk Index and Technosylva publish reproducible score maths, but none publishes this one, so the panel says "screening index, not a failure probability" and the weight set must never be described as calibrated.
+
+`C = 3` is neutral, so the baseline `R` reproduces the §4.4 scores exactly while the consequence dimension is unloaded. The drawer and telemetry tab show the `L`/`C`/`R` decomposition, factor bars, a deterministic regional rank/percentile, a confidence badge and — on the upgrade tab — risk points removed per $M of capex (motor-efficiency and overload effects only; solar carbon reduction is not scored yet). `rankRisks()` breaks ties by id. Every `C` is labelled **assumed** until `criticalityFor()` receives both population and critical-facility counts.
 
 ### 4.4 Expected values (use as G1 assertions)
 
@@ -566,7 +598,7 @@ Left: product mark + region selector (one option, `Westminster 100-Mile Radius`)
 | --- | --- | --- |
 | **G0 — Contract** | G0 commit | ✅ `lib/types.ts`, `design/tokens.css`, `components/primitives/*` committed. Everyone unblocked. |
 | **G1 — Data spine** | Dev 2 | `nodes.json` + `regions.json` valid GeoJSON; §4.4 assertions reproduce exactly; `/api/simulate` returns sane numbers for `node-la-05` under heatwave. |
-| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 9 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
+| **G2 — Shell on screen** | Dev 1 | Dark map, 100-mile ring, 11 markers, 10 flows, control bar, 3-tab drawer, KPIs wired to `RegionPayload`. |
 | **G3 — Analytics live** | Dev 2 | Tabs 1–2 render real charts; sliders move payback instantly; no `NaN`/`Infinity` anywhere. |
 | **G4 — Outreach live** | Dev 3 | Memo generates (fallback if no key), dispatch returns a receipt, button has pending/done/error states. |
 | **G5 — Integration** | All | `npx tsc --noEmit` clean, `npm run build` clean, one browser pass heatwave on/off × three tabs × one dispatch. |

@@ -1,0 +1,113 @@
+{
+  "schema": "gridsentinel.region-profile/1",
+  "id": "westminster-100mi",
+  "name": "Westminster 100-Mile Radius",
+  "state": "CA",
+  "center": [33.7538, -118.0111],
+  "radius_miles": 100,
+  "bounds": [
+    [33.1, -118.6],
+    [34.5, -117.28]
+  ],
+  "grid_zone": "US-CAL-CAMX",
+  "as_of_year": 2026,
+  "captured_at": "2026-11-14T19:30:20.804Z",
+  "output": "public/evidence/westminster-100mi.json",
+  "seed": {
+    "source_id": "gs-seed-nodes",
+    "path": "data/nodes.json",
+    "parser": "geojson.features",
+    "model_basis": {
+      "identity": "Curated seed record in data/nodes.json. Name, operator and coordinates were assembled from operator/agency records during the build sprint and cross-checked against the in-repo EIA-860 and OSM layers where a match exists. Operator confirmation is still pending; treat identity as curated, not audited.",
+      "electrical": "Modelled electrical rating derived from the site's published scale and process class. This is not an operator-published meter value. Formula and assumptions are documented in README §4.1 and §4.2.",
+      "carbon": "Modelled grid carbon intensity and source mix for the serving zone (US-CAL-CAMX). Replace with an EPA eGRID subregion snapshot and an ISO fuel-mix snapshot when those captures are added.",
+      "economics": "Screening unit economics from the README §4.1 bundle and the lib/grid.ts UNIT table. Not a quote, bid or approved capital plan.",
+      "upgrade": "Recommended screening bundle: on-site solar plus a drive retrofit. Sized from nameplate draw, not from a site audit."
+    }
+  },
+  "fixtures": [
+    {
+      "source_id": "census-geocoder",
+      "path": "research/fixtures/census/westminster-hs.geographies.json",
+      "parser": "json.census.geographies",
+      "claims": [
+        {
+          "predicate": "region.state_fips",
+          "locator": "/result/geographies/States/0/GEOID"
+        },
+        {
+          "predicate": "region.county_fips",
+          "locator": "/result/geographies/Counties/0/GEOID"
+        },
+        {
+          "predicate": "region.county_name",
+          "locator": "/result/geographies/Counties/0/NAME"
+        }
+      ],
+      "notes": [
+        "Reverse geocode of the profile anchor point. Confirms the Census state/county containing the point; it does not confirm that a facility occupies it."
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "source_id": "gs-layer-plants",
+      "path": "public/layers/plants.geojson",
+      "parser": "geojson.features",
+      "claim": "region.plant_count",
+      "notes": [
+        "In-repo radius-clipped subset. `artifact.count` counts features in the exact snapshot; it does not claim a national EIA total."
+      ]
+    },
+    {
+      "source_id": "gs-layer-transmission",
+      "path": "public/layers/transmission.geojson",
+      "parser": "geojson.features",
+      "claim": "region.transmission_feature_count",
+      "notes": [
+        "In-repo OSM extract. Missing geometry is not evidence that a line does not exist."
+      ]
+    },
+    {
+      "source_id": "gs-layer-substations",
+      "path": "public/layers/substations.geojson",
+      "parser": "geojson.features",
+      "claim": "region.substation_feature_count",
+      "notes": [
+        "In-repo OSM extract. Presence is not proof of energisation."
+      ]
+    }
+  ],
+  "disclosures": [
+    {
+      "id": "modelled-electrical",
+      "subject": "region:westminster-100mi",
+      "severity": "caution",
+      "text": "Every nameplate MW, utilization and motor efficiency on the 11 load centers is modelled. None is an operator-published meter reading. The UI labels those claims MODELED."
+    },
+    {
+      "id": "modelled-carbon",
+      "subject": "region:westminster-100mi",
+      "severity": "caution",
+      "text": "Carbon intensity and source mix are modelled for the serving grid zone. A live eGRID/ISO capture is the next evidence upgrade."
+    },
+    {
+      "id": "screening-economics",
+      "subject": "region:westminster-100mi",
+      "severity": "caution",
+      "text": "Capex, savings and payback are screening estimates. They exclude incentives, escalation, financing and site-specific engineering."
+    },
+    {
+      "id": "layer-provenance",
+      "subject": "region:westminster-100mi",
+      "severity": "info",
+      "text": "Generation, transmission and substation layers are radius-clipped in-repo artifacts. The snapshot hash proves which artifact was counted; upstream row locators are not preserved."
+    },
+    {
+      "id": "osm-completeness",
+      "subject": "region:westminster-100mi",
+      "severity": "info",
+      "text": "OpenStreetMap coverage is community-maintained and incomplete. Counts are lower bounds on mapped features, not asset inventories."
+    }
+  ]
+}

@@ -209,7 +209,7 @@
 
 .flow-line {
   stroke: var(--flow);
-  stroke-dasharray: 2 10;
+  stroke-dasharray: 6 8;
   stroke-linecap: round;
   animation: gs-flow var(--flow-speed) linear infinite;
 }
