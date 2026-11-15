@@ -378,6 +378,13 @@ export interface AssetInfo {
 }
 
 const OSM = "OpenStreetMap";
+
+/** City from a scan's area label ("Long Beach · near Haynes", "Anaheim area"); null for "Remote area · ...". */
+export function areaPlace(label: string): string | null {
+  const head = label.split("·")[0].trim();
+  if (!head || /^remote area$/i.test(head)) return null;
+  return head.replace(/\s+area$/i, "").trim() || null;
+}
 const EIA = "EIA-860 (2025)";
 
 export function osmUrl(lat: number, lon: number): string {
@@ -1040,6 +1047,23 @@ export interface ReportDraft {
   assetLabel: string;
   location: { lat: number; lon: number; text: string };
   issues: ReportIssue[];
+  /** What is reported, as plain parts for the formal letter (no display labels to parse). */
+  letter?: LetterAsset;
+}
+
+/** The reported thing, in parts the letter can phrase: "the 220 kV power line near La Mirada, operated by SCE". */
+export interface LetterAsset {
+  kind: "plant" | "substation" | "line" | "area";
+  /** Its name, or "" when public records give none. */
+  name: string;
+  /** Nearby city or "City, County", when known. */
+  place: string | null;
+  /** "66 kV", "1.61 GW natural gas", or "". */
+  size: string;
+  /** "operated by Southern California Edison" / "owned by ...", or "". */
+  by: string;
+  /** Area scans: radius in miles. */
+  radiusMi?: number;
 }
 
 const pctOf = (ratio: number) => fmtNum(ratio * 100, 0);
@@ -1068,8 +1092,8 @@ function liveIssue(live: LineRatingNow | null, heatwave: boolean, subject: strin
       `Right now it is ${fmtNum(cToF(live.weather.temp_c), 0)} °F here. ${subject} can safely carry only about ` +
       `${pctOf(live.ratio)}% of normal in this weather. (Computer estimate for a typical wire.)`,
     letter:
-      `It is currently about ${fmtNum(cToF(live.weather.temp_c), 0)} °F here; a screening estimate from public weather data ` +
-      `suggests the lines can safely carry only about ${pctOf(live.ratio)}% of their normal load in these conditions.`,
+      `It is currently about ${fmtNum(cToF(live.weather.temp_c), 0)} °F here, and a screening estimate from public weather data ` +
+      `suggests nearby lines can safely carry only about ${pctOf(live.ratio)}% of their normal load in these conditions.`,
   };
 }
 
@@ -1103,7 +1127,7 @@ export function buildDraft(
       issues.push({
         severity: age >= 60 ? "danger" : "warn",
         text: `Most of this plant's machines are about ${fmtNum(age, 0)} years old. That is ${age >= 60 ? "very old" : "old"} for a power plant.`,
-        letter: `Federal records (EIA-860) show this plant's generating units average about ${fmtNum(age, 0)} years old.`,
+        letter: `According to federal EIA-860 data, the plant's generating units average about ${fmtNum(age, 0)} years old.`,
       });
     }
     if (isNum(p.planned_retirement_mw) && p.planned_retirement_mw > 0) {
@@ -1123,6 +1147,13 @@ export function buildDraft(
       assetLabel: `${name} (${fmtPowerText(p.nameplate_mw)} ${fuel.toLowerCase()} power plant${owner})`,
       location: { lat: p.lat, lon: p.lon, text: place ? `${place} (${fmtCoord(p.lat, p.lon)})` : fmtCoord(p.lat, p.lon) },
       issues: finish(issues),
+      letter: {
+        kind: "plant",
+        name: p.plant_name.trim(),
+        place: place || null,
+        size: [isNum(p.nameplate_mw) ? fmtPowerText(p.nameplate_mw) : "", fuel === "Other" ? "" : fuel.toLowerCase()].filter(Boolean).join(" "),
+        by: p.utility_name?.trim() ? `owned by ${p.utility_name.trim()}` : "",
+      },
     };
   }
 
@@ -1139,6 +1170,13 @@ export function buildDraft(
       assetLabel: `${name} (${kv ? `${kv} ` : ""}substation${op})`,
       location: { lat: s.lat, lon: s.lon, text: fmtCoord(s.lat, s.lon) },
       issues: finish([missingIssue("substation", missing)]),
+      letter: {
+        kind: "substation",
+        name: s.name?.trim() ?? "",
+        place: s.near ?? nearestCity(result, s.lat, s.lon),
+        size: kv ?? "",
+        by: s.operator?.trim() ? `operated by ${s.operator.trim()}` : "",
+      },
     };
   }
 
@@ -1160,6 +1198,13 @@ export function buildDraft(
         liveIssue(live, heatwave, "This power line"),
         missingIssue("power line", missing),
       ]),
+      letter: {
+        kind: "line",
+        name: l.name?.trim() ?? "",
+        place: l.near ?? nearestCity(result, mid[0], mid[1]),
+        size: kv ?? "",
+        by: l.operator?.trim() ? `operated by ${l.operator.trim()}` : "",
+      },
     };
   }
 
@@ -1192,6 +1237,7 @@ export function buildDraft(
     assetLabel: `The area within ${fmtNum(a.radius_mi, 0)} mi of ${result.area_label}`,
     location: { lat: a.lat, lon: a.lon, text: `Center: ${fmtCoord(a.lat, a.lon)}` },
     issues: finish(issues),
+    letter: { kind: "area", name: "", place: areaPlace(result.area_label), size: "", by: "", radiusMi: a.radius_mi },
   };
 }
 
@@ -1326,8 +1372,8 @@ export const EMPTY_SENDER: ReportSender = { name: "", contact: "" };
 const OBSERVED: Record<HazardId, string> = {
   tree: "A tree or branch appears to be touching a power line.",
   old_broken: "The equipment appears to be old, damaged or broken.",
-  outage: "The power is out at this location.",
-  other: "There is a problem with the equipment here.",
+  outage: "The power is out in the area.",
+  other: "Something about the equipment does not look right.",
   wire_down: "A power line is down or hanging low.",
   sparks: "There are sparks or fire at the equipment.",
 };
@@ -1347,38 +1393,55 @@ function listPhrase(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-/** The asset's short name: the draft title without its "Problem report:" prefix. */
-function shortName(draft: ReportDraft): string {
-  const raw = (draft.title.replace(/^(problem|compliance) report:\s*/i, "").trim() || draft.assetLabel)
-    .replace(/\s*\((area|plant|substation|line)\)$/i, "");
-  // Area labels look like "Anaheim · near AT&T Anaheim": say "AT&T Anaheim, Anaheim".
-  const m = raw.match(/^(.+?)\s*·\s*near\s+(.+)$/i);
-  return m ? `${m[2]}, ${m[1]}` : raw.replace(/\s*·\s*/g, ", ");
-}
-
-/** Generic names read with "the": "the 220 kV power line near La Mirada", "the substation near Stanton". */
-function theName(name: string): string {
-  if (/^\d/.test(name)) return `the ${name}`;
-  if (/^(substation|power line|power plant)\b/i.test(name)) return `the ${name[0].toLowerCase()}${name.slice(1)}`;
-  return name;
-}
-
-/** Location text as it reads in a sentence: "Center: 33.8° N, ..." and "Middle of the line: ..." lose their prefix. */
+/** Location text without its "Center:" / "Middle of the line:" prefix. */
 function placeText(text: string): string {
   return text.replace(/^(center|middle of the line):\s*/i, "").trim();
 }
 
-/** "Anaheim, Orange County (33.8° N, ...)" as is; bare coordinates in parentheses. */
-function placePhrase(text: string): string {
-  const t = placeText(text);
-  return /^-?\d/.test(t) ? ` (${t})` : `, ${t}`;
+/** Older drafts without `letter` parts: rebuild the parts from the title (best effort). */
+function letterAsset(draft: ReportDraft): LetterAsset {
+  if (draft.letter) return draft.letter;
+  const name = draft.title.replace(/^(problem|compliance) report:\s*/i, "").replace(/\s*\((area|plant|substation|line)\)$/i, "").trim();
+  const area = /\(area\)$/i.test(draft.title);
+  return { kind: area ? "area" : "substation", name: area ? "" : name, place: area ? areaPlace(name) : null, size: "", by: "" };
 }
 
+const KIND_WORD = { plant: "power plant", substation: "substation", line: "power line" } as const;
 
+/**
+ * The reported thing as a noun phrase: "Marion Substation", "the Pipeline Easement power line",
+ * "the 220 kV power line near La Mirada", "the substation near Long Beach", "the Ormond Beach power plant".
+ */
+function assetPhrase(a: LetterAsset): string {
+  if (a.kind === "area") return a.place ? `the power lines and equipment in ${a.place}` : "the power lines and equipment in this area";
+  const word = KIND_WORD[a.kind];
+  if (!a.name) {
+    const sized = a.kind === "plant" ? word : [a.size, word].filter(Boolean).join(" ");
+    return `the ${sized}${a.place ? ` near ${a.place.split(",")[0]}` : ""}`;
+  }
+  // Names that already say what they are: "Marion Substation", "Haynes Generating Station", "Lugo 500 kV Line".
+  const says = a.kind === "substation" ? /substation/i : a.kind === "line" ? /\bline\b/i : /plant|station|center|facility|project|farm|park/i;
+  if (says.test(a.name)) return /^the\b/i.test(a.name) ? a.name : a.kind === "substation" ? a.name : `the ${a.name}`;
+  return `the ${a.name} ${word}`;
+}
+
+/** First "Location" line: what it is, size and operator, as a sentence fragment. */
+function assetDescription(a: LetterAsset): string {
+  if (a.kind === "area") return `Power lines and equipment within ${fmtNum(a.radiusMi ?? 0, 0)} miles of the point below${a.place ? `, in ${a.place}` : ""}`;
+  const phrase = assetPhrase(a);
+  const what = [a.size, KIND_WORD[a.kind]].filter(Boolean).join(" ");
+  const parts = [a.name ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, a ${what}` : `${phrase[0].toUpperCase()}${phrase.slice(1)}`];
+  if (!a.by) return parts[0];
+  return a.name ? `${parts[0]} ${a.by}` : `${parts[0]}, ${a.by}`;
+}
+
+/** Whole-word trim to fit `max` characters (never inside a surrogate pair), ending with an ellipsis. */
 function trimWords(t: string, max: number): string {
-  if (t.length <= max) return t;
-  const cut = t.slice(0, Math.max(0, max - 1)).replace(/\s+\S*$/, "");
-  return `${cut || t.slice(0, Math.max(0, max - 1))}…`;
+  const chars = Array.from(t);
+  if (chars.length <= max) return t;
+  const head = chars.slice(0, Math.max(1, max - 1)).join("");
+  const cut = head.replace(/\s+\S*$/, "");
+  return `${(cut || head).replace(/[\s.,;:!?-]+$/, "")}…`;
 }
 
 const encodedLength = (t: string) => encodeURIComponent(wellFormed(t)).length;
@@ -1397,80 +1460,99 @@ export function quickReportLetter(
   sender: ReportSender = EMPTY_SENDER,
 ): ReportEmail {
   const service = hazardRoute(hazards) === "service";
-  const name = theName(shortName(draft));
+  const asset = letterAsset(draft);
+  const phrase = assetPhrase(asset);
+  const area = asset.kind === "area";
+  const coords = placeText(draft.location.text).replace(/^.*\((.+)\)$/, "$1");
+  const outageOnly = hazards.length > 0 && hazards.every((h) => h === "outage");
+
   const phrases = hazards.map((h) => SUBJECT_PHRASE[h]);
   const topic = phrases.length ? listPhrase(phrases) : "request for inspection";
-  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} near ${name}`;
+  const where = area ? (asset.place ? `in ${asset.place}` : `near ${coords}`) : `${asset.kind === "line" ? "on" : "at"} ${phrase}`;
+  const subject = `${service ? "Service request" : "Safety report"}: ${topic[0].toUpperCase()}${topic.slice(1)} ${where}`;
 
   const util = routing.utility;
-  const kind = /\((area)\)$/i.test(draft.title) ? "area" : (draft.assetLabel.match(/\b(power plant|substation|power line)\b/i)?.[1] ?? "");
-  const what = kind === "area"
-    ? `involving electrical equipment in the area around ${name}`
-    : `at ${name}${kind && !name.toLowerCase().includes(kind.toLowerCase()) ? ` (${kind.toLowerCase()})` : ""}`;
+  const raw = note.trim().replace(/\s+/g, " ");
+  const full = raw ? `${raw[0].toUpperCase()}${raw.slice(1)}${/[.!?…]$/.test(raw) ? "" : "."}` : "";
 
   const asks: string[] = [];
-  if (!service || hazards.length === 0) asks.push("Send a crew to inspect the equipment and make it safe.");
+  if (hazards.length === 0) asks.push("Inspect the equipment at this location and let me know whether any work is needed.");
+  else if (!service) asks.push("Send a crew to inspect the equipment and make it safe.");
   if (hazards.includes("tree")) asks.push("Trim the vegetation back to the clearances required by CPUC General Order 95, Rule 35.");
   if (hazards.includes("old_broken")) asks.push("Repair or replace any damaged equipment.");
-  if (hazards.includes("outage")) asks.push("Restore service, and let me know the cause and the expected restoration time.");
-  if (hazards.includes("other") && asks.length === 0) asks.push("Look into the problem described above.");
-  asks.push("Reply with a reference number for this report and the expected date of the work.");
+  if (hazards.includes("outage")) asks.push("Restore power, and let me know the cause and when service is expected to be restored.");
+  if (hazards.includes("other") && service) asks.push("Inspect the equipment I described and fix any problem you find.");
+  asks.push(
+    service || hazards.length === 0
+      ? "Reply with a reference number for this report."
+      : "Reply with a reference number for this report and the expected date of the work.",
+  );
 
-  const observed = hazards.length ? hazards.map((h) => `- ${OBSERVED[h]}`) : ["- I would like the equipment at this location inspected."];
+  const observed = hazards.length
+    ? hazards.map((h) => `- ${OBSERVED[h]}`)
+    : ["- I did not see a specific fault, but I am concerned about this equipment and would like it checked."];
   const facts = draft.issues.flatMap((i) => (i.letter ? [`- ${i.letter}`] : []));
   const signer = sender.name.trim().replace(/\s+/g, " ") || "A local resident";
   const contact = sender.contact.trim().replace(/\s+/g, " ");
-  const greeting = util ? `Dear ${util.name} ${routing.team} Team,` : `Dear ${routing.team} Team,`;
+  const greeting = `Dear ${util ? `${util.short} ` : ""}${routing.team} Team,`;
+  const placeBit = !area && asset.place && !phrase.includes(asset.place.split(",")[0]) ? ` in ${asset.place}` : "";
+  const intro = hazards.length === 0
+    ? `I am writing to request an inspection of ${phrase}${placeBit} (${coords}).`
+    : outageOnly
+    ? `I am writing to report a power outage ${area ? where : `near ${phrase}${placeBit}`} (${coords}).`
+    : `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} ${area ? `involving ${phrase}` : `${asset.kind === "line" ? "on" : "at"} ${phrase}${placeBit}`} (${coords}).`;
 
-  const build = (extra: string, withFacts: boolean): string => {
+  const build = (extra: string, withFacts: boolean, compact = false, who = signer, how = contact): string => {
     const L: string[] = [
       greeting,
       "",
-      `I am writing to report ${service ? "a service problem" : "a possible safety hazard"} ${what}${placePhrase(draft.location.text)}. ` +
-        "I would appreciate it if your team could look into it as soon as possible.",
+      `${intro} I would appreciate it if your team could look into it as soon as possible.`,
       "",
       "Location",
-      `- ${draft.assetLabel.replace(/\s*·\s*near\s+/i, " near ").replace(/\s*·\s*/g, ", ")}`,
-      `- ${placeText(draft.location.text)}`,
+      ...(compact ? [] : [`- ${assetDescription(asset)}`]),
+      `- Coordinates: ${coords}`,
       `- Map: ${osmUrl(draft.location.lat, draft.location.lon)}`,
       "",
       "What I observed",
       ...observed,
     ];
     if (extra) L.push(`- Additional details: ${extra}`);
-    L.push("", "What I am requesting", ...asks.map((a, i) => `${i + 1}. ${a}`));
-    if (withFacts && facts.length) L.push("", "For reference, public records show", ...facts);
+    L.push("", "What I am requesting", ...asks.map((x, i) => `${i + 1}. ${x}`));
+    if (withFacts && facts.length) L.push("", "For reference:", ...facts);
     L.push(
       "",
       "Thank you for your attention to this matter. Please let me know if you need any more information.",
       "",
       "Sincerely,",
-      signer,
-      ...(contact ? [contact] : []),
+      who,
+      ...(how ? [how] : []),
     );
     return L.join("\n");
   };
 
-  const raw = note.trim().replace(/\s+/g, " ");
-  const full = raw ? `${raw[0].toUpperCase()}${raw.slice(1)}${/[.!?…]$/.test(raw) ? "" : "."}` : "";
   let body = build(full, true);
   if (encodedLength(body) > MAIL_BODY_MAX) body = build(full, false);
   if (encodedLength(body) > MAIL_BODY_MAX && full) {
     let lo = 0;
-    let hi = full.length;
+    let hi = Array.from(full).length;
     while (lo < hi) {
       const mid = Math.ceil((lo + hi) / 2);
       if (encodedLength(build(trimWords(full, mid), false)) <= MAIL_BODY_MAX) lo = mid;
       else hi = mid - 1;
     }
-    body = build(lo > 0 ? trimWords(full, lo) : "", false);
+    body = build(lo > 1 ? trimWords(full, lo) : "", false);
+  }
+  // Still too long (many hazards, long names): drop the description line, then shorten the signature lines.
+  if (encodedLength(body) > MAIL_BODY_MAX) body = build("", false, true);
+  for (let n = 60; encodedLength(body) > MAIL_BODY_MAX && n >= 0; n -= 10) {
+    body = build("", false, true, trimWords(signer, Math.max(n, 1)), contact ? trimWords(contact, Math.max(n, 1)) : "");
   }
   return {
     to: routing.email,
     subject,
     body: wellFormed(body),
     ...(routing.formUrl ? { formUrl: routing.formUrl } : {}),
-    ...(util ? { recipient: routing.email ? `${util.short} ${routing.team.toLowerCase()}` : util.short } : {}),
+    ...(util ? { recipient: routing.email && routing.team !== "Customer Service" ? `${util.short}'s tree team` : util.short } : {}),
   };
 }
 

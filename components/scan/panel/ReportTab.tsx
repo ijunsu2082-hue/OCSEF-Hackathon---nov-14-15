@@ -44,10 +44,10 @@ import { UTILITIES, type UtilityInfo, type UtilityKey } from "@/lib/scan/legal";
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]";
 const LINK = `text-[#0369a1] hover:underline ${FOCUS}`;
 const SMALL_BTN =
-  `inline-flex h-9 items-center rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#1d2733] transition-colors hover:bg-[#f6f8fa] ${FOCUS}`;
+  `inline-flex min-h-9 items-center rounded-[6px] border border-[#e6e9ee] bg-white px-3 py-1.5 text-left text-[14px] font-medium leading-tight text-[#1d2733] transition-colors hover:bg-[#f6f8fa] ${FOCUS}`;
 
 const PRIMARY_BTN =
-  `inline-flex h-11 w-full items-center justify-center rounded-[6px] bg-[#0ea5e9] px-4 text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`;
+  `inline-flex min-h-11 w-full items-center justify-center rounded-[6px] bg-[#0ea5e9] px-4 py-2 text-center text-[16px] leading-tight font-semibold text-white transition-colors hover:bg-[#0284c7] ${FOCUS}`;
 
 const SEVERITY_COLOR: Record<Severity, string> = { info: "#556070", warn: "#b45309", danger: "#dc2626" };
 
@@ -111,25 +111,31 @@ function downloadTxt(text: string, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** Copy inside the click handler itself: execCommand runs synchronously (keeps the click's permission), then the clipboard API. */
+function copyNow(text: string): boolean {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 async function copyText(text: string): Promise<boolean> {
+  if (copyNow(text)) return true;
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
@@ -141,6 +147,11 @@ const letterText = (e: ReportEmail) => `Subject: ${e.subject}\n\n${e.body}`;
  */
 function SendLetter({ r, primary = false }: { r: SavedReport; primary?: boolean }) {
   const [copied, setCopied] = useState<"idle" | "ok" | "fail">("idle");
+  useEffect(() => {
+    if (copied === "idle") return;
+    const t = setTimeout(() => setCopied("idle"), 6000);
+    return () => clearTimeout(t);
+  }, [copied]);
   const e = r.email;
   if (!e) return null;
   const who = e.recipient ?? "the utility";
@@ -148,20 +159,21 @@ function SendLetter({ r, primary = false }: { r: SavedReport; primary?: boolean 
   if (e.to) {
     return (
       <a href={mailtoHref(e.subject, e.body, e.to)} className={cls}>
-        Email {who.replace(/ customer service$/i, "")}
+        Email {who}
       </a>
     );
   }
   const url = e.formUrl ?? r.contact.url;
   // A real link (not window.open) so pop-up blockers never stop the report page; the click also copies the letter.
   const copy = () => void copyText(letterText(e)).then((ok) => setCopied(ok ? "ok" : "fail"));
+  const cut = /\bthe utility\b/.test(who) ? who : `${who}'s`;
   return (
     <>
       <a href={url} target="_blank" rel="noopener noreferrer" onClick={copy} className={cls}>
-        Copy letter and open {who}&apos;s report page
+        Copy letter and open {cut} report page
       </a>
       <span aria-live="polite" className={primary ? "mt-2 block text-[14px] text-[#556070]" : "sr-only"}>
-        {copied === "ok" && "Letter copied. Paste it into the report page that just opened."}
+        {copied === "ok" && "Letter copied. Paste it into the report page in the new tab."}
         {copied === "fail" && "Could not copy. Use Download, then paste the letter into the report page."}
       </span>
     </>
@@ -250,6 +262,12 @@ export default function ReportTab({
     }
   };
 
+  // "Not sure" has no address yet: send the person to the utility picker (focus moves there for screen readers too).
+  const pickFirst = () => {
+    const el = document.getElementById("gs-bill-utility");
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus();
+  };
   const lastReport = lastId ? reports.find((r) => r.id === lastId) ?? null : null;
   const picked = HAZARDS.filter((h) => hazards.includes(h.id) && h.emergency).map((h) => h.label);
 
@@ -489,23 +507,32 @@ export default function ReportTab({
           <Step n={3} title="File it">
             <button
               type="button"
-              onClick={file}
-              disabled={routing.delivery === "pick"}
-              className={`h-11 w-full rounded-[6px] bg-[#0ea5e9] text-[16px] font-semibold text-white transition-colors hover:bg-[#0284c7] disabled:cursor-not-allowed disabled:bg-[#cbd5e1] ${FOCUS}`}
+              onClick={routing.delivery === "pick" ? pickFirst : file}
+              className={`min-h-11 w-full rounded-[6px] px-4 py-2 text-[16px] font-semibold leading-tight text-white transition-colors ${
+                routing.delivery === "pick" ? "bg-[#64748b] hover:bg-[#475569]" : "bg-[#0ea5e9] hover:bg-[#0284c7]"
+              } ${FOCUS}`}
             >
-              {routing.delivery === "pick" ? "Pick the utility first (top of this tab)" : "File report"}
+              {routing.delivery === "pick" ? "Pick the utility first" : "File report"}
             </button>
-            {routing.delivery === "pick" && <EmergencyNumbers contacts={contacts} className="mt-2" />}
-            <div aria-live="polite">
+            {routing.delivery === "pick" && (
+              <>
+                <p className="mt-2 text-[14px] text-[#556070]">
+                  The letter needs to be addressed to the company that serves this spot. Its name is at the top of your
+                  electric bill. If you still can&apos;t tell, call one of these:
+                </p>
+                <EmergencyNumbers contacts={contacts} className="mt-1" />
+              </>
+            )}
+            <div>
               {status !== "idle" && lastReport && (
                 <div className="mt-3">
-                  <p className="text-[15px] font-medium text-[#1d2733]">
+                  <p aria-live="polite" className="text-[15px] font-medium text-[#1d2733]">
                     {status === "saved"
                       ? "Report filed and saved on this device. Now send it:"
                       : "Report filed, but this browser would not let us save it. Send it now:"}
                   </p>
                   <div className="mt-2">
-                    <SendLetter r={lastReport} primary />
+                    <SendLetter key={lastReport.id} r={lastReport} primary />
                   </div>
                 </div>
               )}
@@ -514,7 +541,7 @@ export default function ReportTab({
               <p className="mt-3 text-[14px] text-[#6b7583]">
                 {routing.delivery === "email"
                   ? `Filing saves the report on this device. Then press Email to open the finished letter, addressed to ${routing.email}.`
-                  : `Filing saves the report on this device. Then we copy the letter and open ${routing.utility?.short}'s report page for you.`}
+                  : `Filing saves the report on this device. Then press the button to copy the letter and open ${routing.utility?.short}'s report page.`}
               </p>
             )}
           </Step>
@@ -544,12 +571,14 @@ export default function ReportTab({
                   >
                     Download
                   </button>
-                  <button type="button" onClick={() => copy(r)} className={SMALL_BTN} aria-live="polite">
+                  <button type="button" onClick={() => copy(r)} className={SMALL_BTN}>
                     {copiedId === r.id ? "Copied" : r.email ? "Copy letter" : "Copy"}
                   </button>
-                  <a href={r.contact.url} target="_blank" rel="noopener noreferrer" className={SMALL_BTN}>
-                    Official site
-                  </a>
+                  {!(r.email && !r.email.to) && (
+                    <a href={r.contact.url} target="_blank" rel="noopener noreferrer" className={SMALL_BTN}>
+                      Official site
+                    </a>
+                  )}
                   <button
                     type="button"
                     onClick={() => remove(r.id)}

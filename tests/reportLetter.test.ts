@@ -5,6 +5,7 @@ import { scanArea } from "../lib/scan/scan";
 import {
   HAZARDS,
   MAIL_BODY_MAX,
+  areaPlace,
   buildDraft,
   detectUtility,
   fileQuickReport,
@@ -38,7 +39,7 @@ test("Anaheim report is addressed to Anaheim Public Utilities by email", async (
 
   const letter = quickReportLetter(draft, ["tree", "old_broken"], "The wire is broken.", routing, { name: "Jordan Lee", contact: "jordan@example.com" });
   assert.equal(letter.to, "CustomerService@anaheim.net");
-  assert.match(letter.subject, /^Safety report: Tree touching a power line and damaged equipment near AT&T Anaheim$/);
+  assert.equal(letter.subject, "Safety report: Tree touching a power line and damaged equipment at the AT&T Anaheim power plant");
   assert.match(letter.body, /^Dear Anaheim Public Utilities Customer Service Team,/);
   assert.match(letter.body, /What I observed\n- A tree or branch appears to be touching a power line\./);
   assert.match(letter.body, /- Additional details: The wire is broken\./);
@@ -63,8 +64,9 @@ test("utilities without a published email get their report page, never a blank e
   assert.equal(letter.to, null);
   assert.equal(letter.formUrl, UTILITIES.sce.reportUrl);
   assert.equal(letter.recipient, "SCE");
-  assert.match(letter.subject, /^Service request: Power outage near /);
-  assert.match(letter.body, /^Dear Southern California Edison \(SCE\) Customer Service Team,/);
+  assert.match(letter.subject, /^Service request: Power outage at the AT&T Anaheim power plant$/);
+  assert.match(letter.body, /^Dear SCE Customer Service Team,\n\nI am writing to report a power outage near the AT&T Anaheim power plant/);
+  assert.match(letter.body, /\d\. Reply with a reference number for this report\.\n/);
   // No placeholders to fill in: a blank name signs as a resident, a blank contact is left out.
   assert.match(letter.body, /Sincerely,\nA local resident$/);
   assert.doesNotMatch(letter.body, /\[|\]/);
@@ -101,9 +103,10 @@ test("Marion Substation (operator Southern California Edison) goes to SCE, not L
   const draft = buildDraft(target, result, null, false);
   const letter = quickReportLetter(draft, ["tree"], "", tree, { name: "Sam Park", contact: "(714) 555-0100" });
   assert.equal(letter.to, "safetrees@sce.com");
-  assert.equal(letter.subject, "Safety report: Tree touching a power line near Marion Substation");
-  assert.match(letter.body, /^Dear Southern California Edison \(SCE\) Vegetation Management Team,\n\nI am writing to report a possible safety hazard at Marion Substation \(33\.8177° N, 118\.0274° W\)\./);
-  assert.match(letter.body, /- Marion Substation \(66 kV substation, operator: Southern California Edison\)/);
+  assert.equal(letter.subject, "Safety report: Tree touching a power line at Marion Substation");
+  assert.equal(letter.recipient, "SCE's tree team");
+  assert.match(letter.body, /^Dear SCE Vegetation Management Team,\n\nI am writing to report a possible safety hazard at Marion Substation in Stanton \(33\.8177° N, 118\.0274° W\)\./);
+  assert.match(letter.body, /- Marion Substation, a 66 kV substation operated by Southern California Edison\n- Coordinates: 33\.8177° N, 118\.0274° W\n/);
   assert.match(letter.body, /What I am requesting\n1\. Send a crew to inspect the equipment and make it safe\.\n2\. Trim the vegetation back to the clearances required by CPUC General Order 95, Rule 35\.\n3\. Reply with a reference number/);
   assert.match(letter.body, /Sincerely,\nSam Park\n\(714\) 555-0100$/);
   assert.doesNotMatch(letter.body, /LADWP|Los Angeles/);
@@ -171,11 +174,11 @@ test("letters read as a finished formal letter for every hazard mix and target k
           const l = quickReportLetter(draft, hazards, note, routing, sender);
           n++;
           assert.match(l.subject, /^(Safety report|Service request): [A-Z]/);
-          assert.doesNotMatch(l.subject, /Problem report|\(area\)/);
-          assert.match(l.body, /^Dear .+ Team,\n\nI am writing to report /);
+          assert.doesNotMatch(l.subject, /Problem report|\(area\)|near .* near |·/);
+          assert.match(l.body, /^Dear .+ Team,\n\nI am writing to (report|request an inspection of) /);
           assert.match(l.body, /\nWhat I am requesting\n1\. /);
           assert.match(l.body, /\n\nSincerely,\n(A local resident|Jordan Lee\njordan@example\.com)$/);
-          assert.doesNotMatch(l.body, /\[|\]|Mapergy|911|full report|download|Computer estimate|Where to send|student-built|Center:|Middle of the line:/i);
+          assert.doesNotMatch(l.body, /\[|\]|Mapergy|911|full report|download|Computer estimate|Where to send|student-built|Center:|Middle of the line:|operator:|owner:|·|\uFFFD| the the |\.\./i);
           assert.ok(encodeURIComponent(l.body).length <= MAIL_BODY_MAX, `fits: ${encodeURIComponent(l.body).length}`);
           // The mailto body is the whole letter, never cut.
           const href = mailtoHref(l.subject, l.body, l.to);
@@ -208,4 +211,28 @@ test("filed reports keep the letter through save and load", async () => {
     if (had) g.window = prev;
     else delete g.window;
   }
+});
+
+test("worst cases still fit uncut: every plant, every safety hazard, long non-Latin signature, emoji notes", async () => {
+  const data = await loadGridData();
+  const sce = { utility: UTILITIES.sce, basis: "", known: true, source: "bill" as const };
+  const hz: HazardId[] = ["tree", "old_broken", "outage", "other"];
+  const routing = quickRouting(hz, sce);
+  const sender = { name: "東京電力株式会社の山田太郎".repeat(7).slice(0, 80), contact: "連絡先".repeat(40) };
+  const empty = scanArea(data, { lat: 33.8177, lon: -118.02737, radius_mi: 1 });
+  for (const plant of data.plants) {
+    const draft = buildDraft({ kind: "plant", plant }, empty, null, false);
+    for (const note of ["", "😀".repeat(400)]) {
+      const l = quickReportLetter(draft, hz, note, routing, sender);
+      assert.ok(encodeURIComponent(l.body).length <= MAIL_BODY_MAX, `${plant.plant_name}: ${encodeURIComponent(l.body).length}`);
+      assert.doesNotMatch(l.body, /\uFFFD|full report/);
+      assert.match(l.body, /\nSincerely,\n./);
+    }
+  }
+});
+
+test("area letters name the city, never the internal area label", () => {
+  assert.equal(areaPlace("Long Beach · near Haynes"), "Long Beach");
+  assert.equal(areaPlace("Anaheim area"), "Anaheim");
+  assert.equal(areaPlace("Remote area · 23 mi from Blythe"), null);
 });
