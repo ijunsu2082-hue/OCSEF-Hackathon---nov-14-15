@@ -18,6 +18,7 @@ import {
   NavigationControl,
   Popup,
   ScaleControl,
+  setWorkerUrl,
   type GeoJSONSource,
   type MapGeoJSONFeature,
   type MapMouseEvent,
@@ -50,6 +51,13 @@ import {
   tipHtml,
 } from "./shared";
 import type { MapFocus } from "./types";
+
+// Same fix as components/shell/MapView.tsx: the bundler points MapLibre's
+// worker at a chunk the production build never emits, so GeoJSON layers
+// (lines, plants, substations, scan circle) never draw ("Worker failed to
+// load"). Serve the copy in /public instead; re-copy
+// node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs if maplibre-gl changes.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 const INITIAL_ZOOM = 10;
 const INITIAL_PITCH = 58;
