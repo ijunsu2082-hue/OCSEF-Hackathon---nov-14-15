@@ -12,5 +12,8 @@ export default async function LocationReportPage({
   const { id } = await params;
   const area = parseLocationReportId(id);
   if (!area) notFound();
-  return <LocationReport area={area} />;
+  return <LocationReport
+    area={area}
+    socketOrigin={process.env.LOCATION_REPORT_SOCKET_ORIGIN ?? process.env.ETL_WS_ORIGIN ?? ""}
+  />;
 }

@@ -449,6 +449,12 @@ C = criticality 1–5; default 3, `assumed = true` until a customer/CFI layer ex
 R = clamp(L × C / 3, 0, 100)
 ```
 
+Both scores come from **one** builder: `buildRiskFactors()` returns the weighted factors, `energyRisk()` sums them and returns the unchanged legacy exposure (so `/api/simulate` and §4.4 keep their exact values), and `assessRisk()` adds the overload penalty and applies the consequence multiplier. The old inline formula and the v2 decomposition cannot drift because there is only one place that computes a factor.
+
+Each factor carries the evidence predicates it is computed from, and the telemetry panel renders those citations beside the bar: `source_mix.natural_gas` + `source_mix.other` for fossil exposure, `carbon_intensity_gco2_kwh`, `motor_efficiency_rating`, and `age_years` — itself a `derived` claim with no upstream source, which is why it shows the `∂` marker rather than a source code. Under heatwave the stressed carbon factor and the two penalties are tagged `scenario`, because those values are computed at render time and are not stored claims.
+
+The weights (40/25/20/15), the 200 gCO₂/kWh carbon floor, the 0.85 motor benchmark and the 20-year age floor are **platform screening constants**, not an external standard. Maximo, FEMA's National Risk Index and Technosylva publish reproducible score maths, but none publishes this one, so the panel says "screening index, not a failure probability" and the weight set must never be described as calibrated.
+
 `C = 3` is neutral, so the baseline `R` reproduces the §4.4 scores exactly while the consequence dimension is unloaded. The drawer and telemetry tab show the `L`/`C`/`R` decomposition, factor bars, a deterministic regional rank/percentile, a confidence badge and — on the upgrade tab — risk points removed per $M of capex (motor-efficiency and overload effects only; solar carbon reduction is not scored yet). `rankRisks()` breaks ties by id. Every `C` is labelled **assumed** until `criticalityFor()` receives both population and critical-facility counts.
 
 ### 4.4 Expected values (use as G1 assertions)

@@ -17,15 +17,20 @@ export function LocationClaims({ report, socketOrigin }: { report: LocationRepor
     let stopped = false;
     let delay = 1000;
     let hash = report.state_hash;
+    let inventoryRevision: string | undefined;
     function connect() {
       socket = new WebSocket(new URL(`/ws/location/${id}`, socketOrigin));
       socket.onmessage = ({ data }) => {
         try {
           const event = JSON.parse(String(data));
-          if (event.location_id !== id || typeof event.state_hash !== "string") return;
+          if (event.location_id !== id) return;
           delay = 1000;
-          if (event.state_hash !== hash) {
+          if (event.event === "STATE_UPDATE" && typeof event.state_hash === "string" && event.state_hash !== hash) {
             hash = event.state_hash;
+            router.refresh();
+          } else if (event.event === "INVENTORY_UPDATE" && typeof event.inventory_revision === "string" &&
+            event.inventory_revision !== inventoryRevision) {
+            inventoryRevision = event.inventory_revision;
             router.refresh();
           }
         } catch {

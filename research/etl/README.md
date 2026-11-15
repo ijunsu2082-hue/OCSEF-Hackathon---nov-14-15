@@ -46,6 +46,23 @@ npx tsx research/etl/cli.ts verify <location-id> <restored-revision>
 
 Restore verifies hashes and reconstructs the report before publishing a pinned revision in the target namespace. Claim IDs persist across namespaces. The full revision hash reflects restored capture paths. Set `ETL_BACKUP_DIRECTORY` on the scheduled FastAPI worker to back up published revisions to a separate mounted destination. Keep the destination and key available after loss of the ingestion host.
 
+Loaded asset revisions and historical weather captures use the same key and encrypted archive format. Asset archives include the normalized revision, its source manifests, and capture blobs. Restore rewrites capture paths for the target state namespace and recalculates the revision hash, so it can differ from the archived revision; the restored revision becomes `latest`. Weather archives include the backfill and its capture bytes; restore replays the original capture before publishing the archive. Keep backup files on storage separate from the ETL state directory, and keep `ETL_BACKUP_KEY` separate from those files.
+
+```powershell
+npx tsx research/etl/cli.ts backup-assets <location-id> <asset-revision> <destination-file>
+npx tsx research/etl/cli.ts restore-assets <backup-file>
+npx tsx research/etl/cli.ts backup-weather <snapshot-id> <destination-file>
+npx tsx research/etl/cli.ts restore-weather <backup-file>
+```
+
+## Request layer
+
+Every collector fetch goes through `research/etl/http.ts`. Inside one process an identical request is fetched once, per-host concurrency is bounded by `ETL_HTTP_HOST_CONCURRENCY` (default `4`), retryable failures back off from `ETL_HTTP_RETRY_BASE_MS` (default `300`) up to `ETL_HTTP_RETRY_ATTEMPTS` (default `3`) and honour `Retry-After`, and a provider `304` reuses the bytes already captured. State is process-local: two collector processes can still fetch the same URL, so cross-location deduplication still needs shared state.
+
+## CAISO feeds (not yet reachable)
+
+`research/etl/caiso.ts` implements the five-minute Today's Outlook demand and supply CSVs with header-name column matching, system-wide scope in every caveat, and an operating date derived from the capture instant in `America/Los_Angeles`. The feeds are only added when a query opts in with `caiso: true`; the CLI has no `--caiso` flag yet, so this adapter is currently exercised by code only. `research/etl/geometry.ts` provides study-radius line clipping and mileage that `load-assets` does not call yet.
+
 ## Comparison
 
 `compare <file>` accepts JSON containing `left`, `right`, and optional `policy` as defined in `reconcile.ts`. Provide values already normalized to equivalent scopes. The result retains candidates and distinguishes same-publisher duplicates from cross-publisher comparisons. The comparison command does not modify reports.

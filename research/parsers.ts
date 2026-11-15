@@ -52,6 +52,31 @@ export const PARSERS: Record<string, ParserDefinition> = {
       return { data, recordCount: features.length };
     },
   },
+  "json.nws-alerts": {
+    id: "json.nws-alerts",
+    version: "1",
+    parse: (bytes) => {
+      const data = JSON.parse(decode(bytes)) as Record<string, unknown>;
+      const features = asArray(data.features);
+      if (!features) throw new Error("NWS alerts response has no features array");
+      const pagination = data.pagination;
+      if (pagination !== undefined && (!pagination || typeof pagination !== "object" ||
+          ("next" in pagination && pagination.next !== null && pagination.next !== ""))) {
+        throw new Error("NWS alerts response is paginated or has invalid pagination metadata");
+      }
+      for (const feature of features) {
+        const properties = feature && typeof feature === "object"
+          ? (feature as { properties?: unknown }).properties : null;
+        const event = properties && typeof properties === "object"
+          ? (properties as { event?: unknown }).event : null;
+        if (typeof event !== "string" || !event.trim()) {
+          throw new Error("NWS alert feature has no event name");
+        }
+      }
+      data.etl = { active_alert_count: features.length };
+      return { data, recordCount: features.length };
+    },
+  },
   "json.array": {
     id: "json.array",
     version: "1",

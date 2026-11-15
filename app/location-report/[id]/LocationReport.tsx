@@ -92,9 +92,11 @@ function formatNum(value: number, digits = 0): string {
     : "n/a";
 }
 
-export default function LocationReport({ area }: { area: ScanArea }) {
+export default function LocationReport({ area, socketOrigin }: { area: ScanArea; socketOrigin: string }) {
   const [data, setData] = useState<GridData | null>(null);
   const [live, setLive] = useState<LineRatingNow | null>(null);
+  const [inventoryRevision, setInventoryRevision] = useState<string | null>(null);
+  const [inventoryLocationId, setInventoryLocationId] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [actionStatus, setActionStatus] = useState("");
 
@@ -116,14 +118,55 @@ export default function LocationReport({ area }: { area: ScanArea }) {
         if (current) setStatus("error");
       });
     return () => { current = false; };
-  }, [area.lat, area.lon, area.radius_mi]);
+  }, [area.lat, area.lon, area.radius_mi, inventoryRevision]);
+
+  useEffect(() => {
+    let stopped = false;
+    let socket: WebSocket | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let delay = 1000;
+    if (!socketOrigin) return;
+    async function connect() {
+      const canonical = `{"center":[${JSON.stringify(area.lat)},${JSON.stringify(area.lon)}],"radius_miles":${JSON.stringify(area.radius_mi)}}`;
+      const bytes = new TextEncoder().encode(canonical);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const locationId = `location-${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 24)}`;
+      if (stopped) return;
+      const endpoint = new URL(`/ws/location/${locationId}`, socketOrigin);
+      if (endpoint.protocol === "https:") endpoint.protocol = "wss:";
+      if (endpoint.protocol === "http:") endpoint.protocol = "ws:";
+      socket = new WebSocket(endpoint);
+      socket.onmessage = ({ data }) => {
+        try {
+          const event = JSON.parse(String(data));
+          if (event.event !== "INVENTORY_UPDATE" || event.location_id !== locationId ||
+            typeof event.inventory_revision !== "string") return;
+          delay = 1000;
+          setInventoryLocationId(locationId);
+          setInventoryRevision((current) => current === event.inventory_revision ? current : event.inventory_revision);
+        } catch {
+          // Malformed events carry no inventory state.
+        }
+      };
+      socket.onclose = () => {
+        if (stopped) return;
+        retry = setTimeout(connect, delay);
+        delay = Math.min(delay * 2, 30000);
+      };
+    }
+    void connect();
+    return () => {
+      stopped = true;
+      clearTimeout(retry);
+      socket?.close();
+    };
+  }, [area.lat, area.lon, area.radius_mi, socketOrigin]);
 
   const result = useMemo(() => data ? scanArea(data, area) : null, [data, area]);
   const markdown = useMemo(() => result ? scanReportMarkdown(result, live) : "", [result, live]);
   const sourceIds = useMemo(() => {
-    const ids = SOURCE_IDS.filter((id) => id !== "news");
-    if (result?.cases.length) ids.push("news");
-    return ids;
+    const ids: SourceId[] = [...SOURCE_IDS];
+    return result?.cases.length ? ids : ids.filter((id) => id !== "news");
   }, [result]);
   const caseReferences = useMemo(() => {
     const references = new Map<string, string>();
@@ -180,6 +223,15 @@ export default function LocationReport({ area }: { area: ScanArea }) {
               <div><span>Mapped grid</span><strong>{formatNum(result.totals.line_miles, 1)} mi · {formatNum(result.totals.substation_count)} substations</strong></div>
               <div><span>Weather screen</span><strong>{live ? `${formatNum(live.ratio, 2)}× static · ${live.weather.source}` : "Unavailable"}</strong></div>
             </section>
+
+            {inventoryRevision && inventoryLocationId ? (
+              <p className={styles.coverage}>
+                Inventory snapshot <code>{inventoryRevision}</code> ·{" "}
+                <a href={`/api/location-report/${inventoryLocationId}/assets?revision=${inventoryRevision}`}>
+                  Open pinned inventory JSON
+                </a>
+              </p>
+            ) : null}
 
             {!result.inside_coverage ? (
               <p className={styles.coverage}>Outside the 100-mile Westminster study footprint; local plant and line data may be incomplete.</p>

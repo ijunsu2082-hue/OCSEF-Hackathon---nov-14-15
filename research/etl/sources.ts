@@ -2,11 +2,14 @@ import { resolvePointer } from "../parsers";
 import { getSourceDefinition } from "../registry";
 import type { SourceDefinition } from "../../lib/evidence/schema";
 import { EIA_FUEL_CODES } from "../../lib/evidence/predicates";
+import { caisoFeeds } from "./caiso";
 
 export interface LocationQuery {
   center: [number, number];
   radius_miles: number;
   respondent?: string;
+  /** Opt in to system-wide CAISO telemetry. Not every location is in CAISO. */
+  caiso?: true;
 }
 
 export interface Metric {
@@ -20,8 +23,17 @@ export interface Feed {
   interval: number;
   url: URL;
   extract(data: unknown): Metric[];
-  observationTime?(data: unknown): { timestamp: string; basis: "utc" | "local-unknown" } | null;
+  /**
+   * `retrievedAt` is the snapshot's capture instant. A feed needs it only when
+   * the payload omits its own date, so the derived observation time stays
+   * replayable instead of depending on the current clock.
+   */
+  observationTime?(data: unknown, retrievedAt?: string): { timestamp: string; basis: "utc" | "local-unknown" } | null;
   follow?: (data: unknown) => URL;
+  /** Snapshot parser id for these bytes. Defaults to the JSON parser in pipeline.capture. */
+  parser?: string;
+  /** Accept header. Defaults to application/json. */
+  accept?: string;
 }
 
 function at(data: unknown, pointer: string): unknown {
@@ -79,6 +91,24 @@ const nws: SourceDefinition = {
   },
   freshness: { cadence: "10 minutes", max_age_days: 2 / 24 },
   caveats: ["Point-associated station observation. Represents station conditions."],
+};
+
+const nwsAlerts: SourceDefinition = {
+  id: "nws-active-alerts",
+  title: "Active NWS alerts near location",
+  publisher: "National Weather Service",
+  homepage: "https://www.weather.gov/",
+  license: "U.S. government public data",
+  authority: "primary",
+  access: {
+    kind: "rest",
+    endpoint: "https://api.weather.gov/alerts/active?point={latitude},{longitude}",
+    docs: "https://www.weather.gov/documentation/services-web-api",
+    deterministic: false,
+    notes: "Active alerts returned for the analysis point.",
+  },
+  freshness: { cadence: "10 minutes", max_age_days: 2 / 24 },
+  caveats: ["Counts active alert features returned for the point; it does not summarize alert impacts."],
 };
 
 function eiaFeed(respondent: string, fuel: boolean): Feed {
@@ -206,6 +236,21 @@ export function feedsFor(query: LocationQuery): Feed[] {
       return { timestamp: new Date(timestamp).toISOString(), basis: "utc" };
     },
   };
+  const alerts: Feed = {
+    source: nwsAlerts,
+    interval: 600,
+    url: new URL(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`),
+    extract(data) {
+      const features = at(data, "/features");
+      if (!Array.isArray(features)) return [];
+      return [
+        ...metric(data, "/etl/active_alert_count", "weather.active_alert_count"),
+        ...features.flatMap((_, index) => metric(
+        data, `/features/${index}/properties/event`, "weather.active_alert_event",
+        )),
+      ];
+    },
+  };
   return [
     {
       source: census, interval: 86400,
@@ -219,6 +264,7 @@ export function feedsFor(query: LocationQuery): Feed[] {
       },
     },
     weather,
+    alerts,
     assetCount(query, "eia-atlas-plants", "EIA Energy Atlas power plants", "U.S. Energy Information Administration",
       "https://services.arcgis.com/fGsbyIOAuxHnF97m/ArcGIS/rest/services/Power_Plants/FeatureServer/0", "region.plant_count"),
     assetCount(query, "hifld-substations", "HIFLD substation inventory", "HIFLD",
@@ -227,6 +273,7 @@ export function feedsFor(query: LocationQuery): Feed[] {
     assetCount(query, "hifld-transmission", "HIFLD transmission inventory (69 kV and above)", "HIFLD",
       "https://services1.arcgis.com/oS5ru2iHb8I5vlTv/ArcGIS/rest/services/Transmission_Lines/FeatureServer/0",
       "region.transmission_feature_count", "VOLTAGE >= 69"),
+    ...(query.caiso ? caisoFeeds() : []),
     ...(query.respondent ? [eiaFeed(query.respondent, false), eiaFeed(query.respondent, true)] : []),
   ];
 }

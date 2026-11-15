@@ -11,6 +11,25 @@ export const RISK_COLORS: Record<RiskBucket, string> = {
   CRITICAL: "#F04D5E",
 };
 
+/**
+ * Screening constants — platform choices, not an external standard.
+ *
+ * Maximo, FEMA's National Risk Index and Technosylva all publish reproducible
+ * score maths, but none publishes this one, so these weights are ours and are
+ * labelled "screening" everywhere they surface. The inputs they consume are
+ * evidence-bundle claims (see `inputs` on each factor), so a reader can audit
+ * the data even though the weighting is a product decision.
+ */
+export const RISK_WEIGHTS = { fossil: 40, carbon: 25, motor: 20, age: 15 } as const;
+export const HEATWAVE_POINTS = 8;
+export const OVERLOAD_POINTS = 10;
+/** Carbon at or below this is scored zero. */
+export const CARBON_FLOOR_GCO2_KWH = 200;
+/** Drive-efficiency benchmark; the penalty is zero at or above it. */
+export const MOTOR_BENCHMARK = 0.85;
+/** Assets younger than this earn no age penalty. */
+export const AGE_FLOOR_YEARS = 20;
+
 export function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }
@@ -22,43 +41,17 @@ export function riskBucket(score: number): RiskBucket {
   return "CRITICAL";
 }
 
-/**
- * Energy Risk Score — the original 0–100 exposure score.
- * 40% fossil exposure · 25% carbon intensity · 20% motor inefficiency · 15% age.
- * Heatwave mode recomputes against the stressed carbon intensity and adds a
- * flat +8 stress penalty. Display-only: never mutates stored properties.
- *
- * Kept unchanged for the evidence formulas and the `/api/simulate` contract.
- * `assessRisk` below is the v2 decomposition with criticality.
- */
-export function energyRisk(
-  properties: FacilityProperties,
-  options: { heatwave?: boolean } = {},
-): number {
-  const heatwave = options.heatwave ?? false;
-  const mix = properties.energy_profile.source_mix;
-  const fossilShare = (100 - mix.solar - mix.hydro - mix.wind) / 100;
-  const ci =
-    properties.energy_profile.carbon_intensity_gco2_kwh * (heatwave ? 1.25 : 1);
-  const motorEff = properties.infrastructure.motor_efficiency_rating;
-  const age = properties.infrastructure.age_years;
-
-  let score =
-    40 * fossilShare +
-    25 * clamp((ci - 200) / 200, 0, 1) +
-    20 * clamp((0.85 - motorEff) / 0.35, 0, 1) +
-    15 * clamp((age - 20) / 60, 0, 1);
-
-  if (heatwave) score += 8;
-  return Math.round(score * 10) / 10;
-}
-
 export interface RiskFactor {
   id: "fossil" | "carbon" | "motor" | "age" | "heatwave" | "overload";
   label: string;
   points: number;
   max: number;
   detail: string;
+  /**
+   * Evidence predicates this factor is computed from, in display order. Empty
+   * for scenario-only penalties, which have no stored claim to cite.
+   */
+  inputs: string[];
 }
 
 export interface RiskAssessment {
@@ -101,6 +94,101 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+/**
+ * The single factor builder behind every risk number in the app.
+ *
+ * `energyRisk()` sums these factors and stops there; `assessRisk()` adds the
+ * overload penalty and the consequence multiplier. Because both read the same
+ * builder, the legacy exposure score and the v2 index can never drift apart.
+ *
+ * Heatwave mode recomputes carbon against the stressed intensity and appends a
+ * flat stress penalty. Nothing here mutates the stored properties.
+ */
+export function buildRiskFactors(
+  properties: FacilityProperties,
+  options: { heatwave?: boolean } = {},
+): RiskFactor[] {
+  const heatwave = options.heatwave ?? false;
+  const mix = properties.energy_profile.source_mix;
+  const fossilShare = (100 - mix.solar - mix.hydro - mix.wind) / 100;
+  const ci =
+    properties.energy_profile.carbon_intensity_gco2_kwh * (heatwave ? 1.25 : 1);
+  const motorEff = properties.infrastructure.motor_efficiency_rating;
+  const age = properties.infrastructure.age_years;
+
+  const factors: RiskFactor[] = [
+    {
+      id: "fossil",
+      label: "Fossil exposure",
+      points: RISK_WEIGHTS.fossil * fossilShare,
+      max: RISK_WEIGHTS.fossil,
+      detail: `${Math.round(fossilShare * 100)}% of the supply mix is fossil or other.`,
+      inputs: ["facility.source_mix.natural_gas", "facility.source_mix.other"],
+    },
+    {
+      id: "carbon",
+      label: "Carbon intensity",
+      points:
+        RISK_WEIGHTS.carbon *
+        clamp((ci - CARBON_FLOOR_GCO2_KWH) / CARBON_FLOOR_GCO2_KWH, 0, 1),
+      max: RISK_WEIGHTS.carbon,
+      detail: `${Math.round(ci)} gCO₂/kWh against the ${CARBON_FLOOR_GCO2_KWH} g/kWh floor.`,
+      inputs: ["facility.carbon_intensity_gco2_kwh"],
+    },
+    {
+      id: "motor",
+      label: "Drive efficiency",
+      points:
+        RISK_WEIGHTS.motor *
+        clamp((MOTOR_BENCHMARK - motorEff) / 0.35, 0, 1),
+      max: RISK_WEIGHTS.motor,
+      detail: `${motorEff.toFixed(2)} vs the ${MOTOR_BENCHMARK} benchmark.`,
+      inputs: ["facility.motor_efficiency_rating"],
+    },
+    {
+      id: "age",
+      label: "Asset age",
+      points:
+        RISK_WEIGHTS.age * clamp((age - AGE_FLOOR_YEARS) / 60, 0, 1),
+      max: RISK_WEIGHTS.age,
+      detail: `${age} years in service against a ${AGE_FLOOR_YEARS}-year floor.`,
+      inputs: ["facility.age_years"],
+    },
+  ];
+
+  if (heatwave) {
+    factors.push({
+      id: "heatwave",
+      label: "Heatwave stress",
+      points: HEATWAVE_POINTS,
+      max: HEATWAVE_POINTS,
+      detail: "105 °F scenario penalty.",
+      inputs: [],
+    });
+  }
+
+  return factors;
+}
+
+/**
+ * Energy Risk Score — the original 0–100 exposure score.
+ * 40% fossil exposure · 25% carbon intensity · 20% motor inefficiency · 15% age,
+ * plus the flat +8 heatwave penalty. Display-only: never mutates properties.
+ *
+ * A thin sum over `buildRiskFactors()`: this is what `/api/simulate` and the
+ * evidence formulas call, and its output must not change.
+ */
+export function energyRisk(
+  properties: FacilityProperties,
+  options: { heatwave?: boolean } = {},
+): number {
+  const total = buildRiskFactors(properties, options).reduce(
+    (sum, factor) => sum + factor.points,
+    0,
+  );
+  return round1(total);
+}
+
 function normalizeCriticality(
   properties: FacilityProperties,
   input: RiskOptions["criticality"],
@@ -123,10 +211,10 @@ function normalizeCriticality(
 /**
  * Risk Index v2 — likelihood × consequence, with the full decomposition.
  *
- * `exposure` is the original score plus an overload penalty. `criticality`
- * defaults to 3 and is labelled assumed until a customer/CFI layer exists.
- * `score` is deliberately clamped to 0–100 and is a screening index, not a
- * probability of failure.
+ * `exposure` is the shared factor sum plus an overload penalty, scaled down
+ * proportionally when it would exceed 100. `criticality` defaults to 3 and is
+ * labelled assumed until a customer/CFI layer exists. `score` is deliberately
+ * clamped to 0–100 and is a screening index, not a probability of failure.
  */
 export function assessRisk(
   properties: FacilityProperties,
@@ -135,60 +223,16 @@ export function assessRisk(
   const heatwave = options.heatwave ?? false;
   const overload = options.overload ?? false;
   const criticality = normalizeCriticality(properties, options.criticality);
-  const mix = properties.energy_profile.source_mix;
-  const fossilShare = (100 - mix.solar - mix.hydro - mix.wind) / 100;
-  const ci =
-    properties.energy_profile.carbon_intensity_gco2_kwh * (heatwave ? 1.25 : 1);
-  const motorEff = properties.infrastructure.motor_efficiency_rating;
-  const age = properties.infrastructure.age_years;
 
-  const factors: RiskFactor[] = [
-    {
-      id: "fossil",
-      label: "Fossil exposure",
-      points: 40 * fossilShare,
-      max: 40,
-      detail: `${Math.round(fossilShare * 100)}% of the supply mix is fossil or other.`,
-    },
-    {
-      id: "carbon",
-      label: "Carbon intensity",
-      points: 25 * clamp((ci - 200) / 200, 0, 1),
-      max: 25,
-      detail: `${Math.round(ci)} gCO₂/kWh against the 200 g/kWh floor.`,
-    },
-    {
-      id: "motor",
-      label: "Drive efficiency",
-      points: 20 * clamp((0.85 - motorEff) / 0.35, 0, 1),
-      max: 20,
-      detail: `${motorEff.toFixed(2)} vs the 0.85 benchmark.`,
-    },
-    {
-      id: "age",
-      label: "Asset age",
-      points: 15 * clamp((age - 20) / 60, 0, 1),
-      max: 15,
-      detail: `${age} years in service against a 20-year floor.`,
-    },
-  ];
-
-  if (heatwave) {
-    factors.push({
-      id: "heatwave",
-      label: "Heatwave stress",
-      points: 8,
-      max: 8,
-      detail: "105 °F scenario penalty.",
-    });
-  }
+  const factors = buildRiskFactors(properties, { heatwave });
   if (overload) {
     factors.push({
       id: "overload",
       label: "Nameplate overload",
-      points: 10,
-      max: 10,
+      points: OVERLOAD_POINTS,
+      max: OVERLOAD_POINTS,
       detail: "Demand exceeds nameplate at the stressed operating point.",
+      inputs: [],
     });
   }
 

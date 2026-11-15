@@ -14,11 +14,11 @@ export interface AssetManifest {
 }
 
 async function capture(sourceId: string, url: URL) {
-  const { bytes, response } = await request(url);
+  const { bytes, headers } = await request(url);
   const { cachePath } = await storeCapture(bytes);
   return buildSnapshot({
     sourceId, url: url.href, bytes, cachePath, retrievedAt: new Date().toISOString(),
-    parser: "json.object", contentType: response.headers.get("content-type"),
+    parser: "json.object", contentType: headers.get("content-type"),
   });
 }
 

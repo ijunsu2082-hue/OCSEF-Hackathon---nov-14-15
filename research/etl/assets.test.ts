@@ -6,6 +6,7 @@ import { collectAssets, replayAssets } from "./assets";
 import { atomicJson, locationQuery, stateRoot } from "./pipeline";
 import { auditSubstations } from "./substation-audit";
 import { loadLocationAssets, readLocationAssets } from "./load-assets";
+import { backupAssets, restoreAssets } from "./backup";
 
 test("ArcGIS collection pins all feature pages and rejects an incomplete inventory", async (t) => {
   const prior = process.env.ETL_STATE_NAMESPACE;
@@ -72,6 +73,19 @@ test("substation audit requires reviewed identity and preserves source conflicts
   assert.equal(normalized.properties.maximum_voltage_kv, 230);
   assert.equal(normalized.citations.name.locator, "/features/0/properties/NAME");
   assert.equal((await loadLocationAssets([manifest.path])).revision, loaded.revision);
+  const oldKey = process.env.ETL_BACKUP_KEY;
+  const originalNamespace = process.env.ETL_STATE_NAMESPACE;
+  process.env.ETL_BACKUP_KEY = "cd".repeat(32);
+  const backup = `${stateRoot()}/assets.backup.json`;
+  await backupAssets(loaded.location, loaded.revision, backup);
+  process.env.ETL_STATE_NAMESPACE = `restore-${randomUUID()}`;
+  const restored = await restoreAssets(backup);
+  assert.notEqual(restored.revision, loaded.revision);
+  assert.ok(await readLocationAssets(loaded.location, restored.revision));
+  if (originalNamespace === undefined) delete process.env.ETL_STATE_NAMESPACE;
+  else process.env.ETL_STATE_NAMESPACE = originalNamespace;
+  if (oldKey === undefined) delete process.env.ETL_BACKUP_KEY;
+  else process.env.ETL_BACKUP_KEY = oldKey;
   await assert.rejects(loadLocationAssets([manifest.path, manifest.path]), /Only one manifest/);
   const osm = `${stateRoot()}/osm.geojson`;
   const crosswalk = `${stateRoot()}/crosswalk.json`;

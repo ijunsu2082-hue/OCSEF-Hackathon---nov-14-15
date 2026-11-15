@@ -18,7 +18,7 @@ PUBLISH_CHANGED = """
 local previous = redis.call('GET', KEYS[1])
 if previous == ARGV[1] then return 0 end
 redis.call('SET', KEYS[1], ARGV[1])
-redis.call('PUBLISH', KEYS[1], ARGV[1])
+redis.call('PUBLISH', KEYS[2], ARGV[1])
 return 1
 """
 
@@ -61,7 +61,10 @@ async def refresh(redis: Redis, location: Location):
         "location_id": location_id,
         "state_hash": report["state_hash"],
     }, separators=(",", ":"))
-    await redis.eval(PUBLISH_CHANGED, 1, f"location-report:{location_id}", event)
+    await redis.eval(
+        PUBLISH_CHANGED, 2,
+        f"location-report:state:{location_id}", f"location-report:{location_id}", event,
+    )
     backup_root = os.environ.get("ETL_BACKUP_DIRECTORY")
     if backup_root:
         revision = json.loads(stderr.decode().strip().splitlines()[-1])["revision"]
@@ -96,7 +99,7 @@ class AssetLocation(BaseModel):
         return self
 
 
-async def refresh_assets(location: AssetLocation):
+async def refresh_assets(redis: Redis, location: AssetLocation):
     manifests = []
     for source in location.sources:
         result, _ = await etl(
@@ -108,15 +111,31 @@ async def refresh_assets(location: AssetLocation):
         if not isinstance(path, str) or not path:
             raise RuntimeError(f"Asset collection returned no manifest path for {source}")
         manifests.append(path)
-    await etl("load-assets", *manifests, timeout=1800)
+    result, _ = await etl("load-assets", *manifests, timeout=1800)
+    loaded = json.loads(result)
+    location_id = loaded.get("location")
+    revision = loaded.get("revision")
+    if not isinstance(location_id, str) or not re.fullmatch(r"location-[a-f0-9]{24}", location_id):
+        raise RuntimeError("Asset loading returned an invalid location id")
+    if not isinstance(revision, str) or not re.fullmatch(r"[a-f0-9]{64}", revision):
+        raise RuntimeError("Asset loading returned an invalid inventory revision")
+    event = json.dumps({
+        "event": "INVENTORY_UPDATE",
+        "location_id": location_id,
+        "inventory_revision": revision,
+    }, separators=(",", ":"))
+    await redis.eval(
+        PUBLISH_CHANGED, 2,
+        f"location-report:inventory:{location_id}", f"location-report:{location_id}", event,
+    )
 
 
-async def asset_worker(location: AssetLocation, interval: int, retry_delay: int, semaphore: asyncio.Semaphore):
+async def asset_worker(redis: Redis, location: AssetLocation, interval: int, retry_delay: int, semaphore: asyncio.Semaphore):
     # Inventory calls can be slow; keep them outside telemetry's refresh loop.
     while True:
         try:
             async with semaphore:
-                await refresh_assets(location)
+                await refresh_assets(redis, location)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -150,7 +169,7 @@ async def lifespan(app: FastAPI):
     if locations:
         tasks.append(asyncio.create_task(worker(redis, locations)))
     asset_semaphore = asyncio.Semaphore(asset_concurrency)
-    tasks.extend(asyncio.create_task(asset_worker(location, asset_interval, asset_retry, asset_semaphore))
+    tasks.extend(asyncio.create_task(asset_worker(redis, location, asset_interval, asset_retry, asset_semaphore))
                   for location in asset_locations)
     try:
         yield
@@ -181,9 +200,11 @@ async def stream(websocket: WebSocket, location_id: str):
             await subscription.subscribe(channel)
             # Consume the subscription acknowledgment before reading saved state.
             await subscription.get_message(timeout=5)
-            initial = await redis.get(channel)
-            if initial:
-                await websocket.send_text(initial)
+            latest_state = await redis.get(f"location-report:state:{location_id}")
+            latest_inventory = await redis.get(f"location-report:inventory:{location_id}")
+            for initial in (latest_state, latest_inventory):
+                if initial:
+                    await websocket.send_text(initial)
             async for event in subscription.listen():
                 if event["type"] == "message":
                     await websocket.send_text(event["data"])

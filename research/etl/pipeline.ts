@@ -8,6 +8,7 @@ import { modeledClaim, observedClaim } from "../claims";
 import { buildSnapshot, replaySnapshot, type LoadedSnapshot } from "../snapshot";
 import { verifyEvidenceFiles } from "../verify-files";
 import { feedsFor, nwsObservationUrl, type Feed, type LocationQuery } from "./sources";
+import { requestBytes } from "./http";
 
 export function stateRoot(): string {
   const suffix = process.env.ETL_STATE_NAMESPACE;
@@ -16,13 +17,18 @@ export function stateRoot(): string {
 }
 const MAX_BYTES = 8 * 1024 * 1024;
 
-export function locationQuery(lat: number, lon: number, radius: number, respondent?: string): LocationQuery {
+export function locationQuery(
+  lat: number, lon: number, radius: number, respondent?: string, caiso = false,
+): LocationQuery {
   if (!Number.isFinite(lat) || Math.abs(lat) > 90 || !Number.isFinite(lon) || Math.abs(lon) > 180 ||
       !Number.isFinite(radius) || radius < 1 || radius > 500 ||
-      (respondent !== undefined && !/^[A-Z0-9]{2,8}$/.test(respondent))) {
+      (respondent !== undefined && !/^[A-Z0-9]{2,8}$/.test(respondent)) || typeof caiso !== "boolean") {
     throw new Error("Expected latitude [-90,90], longitude [-180,180], radius [1,500] miles and optional EIA respondent code");
   }
-  return { center: [lat, lon], radius_miles: radius, ...(respondent ? { respondent } : {}) };
+  return {
+    center: [lat, lon], radius_miles: radius,
+    ...(respondent ? { respondent } : {}), ...(caiso ? { caiso: true as const } : {}),
+  };
 }
 
 export function locationId(query: LocationQuery): string {
@@ -40,37 +46,27 @@ export async function atomicJson(path: string, value: unknown): Promise<void> {
   }
 }
 
-export async function request(url: URL): Promise<{ bytes: Uint8Array; response: Response }> {
+/**
+ * Fetch one upstream resource through the shared request layer, which dedupes
+ * identical in-flight requests, bounds per-host concurrency, retries with
+ * backoff and revalidates with the provider's ETag.
+ */
+export async function request(
+  url: URL, accept = "application/json",
+): Promise<{ bytes: Uint8Array; headers: Headers }> {
   const target = new URL(url);
   if (target.hostname === "api.eia.gov") {
     const key = process.env.EIA_API_KEY;
     if (!key) throw new Error("EIA_API_KEY is required");
     target.searchParams.set("api_key", key);
   }
-  const response = await fetch(target, {
-    redirect: "error",
-    signal: AbortSignal.timeout(15000),
-    headers: {
-      accept: "application/json",
-      "user-agent": process.env.NWS_USER_AGENT || "GridSentinel/1.0",
-    },
+  const { bytes, headers } = await requestBytes(target, {
+    accept,
+    userAgent: process.env.NWS_USER_AGENT || "GridSentinel/1.0",
+    maxBytes: MAX_BYTES,
+    timeoutMs: 15000,
   });
-  if (!response.ok || !response.body) throw new Error(`Upstream HTTP ${response.status}`);
-  const parts: Uint8Array[] = [];
-  const reader = response.body.getReader();
-  let size = 0;
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > MAX_BYTES) throw new Error("Upstream response exceeds capture limit");
-      parts.push(value);
-    }
-  } finally {
-    await reader.cancel().catch(() => {});
-  }
-  return { response, bytes: Buffer.concat(parts) };
+  return { bytes, headers };
 }
 
 async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
@@ -80,14 +76,15 @@ async function capture(feed: Feed, now: Date): Promise<LoadedSnapshot> {
     const stations = await request(feed.follow(JSON.parse(Buffer.from(point.bytes).toString("utf8"))));
     url = nwsObservationUrl(JSON.parse(Buffer.from(stations.bytes).toString("utf8")));
   }
-  const { bytes, response } = await request(url);
+  const { bytes, headers } = await request(url, feed.accept);
   const { hash, cachePath } = await storeCapture(bytes);
   try {
     const loaded = buildSnapshot({
       sourceId: feed.source.id, url: url.href, retrievedAt: now.toISOString(),
-      bytes, cachePath, parser: url.hostname === "api.eia.gov" ? "json.eia-hourly" : "json.object",
-      contentType: response.headers.get("content-type"),
-      etag: response.headers.get("etag"), lastModified: response.headers.get("last-modified"),
+      bytes, cachePath, parser: feed.parser ?? (url.hostname === "api.eia.gov" ? "json.eia-hourly" :
+        url.hostname === "api.weather.gov" && url.pathname === "/alerts/active" ? "json.nws-alerts" : "json.object"),
+      contentType: headers.get("content-type"),
+      etag: headers.get("etag"), lastModified: headers.get("last-modified"),
     });
     if (!feed.extract(loaded.data).length) throw new Error("No usable observations for this scope");
     return loaded;
@@ -140,7 +137,7 @@ function observedState(feed: Feed, loaded: LoadedSnapshot, now: Date, attempted_
       snapshot: loaded.snapshot,
     };
   }
-  const observation = feed.observationTime(loaded.data);
+  const observation = feed.observationTime(loaded.data, loaded.snapshot.retrieved_at);
   if (!observation) return {
     attempted_at, status: "unknown", source_age_seconds: null,
     issue: "Observation time is unavailable or has no verified timezone.", snapshot: loaded.snapshot,
@@ -192,7 +189,7 @@ export async function runLocation(
   const previous = pinned ?? await readReport(id);
   const legacyReplay = !!pinned && Object.values(pinned.feeds).every((state) =>
     state.observation_at === undefined && state.observation_time_basis === undefined && state.source_age_seconds === undefined);
-  const feeds = feedsFor(query);
+  const feeds = feedsFor(query).filter((feed) => !pinned || Object.hasOwn(pinned.feeds, feed.source.id));
   const entries = await Promise.all(feeds.map(async (feed): Promise<[string, FeedState, LoadedSnapshot | null]> => {
     const source = feed.source.id;
     const prior = previous?.feeds[source];
@@ -261,7 +258,10 @@ export async function runLocation(
   }
   if (!query.respondent) unresolved.push({
     subject, predicate: "telemetry.demand", reason: "no_source",
-    detail: "Supply an EIA balancing-authority respondent explicitly.", candidate_claim_ids: [], escalated: false,
+    detail: query.caiso
+      ? "CAISO system telemetry is included; EIA hourly demand additionally requires an explicit respondent."
+      : "Supply an EIA balancing-authority respondent explicitly.",
+    candidate_claim_ids: [], escalated: false,
   });
   const radiusDegrees = query.radius_miles / 3958.7613 * 180 / Math.PI;
   const south = Math.max(-90, lat - radiusDegrees);

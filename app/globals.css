@@ -2165,7 +2165,7 @@ input[type="range"]::-moz-range-thumb {
 
 .risk-factors li {
   display: grid;
-  grid-template-columns: 82px 1fr 34px;
+  grid-template-columns: 82px minmax(36px, 1fr) auto 34px;
   align-items: center;
   gap: 8px;
   font-size: 9px;
@@ -2197,6 +2197,17 @@ input[type="range"]::-moz-range-thumb {
   text-align: right;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+.risk-factor-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.risk-factor-src .cite,
+.risk-factor-src .scenario-tag {
+  margin-left: 0;
 }
 
 .riskline {

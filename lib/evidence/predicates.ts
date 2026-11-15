@@ -650,12 +650,43 @@ const REGION_UNITS: PredicateDefinition[] = [
 
 export const EIA_FUEL_CODES = ["BAT", "COL", "GEO", "HYD", "NG", "NUC", "OIL", "OTH", "PS", "SNB", "SUN", "UNK", "WND", "WNB"] as const;
 
+/** CAISO Today's Outlook supply columns, normalized to predicate keys. */
+export const CAISO_SUPPLY_KEYS = [
+  "renewables", "solar", "wind", "geothermal", "biomass", "biogas", "small_hydro",
+  "coal", "nuclear", "natural_gas", "large_hydro", "batteries", "imports", "other",
+] as const;
+
 const TELEMETRY: PredicateDefinition[] = [
   def({
     id: "telemetry.period", label: "Source observation time", unit: null,
     value_type: "string", allowed_methods: ["observed"], subject_prefix: "region",
     description: "Observation timestamp or hour as published by the feed.",
   }),
+  def({
+    id: "weather.active_alert_event", label: "Active NWS alert event", unit: null,
+    value_type: "string", allowed_methods: ["observed"], subject_prefix: "region",
+    description: "Event name for an active NWS alert returned for the analysis point.",
+  }),
+  def({
+    id: "weather.active_alert_count", label: "Active NWS alerts", unit: "count",
+    value_type: "number", min: 0, max: 10000, integer: true,
+    allowed_methods: ["observed"], subject_prefix: "region",
+    description: "Count of active alert features in the complete NWS response for the analysis point.",
+  }),
+  ...([
+    ["caiso.system_demand_mw", "CAISO system demand (5-minute average)", "MW"],
+    ["caiso.system_net_demand_mw", "CAISO net system demand (5-minute average)", "MW"],
+  ] as [string, string, string][]).map(([id, label, unit]) => def({
+    id, label, unit, value_type: "number", min: 0, max: 100000,
+    allowed_methods: ["observed"], subject_prefix: "region",
+    description: "CAISO system-wide demand for the published interval. Not a local or facility demand.",
+  })),
+  ...CAISO_SUPPLY_KEYS.map((key) => def({
+    id: `caiso.supply_${key}_mw`, label: `CAISO supply — ${key}`, unit: "MW",
+    value_type: "number", min: -100000, max: 100000,
+    allowed_methods: ["observed"], subject_prefix: "region",
+    description: "CAISO system-wide supply for one resource type, five-minute average. Negative values are published battery charging or net imports.",
+  })),
   ...([
     ["weather.temperature_c", "Station air temperature", "°C"],
     ["weather.wind_kmh", "Station wind speed", "km/h"],

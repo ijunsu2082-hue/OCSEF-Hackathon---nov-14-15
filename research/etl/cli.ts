@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { atomicJson, locationQuery, readReport, reportRevision, runLocation, verifyLocation } from "./pipeline";
-import { backupReport, restoreReport } from "./backup";
+import { backupAssets, backupReport, backupWeather, restoreAssets, restoreReport, restoreWeather } from "./backup";
 import { reconcile } from "./reconcile";
 import { coverageInventory } from "./coverage";
 import { backfillWeather } from "./weather-history";
@@ -13,6 +13,28 @@ async function main() {
   const command = args[0] && !args[0].startsWith("--") ? args.shift() : "location";
   if (command === "load-assets") {
     console.log(JSON.stringify(await loadLocationAssets(args)));
+    return;
+  }
+  if (command === "backup-assets") {
+    if (args.length !== 3) throw new Error("Expected location ID, asset revision, and destination file");
+    await backupAssets(args[0], args[1], args[2]);
+    console.log(JSON.stringify({ backed_up: "assets", location: args[0], revision: args[1] }));
+    return;
+  }
+  if (command === "restore-assets") {
+    if (args.length !== 1) throw new Error("Expected backup file");
+    console.log(JSON.stringify(await restoreAssets(args[0])));
+    return;
+  }
+  if (command === "backup-weather") {
+    if (args.length !== 2) throw new Error("Expected weather snapshot ID and destination file");
+    await backupWeather(args[0], args[1]);
+    console.log(JSON.stringify({ backed_up: "weather", snapshot: args[0] }));
+    return;
+  }
+  if (command === "restore-weather") {
+    if (args.length !== 1) throw new Error("Expected backup file");
+    console.log(JSON.stringify(await restoreWeather(args[0])));
     return;
   }
   if (command === "audit-substations") {

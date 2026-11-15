@@ -157,20 +157,41 @@ export default function TelemetryTab({
         </div>
 
         <ul className="risk-factors" aria-label="Risk factor contributions">
-          {risk.factors.map((factor) => (
-            <li key={factor.id} title={factor.detail}>
-              <span className="risk-factor-label">{factor.label}</span>
-              <span className="risk-factor-bar">
-                <i
-                  style={{
-                    width: `${(factor.points / factor.max) * 100}%`,
-                    background: risk.color,
-                  }}
-                />
-              </span>
-              <span className="risk-factor-points">{fmtNumber(factor.points, 1)}</span>
-            </li>
-          ))}
+          {risk.factors.map((factor) => {
+            const isScenario =
+              heatwave &&
+              (factor.id === "carbon" ||
+                factor.id === "heatwave" ||
+                factor.id === "overload");
+            return (
+              <li key={factor.id} title={factor.detail}>
+                <span className="risk-factor-label">{factor.label}</span>
+                <span className="risk-factor-bar">
+                  <i
+                    style={{
+                      width: `${(factor.points / factor.max) * 100}%`,
+                      background: risk.color,
+                    }}
+                  />
+                </span>
+                <span className="risk-factor-src">
+                  {isScenario || factor.inputs.length === 0 ? (
+                    <ScenarioTag />
+                  ) : (
+                    factor.inputs.map((predicate) => (
+                      <Cite
+                        key={predicate}
+                        subject={subject}
+                        predicate={predicate}
+                        quiet
+                      />
+                    ))
+                  )}
+                </span>
+                <span className="risk-factor-points">{fmtNumber(factor.points, 1)}</span>
+              </li>
+            );
+          })}
         </ul>
 
         <p className="risk-note">

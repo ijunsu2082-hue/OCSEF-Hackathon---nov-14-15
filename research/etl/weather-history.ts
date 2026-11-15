@@ -24,13 +24,13 @@ export async function backfillWeather(lat: number, lon: number, start: string, e
     timezone: "GMT", models: "era5", wind_speed_unit: "ms", temperature_unit: "celsius",
     hourly: Object.keys(FIELDS).join(","),
   }).toString();
-  const { bytes, response } = await request(url);
+  const { bytes, headers } = await request(url);
   const { cachePath, hash } = await storeCapture(bytes);
   const retrievedAt = new Date().toISOString();
   try {
     const { snapshot, data } = buildSnapshot({
       sourceId: "open-meteo-era5", url: url.href, retrievedAt, bytes, cachePath,
-      parser: "json.object", contentType: response.headers.get("content-type"),
+      parser: "json.object", contentType: headers.get("content-type"),
     });
     const source = data as {
       hourly?: Record<string, unknown>;
