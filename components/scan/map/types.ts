@@ -1,4 +1,4 @@
-import type { GridData, ScanArea, ScanResult } from "@/lib/scan";
+import type { GridData, NicheCase, ScanArea, ScanResult } from "@/lib/scan";
 import type { NewsPin, ReportTarget } from "@/lib/scan/target";
 
 /** A fly-to request from the page. Bump `nonce` to re-trigger the same point. */
@@ -13,9 +13,10 @@ export interface ScanMapProps {
   data: GridData;
   area: ScanArea;
   result: ScanResult | null;
+  selectedCaseId?: string | null;
   focus: MapFocus | null;
-  /** A story's spot from the Local news tab: one plain pin, cleared by the next map click. */
-  newsPin: NewsPin | null;
+  /** A story's spot from the Local news tab: one plain pin, cleared by the next map click. The 2D map flies to it. */
+  newsPin?: NewsPin | null;
   /** Click anywhere on the map → scan at that point (page keeps the radius). */
   onScan: (lat: number, lon: number) => void;
   onFocus: (lat: number, lon: number) => void;
@@ -23,4 +24,5 @@ export interface ScanMapProps {
   onSelectAsset: (t: ReportTarget | null) => void;
   /** The selected asset, highlighted on the map. */
   selected: ReportTarget | null;
+  onSelectCase?: (c: NicheCase) => void;
 }

@@ -2,8 +2,8 @@
 
 /**
  * Imperative Leaflet layers for the big static datasets (5k+ lines, ~700 plants,
- * substations). Each layer is built ONCE on a shared canvas; a new scan only
- * re-styles the features whose inside/outside status actually changed.
+ * substations). Each layer is built ONCE on a dedicated canvas pane; a new scan
+ * only re-styles the features whose inside/outside status actually changed.
  */
 
 import { useEffect, useMemo, useRef } from "react";
@@ -24,6 +24,9 @@ export const MAP_COLORS = {
 
 export const PANES = {
   casing: { name: "gs-line-casing", z: 405 },
+  lines: { name: "gs-lines", z: 410 },
+  /** In-scan circuits: own pane so they always paint over the base network canvas. */
+  scanLines: { name: "gs-lines-scan", z: 412 },
   points: { name: "gs-points", z: 430 },
   /** Selected-asset highlight: above the points, below the label tiles; never takes clicks. */
   highlight: { name: "gs-highlight", z: 440 },
@@ -36,15 +39,17 @@ function ensurePane(map: L.Map, name: string, z: number) {
 }
 
 /*
- * All interactive layers (lines AND points) share ONE canvas. A canvas element
- * swallows every mouse event over its full extent and only hit-tests its own
- * layers, so a separate line canvas under the points canvas could never be
- * clicked. Draw order inside the shared canvas: lines first (in-scan lines on
- * top of the rest), then bringToFront restores substations → plants → events.
- * `tolerance` widens the hit area around every feature so thin lines are clickable.
+ * All interactive layers share ONE canvas. A canvas element swallows every
+ * mouse event over its full extent, so separate per-layer canvases would block
+ * hover/click on the layers beneath. The visible lines are drawn on their own
+ * non-interactive canvases (see TransmissionLayer); their hover/click targets
+ * are invisible paths on this shared canvas. Draw order inside the shared
+ * canvas is restored with bringToFront: line targets → substations → plants →
+ * events. `tolerance` widens the hit area around every feature so thin lines
+ * are clickable.
  */
-type PointKind = "substations" | "plants" | "events";
-const POINT_ORDER: PointKind[] = ["substations", "plants", "events"];
+type PointKind = "lines" | "substations" | "plants" | "events";
+const POINT_ORDER: PointKind[] = ["lines", "substations", "plants", "events"];
 const pointRenderers = new WeakMap<L.Map, L.Canvas>();
 const pointGroups = new WeakMap<L.Map, Partial<Record<PointKind, L.FeatureGroup>>>();
 
@@ -97,8 +102,7 @@ function fuelText(k: string): string {
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
-/** Escaped " solar" / ": solar 60%, battery 40%" suffix for "N MW". */
-function plantFuels(p: Plant): string {
+function plantTooltip(p: Plant): string {
   const total = p.nameplate_mw || 0;
   const mix = Object.entries(p.mw_by_source)
     .filter(([, v]) => (v ?? 0) > 0)
@@ -108,23 +112,16 @@ function plantFuels(p: Plant): string {
       const pct = total > 0 ? Math.round(((v ?? 0) / total) * 100) : 0;
       return { label: fuelText(k), pct };
     });
-  return mix.length === 0
-    ? ""
-    : mix.length === 1
-      ? ` ${esc(mix[0].label)}`
-      : `: ${mix.map((m) => `${esc(m.label)} ${m.pct}%`).join(", ")}`;
-}
-
-function plantAge(p: Plant): string {
-  return p.capacity_weighted_age_years != null
-    ? `Capacity-weighted age ${Math.round(p.capacity_weighted_age_years)} yr`
-    : "Age not reported";
-}
-
-function plantTooltip(p: Plant): string {
-  const total = p.nameplate_mw || 0;
-  const fuels = plantFuels(p);
-  const age = plantAge(p);
+  const fuels =
+    mix.length === 0
+      ? ""
+      : mix.length === 1
+        ? ` ${esc(mix[0].label)}`
+        : `: ${mix.map((m) => `${esc(m.label)} ${m.pct}%`).join(", ")}`;
+  const age =
+    p.capacity_weighted_age_years != null
+      ? `Capacity-weighted age ${Math.round(p.capacity_weighted_age_years)} yr`
+      : "Age not reported";
   return `<div class="gs-tip-title">${esc(p.plant_name)}</div>
 <div class="gs-tip-row">${fmtMw(total)} MW${fuels}</div>
 <div class="gs-tip-row">${age}</div>
@@ -204,64 +201,77 @@ export function TransmissionLayer({
 }) {
   const map = useMap();
   const onClickRef = useLatest(onAssetClick);
-  const groupRef = useRef<L.LayerGroup | null>(null);
-  const entriesRef = useRef<{ line: Line; layer: L.Polyline; inside: boolean }[]>([]);
-  const imageryRef = useRef(false);
+  const baseRef = useRef<L.LayerGroup | null>(null);
+  const hitRef = useRef<L.FeatureGroup | null>(null);
+  const accentRef = useRef<{ group: L.LayerGroup; renderer: L.Canvas } | null>(null);
 
   const insideIds = useMemo(() => new Set((result?.lines ?? []).map((l) => l.osm_id)), [result]);
 
-  // Build once per dataset, on the shared canvas (see pointsRenderer).
+  // The whole network is drawn once and never restyled by a scan. Rebuilt only
+  // when the dataset or the basemap kind changes, because the outside style is
+  // basemap-dependent.
   useEffect(() => {
-    const renderer = pointsRenderer(map);
+    ensurePane(map, PANES.lines.name, PANES.lines.z);
+    const renderer = L.canvas({ pane: PANES.lines.name, padding: 0.4 });
     const group = L.layerGroup();
-    const entries = lines.map((line) => {
-      const layer = L.polyline(line.coords, {
-        renderer,
-        pane: PANES.points.name,
-        interactive: true,
-        bubblingMouseEvents: false,
-        ...lineStyle(line.voltage_kv, false, false),
-        lineCap: "round",
-        lineJoin: "round",
-        smoothFactor: 1.2,
-      });
-      const entry = { line, layer, inside: false };
-      layer.bindTooltip(() => lineTooltip(line), { direction: "top", offset: [0, -6], sticky: true });
-      // Scan where the line was clicked (not its midpoint).
-      layer.on("click", (ev: L.LeafletMouseEvent) =>
-        onClickRef.current({ kind: "line", line }, ev.latlng.lat, ev.latlng.lng),
+    for (const line of lines) {
+      group.addLayer(
+        L.polyline(line.coords, {
+          renderer,
+          pane: PANES.lines.name,
+          interactive: false,
+          lineCap: "round",
+          lineJoin: "round",
+          smoothFactor: 1.2,
+          ...lineStyle(line.voltage_kv, false, onImagery),
+        }),
       );
-      group.addLayer(layer);
-      return entry;
-    });
-    entriesRef.current = entries;
-    groupRef.current = group;
-    imageryRef.current = false;
+    }
+    baseRef.current = group;
     return () => {
       group.remove();
-      groupRef.current = null;
-      entriesRef.current = [];
+      renderer.remove();
+      baseRef.current = null;
     };
-  }, [map, lines, onClickRef]);
+  }, [map, lines, onImagery]);
 
-  // Re-style only what changed (or every line when the basemap kind flips).
+  // In-scan circuits live on their own canvas, rebuilt from only the lines that
+  // are inside the circle. A radius change therefore costs O(inside) instead of
+  // restyling every feature and asking Leaflet to redraw 5k paths per frame.
   useEffect(() => {
-    const full = imageryRef.current !== onImagery;
-    imageryRef.current = onImagery;
-    const newlyInside: L.Polyline[] = [];
-    for (const e of entriesRef.current) {
-      const inside = insideIds.has(e.line.osm_id);
-      if (inside === e.inside && !full) continue;
-      e.inside = inside;
-      e.layer.setStyle(lineStyle(e.line.voltage_kv, inside, onImagery));
-      if (inside) newlyInside.push(e.layer);
+    const previous = accentRef.current;
+    if (previous) {
+      previous.group.remove();
+      previous.renderer.remove();
+      accentRef.current = null;
     }
-    if (groupRef.current && map.hasLayer(groupRef.current) && newlyInside.length > 0) {
-      newlyInside.forEach((l) => l.bringToFront());
-      // Lines share the points canvas: keep every point above every line.
-      restackPoints(map);
+    if (!visible || insideIds.size === 0) return;
+
+    ensurePane(map, PANES.scanLines.name, PANES.scanLines.z);
+    const renderer = L.canvas({ pane: PANES.scanLines.name, padding: 0.4 });
+    const group = L.layerGroup();
+    for (const line of lines) {
+      if (!insideIds.has(line.osm_id)) continue;
+      group.addLayer(
+        L.polyline(line.coords, {
+          renderer,
+          pane: PANES.scanLines.name,
+          interactive: false,
+          ...lineStyle(line.voltage_kv, true, onImagery),
+          lineCap: "round",
+          lineJoin: "round",
+          smoothFactor: 1.2,
+        }),
+      );
     }
-  }, [insideIds, onImagery, map, lines]);
+    group.addTo(map);
+    accentRef.current = { group, renderer };
+    return () => {
+      group.remove();
+      renderer.remove();
+      if (accentRef.current?.group === group) accentRef.current = null;
+    };
+  }, [insideIds, visible, onImagery, map, lines]);
 
   // White casing under in-scan lines, satellite only (drawn on a pane just below the lines).
   useEffect(() => {
@@ -292,12 +302,51 @@ export function TransmissionLayer({
     };
   }, [onImagery, visible, insideIds, lines, map]);
 
+  // Hover/click targets: one invisible path per line on the shared canvas
+  // (nothing is stroked or filled, so it never repaints the visible lines).
+  // Built once per dataset; the visible lines above stay non-interactive.
   useEffect(() => {
-    const g = groupRef.current;
+    const renderer = pointsRenderer(map);
+    const group = L.featureGroup();
+    for (const line of lines) {
+      const layer = L.polyline(line.coords, {
+        renderer,
+        pane: PANES.points.name,
+        interactive: true,
+        bubblingMouseEvents: false,
+        stroke: false,
+        fill: false,
+        smoothFactor: 1.2,
+      });
+      layer.bindTooltip(() => lineTooltip(line), { direction: "top", offset: [0, -6], sticky: true });
+      // Scan where the line was clicked (not its midpoint).
+      layer.on("click", (ev: L.LeafletMouseEvent) =>
+        onClickRef.current({ kind: "line", line }, ev.latlng.lat, ev.latlng.lng),
+      );
+      group.addLayer(layer);
+    }
+    hitRef.current = group;
+    registerPointGroup(map, "lines", group);
+    return () => {
+      group.remove();
+      registerPointGroup(map, "lines", null);
+      hitRef.current = null;
+    };
+  }, [map, lines, onClickRef]);
+
+  useEffect(() => {
+    const g = baseRef.current;
+    if (!g) return;
+    if (visible && !map.hasLayer(g)) g.addTo(map);
+    if (!visible && map.hasLayer(g)) g.remove();
+  }, [visible, map, lines, onImagery]);
+
+  useEffect(() => {
+    const g = hitRef.current;
     if (!g) return;
     if (visible && !map.hasLayer(g)) {
       g.addTo(map);
-      for (const e of entriesRef.current) if (e.inside) e.layer.bringToFront();
+      // Line targets go under every point so dots win the hit test.
       restackPoints(map);
     }
     if (!visible && map.hasLayer(g)) g.remove();
@@ -385,17 +434,21 @@ export function PlantLayer({
   plants,
   result,
   visible,
+  onFocus,
   onAssetClick,
 }: {
   plants: Plant[];
   result: ScanResult | null;
   visible: boolean;
+  /** Optional: also fly the map to a clicked plant. */
+  onFocus?: (lat: number, lon: number) => void;
   onAssetClick: AssetClick;
 }) {
   const map = useMap();
-  const onClickRef = useLatest(onAssetClick);
   const groupRef = useRef<L.FeatureGroup | null>(null);
   const entriesRef = useRef<{ p: Plant; layer: L.CircleMarker; inside: boolean }[]>([]);
+  const onFocusRef = useLatest(onFocus);
+  const onClickRef = useLatest(onAssetClick);
   const insideIds = useMemo(() => new Set((result?.plants ?? []).map((p) => p.plant_code)), [result]);
 
   useEffect(() => {
@@ -416,7 +469,11 @@ export function PlantLayer({
         bubblingMouseEvents: false,
       });
       layer.bindTooltip(() => plantTooltip(p), { direction: "top", offset: [0, -6] });
-      layer.on("click", () => onClickRef.current({ kind: "plant", plant: p }, p.lat, p.lon));
+      // Scan at the plant and select it (and fly there when onFocus is given).
+      layer.on("click", () => {
+        onClickRef.current({ kind: "plant", plant: p }, p.lat, p.lon);
+        onFocusRef.current?.(p.lat, p.lon);
+      });
       group.addLayer(layer);
       return { p, layer, inside: false };
     });
@@ -428,7 +485,7 @@ export function PlantLayer({
       groupRef.current = null;
       entriesRef.current = [];
     };
-  }, [map, plants, onClickRef]);
+  }, [map, plants, onFocusRef, onClickRef]);
 
   useEffect(() => {
     for (const e of entriesRef.current) {

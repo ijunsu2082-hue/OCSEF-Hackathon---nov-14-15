@@ -9,6 +9,7 @@ import type { PanelTab, ReportTarget } from "@/lib/scan/target";
 import { AreaBrief, areaTakeaway } from "./AreaBrief";
 import { AreaCharts } from "./AreaCharts";
 import { Explainer } from "./Explainer";
+import { GridChain } from "./GridChain";
 import { GridImpact } from "./GridImpact";
 import { HeroLive } from "./HeroLive";
 import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
@@ -163,6 +164,7 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
             <AreaCharts result={result} />
             <WhatsHere result={result} live={live} />
             <RiskBreakdown factors={result.risk.factors} />
+            <GridChain lat={result.area.lat} lon={result.area.lon} heatwave={heatwave} />
             <TopPlants
               result={result}
               onFocus={onFocus}

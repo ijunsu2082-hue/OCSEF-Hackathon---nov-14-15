@@ -1,7 +1,9 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
+import { haversineMi } from "@/lib/scan";
 import { CATEGORY_COLORS, FUEL_CATEGORY, FUEL_LABELS, RISK_COLORS, UI } from "@/lib/scan/colors";
-import type { FuelKey, GenEvent, Plant, RiskFactor, RiskLevel, ScanResult } from "@/lib/scan";
+import type { FuelKey, GenEvent, NicheCase, Plant, RiskFactor, RiskLevel, ScanResult } from "@/lib/scan";
 import { riskLevel, riskRange, WEIGHTS, type RiskWeightKey } from "@/lib/scan/risk";
 import { DASH, fmtNum, fmtPowerText, isNum } from "./format";
 import { Caption, Section } from "./ui";
@@ -98,6 +100,95 @@ export function RiskBreakdown({
           This is our own index. It has not yet been checked against official outage records (SAIDI/SAIFI) or shutoff history.
         </p>
       </details>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------- Cases */
+
+function isUrl(s: string): boolean {
+  return /^https?:\/\//i.test(s);
+}
+
+function CaseRow({
+  c,
+  distanceMi,
+  selected,
+  onSelect,
+}: {
+  c: NicheCase;
+  distanceMi: number;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect();
+    }
+  };
+  const link = c.stats.map((s) => s.source.trim()).find(isUrl);
+  const category = c.category ? c.category.charAt(0).toUpperCase() + c.category.slice(1) : "";
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      onClick={onSelect}
+      onKeyDown={onKey}
+      className={`-mx-3 cursor-pointer border-l-2 px-3 py-3 outline-none transition-colors focus-visible:bg-[#f6f8fa] ${
+        selected ? "border-[#0ea5e9] bg-[#f6f8fa]" : "border-transparent hover:bg-[#f6f8fa]"
+      }`}
+    >
+      <h4 className="text-[14px] font-semibold leading-snug text-[#1d2733]">{c.title}</h4>
+      <p className="mt-0.5 text-[12px] tabular-nums text-[#6b7583]">
+        {category}
+        {category && " · "}
+        {isNum(distanceMi) ? `${fmtNum(distanceMi, 1)} mi away` : DASH}
+      </p>
+      {c.shock_line && <p className="mt-1.5 text-[14px] leading-snug text-[#556070]">{c.shock_line}</p>}
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1.5 inline-block text-[13px] text-[#0284c7] hover:underline"
+        >
+          Sources
+        </a>
+      )}
+    </div>
+  );
+}
+
+export function CasesList({
+  result,
+  selectedCaseId,
+  onSelectCase,
+}: {
+  result: ScanResult;
+  selectedCaseId: string | null;
+  onSelectCase: (c: NicheCase) => void;
+}) {
+  const { lat, lon } = result.area;
+  return (
+    <Section title="Niche cases">
+      {result.cases.length === 0 ? (
+        <p className="text-[14px] text-[#556070]">No documented cases in this area. Try Downtown LA or San Onofre.</p>
+      ) : (
+        <div className="-my-3 flex flex-col">
+          {result.cases.map((c) => (
+            <CaseRow
+              key={c.id}
+              c={c}
+              distanceMi={haversineMi(lat, lon, c.location.lat, c.location.lon)}
+              selected={c.id === selectedCaseId}
+              onSelect={() => onSelectCase(c)}
+            />
+          ))}
+        </div>
+      )}
     </Section>
   );
 }

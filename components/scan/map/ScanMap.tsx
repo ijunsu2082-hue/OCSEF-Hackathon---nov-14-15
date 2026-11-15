@@ -19,6 +19,7 @@ import {
 } from "./layers";
 import { LayerPicker, type LayerVisibility } from "./LayerPicker";
 import { MapKey } from "./MapKey";
+import ScanMap3D from "./ScanMap3D";
 import { basemapById, loadBasemap, saveBasemap, type BasemapId } from "./basemaps";
 import type { MapFocus, ScanMapProps } from "./types";
 
@@ -34,8 +35,13 @@ const DEFAULT_LAYERS: LayerVisibility = {
   plants: true,
   transmission: true,
   substations: true,
+  /** Niche-case pins; only the optional 3D view draws them. */
+  cases: true,
   events: false,
 };
+
+/** 2D (the Leaflet map, default) or the optional 3D terrain view. */
+export type ViewMode = "2d" | "3d";
 
 /* ---- small helpers ------------------------------------------------------- */
 
@@ -149,10 +155,16 @@ export default function ScanMap({
   focus,
   newsPin,
   onScan,
+  onFocus,
   onSelectAsset,
   selected,
+  selectedCaseId = null,
+  onSelectCase = noopCase,
 }: ScanMapProps) {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
+  const [mode, setMode] = useState<ViewMode>("2d");
+  // The 3D view drapes imagery by default; picking a drape there must not rewrite the 2D basemap.
+  const [drape, setDrape] = useState<BasemapId>("satellite");
   // The news pin hides on the next map click; a new pin (new nonce) shows again.
   const [clearedPinNonce, setClearedPinNonce] = useState<number | null>(null);
   const shownPin = newsPin && newsPin.nonce !== clearedPinNonce ? newsPin : null;
@@ -205,111 +217,128 @@ export default function ScanMap({
 
   return (
     <div className="relative h-full w-full">
-      <MapContainer
-        center={[CENTER.lat, CENTER.lon]}
-        zoom={INITIAL_ZOOM}
-        minZoom={6}
-        maxZoom={17}
-        preferCanvas
-        worldCopyJump={false}
-        className="h-full w-full"
-        style={{ zIndex: 0 }}
-        attributionControl
-      >
-        <TileLayer
-          key={basemap.id}
-          url={basemap.url}
-          attribution={basemap.attribution}
-          maxNativeZoom={basemap.maxNativeZoom}
-          maxZoom={19}
+      {mode === "3d" ? (
+        <ScanMap3D
+          data={data}
+          area={area}
+          result={result}
+          selectedCaseId={selectedCaseId}
+          focus={focus}
+          layers={layers}
+          basemap={drape}
+          selected={selected}
+          onScan={handleMapClick}
+          onAssetClick={handleAssetClick}
+          onFocus={onFocus}
+          onSelectCase={onSelectCase}
         />
-        <AutoResize />
-        <ClickToScan onClick={handleMapClick} />
-        <FlyTo focus={focus} />
-        <NewsPinFly pin={newsPin} />
-
-        {/* Coverage ring — 100 mi around Westminster HS */}
-        <Circle
+      ) : (
+        <MapContainer
           center={[CENTER.lat, CENTER.lon]}
-          radius={COVERAGE_M}
-          interactive={false}
-          pathOptions={{
-            color: MAP_COLORS.accentStrong,
-            weight: 2,
-            opacity: 0.75,
-            fill: false,
-          }}
-        />
-        <Marker
-          position={[CENTER.lat + COVERAGE_DLAT, CENTER.lon]}
-          icon={ringLabelIcon}
-          interactive={false}
-          keyboard={false}
-        />
+          zoom={INITIAL_ZOOM}
+          minZoom={6}
+          maxZoom={17}
+          preferCanvas
+          worldCopyJump={false}
+          className="h-full w-full"
+          style={{ zIndex: 0 }}
+          attributionControl
+        >
+          <TileLayer
+            key={basemap.id}
+            url={basemap.url}
+            attribution={basemap.attribution}
+            maxNativeZoom={basemap.maxNativeZoom}
+            maxZoom={19}
+          />
+          <AutoResize />
+          <ClickToScan onClick={handleMapClick} />
+          <FlyTo focus={focus} />
+          <NewsPinFly pin={newsPin ?? null} />
 
-        {/* Active scan circle (drawn under the data panes) */}
-        <Circle
-          center={[scanArea.lat, scanArea.lon]}
-          radius={scanArea.radius_mi * 1609.344}
-          interactive={false}
-          pathOptions={{
-            color: MAP_COLORS.accent,
-            weight: 2,
-            opacity: 1,
-            fillColor: MAP_COLORS.accent,
-            fillOpacity: 0.06,
-          }}
-        />
-
-        <TransmissionLayer
-          lines={data.lines}
-          result={result}
-          visible={layers.transmission}
-          onImagery={basemap.id === "satellite"}
-          onAssetClick={handleAssetClick}
-        />
-        <SubstationLayer
-          substations={data.substations}
-          result={result}
-          visible={layers.substations}
-          onAssetClick={handleAssetClick}
-        />
-        <PlantLayer plants={data.plants} result={result} visible={layers.plants} onAssetClick={handleAssetClick} />
-        <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
-        <SelectionHighlight selected={selected} />
-
-        <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
-          <Tooltip direction="top" offset={[0, -8]}>
-            <div className="gs-tip-title">{CENTER.name}</div>
-            <div className="gs-tip-row">Center of the 100-mile coverage area</div>
-          </Tooltip>
-        </Marker>
-
-        {shownPin && (
+          {/* Coverage ring — 100 mi around Westminster HS */}
+          <Circle
+            center={[CENTER.lat, CENTER.lon]}
+            radius={COVERAGE_M}
+            interactive={false}
+            pathOptions={{
+              color: MAP_COLORS.accentStrong,
+              weight: 2,
+              opacity: 0.75,
+              fill: false,
+            }}
+          />
           <Marker
-            key={shownPin.nonce}
-            position={[shownPin.lat, shownPin.lon]}
-            icon={newsPinIcon}
+            position={[CENTER.lat + COVERAGE_DLAT, CENTER.lon]}
+            icon={ringLabelIcon}
             interactive={false}
             keyboard={false}
-            zIndexOffset={1000}
           />
-        )}
 
-        <ScanLabel area={scanArea} text={label} />
+          {/* Active scan circle (drawn under the data panes) */}
+          <Circle
+            center={[scanArea.lat, scanArea.lon]}
+            radius={scanArea.radius_mi * 1609.344}
+            interactive={false}
+            pathOptions={{
+              color: MAP_COLORS.accent,
+              weight: 2,
+              opacity: 1,
+              fillColor: MAP_COLORS.accent,
+              fillOpacity: 0.06,
+            }}
+          />
 
-        {/* Labels above the data layers so place names stay readable. */}
-        <Pane name="gs-labels" style={{ zIndex: 450, pointerEvents: "none" }}>
-          {basemap.labelsUrl && (
-            <TileLayer
-              key={basemap.id}
-              url={basemap.labelsUrl}
-              maxNativeZoom={basemap.maxNativeZoom}
-              maxZoom={19}
+          <TransmissionLayer
+            lines={data.lines}
+            result={result}
+            visible={layers.transmission}
+            onImagery={basemap.id === "satellite"}
+            onAssetClick={handleAssetClick}
+          />
+          <SubstationLayer
+            substations={data.substations}
+            result={result}
+            visible={layers.substations}
+            onAssetClick={handleAssetClick}
+          />
+          <PlantLayer plants={data.plants} result={result} visible={layers.plants} onAssetClick={handleAssetClick} />
+          <EventLayer events={result?.events ?? EMPTY} visible={layers.events} />
+          <SelectionHighlight selected={selected} />
+
+          <Marker position={[CENTER.lat, CENTER.lon]} icon={homeIcon} interactive keyboard={false}>
+            <Tooltip direction="top" offset={[0, -8]}>
+              <div className="gs-tip-title">{CENTER.name}</div>
+              <div className="gs-tip-row">Center of the 100-mile coverage area</div>
+            </Tooltip>
+          </Marker>
+
+          {shownPin && (
+            <Marker
+              key={shownPin.nonce}
+              position={[shownPin.lat, shownPin.lon]}
+              icon={newsPinIcon}
+              interactive={false}
+              keyboard={false}
+              zIndexOffset={1000}
             />
           )}
-        </Pane>
-      </MapContainer>
+
+          <ScanLabel area={scanArea} text={label} />
+
+          {/* Labels above the data layers so place names stay readable. */}
+          <Pane name="gs-labels" style={{ zIndex: 450, pointerEvents: "none" }}>
+            {basemap.labelsUrl && (
+              <TileLayer
+                key={basemap.id}
+                url={basemap.labelsUrl}
+                maxNativeZoom={basemap.maxNativeZoom}
+                maxZoom={19}
+              />
+            )}
+          </Pane>
+        </MapContainer>
+      )}
 
       {/* Hint + toast: above map overlays (20), below the overlay drawer (30) */}
       <div
@@ -326,18 +355,57 @@ export default function ScanMap({
           </div>
         ) : (
           <div className="whitespace-nowrap rounded-[6px] border border-[#e6e9ee] bg-white px-2.5 py-1 text-[13px] text-[#556070]">
-            Click the map to scan an area
+            {mode === "3d" ? "Click the terrain to scan an area" : "Click the map to scan an area"}
           </div>
         )}
       </div>
 
-      <LayerPicker basemap={basemap.id} onBasemap={onBasemap} layers={layers} onLayers={setLayers} />
-      <MapKey />
+      {/* Optional 3D terrain view; 2D is the default. In 3D it sits left of MapLibre's zoom/compass. */}
+      <div className={mode === "3d" ? "absolute right-[52px] top-3" : "absolute right-3 top-3"} style={{ zIndex: 20 }}>
+        <div
+          role="group"
+          aria-label="Map view"
+          className="flex overflow-hidden rounded-[6px] border border-[#e6e9ee] bg-white"
+          style={{ boxShadow: "0 1px 3px rgba(16,24,40,.08)" }}
+        >
+          {(["2d", "3d"] as const).map((id) => {
+            const on = mode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setMode(id)}
+                className={
+                  on
+                    ? "px-2.5 py-1 text-[12px] font-semibold text-[#0369a1]"
+                    : "px-2.5 py-1 text-[12px] font-medium text-[#556070] hover:bg-[#f6f8fa]"
+                }
+                style={{ background: on ? "#e0f2fe" : undefined }}
+              >
+                {id === "2d" ? "2D" : "3D"}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <LayerPicker
+        mode={mode}
+        basemap={mode === "3d" ? drape : basemap.id}
+        onBasemap={mode === "3d" ? setDrape : onBasemap}
+        layers={layers}
+        onLayers={setLayers}
+      />
+      {mode === "2d" && <MapKey />}
     </div>
   );
 }
 
 const EMPTY: never[] = [];
+
+/** The page selects stories through the Local news tab, not the map. */
+const noopCase = () => {};
 
 function formatRadius(r: number) {
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
