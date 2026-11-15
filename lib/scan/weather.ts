@@ -1,6 +1,14 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+/**
+ * Weather samples, stored in Supabase (`weather_locations` + `weather_samples`).
+ *
+ * They used to live in `.data/weather.sqlite`. Samples are operational state,
+ * so the tables are service-role only: RLS is on with no public policy, and the
+ * server (or the weather collector) writes with the service key. Without
+ * credentials the store is unavailable rather than silently local — a deployed
+ * app must not fall back to a file that does not exist there.
+ */
 
 export interface WeatherSample {
   time: string;
@@ -11,42 +19,12 @@ export interface WeatherSample {
   provider: "open-meteo";
 }
 
-const CELL_DIGITS = 3;
-const roundCell = (value: number) => Number(value.toFixed(CELL_DIGITS));
-/** Default Mapergy coverage center: Westminster, CA. */
-export const WEATHER_BASELINE = { lat: 33.7538, lon: -118.0111 };
-
-function databasePath(): string {
-  return resolve(process.env.WEATHER_DB_PATH || ".data/weather.sqlite");
-}
-
-function openDatabase(): DatabaseSync {
-  const path = databasePath();
-  mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS weather_locations (
-      location_key TEXT PRIMARY KEY,
-      lat REAL NOT NULL,
-      lon REAL NOT NULL,
-      first_seen_at TEXT NOT NULL,
-      last_seen_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS weather_samples (
-      location_key TEXT NOT NULL,
-      time TEXT NOT NULL,
-      temp_c REAL NOT NULL,
-      wind_mps REAL NOT NULL,
-      wind_direction_deg REAL NOT NULL,
-      shortwave_wm2 REAL NOT NULL,
-      provider TEXT NOT NULL DEFAULT 'open-meteo',
-      PRIMARY KEY (location_key, time)
-    );
-    CREATE INDEX IF NOT EXISTS weather_samples_recent
-      ON weather_samples(location_key, time DESC);
-  `);
-  return db;
+/** Raised when Supabase is missing or a weather-table call fails; routes answer 503. */
+export class WeatherStoreUnavailable extends Error {
+  constructor(message = "Weather samples live in Supabase; set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.") {
+    super(message);
+    this.name = "WeatherStoreUnavailable";
+  }
 }
 
 export interface WeatherLocation {
@@ -55,58 +33,187 @@ export interface WeatherLocation {
   lon: number;
 }
 
+/** The persistence surface, so tests can substitute an in-memory backend. */
+export interface WeatherStore {
+  remember(location: WeatherLocation, now: Date): Promise<void>;
+  recent(since: Date): Promise<WeatherLocation[]>;
+  latest(location: WeatherLocation, now: Date): Promise<WeatherSample | null>;
+  persist(location: WeatherLocation, samples: WeatherSample[], refreshEqualTimestamp: boolean): Promise<void>;
+}
+
+const CELL_DIGITS = 3;
+const roundCell = (value: number) => Number(value.toFixed(CELL_DIGITS));
+/** Default Mapergy coverage center: Westminster, CA. */
+export const WEATHER_BASELINE = { lat: 33.7538, lon: -118.0111 };
+
+// ---- Supabase backend -------------------------------------------------------
+
+let client: SupabaseClient | null | undefined;
+
+function supabase(): SupabaseClient {
+  if (client) return client;
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new WeatherStoreUnavailable();
+  client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return client;
+}
+
+interface SampleRow {
+  observed_at: string;
+  temp_c: number;
+  wind_mps: number;
+  wind_direction_deg: number;
+  shortwave_wm2: number;
+  provider: WeatherSample["provider"];
+}
+
+const SAMPLE_COLUMNS = "observed_at,temp_c,wind_mps,wind_direction_deg,shortwave_wm2,provider";
+
+/** Sample times are UTC minutes; Postgres keeps them as timestamptz. */
+const toTimestamp = (minute: string) => `${minute}:00.000Z`;
+const fromTimestamp = (value: string) => new Date(value).toISOString().slice(0, 16);
+
+function toSample(row: SampleRow): WeatherSample {
+  return {
+    time: fromTimestamp(row.observed_at),
+    temp_c: row.temp_c,
+    wind_mps: row.wind_mps,
+    wind_direction_deg: row.wind_direction_deg,
+    shortwave_wm2: row.shortwave_wm2,
+    provider: row.provider,
+  };
+}
+
+function storeFailure(error: unknown): never {
+  const detail = error instanceof Error ? error.message : String(error);
+  throw new WeatherStoreUnavailable(`Weather store query failed: ${detail}`);
+}
+
+const supabaseStore: WeatherStore = {
+  async remember(location, now) {
+    const db = supabase();
+    const nowIso = now.toISOString();
+    // Insert-once so `first_seen_at` survives; then touch the last sighting.
+    const inserted = await db.from("weather_locations").upsert(
+      {
+        location_key: location.key,
+        lat: location.lat,
+        lon: location.lon,
+        first_seen_at: nowIso,
+        last_seen_at: nowIso,
+      },
+      { onConflict: "location_key", ignoreDuplicates: true },
+    );
+    if (inserted.error) storeFailure(inserted.error);
+    const touched = await db
+      .from("weather_locations")
+      .update({ last_seen_at: nowIso })
+      .eq("location_key", location.key);
+    if (touched.error) storeFailure(touched.error);
+  },
+
+  async recent(since) {
+    const { data, error } = await supabase()
+      .from("weather_locations")
+      .select("location_key,lat,lon")
+      .gte("last_seen_at", since.toISOString())
+      .order("last_seen_at", { ascending: false });
+    if (error) storeFailure(error);
+    return (data ?? []).map((row) => ({
+      key: (row as { location_key: string }).location_key,
+      lat: (row as { lat: number }).lat,
+      lon: (row as { lon: number }).lon,
+    }));
+  },
+
+  async latest(location, now) {
+    const { data, error } = await supabase()
+      .from("weather_samples")
+      .select(SAMPLE_COLUMNS)
+      .eq("location_key", location.key)
+      .lte("observed_at", toTimestamp(now.toISOString().slice(0, 16)))
+      .order("observed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) storeFailure(error);
+    return data ? toSample(data as SampleRow) : null;
+  },
+
+  async persist(location, samples, refreshEqualTimestamp) {
+    const rows = samples.map((sample) => ({
+      location_key: location.key,
+      observed_at: toTimestamp(sample.time),
+      temp_c: sample.temp_c,
+      wind_mps: sample.wind_mps,
+      wind_direction_deg: sample.wind_direction_deg,
+      shortwave_wm2: sample.shortwave_wm2,
+      provider: sample.provider,
+    }));
+    const { error } = await supabase().from("weather_samples").upsert(rows, {
+      onConflict: "location_key,observed_at",
+      // A first observation wins; an equal timestamp only refreshes on request.
+      ignoreDuplicates: !refreshEqualTimestamp,
+    });
+    if (error) storeFailure(error);
+  },
+};
+
+let override: WeatherStore | null = null;
+
+/** Test seam: pass null to restore the Supabase backend. */
+export function setWeatherStoreForTests(store: WeatherStore | null): void {
+  override = store;
+}
+
+function active(): WeatherStore {
+  return override ?? supabaseStore;
+}
+
+// ---- Public API -------------------------------------------------------------
+
 export function weatherLocation(lat: number, lon: number): WeatherLocation {
   const cellLat = roundCell(lat);
   const cellLon = roundCell(lon);
   return { key: `${cellLat},${cellLon}`, lat: cellLat, lon: cellLon };
 }
 
-export function rememberWeatherLocation(lat: number, lon: number, now = new Date()): WeatherLocation {
+export async function rememberWeatherLocation(
+  lat: number,
+  lon: number,
+  now = new Date(),
+): Promise<WeatherLocation> {
   const location = weatherLocation(lat, lon);
-  const db = openDatabase();
-  try {
-    db.prepare(`INSERT INTO weather_locations(location_key,lat,lon,first_seen_at,last_seen_at)
-      VALUES(?,?,?,?,?) ON CONFLICT(location_key) DO UPDATE SET last_seen_at=excluded.last_seen_at`)
-      .run(location.key, location.lat, location.lon, now.toISOString(), now.toISOString());
-  } finally { db.close(); }
+  await active().remember(location, now);
   return location;
 }
 
-export function recentWeatherLocations(since = new Date(Date.now() - 24 * 60 * 60 * 1000)): WeatherLocation[] {
-  const db = openDatabase();
-  try {
-    return db.prepare(`SELECT location_key AS key, lat, lon FROM weather_locations
-      WHERE last_seen_at >= ? ORDER BY last_seen_at DESC`).all(since.toISOString()) as unknown as WeatherLocation[];
-  } finally { db.close(); }
+export async function recentWeatherLocations(
+  since = new Date(Date.now() - 24 * 60 * 60 * 1000),
+): Promise<WeatherLocation[]> {
+  return active().recent(since);
 }
 
-export function latestPersistedWeather(location: WeatherLocation, now = new Date()): WeatherSample | null {
-  const db = openDatabase();
-  try {
-    const row = db.prepare(`SELECT time, temp_c, wind_mps, wind_direction_deg,
-      shortwave_wm2, provider FROM weather_samples WHERE location_key=? AND time<=? ORDER BY time DESC LIMIT 1`)
-      .get(location.key, now.toISOString().slice(0, 16)) as unknown as WeatherSample | undefined;
-    return row ?? null;
-  } finally { db.close(); }
+export async function latestPersistedWeather(
+  location: WeatherLocation,
+  now = new Date(),
+): Promise<WeatherSample | null> {
+  return active().latest(location, now);
 }
 
-export function persistWeather(location: WeatherLocation, samples: WeatherSample[], refreshEqualTimestamp = false, now = new Date()): void {
+export async function persistWeather(
+  location: WeatherLocation,
+  samples: WeatherSample[],
+  refreshEqualTimestamp = false,
+  now = new Date(),
+): Promise<void> {
   const nowUtc = now.toISOString().slice(0, 16);
   const accepted = samples.filter((sample) => validUtcTime(sample.time) && sample.time <= nowUtc);
   if (!accepted.length) return;
-  const db = openDatabase();
-  try {
-    const insert = db.prepare(refreshEqualTimestamp
-      ? `INSERT INTO weather_samples(location_key,time,temp_c,wind_mps,wind_direction_deg,shortwave_wm2,provider)
-         VALUES(?,?,?,?,?,?,?) ON CONFLICT(location_key,time) DO UPDATE SET
-         temp_c=excluded.temp_c, wind_mps=excluded.wind_mps,
-         wind_direction_deg=excluded.wind_direction_deg, shortwave_wm2=excluded.shortwave_wm2`
-      : `INSERT INTO weather_samples(location_key,time,temp_c,wind_mps,wind_direction_deg,shortwave_wm2,provider)
-         VALUES(?,?,?,?,?,?,?) ON CONFLICT(location_key,time) DO NOTHING`);
-    for (const sample of accepted) insert.run(location.key, sample.time, sample.temp_c,
-      sample.wind_mps, sample.wind_direction_deg, sample.shortwave_wm2, sample.provider);
-  } finally { db.close(); }
+  await active().persist(location, accepted, refreshEqualTimestamp);
 }
+
+// ---- Open-Meteo -------------------------------------------------------------
 
 const CURRENT_FIELDS = "temperature_2m,wind_speed_10m,wind_direction_10m,shortwave_radiation";
 const HOURLY_FIELDS = "temperature_2m,wind_speed_10m,wind_direction_10m,shortwave_radiation";
@@ -215,19 +322,21 @@ export type WeatherSource = "live" | "persisted" | "historical" | "none";
 export interface WeatherRefreshResult { sample: WeatherSample | null; source: WeatherSource; }
 
 export async function refreshWeatherLocation(location: WeatherLocation): Promise<WeatherRefreshResult> {
-  const before = latestPersistedWeather(location);
+  // Resolves the store first: an unconfigured project answers 503 instead of
+  // pretending a live reading was persisted.
+  const before = await latestPersistedWeather(location);
   try {
     const sample = await fetchCurrentWeather(location);
     const isCurrentOrNewer = !before || sample.time >= before.time;
-    if (isCurrentOrNewer) persistWeather(location, [sample], true);
-    const latest = latestPersistedWeather(location) ?? sample;
+    if (isCurrentOrNewer) await persistWeather(location, [sample], true);
+    const latest = (await latestPersistedWeather(location)) ?? sample;
     return { sample: latest, source: isCurrentOrNewer ? "live" : "persisted" };
   } catch {
-    const persisted = latestPersistedWeather(location) ?? before;
+    const persisted = (await latestPersistedWeather(location)) ?? before;
     try {
       const historical = await fetchHistoricalWeather(location);
-      if (historical) persistWeather(location, [historical]);
-      const latest = latestPersistedWeather(location) ?? persisted ?? historical;
+      if (historical) await persistWeather(location, [historical]);
+      const latest = (await latestPersistedWeather(location)) ?? persisted ?? historical;
       if (historical && (!persisted || historical.time > persisted.time)) {
         return { sample: latest ?? historical, source: "historical" };
       }
@@ -237,6 +346,6 @@ export async function refreshWeatherLocation(location: WeatherLocation): Promise
 }
 
 export async function refreshRecentWeather(): Promise<void> {
-  rememberWeatherLocation(WEATHER_BASELINE.lat, WEATHER_BASELINE.lon);
-  for (const location of recentWeatherLocations()) await refreshWeatherLocation(location);
+  await rememberWeatherLocation(WEATHER_BASELINE.lat, WEATHER_BASELINE.lon);
+  for (const location of await recentWeatherLocations()) await refreshWeatherLocation(location);
 }

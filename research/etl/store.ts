@@ -39,12 +39,25 @@ export function etlStorageConfigured(): boolean {
   return serviceClient() !== null;
 }
 
+let warnedMissingCredentials = false;
+
 /**
  * Test and restore drills run under `ETL_STATE_NAMESPACE` and must stay
- * hermetic: they neither read the published revision nor overwrite it.
+ * hermetic: they neither read the published revision nor overwrite it. Anything
+ * else that cannot reach Supabase is a misconfiguration worth saying out loud,
+ * because the publish succeeds on disk and the deployed app then sees nothing.
  */
 function mirroring(): boolean {
-  return serviceClient() !== null && !process.env.ETL_STATE_NAMESPACE;
+  if (process.env.ETL_STATE_NAMESPACE) return false;
+  if (serviceClient() !== null) return true;
+  if (!warnedMissingCredentials) {
+    warnedMissingCredentials = true;
+    console.warn(
+      "[etl] ETL mirroring skipped: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set. " +
+        "Reports and asset inventories are written to disk only, so a deployed app cannot serve them.",
+    );
+  }
+  return false;
 }
 
 let ready: Promise<SupabaseClient | null> | null = null;
