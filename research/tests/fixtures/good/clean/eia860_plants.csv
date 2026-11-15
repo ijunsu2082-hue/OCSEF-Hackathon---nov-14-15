@@ -1,0 +1,4 @@
+plant_code,plant_name,utility_name,operating,start_date,status,nameplate_mw,latitude,longitude,distance_mi
+400,Haynes,Los Angeles Department of Water & Power,true,1962-01-01,OP,1739.1,33.764741,-118.09913,5.1
+7000,Fixture Solar,,false,,SB,20.5,33.85,-117.9,9.2
+56000,Downtown Battery,Fixture Utility,true,2021-06-30,OP,100,34.05,-118.25,24.6

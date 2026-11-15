@@ -1,0 +1,1550 @@
+plant_code,generator_id,status_group,status_code,technology,prime_mover,energy_source_1,energy_source_2,source_category,nameplate_mw,summer_capacity_mw,winter_capacity_mw,operating_year,operating_month,planned_retirement_year,planned_retirement_month,retirement_year,latitude,longitude,distance_mi
+72,1,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,10.1,10.1,10.1,1982,8,,,,34.01135,-118.4168,29.3
+309,1,retired,RE,Petroleum Liquids,ST,DFO,NG,oil,40,40,40,1943,1,,,1985,32.697222,-117.114722,89.5
+309,2,retired,RE,Petroleum Liquids,ST,DFO,NG,oil,69,62,62,1948,5,,,1985,32.697222,-117.114722,89.5
+309,3,retired,RE,Petroleum Liquids,ST,DFO,NG,oil,69,62,64,1950,8,,,1985,32.697222,-117.114722,89.5
+309,4,retired,RE,Petroleum Liquids,ST,DFO,NG,oil,69,64,64,1952,9,,,1985,32.697222,-117.114722,89.5
+315,1,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,156,175,175,1956,9,,,2019,33.7688,-118.1009,5.3
+315,2,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,156,175,175,1957,2,,,2019,33.7688,-118.1009,5.3
+315,3,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,310,327,327,1961,12,2026,12,,33.7688,-118.1009,5.3
+315,4,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,310,335,335,1962,6,2026,12,,33.7688,-118.1009,5.3
+315,5,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,495,480,480,1964,3,2026,12,,33.7688,-118.1009,5.3
+315,6,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,495,495,495,1966,9,,,2019,33.7688,-118.1009,5.3
+315,7,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,133,133,133,1969,7,,,2003,33.7688,-118.1009,5.3
+316,1,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,8.5,8.5,8.5,1982,6,,,,34.0969,-118.4795,35.8
+332,1,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1.5,1.5,1.5,1917,12,,,,34.155162,-117.397119,44.8
+332,2,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1.5,1.5,1.5,1917,12,,,,34.155162,-117.397119,44.8
+335,1,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,218,225.8,225.8,1958,6,,,2019,33.6439,-117.9792,7.8
+335,2,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,218,225.8,225.8,1958,12,2026,12,,33.6439,-117.9792,7.8
+335,3,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,225,225,225,1961,5,,,2012,33.6439,-117.9792,7.8
+335,4,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,227,227,227,1961,7,,,2012,33.6439,-117.9792,7.8
+335,5,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,133,133,133,1969,4,,,2002,33.6439,-117.9792,7.8
+341,CT1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,63,65,65,1976,12,,,,33.7641,-118.2248,12.3
+341,CT2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,63,65,65,1976,12,,,,33.7641,-118.2248,12.3
+341,CT3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,63,65,65,1976,12,,,,33.7641,-118.2248,12.3
+341,CT4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,63,65,65,1976,12,,,,33.7641,-118.2248,12.3
+341,CT5,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,63,63,63,1977,4,,,2004,33.7641,-118.2248,12.3
+341,CT6,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,63,63,63,1977,4,,,2004,33.7641,-118.2248,12.3
+341,CT7,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,63,63,63,1977,4,,,2004,33.7641,-118.2248,12.3
+341,ST8,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,80,80,80,1976,12,,,2004,33.7641,-118.2248,12.3
+341,ST9,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,66.4,63,63,1977,4,,,2004,33.7641,-118.2248,12.3
+350,1,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,806,741,741,1971,8,2027,1,,34.1292,-119.1689,71.3
+350,2,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,806,750,750,1973,3,2027,1,,34.1292,-119.1689,71.3
+358,1,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,65.3,60,60,1957,8,,,2002,34.0818,-117.2418,49.6
+358,2,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,65.3,60,60,1958,7,,,2002,34.0818,-117.2418,49.6
+358,MV3A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,164.6,156,182,2005,12,,,,34.0818,-117.2418,49.6
+358,MV3B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,164.6,156,182,2005,12,,,,34.0818,-117.2418,49.6
+358,MV3C,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,189.2,197,191,2005,12,,,,34.0818,-117.2418,49.6
+358,MV4A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,164.6,156,182,2006,1,,,,34.0818,-117.2418,49.6
+358,MV4B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,164.6,156,182,2006,1,,,,34.0818,-117.2418,49.6
+358,MV4C,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,189.2,197,191,2006,1,,,,34.0818,-117.2418,49.6
+360,2,retired,RE,Nuclear,ST,NUC,,nuclear,1127,1070,1070,1983,8,,,2013,33.368794,-117.554916,37.4
+360,3,retired,RE,Nuclear,ST,NUC,,nuclear,1127,1080,1080,1984,4,,,2013,33.368794,-117.554916,37.4
+361,1,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,0.8,0.8,0.8,1899,2,,,,34.14522,-117.058481,60.9
+361,2,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,0.8,0.8,0.8,1899,2,,,,34.14522,-117.058481,60.9
+361,3,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,0.8,0.8,0.8,1899,1,,,,34.14522,-117.058481,60.9
+361,4,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,0.8,0.8,0.8,1899,1,,,,34.14522,-117.058481,60.9
+363,1,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,3.1,3.1,3.1,1999,9,,,,34.107245,-117.099091,57.7
+375,M2,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,10,10,10,1984,11,,,2002,34.178056,-118.315556,34.1
+375,M3,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,20,20,20,1949,11,,,2002,34.178056,-118.315556,34.1
+375,M4,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,34.5,30,30,1953,9,,,2002,34.178056,-118.315556,34.1
+375,M5,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,23.1,21.7,21.7,1969,8,,,2003,34.178056,-118.315556,34.1
+377,1,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,20,19,19,1977,7,,,2023,34.1556,-118.2782,31.7
+377,10,proposed,V,Batteries,BA,MWH,,battery,75,75,75,2026,11,,,,34.1556,-118.2782,31.7
+377,11,proposed,V,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,18.8,18.4,18.4,2026,11,,,,34.1556,-118.2782,31.7
+377,12,proposed,V,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,18.8,18.4,18.4,2026,11,,,,34.1556,-118.2782,31.7
+377,13,proposed,V,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,18.8,18.4,18.4,2026,11,,,,34.1556,-118.2782,31.7
+377,2,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,20,19,19,1977,7,,,2023,34.1556,-118.2782,31.7
+377,3,retired,RE,Natural Gas Steam Turbine,ST,NG,LFG,natural_gas,23,18,18,1953,12,,,2023,34.1556,-118.2782,31.7
+377,4,retired,RE,Natural Gas Steam Turbine,ST,NG,LFG,natural_gas,50,40,40,1959,9,,,2023,34.1556,-118.2782,31.7
+377,5,retired,RE,Natural Gas Steam Turbine,ST,NG,LFG,natural_gas,50,40,40,1964,11,,,2023,34.1556,-118.2782,31.7
+377,6,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,22,15,18,1972,4,,,2004,34.1556,-118.2782,31.7
+377,7,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,31,20,23,1974,2,,,2002,34.1556,-118.2782,31.7
+377,8A,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,25.4,26,30,1977,7,,,2023,34.1556,-118.2782,31.7
+377,8BC,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,55.1,46,50,1977,7,,,2023,34.1556,-118.2782,31.7
+377,9,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,57.4,48,48,2004,1,,,,34.1556,-118.2782,31.7
+392,1,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1973,9,,,,34.587237,-118.656638,68.4
+392,2,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1974,7,,,,34.587237,-118.656638,68.4
+392,3,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1976,7,,,,34.587237,-118.656638,68.4
+392,4,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1977,6,,,,34.587237,-118.656638,68.4
+392,5,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1977,12,,,,34.587237,-118.656638,68.4
+392,6,operable,OP,Hydroelectric Pumped Storage,PS,WAT,,hydro,271,270.5,270.5,1978,8,,,,34.587237,-118.656638,68.4
+392,7,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,56,51.5,51.5,1972,1,,,,34.587237,-118.656638,68.4
+396,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,8.8,8.6,8.6,1971,10,,,,34.318248,-118.494449,47.8
+397,1,operable,OA,Conventional Hydroelectric,HY,WAT,,hydro,2,2,2,1921,6,,,,34.103931,-118.413377,33.4
+399,10A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,85.3,72,72,1995,1,,,,33.7706,-118.2656,14.7
+399,10B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,85.3,72,72,1995,1,,,,33.7706,-118.2656,14.7
+399,5,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,DFO,natural_gas,75,64,68,1995,1,,,,33.7706,-118.2656,14.7
+399,GT10,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2002,1,,,,33.7706,-118.2656,14.7
+399,GT11,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2002,1,,,,33.7706,-118.2656,14.7
+399,GT12,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2002,1,,,,33.7706,-118.2656,14.7
+399,GT13,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2002,1,,,,33.7706,-118.2656,14.7
+399,GT14,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2002,1,,,,33.7706,-118.2656,14.7
+399,GT6,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,23.5,19,19,1972,7,,,2002,33.7706,-118.2656,14.7
+399,GT7,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,23.5,19,19,1972,6,,,2002,33.7706,-118.2656,14.7
+400,1,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,230,222,222,1962,9,,,,33.764741,-118.09913,5.1
+400,10,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,182.8,162.5,162.5,2005,1,,,,33.764741,-118.09913,5.1
+400,11,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,12,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,13,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,14,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,15,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,16,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,108.2,99.2,99.2,2013,6,,,,33.764741,-118.09913,5.1
+400,2,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,230,222,222,1963,4,,,,33.764741,-118.09913,5.1
+400,3,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,230,222,222,1964,7,,,2004,33.764741,-118.09913,5.1
+400,4,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,230,222,222,1965,2,,,2003,33.764741,-118.09913,5.1
+400,5,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,343,292,292,1966,8,,,2013,33.764741,-118.09913,5.1
+400,6,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,343,238,243,1967,3,,,2013,33.764741,-118.09913,5.1
+400,8,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,DFO,natural_gas,264.3,235,250,2005,1,,,,33.764741,-118.09913,5.1
+400,9,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,182.8,162.5,162.5,2005,1,,,,33.764741,-118.09913,5.1
+403,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,2.8,3.2,3.2,1922,10,,,,34.312778,-118.492778,47.5
+403,2,operable,OA,Conventional Hydroelectric,HY,WAT,,hydro,2.8,2.9,2.9,1922,10,,,,34.312778,-118.492778,47.5
+404,1,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,163.2,105,105,1958,12,2029,12,,33.918151,-118.427648,26.5
+404,2,operable,OP,Natural Gas Steam Turbine,ST,NG,,natural_gas,163.2,156.3,156.3,1959,7,2029,12,,33.918151,-118.427648,26.5
+404,3,retired,RE,Natural Gas Steam Turbine,ST,NG,OBG,natural_gas,496.8,445,450,1974,10,,,2015,33.918151,-118.427648,26.5
+404,4,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,216.9,206,206,2015,10,,,,33.918151,-118.427648,26.5
+404,5,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,118.9,105,105,2015,11,,,,33.918151,-118.427648,26.5
+404,6,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,106.9,102,102,2015,8,,,,33.918151,-118.427648,26.5
+404,7,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,106.9,102,102,2015,9,,,,33.918151,-118.427648,26.5
+408,1,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,100,95,95,1954,9,,,1992,34.244991,-118.391327,40.3
+408,2,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,100,99,99,1954,12,,,1992,34.244991,-118.391327,40.3
+408,3,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,172.8,163,163,1955,11,,,2003,34.244991,-118.391327,40.3
+408,4,retired,RE,Natural Gas Steam Turbine,ST,NG,RFO,natural_gas,172.8,160,160,1956,5,,,2003,34.244991,-118.391327,40.3
+408,5,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,60.5,44,44,2001,8,,,,34.244991,-118.391327,40.3
+408,6,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,182.8,155,155,2003,9,,,,34.244991,-118.391327,40.3
+408,7,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,182.8,155,155,2003,9,,,,34.244991,-118.391327,40.3
+408,8,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,DFO,natural_gas,264.4,209,209,2003,11,,,,34.244991,-118.391327,40.3
+420,B1,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,46,45,45,1955,3,,,2002,34.1254,-118.148,26.8
+420,B2,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,46,45,45,1957,7,,,2002,34.1254,-118.148,26.8
+420,B3,retired,RE,Natural Gas Steam Turbine,ST,NG,,natural_gas,75,71,73,1965,6,,,2016,34.1254,-118.148,26.8
+422,GT1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,28.8,22,22,1976,1,,,,34.126,-118.1494,26.9
+422,GT2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,28.8,22,22,1976,1,,,,34.126,-118.1494,26.9
+422,GT3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,60.5,47.2,47.2,2004,1,,,,34.126,-118.1494,26.9
+422,GT4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,60.5,47.2,47.2,2004,1,,,,34.126,-118.1494,26.9
+422,GT5,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,71,68,68,2016,12,,,,34.126,-118.1494,26.9
+422,ST1,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,16,16,16,2016,12,,,,34.126,-118.1494,26.9
+436,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,59.8,57,57,1972,12,,,,34.2056,-117.3344,49.8
+436,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,59.8,57,57,1976,7,,,,34.2056,-117.3344,49.8
+436,3,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,78.3,74,74,1994,7,,,,34.2056,-117.3344,49.8
+436,4,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,78.3,74,74,1992,7,,,,34.2056,-117.3344,49.8
+457,HC1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,0.7,0.7,0.7,1986,6,,,,33.166246,-117.016566,70.2
+457,HC2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,0.7,0.7,0.7,1986,6,,,,33.166246,-117.016566,70.2
+479,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,2.9,2.8,2.8,1983,7,,,,33.8343,-117.4971,30
+480,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,2.9,2.8,2.8,1983,8,,,,33.85895,-117.6106,24.1
+481,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,7.9,7.9,7.9,1983,5,,,,33.8361,-117.1831,47.9
+482,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1.9,1.9,1.9,1984,3,,,,34.004722,-118.09917,18.1
+483,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.1,3.1,3.1,1984,6,,,,33.92493,-117.95517,12.3
+484,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,5.9,5.9,5.9,1985,6,,,,33.3944,-117.1889,53.5
+487,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,4.1,4.1,4.1,1985,11,,,,33.9001,-117.82905,14.5
+745,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,23.9,23.9,23.9,1994,12,,,,34.10345,-117.5257,36.9
+905,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,19.6,17,17,1986,7,,,,34.8158,-118.6867,82.9
+6013,O1,operable,SB,Natural Gas Steam Turbine,ST,NG,,natural_gas,50,44,44,1959,10,,,,34.1764,-118.3147,34
+6013,O2,operable,SB,Natural Gas Steam Turbine,ST,NG,,natural_gas,59.7,55,55,1964,9,,,,34.1764,-118.3147,34
+6013,O3,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,24.4,23.5,23.5,1972,7,,,2003,34.1764,-118.3147,34
+6013,O4,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,37.8,32,32,1978,9,,,2003,34.1764,-118.3147,34
+6196,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,37.1,38,38,1982,11,,,,34.6853,-118.7881,78.2
+6196,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,37.1,38,38,1983,2,,,,34.6853,-118.7881,78.2
+6449,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3,2,2,1949,2,,,,34.1548,-117.9093,28.3
+6479,1A,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,22.5,27,27,1983,12,,,,34.590183,-118.454676,63.1
+6479,3,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,9.9,11,11,1917,4,,,,34.590183,-118.454676,63.1
+6479,4,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,10.6,12,12,1923,5,,,,34.590183,-118.454676,63.1
+6479,6,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,22.5,27,27,1987,4,,,,34.590183,-118.454676,63.1
+6480,1,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,14,14.5,14.5,1920,7,,,,34.534337,-118.525113,61.4
+6480,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,14,14.4,14.4,1920,8,,,,34.534337,-118.525113,61.4
+6480,3,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,18,16,16,1932,9,,,,34.534337,-118.525113,61.4
+6643,1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1979,12,,,2019,34.20795,-118.3516,36.9
+6644,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,4.9,4.9,4.9,1980,8,,,,33.8553,-117.4537,32.8
+6645,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,4.5,7.1,6.7,1981,4,,,,34.5148,-118.6092,62.7
+6645,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,4.5,,,1981,4,,,,34.5148,-118.6092,62.7
+6646,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,9.9,9.9,9.9,1981,6,,,,34.1275,-117.7958,28.6
+6647,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,5.1,5.1,5.1,1981,11,,,,33.9117,-117.8192,15.5
+6704,10,operable,OP,Petroleum Liquids,IC,DFO,,oil,1.1,1.1,1.1,1966,7,,,,33.333056,-118.310278,33.8
+6704,12,operable,OP,Petroleum Liquids,IC,DFO,,oil,1.6,1.6,1.6,1976,6,,,,33.333056,-118.310278,33.8
+6704,14,operable,OP,Petroleum Liquids,IC,DFO,,oil,1.4,1.4,1.4,1986,10,,,,33.333056,-118.310278,33.8
+6704,15,operable,OP,Petroleum Liquids,IC,DFO,,oil,2.8,2.8,2.8,1995,12,,,,33.333056,-118.310278,33.8
+6704,7,operable,OP,Petroleum Liquids,IC,DFO,,oil,1,1,1,1958,7,,,,33.333056,-118.310278,33.8
+6704,8,operable,OS,Petroleum Liquids,IC,DFO,,oil,1.5,1.5,1.5,1963,6,,,,33.333056,-118.310278,33.8
+6704,MT01,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT02,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT03,operable,OS,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT04,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT05,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT06,operable,OS,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT07,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT08,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT09,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT10,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT11,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT14,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT15,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT16,operable,OS,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT17,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT18,operable,OS,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT19,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT20,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT21,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT22,operable,OS,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT23,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT24,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,MT25,operable,OP,Petroleum Liquids,GT,PG,,other_gas,0.1,0.1,0.1,2011,12,,,,33.333056,-118.310278,33.8
+6704,NASB1,operable,OS,Batteries,BA,MWH,,battery,1,1,1,2012,8,,,,33.333056,-118.310278,33.8
+7072,1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,10.9,10.8,10.8,1996,8,,,,34.307444,-117.323548,54.9
+7072,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,10.9,10.8,10.8,1996,8,,,,34.307444,-117.323548,54.9
+7072,3,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,10.9,10.8,10.8,1996,8,,,,34.307444,-117.323548,54.9
+7147,3,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1903,3,,,,34.088019,-117.039539,60.3
+7147,4,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1904,10,,,,34.088019,-117.039539,60.3
+7147,5,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1904,3,,,,34.088019,-117.039539,60.3
+7148,1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.5,1.5,1.5,1923,12,,,2001,34.030376,-116.857142,68.9
+7436,JH1,operable,OS,Petroleum Liquids,IC,DFO,,oil,6,3.6,4,1933,9,,,,33.9986,-118.2219,20.8
+7436,JH2,operable,OS,Petroleum Liquids,IC,DFO,,oil,6,3.6,4,1933,9,,,,33.9986,-118.2219,20.8
+7436,JH3,operable,OS,Petroleum Liquids,IC,DFO,,oil,6,3.6,4.6,1933,9,,,,33.9986,-118.2219,20.8
+7436,JH4,operable,OS,Petroleum Liquids,IC,DFO,,oil,6,3.6,4,1933,9,,,,33.9986,-118.2219,20.8
+7436,JH5,operable,OS,Petroleum Liquids,IC,DFO,,oil,6,3.6,4,1933,9,,,,33.9986,-118.2219,20.8
+7693,1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.2,44.5,46.5,1991,5,,,2019,33.853542,-117.856286,11.2
+7942,1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,3.3,,,2001,5,,,2009,33.6808,-117.0698,54.3
+7942,10,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,11,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,12,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,5,,,,33.6808,-117.0698,54.3
+7942,3,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,5,,,,33.6808,-117.0698,54.3
+7942,4,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,5,,,,33.6808,-117.0698,54.3
+7942,5,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,3.3,,,2001,12,,,2009,33.6808,-117.0698,54.3
+7942,6,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,7,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,8,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.3,3.3,3.3,2001,12,,,,33.6808,-117.0698,54.3
+7942,9,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,3.3,,,2001,12,,,2009,33.6808,-117.0698,54.3
+7987,L1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,60.5,48,48,2002,6,,,,34.1772,-118.3147,34
+10026,EG1,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.5,0.5,0.5,1984,1,,,2008,33.1165,-117.3215,59.3
+10026,EG10,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.8,0.8,0.8,2008,11,,,,33.1165,-117.3215,59.3
+10026,EG2,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.5,0.5,0.5,1984,1,,,2008,33.1165,-117.3215,59.3
+10026,EG20,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.8,0.8,0.8,2008,11,,,,33.1165,-117.3215,59.3
+10026,EG3,retired,RE,Other Waste Biomass,IC,OBG,NG,biogas,0.5,0.5,0.5,1984,1,,,2008,33.1165,-117.3215,59.3
+10026,EG30,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.8,0.8,0.8,2009,1,,,,33.1165,-117.3215,59.3
+10026,EG40,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.8,0.8,0.8,2009,4,,,,33.1165,-117.3215,59.3
+10048,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4,3.5,3.5,1985,2,,,2013,33.943965,-118.40425,26.1
+10048,GEN2,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4,3.5,3.5,1985,2,,,2013,33.943965,-118.40425,26.1
+10090,GEN1,retired,RE,Municipal Solid Waste,ST,MSW,NG,biomass,12,10,10,1986,11,,,2018,33.9949,-118.1538,18.6
+10091,G2,operable,OP,Other Waste Biomass,CT,OBG,NG,biogas,9.9,8,9,2003,2,,,,33.7683,-118.2836,15.7
+10091,G3,operable,OP,Other Waste Biomass,CT,OBG,NG,biogas,9.9,8,9,2001,12,,,,33.7683,-118.2836,15.7
+10091,GEN1,operable,OP,Other Waste Biomass,CT,OBG,NG,biogas,9.9,8,9,1986,1,,,,33.7683,-118.2836,15.7
+10091,GEN2,retired,RE,Other Waste Biomass,CT,OBG,NG,biogas,9.9,8,9,1986,1,,,2002,33.7683,-118.2836,15.7
+10091,GEN3,retired,RE,Other Waste Biomass,CT,OBG,NG,biogas,9.9,8,9,1986,1,,,2000,33.7683,-118.2836,15.7
+10091,GEN4,operable,OP,Other Waste Biomass,CA,OBG,NG,biogas,8.7,7.4,7.4,1986,11,,,,33.7683,-118.2836,15.7
+10115,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.8,0.8,0.8,1983,8,,,2016,32.77973,-117.006397,88.9
+10115,GEN2,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.8,0.8,0.8,1983,8,,,2016,32.77973,-117.006397,88.9
+10115,GEN3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.5,4.2,4.4,2016,5,,,,32.77973,-117.006397,88.9
+10162,WWHI,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1.3,1.3,1.3,1986,4,,,,33.934725,-116.640548,79.6
+10169,GEN1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,45.3,41.3,41.1,1989,12,,,,33.8759,-118.2491,16.1
+10169,GEN2,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,10.5,8,8.1,1990,1,,,,33.8759,-118.2491,16.1
+10175,0799,operable,SB,Petroleum Liquids,IC,DFO,,oil,2,2,2,2000,4,2028,6,,32.7992,-117.1517,82.6
+10175,1631,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,0.6,0.6,0.6,1993,2,,,2003,32.7992,-117.1517,82.6
+10175,1698,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,0.3,0.3,0.3,1983,6,,,2004,32.7992,-117.1517,82.6
+10175,1699,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,0.3,0.3,0.3,1983,6,,,2003,32.7992,-117.1517,82.6
+10175,1710,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,0.3,0.3,0.3,1983,6,,,2004,32.7992,-117.1517,82.6
+10175,1711,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.8,4.8,4.8,2004,12,,,,32.7992,-117.1517,82.6
+10175,5083,operable,SB,Petroleum Liquids,IC,DFO,,oil,1.5,1.5,1.5,2010,10,,,,32.7992,-117.1517,82.6
+10175,5084,operable,SB,Petroleum Liquids,IC,DFO,,oil,1.5,1.5,1.5,2010,10,,,,32.7992,-117.1517,82.6
+10175,5085,operable,SB,Petroleum Liquids,IC,DFO,,oil,1.5,1.5,1.5,2010,10,,,,32.7992,-117.1517,82.6
+10191,EXIS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,8.7,8.7,8.7,1984,12,,,,35.060556,-118.389722,92.8
+10206,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,5.2,4.8,4.8,1989,11,,,,34.050391,-117.248417,48.3
+10206,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,5.2,4.8,4.8,1989,11,,,,34.050391,-117.248417,48.3
+10206,GEN3,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,1.2,1.2,1.2,1980,2,,,2014,34.050391,-117.248417,48.3
+10206,GEN4,operable,SB,Petroleum Liquids,IC,DFO,,oil,1.7,1.7,1.7,1986,6,,,,34.050391,-117.248417,48.3
+10206,GEN5,operable,SB,Petroleum Liquids,IC,DFO,,oil,1,1,1,2018,7,,,,34.050391,-117.248417,48.3
+10213,GEN1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,42.4,38.7,38.7,1987,12,,,,33.9058,-118.4031,24.8
+10213,GEN2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,42.4,38.7,38.7,1987,12,,,,33.9058,-118.4031,24.8
+10213,GEN3,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,OG,natural_gas,1.5,1,1,1975,1,,,1986,33.9058,-118.4031,24.8
+10213,GEN4,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,OG,natural_gas,1.2,1,1,1991,11,,,1996,33.9058,-118.4031,24.8
+10213,GEN5,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,40.3,39.2,39.2,1996,3,,,,33.9058,-118.4031,24.8
+10213,GEN6,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,9.1,9.1,9.1,1996,3,,,,33.9058,-118.4031,24.8
+10213,GEN7,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,40.7,40.7,40.7,2013,6,,,,33.9058,-118.4031,24.8
+10213,GEN8,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,5.2,5.2,5.2,2013,6,,,,33.9058,-118.4031,24.8
+10262,GEN1,retired,RE,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,1,1,1,1982,2,,,2002,34.138467,-118.1256,27.4
+10262,GEN2,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,4.3,4.3,4.3,1989,5,,,2002,34.138467,-118.1256,27.4
+10262,GEN6,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,10.5,9,9.9,2003,8,,,,34.138467,-118.1256,27.4
+10262,GEN7,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,2.5,2.1,2.1,2003,10,,,,34.138467,-118.1256,27.4
+10387,1,retired,RE,Landfill Gas,GT,LFG,NG,biogas,0.9,0.7,0.7,1989,12,,,2010,32.857709,-117.028847,84
+10387,1A,operable,OP,Landfill Gas,GT,LFG,,biogas,1.2,1.2,1.2,2011,5,,,,32.857709,-117.028847,84
+10387,2,retired,RE,Landfill Gas,GT,LFG,NG,biogas,0.9,0.7,0.7,1989,12,,,2010,32.857709,-117.028847,84
+10387,2A,operable,OP,Landfill Gas,GT,LFG,,biogas,1.2,1.2,1.2,2011,5,,,,32.857709,-117.028847,84
+10387,3,operable,OP,Landfill Gas,GT,LFG,PG,biogas,3,2.8,3,2004,4,,,,32.857709,-117.028847,84
+10427,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,34,34,34,1985,6,,,2019,34.045361,-117.540193,33.7
+10427,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,16.5,14.7,14.8,2019,11,,,,34.045361,-117.540193,33.7
+10427,GEN3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,16.5,14.7,14.8,2019,11,,,,34.045361,-117.540193,33.7
+10444,GEN1,retired,RE,Solar Thermal without Energy Storage,ST,SUN,,solar,92,80,64,1989,12,,,2021,35.0308,-117.3563,95.8
+10444,LHC1,operable,OP,Batteries,BA,MWH,,battery,69,69,69,2025,11,,,,35.0308,-117.3563,95.8
+10444,LOC1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,100.4,85,85,2023,7,,,,35.0308,-117.3563,95.8
+10446,GEN1,retired,RE,Natural Gas Steam Turbine,ST,NG,OTH,natural_gas,92,88,64,1990,9,,,2024,35.033,-117.338,96.4
+10471,GEN1,retired,RE,Landfill Gas,ST,LFG,OBG,biogas,10.6,5,5,1990,2,,,2015,34.0408,-117.8217,22.6
+10472,GEN1,operable,OP,Landfill Gas,ST,LFG,,biogas,50,45,45,1986,10,,,,34.0233,-118.0241,18.6
+10472,GEN2,retired,RE,Landfill Gas,GT,LFG,,biogas,2.8,1.1,1.1,1984,10,,,2013,34.0233,-118.0241,18.6
+10472,GEN3,retired,RE,Landfill Gas,IC,LFG,,biogas,3.3,2.7,2.7,2006,1,,,2016,34.0233,-118.0241,18.6
+10472,GEN4,retired,RE,Landfill Gas,IC,LFG,,biogas,3.3,2.7,2.7,2006,1,,,2016,34.0233,-118.0241,18.6
+10472,GEN5,retired,RE,Landfill Gas,IC,LFG,,biogas,3.3,2.7,2.7,2006,1,,,2016,34.0233,-118.0241,18.6
+10473,GEN1,retired,RE,Landfill Gas,ST,LFG,NG,biogas,13,2.5,2.5,1988,5,,,2011,33.792778,-118.35,19.6
+10586,EXIS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,59.6,59.6,59.6,1984,12,,,,35.075,-118.3158,92.9
+10597,WGN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,29,29,29,1984,1,,,,35.0697,-118.3167,92.6
+10635,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,47,40,42,1988,6,,,2017,33.8827,-117.5565,27.6
+10677,UNT1,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,60,46,50,1988,6,,,2008,34.3801,-118.4999,51.5
+10677,UNT2,operable,OS,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,60,46,50,1988,6,,,,34.3801,-118.4999,51.5
+10677,UNT3,operable,OS,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,30,23,25,1988,6,,,,34.3801,-118.4999,51.5
+10718,WND,operable,OP,Onshore Wind Turbine,WT,WND,,wind,11.7,11.7,11.7,1985,1,,,,33.92194,-116.56222,84
+10720,0287,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.7,1.7,1.7,2012,9,,,,32.819675,-117.140548,81.8
+10720,0333,operable,OA,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,2.1,2.1,2.1,2012,9,,,,32.819675,-117.140548,81.8
+10776,GTG,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,48.5,48.5,48.5,1990,6,,,,34.1958,-119.1664,72.9
+10884,CTC1,operable,OS,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,2.8,2.7,2.7,1987,2,,,,34.326242,-118.44477,46.7
+10884,CTC2,operable,OS,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,2.8,2.7,2.7,1987,2,,,,34.326242,-118.44477,46.7
+50061,GEN1,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,2.5,2.9,2.9,1986,1,,,2002,32.778225,-117.070114,86.6
+50061,GEN2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,5.1,4.5,4.9,2002,9,,,,32.778225,-117.070114,86.6
+50061,GEN3,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,5.1,4.5,4.9,2002,9,,,,32.778225,-117.070114,86.6
+50061,GEN4,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,4.1,2.1,1.1,2002,12,,,,32.778225,-117.070114,86.6
+50061,GEN5,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.1,0.1,0.1,2009,9,,,,32.778225,-117.070114,86.6
+50061,GEN6,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.2,2011,10,,,,32.778225,-117.070114,86.6
+50061,GEN7,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.2,2012,4,,,,32.778225,-117.070114,86.6
+50061,GEN8,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.1,0.1,0.1,2014,3,,,,32.778225,-117.070114,86.6
+50076,UNT1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,0.2,0.2,0.2,1987,6,,,,34.461667,-118.7511,64.7
+50076,UNT2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1.1,1.1,1,1987,6,,,,34.461667,-118.7511,64.7
+50115,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,48.2,39,42,1984,7,,,,35.0329,-117.701,90.1
+50147,1,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,1.4,1,0.5,1987,7,,,,33.051,-117.175,68.4
+50148,GEN1,operable,SB,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,25,21,21,1988,12,,,,33.78856,-118.229392,12.8
+50148,GEN2,operable,SB,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,6,6,6,1988,12,,,,33.78856,-118.229392,12.8
+50200,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,2.8,2.7,2.6,1982,11,,,2025,33.688721,-117.834793,11.1
+50200,GEN2,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,3.3,3,2.9,1995,1,,,2025,33.688721,-117.834793,11.1
+50216,GN91,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,OG,natural_gas,82,82,82,1988,3,,,,33.816647,-118.244841,14.1
+50216,GN92,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,OG,natural_gas,82,82,82,1988,2,,,,33.816647,-118.244841,14.1
+50216,GN93,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,OG,natural_gas,82,82,82,1988,1,,,,33.816647,-118.244841,14.1
+50216,GN94,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,OG,natural_gas,82,82,82,1987,12,,,,33.816647,-118.244841,14.1
+50216,GN95,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,OG,natural_gas,38.5,35,35,1988,2,,,,33.816647,-118.244841,14.1
+50216,GN96,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,OG,natural_gas,38.5,35,35,1987,12,,,,33.816647,-118.244841,14.1
+50224,7610,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.5,0.4,0.4,1981,8,,,,34.140501,-119.184529,72.4
+50224,7710,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.5,0.4,0.4,1981,8,,,,34.140501,-119.184529,72.4
+50224,7810,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,0.5,0.4,0.4,1981,8,,,,34.140501,-119.184529,72.4
+50233,4011,operable,SB,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1986,3,,,,34.124171,-117.805091,28.2
+50234,2074,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.9,0.9,0.8,1985,1,,,,34.1019,-117.6381,32.2
+50234,2075,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.9,0.9,0.8,1985,1,,,,34.1019,-117.6381,32.2
+50234,2076,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.9,0.9,0.8,2001,3,,,,34.1019,-117.6381,32.2
+50281,WGEN,operable,OP,Onshore Wind Turbine,WT,WND,,wind,31,31,31,1983,3,,,,33.926111,-116.615,81
+50300,BESS1,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2016,12,,,,34.059444,-117.774167,25.1
+50300,BESS2,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2023,8,,,,34.059444,-117.774167,25.1
+50300,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,46,40,42,1985,12,,,2019,34.059444,-117.774167,25.1
+50375,GEN1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1.2,1.2,1.2,1987,1,,,,34.2619,-118.6242,49.7
+50386,WING,retired,RE,Onshore Wind Turbine,WT,WND,,wind,15.3,15.3,15.3,1982,12,,,2020,35.0522,-118.3581,91.9
+50464,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,19.2,22.4,22.4,1982,7,,,,34.196,-119.1667,72.9
+50464,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.5,48.5,48.5,1989,11,,,,34.196,-119.1667,72.9
+50485,GEN1,retired,RE,Onshore Wind Turbine,WT,WND,,wind,21.7,21.7,21.7,1985,12,,,2020,33.915023,-116.555064,84.3
+50485,GEN2,retired,RE,Onshore Wind Turbine,WT,WND,,wind,3.4,3.4,3.4,1984,12,,,2020,33.915023,-116.555064,84.3
+50492,1,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,2.3,2.3,2.3,1985,6,,,,32.679172,-117.246698,86.4
+50492,2,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,2.3,2.3,2.3,1985,6,,,,32.679172,-117.246698,86.4
+50492,3,operable,OS,Conventional Hydroelectric,HY,WAT,,hydro,1.5,1,1.5,2002,5,,,,32.679172,-117.246698,86.4
+50530,GEN1,retired,RE,Other Gases,GT,OG,NG,other_gas,30,24.1,23.6,1982,12,,,2025,33.791667,-118.234722,13.1
+50530,GEN2,retired,RE,Other Gases,GT,OG,NG,other_gas,30,25.4,26.2,1982,12,,,2025,33.791667,-118.234722,13.1
+50530,GEN3,retired,RE,Other Gases,ST,OG,,other_gas,23,9.9,11,1991,4,,,2025,33.791667,-118.234722,13.1
+50532,15SLE,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.5,1.5,1.5,2000,5,,,,35.0686,-118.3833,93.3
+50532,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,24.6,17.3,17.3,1981,12,,,,35.0686,-118.3833,93.3
+50533,PHW,operable,OP,Onshore Wind Turbine,WT,WND,,wind,46.8,46.8,46.8,2021,4,,,,33.9369,-116.6183,80.9
+50533,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,19,19,19,1985,11,,,2019,33.9369,-116.6183,80.9
+50535,MWD1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,30,30,30,2024,6,,,,33.9461,-116.6769,77.7
+50535,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,29.9,29.9,29.9,1984,11,,,2020,33.9461,-116.6769,77.7
+50540,GEN1,operable,SB,Other Gases,OT,OG,,other_gas,12,6.5,6.5,1984,6,,,,33.8153,-118.2358,13.6
+50540,GEN2,operable,OS,Natural Gas Steam Turbine,ST,NG,OG,natural_gas,1.5,1.5,1.5,1982,4,,,,33.8153,-118.2358,13.6
+50541,GEN1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,82.3,80.8,84.5,1988,12,,,,33.7771,-118.2303,12.7
+50541,ST1,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,13.6,9.9,10.4,2001,6,,,,33.7771,-118.2303,12.7
+50541,ST2,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,11.5,11,11,2001,6,,,,33.7771,-118.2303,12.7
+50552,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,38.9,38.9,38.9,1999,1,,,,33.914986,-116.71026,75.5
+50553,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,20,20,20,2008,9,,,,33.881667,-116.460278,89.5
+50553,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,11,6.5,10.2,1985,12,,,2007,33.881667,-116.460278,89.5
+50610,01,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,1.2,1,1.1,1992,2,,,,34.030318,-118.47844,32.9
+50624,EXP1,operable,OP,All Other,ST,WH,,waste_heat,7.5,7.5,7.5,1983,9,,,,33.85336,-118.33,19.6
+50624,GTG1,operable,OP,Other Gases,GT,OG,NG,other_gas,22.5,22.5,22.5,1988,11,,,,33.85336,-118.33,19.6
+50624,STG1,operable,SB,All Other,ST,WH,,waste_heat,19.3,19.3,19.3,1988,11,,,,33.85336,-118.33,19.6
+50674,GEN1,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.7,0.6,0.6,1985,5,,,2014,33.8247,-116.5106,86.3
+50674,GEN1A,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2015,11,,,,33.8247,-116.5106,86.3
+50674,GEN2,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.7,0.6,0.6,1985,5,,,2014,33.8247,-116.5106,86.3
+50690,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,43.4,43.4,43.4,1999,6,,,,33.934,-116.5781,83.2
+50696,GEN1,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,2.5,2.4,2.4,1993,6,,,,33.6942,-117.9381,5.9
+50696,GEN2,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,2.5,2.4,2.4,1993,6,,,,33.6942,-117.9381,5.9
+50696,GEN3,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,2.5,2.4,2.4,1993,6,,,,33.6942,-117.9381,5.9
+50754,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,3.5,3.5,3.5,1982,6,,,,35.043889,-118.276388,90.4
+50754,GEN2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,4.2,4.2,4.2,1993,12,,,,35.043889,-118.276388,90.4
+50754,GEN3,operable,OP,Onshore Wind Turbine,WT,WND,,wind,23.1,23.1,23.1,1999,6,,,,35.043889,-118.276388,90.4
+50754,GEN4,operable,OP,Onshore Wind Turbine,WT,WND,,wind,3.7,3.7,3.7,1999,6,,,,35.043889,-118.276388,90.4
+50820,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,3,3,3,1985,1,,,,33.890913,-116.541515,84.9
+50821,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,88.5,88.5,88.5,1989,12,,,,35.045,-118.2642,90.4
+50850,GEN1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,23.5,22.5,22.5,1987,12,,,,33.989626,-117.680911,25
+50850,GEN2,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,7.3,6.5,6,1987,12,,,,33.989626,-117.680911,25
+50851,GEN1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,23.5,21.5,22.1,1988,3,,,,34.161951,-119.047916,65.8
+50851,GEN2,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,7.6,6.8,6.9,1988,3,,,,34.161951,-119.047916,65.8
+50963,1TG,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,0.8,0.7,0.8,1986,9,,,2003,32.7261,-117.1464,86.8
+50963,2TG,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,0.8,0.7,0.8,1986,9,,,2003,32.7261,-117.1464,86.8
+50963,3TG,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,DFO,natural_gas,0.8,0.7,0.8,1986,9,,,2003,32.7261,-117.1464,86.8
+50963,4TG,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,5.3,4.4,4.4,2003,12,,,,32.7261,-117.1464,86.8
+52064,GEN1,operable,OP,All Other,ST,WH,NG,waste_heat,5,3.5,3.5,1976,8,,,,33.8431,-118.2347,14.2
+52073,GEN-A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,16.4,13.5,14.2,2025,3,,,,34.0692,-118.4439,33
+52073,GEN-B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,16.4,13.5,14.2,2025,10,,,,34.0692,-118.4439,33
+52073,GEN1,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,14.5,12.5,13.5,1993,10,,,2024,34.0692,-118.4439,33
+52073,GEN2,retired,RE,Natural Gas Fired Combined Cycle,CT,NG,DFO,natural_gas,14.5,12.5,13.5,1993,10,,,2025,34.0692,-118.4439,33
+52073,GEN3,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,14,11,12,1993,10,,,,34.0692,-118.4439,33
+52096,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,21.4,20,20.7,1990,3,,,,34.38407,-118.494882,51.6
+52096,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,21.4,20,20.7,1990,5,,,,34.38407,-118.494882,51.6
+52099,GEN1,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,3,2.7,2.7,1993,6,,,,33.6433,-117.9556,8.3
+52099,GEN2,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,3,2.7,2.7,1993,6,,,,33.6433,-117.9556,8.3
+52099,GEN3,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,3,2.7,2.7,1993,6,,,,33.6433,-117.9556,8.3
+52099,GEN4,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,3,2.7,2.7,1993,6,,,,33.6433,-117.9556,8.3
+52099,GEN5,operable,OP,Other Waste Biomass,IC,OBG,NG,biogas,3,2.7,2.7,1993,6,,,,33.6433,-117.9556,8.3
+52099,GEN6,operable,OP,All Other,ST,OTH,,other,1,0.9,0.9,1993,6,,,,33.6433,-117.9556,8.3
+52142,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,75,67,67,1990,12,,,,35.0506,-118.2572,90.7
+52147,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,9.2,9.2,9.2,1983,10,,,,32.6947,-117.1436,88.7
+52147,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,9.3,9.3,1983,10,,,,32.6947,-117.1436,88.7
+52147,GEN3,operable,OS,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,9.3,9.3,1983,10,,,,32.6947,-117.1436,88.7
+52160,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,22,22,22,1990,5,,,2020,35.076,-118.3664,93.6
+52161,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,18.4,18.4,18.4,1987,1,,,2020,35.0853,-118.3547,94.1
+52162,MON1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,21.3,21.3,21.3,2021,3,,,,35.095797,-118.324772,94.4
+52162,WGNS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,14.1,14.1,14.1,1985,1,,,2019,35.095797,-118.324772,94.4
+52163,MON2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,25.2,25.2,25.2,2021,3,,,,35.102577,-118.332533,95
+52163,WTGN,retired,RE,Onshore Wind Turbine,WT,WND,,wind,21.2,21.2,21.2,1985,1,,,2019,35.102577,-118.332533,95
+54015,GEN2,operable,OP,Landfill Gas,ST,LFG,NG,biogas,6.8,5.4,5.4,1993,6,,,,34.033206,-117.906129,20.2
+54015,GEN3,retired,RE,Landfill Gas,GT,LFG,,biogas,4.9,4.4,4.4,1999,4,,,2018,34.033206,-117.906129,20.2
+54017,U1,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,3.9,3.7,3.6,1987,12,,,,34.204311,-117.855714,32.4
+54017,U2,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1.1,1.1,1,1987,12,,,,34.204311,-117.855714,32.4
+54242,AHF,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,2.1,1.4,1,1985,1,,,2011,32.7814,-117.0411,87.5
+54296,BATT,operable,OP,Batteries,BA,MWH,,battery,0.3,0.3,0.3,2018,2,,,,33.906953,-118.013105,10.6
+54296,EG-1H,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.5,1.5,2023,2,,,,33.906953,-118.013105,10.6
+54296,EG-2H,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.5,1.5,2022,12,,,,33.906953,-118.013105,10.6
+54296,EG1,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.6,0.6,0.6,1990,4,,,2020,33.906953,-118.013105,10.6
+54296,EG2,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,0.6,0.6,0.6,1990,4,,,2020,33.906953,-118.013105,10.6
+54296,EG3,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1,1,1,2002,9,,,,33.906953,-118.013105,10.6
+54298,GEWE,operable,OP,Onshore Wind Turbine,WT,WND,,wind,7.5,7.5,7.5,2005,5,,,,35.0583,-118.3417,92.1
+54298,SX1S,retired,RE,Onshore Wind Turbine,WT,WND,,wind,3.3,3.3,3.3,1985,12,,,2005,35.0583,-118.3417,92.1
+54299,GEWE,operable,OP,Onshore Wind Turbine,WT,WND,,wind,3,3,3,2005,1,,,,35.075,-118.3417,93.2
+54299,SX15,retired,RE,Onshore Wind Turbine,WT,WND,,wind,1.4,1.4,1.4,1985,12,,,2005,35.075,-118.3417,93.2
+54300,GEWE,operable,OP,Onshore Wind Turbine,WT,WND,,wind,4.5,4.5,4.5,2004,1,,,,35.0583,-118.3083,91.7
+54300,SX1S,operable,OS,Onshore Wind Turbine,WT,WND,,wind,0.1,0.1,0.1,1985,12,,,,35.0583,-118.3083,91.7
+54327,TOY1,retired,RE,Landfill Gas,IC,LFG,NG,biogas,1.8,1.7,1.7,1986,1,,,2004,34.146253,-118.30485,31.9
+54327,TOY2,retired,RE,Landfill Gas,IC,LFG,NG,biogas,1.8,1.7,1.7,1986,1,,,2004,34.146253,-118.30485,31.9
+54327,TOY3,retired,RE,Landfill Gas,IC,LFG,NG,biogas,1.8,1.7,1.7,1986,1,,,2017,34.146253,-118.30485,31.9
+54327,TOY4,retired,RE,Landfill Gas,IC,LFG,NG,biogas,1.8,1.7,1.7,1986,1,,,2015,34.146253,-118.30485,31.9
+54327,TOY5,retired,RE,Landfill Gas,IC,LFG,NG,biogas,1.8,1.7,1.7,1986,1,,,2017,34.146253,-118.30485,31.9
+54327,TOY7,operable,OP,Landfill Gas,IC,LFG,,biogas,1.1,0.9,0.9,2022,7,,,,34.146253,-118.30485,31.9
+54451,G1,retired,RE,Other Natural Gas,OT,NG,,natural_gas,10,6.1,7,1984,5,,,2021,33.7686,-118.2867,15.9
+54451,G2,operable,OS,Other Gases,GT,OG,NG,other_gas,58.5,50,52,1988,5,,,,33.7686,-118.2867,15.9
+54454,GEN11,operable,OP,Onshore Wind Turbine,WT,WND,,wind,49.5,49.5,49.5,2011,12,,,,33.918395,-116.573906,83.3
+54454,GEN3,retired,RE,Onshore Wind Turbine,WT,WND,,wind,34.5,34.5,34.5,1994,4,,,2011,33.918395,-116.573906,83.3
+54647,EXIS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,28.7,28.7,28.7,1986,12,,,,35.05,-118.2572,90.7
+54681,EXIS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,7.3,7.3,7.3,1986,1,,,2020,33.898856,-116.57281,83.2
+54682,EXIS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,5.5,5.4,5.4,1986,1,,,2020,33.893685,-116.567811,83.4
+54685,EXIS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,11.7,11.6,11.6,1987,1,,,2020,33.887401,-116.578231,82.8
+54686,EXIS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,27.1,25.3,25.3,1987,1,,,,35.0506,-118.1714,90.1
+54687,EXIS,retired,RE,Onshore Wind Turbine,WT,WND,,wind,15,15,15,1987,1,,,2015,35.0506,-118.1714,90.1
+54749,CTG,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,41.2,40,40,1994,8,,,,33.1185,-117.0995,68.5
+54749,STG,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,10.2,9.4,9.4,1994,8,,,,33.1185,-117.0995,68.5
+54750,VW1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,6.5,6.5,6.5,1992,9,,,,35.0663,-118.339444,92.6
+54909,EXI2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,8.6,8.58,8.58,2002,12,,,,35.1061,-118.3114,95
+54909,EXIS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,0.3,0.26,0.26,1997,1,,,,35.1061,-118.3114,95
+54909,PLAN,operable,OP,Onshore Wind Turbine,WT,WND,,wind,11.2,11.22,11.22,2025,7,,,,35.1061,-118.3114,95
+54931,WGN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,46.8,46.9,46.9,1994,4,,,,35.074,-118.3153,92.9
+55094,UNT1,operable,OP,Landfill Gas,IC,LFG,OBG,biogas,1.6,1.6,1.6,1997,7,,,,32.844845,-117.162747,79.7
+55094,UNT2,operable,OP,Landfill Gas,IC,LFG,OBG,biogas,1.9,1.6,1.6,1997,7,,,,32.844845,-117.162747,79.7
+55094,UNT3,operable,OP,Landfill Gas,IC,LFG,OBG,biogas,1.9,1.6,1.6,1997,7,,,,32.844845,-117.162747,79.7
+55094,UNT4,operable,OP,Landfill Gas,IC,LFG,OBG,biogas,1.9,1.6,1.6,1997,7,,,,32.844845,-117.162747,79.7
+55161,UNT1,operable,OP,Landfill Gas,IC,LFG,,biogas,3,2.7,2.7,1998,12,,,,34.2925,-118.389444,43.1
+55161,UNT2,retired,RE,Landfill Gas,IC,LFG,,biogas,3,2.7,2.7,1998,12,,,2016,34.2925,-118.389444,43.1
+55339,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,2.1,2.1,2.1,1999,6,,,,33.916667,-116.55,84.6
+55512,CPP6,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,48.7,48.7,48.7,2002,5,,,,32.796491,-116.972071,89.3
+55513,CPP7,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,58.9,48,48.1,2001,11,,,,33.121943,-117.117441,67.5
+55518,CTG1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,209,189.8,201.1,2003,4,,,,34.5953,-117.3647,68.9
+55518,CTG2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,209,187.7,201.3,2003,4,,,,34.5953,-117.3647,68.9
+55518,CTG3,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,209,189.5,197.3,2003,4,,,,34.5953,-117.3647,68.9
+55518,STG1,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,333,322.2,342.8,2003,4,,,,34.5953,-117.3647,68.9
+55538,CTG1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,54,54,54,2014,1,,,,33.1261,-117.1172,67.4
+55538,GEN1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,44,33.6,34.6,2001,8,,,2013,33.1261,-117.1172,67.4
+55540,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,37.2,37.2,37.2,2001,5,,,,32.591667,-117.058611,97.4
+55541,CTG1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.9,46.7,46.7,2001,7,,,,33.910873,-116.552994,84.4
+55541,CTG2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.9,47.6,47.6,2001,7,,,,33.910873,-116.552994,84.4
+55541,CTG3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.9,48.2,48.2,2001,8,,,,33.910873,-116.552994,84.4
+55557,T101,operable,OP,All Other,ST,WH,,waste_heat,31.9,28.1,27.7,1996,3,,,,33.7803,-118.24,13.3
+55602,UNT1,retired,RE,Landfill Gas,IC,LFG,NG,biogas,0.9,0.9,0.9,1999,3,,,2022,32.8817,-117.1958,76.5
+55602,UNT2,retired,RE,Landfill Gas,IC,LFG,NG,biogas,0.9,0.9,0.9,1999,3,,,2022,32.8817,-117.1958,76.5
+55602,UNT3,retired,RE,Landfill Gas,IC,LFG,NG,biogas,0.9,0.9,0.9,1999,3,,,2022,32.8817,-117.1958,76.5
+55602,UNT4,retired,RE,Landfill Gas,IC,LFG,NG,biogas,0.9,0.9,0.9,1999,3,,,2022,32.8817,-117.1958,76.5
+55656,CT01,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,168,172,183,2005,7,,,,34.9556,-118.844,95.7
+55656,CT02,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,168,172,183,2005,7,,,,34.9556,-118.844,95.7
+55656,CT04,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,168,165,168,2005,5,,,,34.9556,-118.844,95.7
+55656,ST03,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,185,165,182,2005,7,,,,34.9556,-118.844,95.7
+55656,ST05,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,90,83,83,2005,5,,,,34.9556,-118.844,95.7
+55719,GEN2,retired,RE,Onshore Wind Turbine,WT,WND,,wind,22.2,22.2,22.2,2001,7,,,2021,33.9211,-116.5642,83.8
+55719,GENI,retired,RE,Onshore Wind Turbine,WT,WND,,wind,42.6,42.6,42.6,2001,6,,,2021,33.9211,-116.5642,83.8
+55719,MVWR,operable,OP,Onshore Wind Turbine,WT,WND,,wind,70.9,70.9,70.9,2022,2,,,,33.9211,-116.5642,83.8
+55934,C1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,9,,,,34.0606,-117.3533,43.3
+55934,C2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,9,,,,34.0606,-117.3533,43.3
+55934,C3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,9,,,,34.0606,-117.3533,43.3
+55934,C4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,9,,,,34.0606,-117.3533,43.3
+55935,D1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,8,,,,34.0609,-117.3532,43.3
+55935,D2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,8,,,,34.0609,-117.3532,43.3
+55935,D3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,8,,,,34.0609,-117.3532,43.3
+55935,D4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,11.2,9.5,11,2001,8,,,,34.0609,-117.3532,43.3
+55951,AMP1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,60.5,40,43,2003,6,,,,34.0414,-117.3603,42.3
+55985,CTG1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,165,179.6,180,2005,10,,,,33.1197,-117.117778,67.6
+55985,CTG2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,165,179.8,181,2005,11,,,,33.1197,-117.117778,67.6
+55985,STG,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,229,222,229,2006,1,,,,33.1197,-117.117778,67.6
+56011,V-47,operable,OP,Onshore Wind Turbine,WT,WND,,wind,41,41,41,2002,10,,,,33.9172,-116.735,74.1
+56012,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,61.5,61.5,61.5,2002,10,,,,33.925,-116.617778,80.8
+56039,G1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,5.9,5.4,5.9,1987,1,,,,33.9986,-118.2219,20.8
+56039,G2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,5.9,5.4,5.9,1987,1,,,,33.9986,-118.2219,20.8
+56041,M1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,40,44,44,2005,10,,,,33.9986,-118.2219,20.8
+56041,M2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,40,44,44,2005,10,,,,33.9986,-118.2219,20.8
+56041,M3,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,50,51,51,2005,10,,,,33.9986,-118.2219,20.8
+56046,1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,198.9,161,165,2005,9,,,,34.1786,-118.3153,34.1
+56046,2,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,188.7,140,140,2005,9,,,,34.1786,-118.3153,34.1
+56051,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,57.4,45,45,2003,1,,,,33.7684,-118.2141,11.7
+56090,D182,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4,2.5,2.5,2000,6,,,,33.9328,-117.855,15.3
+56090,D189,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,3.7,3,3,2000,11,,,,33.9328,-117.855,15.3
+56090,D190,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.3,0.3,2012,9,,,,33.9328,-117.855,15.3
+56090,D191,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.8,0.8,0.8,2025,7,,,,33.9328,-117.855,15.3
+56090,D192,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.8,0.8,0.8,2025,7,,,,33.9328,-117.855,15.3
+56112,V47,operable,OP,Onshore Wind Turbine,WT,WND,,wind,22.4,22.4,22.4,2003,12,,,,33.9141,-116.5914,82.2
+56125,4152,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,1994,3,,,,34.2253,-119.0858,69.7
+56143,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,50,50,2006,6,,,,33.9636,-117.4528,35.2
+56143,2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,50,50,2006,7,,,,33.9636,-117.4528,35.2
+56143,3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,48,48,48,2011,4,,,,33.9636,-117.4528,35.2
+56143,4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,48,48,48,2011,4,,,,33.9636,-117.4528,35.2
+56144,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,10,10,2002,7,,,,33.9308,-117.2933,43
+56144,2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,10,10,2002,7,,,,33.9308,-117.2933,43
+56144,3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,10,10,2002,7,,,,33.9308,-117.2933,43
+56144,4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,10,10,10,2002,7,,,,33.9308,-117.2933,43
+56232,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,53,47,47,2005,6,,,,32.8769,-117.166389,77.8
+56232,2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,53,47,47,2009,8,,,,32.8769,-117.166389,77.8
+56275,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,2.4,2.4,2.4,1986,12,,,,35.0925,-118.3952,95.1
+56276,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,1985,12,,,,35.0772,-118.3811,93.8
+56302,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,60.3,60.3,60.3,2004,12,,,,35.06094,-118.292406,91.7
+56346,ICE1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE3,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE4,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE5,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE6,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56346,ICE7,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.2,1.2,1.2,2005,1,,,,34.2506,-116.9025,72.2
+56356,CT1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,41,21,21,2005,3,,,,33.8912,-117.6085,25
+56356,ST1,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,8,7,7,2005,3,,,,33.8912,-117.6085,25
+56471,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.8,49,49,2012,11,,,,34.205556,-119.246944,77.4
+56472,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.8,46,46,2007,9,,,,34.0903,-117.5343,35.9
+56472,BA1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2016,12,,,,34.0903,-117.5343,35.9
+56473,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.8,49,49,2007,9,,,,34.0053,-117.5604,31.2
+56474,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.8,49,49,2007,9,,,,33.8073,-117.9832,4
+56475,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,49.8,47,47,2007,9,,,,33.9296,-118.1046,13.3
+56475,BA1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2016,12,,,,33.9296,-118.1046,13.3
+56570,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,7.4,7.4,7.4,1984,1,,,,35.1161,-118.3789,96.4
+56615,G100,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,4.6,3.6,4.2,2007,1,,,2022,32.93695,-117.113669,76.6
+56615,G200,proposed,U,Conventional Hydroelectric,HY,WAT,,hydro,4.3,4.1,2.3,2026,10,,,,32.93695,-117.113669,76.6
+56791,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,45,45,45,2008,4,,,,33.9393,-116.5527,84.7
+56814,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.5,0.4,0.3,2008,5,,,,34.040278,-118.148056,21.3
+56814,PV2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.5,0.4,0.3,2008,5,,,,34.040278,-118.148056,21.3
+56862,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2008,11,,,,34.5644,-117.6933,58.9
+56862,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2008,11,,,,34.5644,-117.6933,58.9
+56862,3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2008,11,,,,34.5644,-117.6933,58.9
+56862,4,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2008,11,,,,34.5644,-117.6933,58.9
+56898,1,operable,OA,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2010,11,,,,34.431664,-118.642855,59.2
+56898,2,operable,OA,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2010,11,,,,34.431664,-118.642855,59.2
+56914,CTG1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,59,49.1,49.1,2010,6,,,,33.3594,-117.1114,58.5
+56914,CTG2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,59,49.1,49.1,2010,6,,,,33.3594,-117.1114,58.5
+56976,S1A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2008,11,,,2011,34.073206,-117.512842,36.1
+56976,S1B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2008,11,,,2011,34.073206,-117.512842,36.1
+56976,S1C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2008,11,,,2011,34.073206,-117.512842,36.1
+56976,S1D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2008,11,,,2011,34.073206,-117.512842,36.1
+56996,S1A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2009,12,,,2023,33.985244,-117.700826,23.9
+56996,S1B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2009,12,,,2023,33.985244,-117.700826,23.9
+57001,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,60.5,60.5,60.5,2010,6,,,,32.796106,-116.972073,89.3
+57004,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.9,0.9,2007,9,,,,33.8672,-117.23,45.5
+57008,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.8,0.8,2009,10,,,,34.2089,-119.13,71.4
+57009,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.9,0.9,2007,11,,,,34.094695,-117.266831,48.7
+57012,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.9,0.9,2009,3,,,,34.5975,-117.2,74.5
+57027,CPP1,operable,OA,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,49.4,49.4,2011,9,,,,33.858056,-117.861667,11.2
+57027,CPP2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,48,48,2011,9,,,,33.858056,-117.861667,11.2
+57027,CPP3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,48,48,2011,8,,,,33.858056,-117.861667,11.2
+57027,CPP4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,50,49.4,49.4,2011,8,,,,33.858056,-117.861667,11.2
+57102,EN01,operable,OP,Landfill Gas,IC,LFG,,biogas,1.1,1,1,2006,12,,,,33.9716,-118.0481,15.2
+57102,EN02,operable,OP,Landfill Gas,IC,LFG,,biogas,1.1,1,1,2010,4,,,,33.9716,-118.0481,15.2
+57122,CTG1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,13.5,13.5,13.5,2007,7,,,,33.6481,-117.8467,11.9
+57122,STG1,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,5.5,5.5,5.5,2007,7,,,,33.6481,-117.8467,11.9
+57163,GEN1,operable,OP,Landfill Gas,GT,LFG,NG,biogas,4.6,3.3,3.6,2010,7,,,,34.1511,-118.7236,49.2
+57163,GEN2,retired,RE,Landfill Gas,GT,LFG,,biogas,4.6,3.3,3.6,2010,7,,,2018,34.1511,-118.7236,49.2
+57163,GEN3,operable,OP,Landfill Gas,GT,LFG,NG,biogas,4.6,3.3,3.6,2010,7,,,,34.1511,-118.7236,49.2
+57217,S003A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,3,,,2023,34.094279,-117.400113,42.2
+57217,S003B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,3,,,2023,34.094279,-117.400113,42.2
+57219,S005A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086276,-117.230571,50.3
+57219,S005B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086276,-117.230571,50.3
+57219,S005C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086276,-117.230571,50.3
+57219,S005D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086276,-117.230571,50.3
+57219,S005E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086276,-117.230571,50.3
+57220,S006A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041389,-117.573055,32
+57220,S006B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041389,-117.573055,32
+57220,S006C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041389,-117.573055,32
+57220,S006D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041389,-117.573055,32
+57221,S007A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086111,-117.2275,50.5
+57221,S007B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086111,-117.2275,50.5
+57221,S007C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086111,-117.2275,50.5
+57221,S007D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086111,-117.2275,50.5
+57221,S007E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.086111,-117.2275,50.5
+57222,S008A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041944,-117.565,32.4
+57222,S008B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041944,-117.565,32.4
+57222,S008C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041944,-117.565,32.4
+57222,S008D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.041944,-117.565,32.4
+57223,S009A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.042778,-117.571666,32.2
+57223,S009B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.042778,-117.571666,32.2
+57224,S010A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.075,-117.516944,36
+57224,S010B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.075,-117.516944,36
+57224,S010C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.075,-117.516944,36
+57225,S011A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57225,S011G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.075833,-117.241388,49.4
+57226,S012A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.042222,-117.561666,32.6
+57227,S013A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57227,S013G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.083499,-117.23557,50
+57229,S015A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57229,S015G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.079167,-117.516666,36.2
+57230,S016A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.085556,-117.233611,50.1
+57230,S016B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.085556,-117.233611,50.1
+57230,S016C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.085556,-117.233611,50.1
+57231,S017A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57231,S017G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.072778,-117.503333,36.5
+57232,S018A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.083333,-117.516388,36.4
+57232,S018B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.083333,-117.516388,36.4
+57232,S018C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2012,11,,,2023,34.083333,-117.516388,36.4
+57236,S023A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.080833,-117.520277,36.1
+57236,S023B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.080833,-117.520277,36.1
+57236,S023C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.080833,-117.520277,36.1
+57236,S023D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.080833,-117.520277,36.1
+57236,S023E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,1,,,2023,34.080833,-117.520277,36.1
+57237,S022A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.08,-117.2114,51.1
+57237,S022B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.08,-117.2114,51.1
+57237,S022C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.08,-117.2114,51.1
+57237,S022D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,8,,,2023,34.08,-117.2114,51.1
+57245,S026A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026H,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026I,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,S026J,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,SO26K,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57245,SO26L,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131214,-117.425324,42.5
+57246,S027A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131111,-117.421666,42.7
+57246,S027B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131111,-117.421666,42.7
+57246,S027C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131111,-117.421666,42.7
+57246,S027D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.131111,-117.421666,42.7
+57247,S028A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57247,S028G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.094167,-117.274166,48.4
+57254,1PV,operable,OS,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2010,6,,,,34.48017,-117.257938,66.1
+57282,AW01,operable,OP,Onshore Wind Turbine,WT,WND,,wind,150,150,150,2011,1,,,,35.033725,-118.353422,90.6
+57291,AW02,operable,OP,Onshore Wind Turbine,WT,WND,,wind,150,150,150,2011,1,,,,35.023889,-118.295278,89.2
+57292,AW03,operable,OP,Onshore Wind Turbine,WT,WND,,wind,150,150,150,2011,2,,,,35.023889,-118.295278,89.2
+57293,AW04,operable,OP,Onshore Wind Turbine,WT,WND,,wind,102,102,102,2011,4,,,,35.008611,-118.242222,87.7
+57294,AW05,operable,OP,Onshore Wind Turbine,WT,WND,,wind,168,168,168,2011,4,,,,35.008611,-118.242222,87.7
+57295,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,66,66,66,2013,2,,,,34.7892,-118.5047,76.9
+57301,DEC,retired,RE,Onshore Wind Turbine,WT,WND,,wind,8,8,8,1994,8,,,2020,33.8942,-116.5603,83.8
+57302,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,6.5,6.5,6.5,2009,6,,,,33.9053,-116.5825,82.7
+57305,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,6.8,6.8,6.8,2012,6,,,,34.550833,-117.435277,64.2
+57308,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,1.8,1.1,2017,4,,,,34.319722,-118.430833,45.9
+57309,1,operable,OS,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2010,9,,,,33.7331,-118.27722,15.4
+57311,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,2,,,,34.1283,-118.206903,28.2
+57313,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2005,4,,,,34.0578,-118.229722,24.5
+57314,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,2.2,2.2,2010,10,,,,33.783102,-118.28493,15.9
+57331,MSP1,operable,OP,Solar Thermal without Energy Storage,ST,SUN,,solar,140,137.5,100,2014,12,,,,35.017717,-117.339144,95.4
+57331,MSP2,operable,OP,Solar Thermal without Energy Storage,ST,SUN,,solar,140,137.5,100,2014,12,,,,35.017717,-117.339144,95.4
+57378,AVSR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,253,241.5,241.5,2014,8,,,,34.780278,-118.42444,74.7
+57459,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,49,49,49,2012,2,,,,33.8816,-116.5527,84.2
+57460,CL00,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL01,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL02,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL03,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL04,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL05,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL06,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL07,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL08,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL09,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57460,CL10,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.1,0.1,0.1,2010,11,2031,3,,34.1358,-118.1267,27.2
+57482,CTG1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG5,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG6,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG7,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57482,CTG8,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100,100,2013,5,,,,33.934167,-116.571388,83.6
+57484,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,189,189,189,2012,12,,,,34.9349,-118.4612,85.6
+57515,GT1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100.1,100.1,2013,4,,,,34.008709,-117.944864,18
+57515,GT2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100.1,100.1,2013,4,,,,34.008709,-117.944864,18
+57515,GT3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100.1,100.1,2013,4,,,,34.008709,-117.944864,18
+57515,GT4,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100.1,100.1,2013,4,,,,34.008709,-117.944864,18
+57515,GT5,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,100,100.1,100.1,2013,5,,,,34.008709,-117.944864,18
+57534,S32A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.031667,-117.571944,31.7
+57534,S32B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.031667,-117.571944,31.7
+57534,S32C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.031667,-117.571944,31.7
+57535,S33A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.0325,-117.569166,31.8
+57535,S33B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,1,,,2023,34.0325,-117.569166,31.8
+57540,S44A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44H,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44I,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44J,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44K,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44L,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44M,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44N,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44O,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57540,S44P,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2019,33.839167,-117.220833,45.8
+57544,FC01,retired,RE,Other Natural Gas,FC,NG,,natural_gas,1.4,1.4,1.4,2013,9,,,2023,34.185833,-117.324167,49.4
+57566,1.6PR,retired,RE,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,2011,3,,,2013,35.155278,-118.369444,99
+57566,1.7SF,retired,RE,Onshore Wind Turbine,WT,WND,,wind,1.8,1.8,1.8,2014,5,,,2019,35.155278,-118.369444,99
+57566,2.5P2,retired,RE,Onshore Wind Turbine,WT,WND,,wind,2.5,2.5,2.5,2015,4,,,2020,35.155278,-118.369444,99
+57566,2.8P3,retired,RE,Onshore Wind Turbine,WT,WND,,wind,2.8,2.8,2.8,2018,2,,,2020,35.155278,-118.369444,99
+57584,BS1,retired,RE,Batteries,BA,MWH,,battery,2.5,2.5,2.5,2015,12,,,2025,32.8747,-117.2392,75.3
+57584,NT2,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,15,13.5,13.5,2001,7,,,,32.8747,-117.2392,75.3
+57584,ST1,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,15,13.5,13.5,2001,7,,,,32.8747,-117.2392,75.3
+57584,STG,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,3,3,3,2001,7,,,,32.8747,-117.2392,75.3
+57585,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,29,29,29,1986,3,,,,34.1414,-119.1831,72.3
+57621,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,79.2,79.2,79.2,2015,1,,,,35.0775,-118.218333,92.2
+57656,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2011,5,,,,33.826389,-117.511667,29.1
+57683,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,0.9,0.9,2010,3,,,,33.881667,-118.0175,8.8
+57702,1,operable,OP,Other Gases,GT,OG,,other_gas,5.7,5.7,5.7,2004,7,,,,33.811182,-118.175645,10.2
+57708,INV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,110,110,110,2012,12,,,,34.938261,-118.334492,83.9
+57715,GEN1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1,1,1,2001,11,,,,33.143847,-117.236908,61.4
+57715,GEN2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1,1,1,2001,11,,,,33.143847,-117.236908,61.4
+57722,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,4,4,2012,10,,,,33.909722,-116.5625,83.8
+57729,1,retired,RE,Hydroelectric Pumped Storage,PS,WAT,,hydro,21,21,21,2012,8,,,2024,33.058611,-117.119444,70.4
+57729,2,retired,RE,Hydroelectric Pumped Storage,PS,WAT,,hydro,21,21,21,2012,8,,,2024,33.058611,-117.119444,70.4
+57730,1,retired,RE,Landfill Gas,GT,LFG,,biogas,1.5,1.5,1.5,2002,8,,,2015,34.292645,-118.389774,43.1
+57743,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.4,2.4,2012,4,,,,33.924167,-116.593333,82.2
+57757,1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,151.7,140,140,2012,8,,,,34.891389,-118.4325,82.2
+57774,WGNS,operable,OP,Onshore Wind Turbine,WT,WND,,wind,120,120,120,2012,2,,,,35.054167,-118.354722,92
+57792,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1,1,1,2011,12,,,,34.084722,-117.529444,35.9
+57796,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2012,2,,,,33.914167,-118.053611,11.3
+57797,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2012,3,,,,33.911944,-118.052222,11.2
+57831,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.3,1.5,2012,3,,,,34.65434,-117.971004,62.3
+57833,AW06,operable,OP,Onshore Wind Turbine,WT,WND,,wind,150,150,150,2012,5,,,,35.030855,-118.293188,89.7
+57834,AW07,operable,OP,Onshore Wind Turbine,WT,WND,,wind,168,168,168,2012,11,,,,35.043411,-118.211835,89.8
+57835,AW08,operable,OP,Onshore Wind Turbine,WT,WND,,wind,150,150,150,2012,1,,,,35.026683,-118.234811,88.9
+57836,TSM,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.3,1.5,2012,5,,,,34.654347,-117.973103,62.3
+57837,AW09,operable,OP,Onshore Wind Turbine,WT,WND,,wind,132,132,132,2012,11,,,,35.026759,-118.223333,88.8
+57840,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1,1,2011,12,,,,32.791667,-117.095277,85
+57841,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2011,9,,,,33.921667,-118.124444,13.3
+57854,1PT1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.8,1.8,1.8,1993,1,,,2024,34.194444,-118.39028,37.4
+57854,1PT2,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.8,1.8,1.8,1993,1,,,2024,34.194444,-118.39028,37.4
+57854,1PT3,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.8,1.8,1.8,1993,1,,,2024,34.194444,-118.39028,37.4
+57854,2T1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.2,1.2,1.2,1993,1,,,2021,34.194444,-118.39028,37.4
+57854,2T2,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,1.2,1.2,1.2,1993,1,,,2021,34.194444,-118.39028,37.4
+57854,2T3,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,0.5,0.5,0.5,1993,1,,,2016,34.194444,-118.39028,37.4
+57854,3T1,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,0.5,0.5,0.5,1993,1,,,2024,34.194444,-118.39028,37.4
+57854,3T2,retired,RE,Conventional Hydroelectric,HY,WAT,,hydro,0.2,0.2,0.2,1993,1,,,2024,34.194444,-118.39028,37.4
+57856,SGU1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2008,12,,,,32.874379,-117.238927,75.4
+57860,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2012,4,,,,34.008661,-117.845603,20
+57871,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2012,3,,,,34.026944,-118.224167,22.5
+57900,S48A,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48B,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48C,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48D,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48E,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48F,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48G,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48H,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48I,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57900,S48J,retired,RE,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,2,,,2023,34.081111,-117.228056,50.3
+57901,5,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,198,195,195,2013,8,,,,33.910556,-118.425,26.1
+57901,6,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,70.7,60,60,2013,8,,,,33.910556,-118.425,26.1
+57901,7,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,198,195,195,2013,7,,,,33.910556,-118.425,26.1
+57901,8,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,70.7,60,60,2013,7,,,,33.910556,-118.425,26.1
+57904,CHNO,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2012,8,,,,33.965617,-117.659059,24.9
+57962,BT1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,102,102,102,2012,3,,,,35.008333,-118.241389,87.7
+58007,G1,operable,OP,Landfill Gas,CT,LFG,,biogas,6.3,6.8,6.8,2012,11,,,,33.932022,-117.840233,15.7
+58007,G2,operable,OP,Landfill Gas,CT,LFG,,biogas,6.3,6.8,6.8,2012,11,,,,33.932022,-117.840233,15.7
+58007,G3,operable,OP,Landfill Gas,CT,LFG,,biogas,6.3,6.8,6.8,2012,11,,,,33.932022,-117.840233,15.7
+58007,G4,operable,OP,Landfill Gas,CT,LFG,,biogas,6.3,6.8,6.8,2012,11,,,,33.932022,-117.840233,15.7
+58007,G5,operable,OP,Landfill Gas,CA,LFG,,biogas,10.5,10,10,2012,11,,,,33.932022,-117.840233,15.7
+58028,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2011,4,,,,34.975278,-118.946944,99.9
+58056,JEN1,operable,OA,Other Waste Biomass,IC,OBG,,biogas,0.5,0.6,0.6,2007,7,,,,34.121667,-117.938333,25.8
+58056,JEN2,retired,RE,Other Waste Biomass,IC,OBG,,biogas,0.5,0.6,0.6,2007,7,,,2021,34.121667,-117.938333,25.8
+58056,PV,retired,RE,Solar Photovoltaic,PV,SUN,,solar,2.5,0.8,0.8,2015,3,,,2025,34.121667,-117.938333,25.8
+58056,T100,operable,OS,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,5.2,4.1,4.7,2002,2,,,,34.121667,-117.938333,25.8
+58056,T200,operable,OS,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,5.2,4.1,4.7,2002,2,,,,34.121667,-117.938333,25.8
+58073,SEPV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2012,5,,,,34.618861,-117.939444,59.9
+58076,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,12,,,,34.9077,-117.9206,79.9
+58076,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,12,,,,34.9077,-117.9206,79.9
+58076,3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,12,,,,34.9077,-117.9206,79.9
+58085,CATR1,operable,SB,Petroleum Liquids,IC,DFO,,oil,0.5,0.5,0.5,1999,9,,,,34.989722,-118.150556,85.8
+58085,CATR2,operable,SB,Petroleum Liquids,IC,DFO,,oil,1,1,1,2000,6,,,,34.989722,-118.150556,85.8
+58101,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,2012,12,,,,34.561944,-117.307222,68.8
+58101,WTG2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,2012,12,,,,34.561944,-117.307222,68.8
+58102,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.5,1.5,1.5,2012,12,,,,34.623056,-117.1125,79
+58102,WTG2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.5,1.5,1.5,2012,12,,,,34.623056,-117.1125,79
+58113,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1,1,1,2012,12,,,,33.917222,-116.815,69.6
+58113,WTG2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1,1,1,2012,12,,,,33.917222,-116.815,69.6
+58114,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,2012,12,,,,33.914167,-116.749167,73.3
+58114,WTG2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.6,1.6,1.6,2012,12,,,,33.914167,-116.749167,73.3
+58114,WTG3,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.9,1.9,1.9,2018,9,,,,33.914167,-116.749167,73.3
+58128,KRSO1,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,6,,,,33.919167,-118.128611,13.3
+58128,KRSO2,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,6,,,,33.919167,-118.128611,13.3
+58128,KRSO3,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,6,,,,33.919167,-118.128611,13.3
+58128,KRSO4,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,6,,,,33.919167,-118.128611,13.3
+58128,KRSO5,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,6,,,,33.919167,-118.128611,13.3
+58132,KSRO1,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,10,,,,34.0325,-117.608889,30
+58132,KSRO2,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,10,,,,34.0325,-117.608889,30
+58132,KSRO3,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,10,,,,34.0325,-117.608889,30
+58132,KSRO4,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,10,,,,34.0325,-117.608889,30
+58132,KSRO5,operable,OP,Other Natural Gas,FC,NG,,natural_gas,0.2,0.2,0.2,2012,10,,,,34.0325,-117.608889,30
+58149,TAHD,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2013,3,,,,34.708889,-118.304722,68.1
+58168,EC01,retired,RE,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.5,1.5,2007,2,,,2019,34.063056,-117.163889,53.1
+58168,TURB1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.3,0.3,2019,5,,,,34.063056,-117.163889,53.1
+58168,TURB2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.3,0.3,2019,5,,,,34.063056,-117.163889,53.1
+58168,TURB3,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.3,0.3,2019,5,,,,34.063056,-117.163889,53.1
+58168,TURB4,proposed,P,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.33,0.33,2030,12,,,,34.063056,-117.163889,53.1
+58168,TURB5,proposed,P,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.33,0.33,2030,12,,,,34.063056,-117.163889,53.1
+58168,TURB6,proposed,P,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.3,0.33,0.33,2030,12,,,,34.063056,-117.163889,53.1
+58169,1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4.3,4.3,2010,10,,,,33.880638,-117.88656,11.3
+58169,CPAC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2012,1,,,,33.880638,-117.88656,11.3
+58169,KHS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2012,1,,,,33.880638,-117.88656,11.3
+58169,NPS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2016,12,,,,33.880638,-117.88656,11.3
+58169,PS4,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.3,0.3,0.3,2012,1,,,,33.880638,-117.88656,11.3
+58169,PS5,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.4,0.4,0.4,2020,7,,,,33.880638,-117.88656,11.3
+58169,SCPS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,12,,,,33.880638,-117.88656,11.3
+58202,VPS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2013,12,,,,34.51231,-117.47753,60.6
+58223,1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.2,1.2,2006,7,,,,33.622778,-117.936389,10
+58223,2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.2,1.2,2006,7,,,,33.622778,-117.936389,10
+58223,3,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.5,1.2,1.2,2006,7,,,,33.622778,-117.936389,10
+58223,TESLA,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2020,1,,,,33.622778,-117.936389,10
+58232,TAHQ,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2012,9,,,,33.767222,-117.0175,57.1
+58233,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,6,6,6,2012,12,,,,33.908889,-116.555556,84.2
+58244,WEST,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.9,0.9,2012,9,,,,33.719722,-117.009722,57.6
+58248,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2013,1,,,,34.183611,-118.574722,43.9
+58249,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.4,3.5,3.5,2014,10,,,,34.248889,-118.483333,43.6
+58253,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2013,7,,,,34.075,-118.36,29.9
+58253,GEN2,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.4,0.4,0.4,2013,7,,,2023,34.075,-118.36,29.9
+58253,GEN3,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.4,0.4,0.4,2013,7,,,2023,34.075,-118.36,29.9
+58253,GEN4,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.4,0.4,0.4,2013,7,,,2023,34.075,-118.36,29.9
+58258,GEN1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4.2,4.2,2015,10,,,,33.943889,-118.404167,26.1
+58258,GEN2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4.2,4.2,2015,10,,,,33.943889,-118.404167,26.1
+58300,HON,retired,RE,Other Natural Gas,FC,NG,,natural_gas,1.1,1,1,2012,12,,,2023,33.838056,-118.315,18.4
+58302,LFT,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1.1,1,1,2012,8,,,,33.137222,-117.286944,59.6
+58354,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,7,,,,34.665556,-118.288056,65
+58355,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,7,,,,34.665556,-118.286944,64.9
+58388,AVS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,39,38,38,2014,3,,,,34.8181,-118.4036,76.9
+58388,SS11,operable,OP,Solar Photovoltaic,PV,SUN,,solar,54,52.6,52.6,2015,6,,,,34.8181,-118.4036,76.9
+58388,SS12,operable,OP,Solar Photovoltaic,PV,SUN,,solar,54,52.6,52.6,2015,2,,,,34.8181,-118.4036,76.9
+58388,SS13,operable,OP,Solar Photovoltaic,PV,SUN,,solar,58.5,57,57,2014,10,,,,34.8181,-118.4036,76.9
+58388,SS14,operable,OP,Solar Photovoltaic,PV,SUN,,solar,33,32.2,32.2,2015,6,,,,34.8181,-118.4036,76.9
+58388,SS15,operable,OP,Solar Photovoltaic,PV,SUN,,solar,15,14.6,14.6,2014,10,,,,34.8181,-118.4036,76.9
+58388,SS16,operable,OP,Solar Photovoltaic,PV,SUN,,solar,64.5,62.9,62.9,2014,4,,,,34.8181,-118.4036,76.9
+58389,AVS2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,19.5,19,19,2014,3,,,,34.848611,-118.352778,78.1
+58389,SS21,operable,OP,Solar Photovoltaic,PV,SUN,,solar,60,59,59,2014,7,,,,34.848611,-118.352778,78.1
+58389,SS22,operable,OP,Solar Photovoltaic,PV,SUN,,solar,55.5,55,55,2014,12,,,,34.848611,-118.352778,78.1
+58389,SS23,operable,OP,Solar Photovoltaic,PV,SUN,,solar,48,47,47,2014,12,,,,34.848611,-118.352778,78.1
+58389,SS24,operable,OP,Solar Photovoltaic,PV,SUN,,solar,43.5,43,43,2015,6,,,,34.848611,-118.352778,78.1
+58389,SS25,operable,OP,Solar Photovoltaic,PV,SUN,,solar,52.5,52,52,2014,4,,,,34.848611,-118.352778,78.1
+58394,AW10,operable,OP,Onshore Wind Turbine,WT,WND,,wind,138,138,138,2014,1,,,,35.06,-118.2,90.9
+58395,AW11,operable,OP,Onshore Wind Turbine,WT,WND,,wind,90,90,90,2014,1,,,,35.065,-118.39,93.1
+58417,CP1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,10,10,2014,12,,,,34.398059,-116.865517,79.2
+58418,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,4,2015,6,,,,34.501111,-117.466667,60.3
+58419,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,4,2015,6,,,,34.497778,-117.471111,60
+58422,63,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.3,0.3,0.3,2007,1,,,2018,34.243333,-118.530556,45
+58422,64,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.3,0.3,0.3,2007,1,,,2018,34.243333,-118.530556,45
+58422,65,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.3,0.3,0.3,2007,1,,,2018,34.243333,-118.530556,45
+58422,67,retired,RE,Other Natural Gas,FC,NG,,natural_gas,0.3,0.3,0.3,2007,1,,,2018,34.243333,-118.530556,45
+58422,B2PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.4,0.3,0.2,2005,4,,,,34.243333,-118.530556,45
+58422,CP1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,0.2,0.2,0.2,2001,12,,,2018,34.243333,-118.530556,45
+58422,E6PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.2,0.1,0.1,2003,3,,,,34.243333,-118.530556,45
+58422,G6PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.7,0.7,0.3,2025,7,,,,34.243333,-118.530556,45
+58429,1,operable,OP,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2014,8,,,,34.335678,-118.519188,49.6
+58429,2,operable,OP,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2014,8,,,,34.335678,-118.519188,49.6
+58429,3,operable,OP,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2014,8,,,,34.335678,-118.519188,49.6
+58429,4,operable,OP,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2014,8,,,,34.335678,-118.519188,49.6
+58429,5,operable,OP,Landfill Gas,GT,LFG,,biogas,4.6,4,4,2014,8,,,,34.335678,-118.519188,49.6
+58432,COG1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,4.4,4.4,4.4,2012,8,,,,34.179722,-119.083056,68.1
+58432,COG2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,4.4,4.4,4.4,2012,8,,,,34.179722,-119.083056,68.1
+58432,COG3,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,4.4,4.4,4.4,2013,9,,,,34.179722,-119.083056,68.1
+58445,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,8,,,,34.655,-118.051111,62.3
+58445,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,8,,,,34.655,-118.051111,62.3
+58446,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,8,,,,34.650556,-118.051944,62
+58447,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,9,,,,34.647778,-118.061111,61.8
+58447,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,9,,,,34.647778,-118.061111,61.8
+58447,3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,9,,,,34.647778,-118.061111,61.8
+58448,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,7,,,,34.509167,-117.154444,71.6
+58449,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,1,,,,34.643889,-118.163056,62.1
+58449,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,1,,,,34.643889,-118.163056,62.1
+58449,3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,1,,,,34.643889,-118.163056,62.1
+58450,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,7,,,,34.668889,-118.061389,63.3
+58451,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,10,,,,34.695278,-118.0625,65.1
+58452,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,10,,,,34.708889,-118.274167,67.7
+58454,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,8,,,,34.600833,-117.642222,62.2
+58454,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2013,12,,,,34.600833,-117.642222,62.2
+58498,RONE,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2014,1,,,,34.9,-118.246944,80.3
+58499,RTWO,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2014,1,,,,34.900278,-118.238333,80.3
+58500,RIO,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2013,12,,,,35.00745,-118.16451,87.1
+58502,COL3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,10,10,2014,1,,,,35.024722,-118.164167,88.2
+58514,DHCA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.3,2.2,2.2,2013,12,,,,33.923056,-116.53,85.8
+58528,WDT44,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,4,4,2014,12,,,,33.8906,-116.5431,84.8
+58581,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2013,12,,,,34.043889,-117.531111,34.1
+58582,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,12,,,,34.05,-117.596111,31.4
+58609,ISP1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,12,,,,34.553056,-117.456944,63.7
+58610,NSP1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,12,,,,34.551111,-117.191111,72.3
+58611,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,12,,,,34.496944,-117.145,71.3
+58612,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2013,12,,,,34.545,-117.191944,72
+58626,WABSA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,19,18,2014,11,,,,34.681667,-118.324722,66.6
+58627,WADR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,10,9,2016,12,,,,34.688889,-118.320278,67
+58634,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,12,,,,34.695833,-118.058889,65.1
+58698,D960,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,11,,,,34.013056,-117.5375,32.5
+58698,D9611,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2011,11,,,,34.013056,-117.5375,32.5
+58698,D9612,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2011,11,,,,34.013056,-117.5375,32.5
+58750,LDFRB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2014,11,,,,34.716944,-118.289444,68.4
+58751,RSC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,5,,,,34.713333,-118.289444,68.2
+58752,RSD2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,5,,,,34.713333,-118.289444,68.2
+58753,SSA2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,6,,,,34.723056,-118.289722,68.8
+58754,SSB2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,6,,,,34.723056,-118.289722,68.8
+58755,SSC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,6,,,,34.723056,-118.289722,68.8
+58756,SSD2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,7,,,,34.723056,-118.289722,68.8
+58757,UE2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,12,,,,34.723056,-118.289722,68.8
+58757,UF2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2014,12,,,,34.723056,-118.289722,68.8
+58757,UG2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,12,,,,34.723056,-118.289722,68.8
+58757,UH2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,12,,,,34.723056,-118.289722,68.8
+58761,EXSA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2014,5,,,,34.582222,-117.341667,68.9
+58762,EXSB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2014,5,,,,34.583333,-117.340278,69
+58763,EXSC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.584444,-117.341389,69
+58906,VC1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2013,12,,,,33.234167,-117.001667,68.4
+58907,VC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2013,12,,,,33.234167,-117.001667,68.4
+58909,RAM1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2013,12,,,,33.012222,-116.875,83.2
+58911,RAM2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2013,12,,,,33.012222,-116.875,83.2
+58912,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2015,3,,,,33.910833,-118.044444,11
+58913,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,3,,,,33.910833,-118.044444,11
+58963,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,2,,,,34.136111,-118.701944,47.6
+58983,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,45,45,45,2014,12,,,,35.026667,-118.185556,88.5
+58990,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,15,15,15,2014,12,,,,35.026667,-118.185556,88.5
+59002,CEC 6,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,131.8,105.5,105.5,2018,12,,,,33.140507,-117.333916,57.6
+59002,CEC 7,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,131.8,105.5,105.5,2018,12,,,,33.140507,-117.333916,57.6
+59002,CEC 8,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,131.8,105.5,105.5,2018,12,,,,33.140507,-117.333916,57.6
+59002,CEC 9,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,131.8,105.5,105.5,2018,12,,,,33.140507,-117.333916,57.6
+59002,CEC10,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,131.8,105.5,105.5,2018,12,,,,33.140507,-117.333916,57.6
+59094,GEN 1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,6,,,,34.708333,-118.130556,66.3
+59095,GEN 1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,6,,,,34.708333,-118.130556,66.3
+59096,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,6,,,,34.708333,-118.130556,66.3
+59098,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,6,,,,34.700278,-118.123611,65.7
+59099,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,6,,,,34.700278,-118.123611,65.7
+59132,57449,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2012,2,,,,34.9325,-117.907222,81.7
+59133,57449,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2012,2,,,,34.917222,-117.900278,80.6
+59138,57449,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,2,,,,32.906111,-117.121389,77.9
+59139,57449,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2011,5,,,,33.21,-117.170556,61.3
+59167,LS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.715,-118.095,66.6
+59169,LS2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.710556,-118.166111,66.7
+59182,10-94,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,8,,,,34.435,-117.378056,59.4
+59235,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,19.8,19.8,19.8,2015,1,,,,35.088889,-118.206389,92.9
+59236,GEN1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,99,99,99,2015,6,,,,35.060556,-118.243333,91.3
+59237,CPII,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2014,12,,,,34.408333,-116.8625,79.8
+59261,VZ300,retired,RE,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2013,12,,,2023,33.850556,-118.304167,18.1
+59262,LLRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2014,12,,,,34.599444,-117.932778,58.6
+59269,VMLB2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.6,1.5,2014,11,,,,34.512778,-117.387222,63.4
+59270,VMLC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.6,1.5,2014,11,,,,34.511389,-117.387222,63.3
+59271,VMLD2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.6,1.5,2014,11,,,,34.509444,-117.387222,63.2
+59272,VMLE2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.6,1.5,2014,11,,,,34.508056,-117.387222,63.2
+59273,PALME,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,9,9,2015,8,,,,34.613056,-117.938889,59.5
+59334,INV-1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,18,18,18,2015,8,,,,34.812222,-118.352778,75.7
+59359,10400,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,10,,,,34.473889,-117.562778,56
+59360,11113,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,10,,,,34.471389,-117.562222,55.8
+59405,PV11,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2015,1,,,,33.713056,-117.0725,54
+59409,SNL17,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2014,12,,,,34.768333,-117.323611,80.3
+59410,SNL19,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,12,,,,34.766389,-117.323611,80.2
+59411,SNL18,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,12,,,,34.765,-117.323611,80.1
+59416,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.1,2,1.2,2014,8,,,,33.8025,-117.919722,6.2
+59421,11111,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.413056,-117.470833,55.1
+59422,10401,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.4175,-117.469722,55.3
+59423,10402,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2014,11,,,,34.415278,-117.47,55.2
+59431,SSG1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,18,18,2015,11,,,,34.703611,-118.334167,68.2
+59440,SAS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,7,7,7,2015,7,,,,34.557222,-117.3775,66.3
+59441,SAS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2015,9,,,,34.557222,-117.3775,66.3
+59443,WAS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2014,11,,,,34.689167,-118.324722,67.1
+59456,P-TG4,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4,4,2007,3,,,2024,32.894722,-117.198056,75.7
+59456,P-TG5,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4,4,2015,11,,,2023,32.894722,-117.198056,75.7
+59457,Q-TG1,retired,RE,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4,4,2013,7,,,2023,32.904167,-117.201111,75.1
+59458,W-TG1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,4.6,4,4,2005,7,,,,32.903333,-117.195556,75.3
+59461,GEN01,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN02,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN03,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN04,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN05,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN06,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59461,GEN07,operable,OP,Landfill Gas,IC,LFG,,biogas,3.4,3.4,3.4,2016,4,,,,33.718889,-117.702222,17.9
+59469,ALAMO,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2015,5,,,,34.682222,-117.3475,74.5
+59528,OASIS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2016,1,,,,34.648889,-118.076667,62
+59536,AWI,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,1,,,,34.548056,-117.464444,63.2
+59537,AW2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,1,,,,34.548056,-117.464444,63.2
+59539,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,3,,,,33.896111,-117.283611,42.9
+59540,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2015,4,,,,34.100278,-117.552778,35.5
+59541,3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,3,,,,34.039722,-117.606667,30.5
+59597,CS001,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2015,6,,,,34.093333,-117.319444,46.1
+59598,CS002,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2015,4,,,,34.042222,-117.361667,42.2
+59610,APNLI,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,18.5,12.2,2015,8,,,,33.74,-117.010556,57.5
+59651,W4161,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1,2015,2,,,,34.071389,-118.196111,24.4
+59652,W4162,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.9,1,0.6,2014,9,,,,34.236667,-118.565833,46.1
+59661,TSP1,retired,RE,Batteries,BA,MWH,,battery,8,8,8,2016,4,,,2022,35.123333,-118.38,96.9
+59730,SPV18,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2016,1,,,,34.613602,-117.93439,59.6
+59739,LWADB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2017,4,,,,34.780192,-118.19333,71.7
+59740,SPVMW,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2016,6,,,,35.022903,-118.282694,89
+59798,W4172,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,0.9,1.4,2015,12,,,,33.792694,-118.252407,14.1
+59800,AMZ00,retired,RE,Other Natural Gas,FC,NG,,natural_gas,1.1,1,1,2014,11,,,2023,34.088408,-117.245839,49.6
+59804,SBK00,retired,RE,Other Natural Gas,FC,NG,,natural_gas,1.1,1,1,2014,6,,,2024,34.093684,-117.551044,35.3
+59868,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2016,4,,,,34.819,-118.432,77.4
+59877,MB20,operable,OP,Other Waste Biomass,FC,OBG,NG,biogas,1.4,1.4,1.4,2016,8,,,,33.9617,-117.455897,34.9
+59878,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2019,12,,,,35.0199,-118.2879,88.9
+59879,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,151.1,151.1,151.1,2019,6,,,,34.862,-118.38,79.4
+59916,12307,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,3,,,,34.03527,-117.5341,33.6
+59942,ML1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2015,9,,,,34.6608,-118.0836,62.8
+59961,WABSB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,19,19,2016,12,,,,34.73206,-118.313573,69.8
+59962,NLR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,18,17,2016,12,,,,34.719538,-118.31301,68.9
+59963,CADRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,17,16,2016,5,,,,34.720499,-118.30046,68.8
+59964,ELVSC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,40,39,37,2016,12,,,,34.730263,-118.30425,69.5
+59969,GEN01,proposed,V,Solar Photovoltaic,PV,SUN,,solar,26.4,26.4,26.4,2026,10,,,,35.0133,-118.2698,88.3
+59976,ASTR1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,100,100,100,2016,12,,,,34.844226,-118.458466,79.6
+59977,ASTR2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,75,75,75,2016,12,,,,34.836649,-118.480204,79.5
+60026,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2015,12,,,,34.600231,-117.94751,58.6
+60032,RCHTR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,8,,,,34.097728,-117.544529,35.8
+60035,RPU1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,7.3,7.3,7.3,2015,10,,,,33.97819,-117.38514,39.1
+60060,SDIA2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.7,1.7,2016,2,,,,32.729238,-117.207718,84.7
+60060,SDIAA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.6,0.5,0.5,2015,9,,,,32.729238,-117.207718,84.7
+60060,SDIAB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.5,0.5,0.5,2015,12,,,,32.729238,-117.207718,84.7
+60085,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3.7,3.7,3.7,2016,12,,,,34.748894,-117.973571,68.8
+60086,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2016,12,,,,34.66072,-118.081152,62.8
+60091,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2016,4,,,,34.824206,-118.438547,77.9
+60151,BLDGF,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2016,11,,,,33.914356,-118.050189,11.3
+60153,BLDGG,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2016,9,,,,33.912917,-118.050561,11.2
+60154,BLDG1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,11,,,,33.912917,-118.041944,11.1
+60182,DULLE,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2016,9,,,,34.030119,-117.517753,34.1
+60183,FSPRI,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2016,10,,,,33.892614,-118.037564,9.7
+60185,SOLV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,85,81,78,2016,12,,,,34.655694,-118.298166,64.4
+60186,DSR1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,50,48,46,2016,12,,,,34.655556,-118.280722,64.2
+60187,DSR2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2016,12,,,,34.686944,-118.311722,66.7
+60231,BA1,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2016,4,,,,33.211095,-117.299593,55.6
+60231,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.5,4.5,4.5,2016,4,,,,33.211095,-117.299593,55.6
+60233,BESS1,operable,OP,Batteries,BA,MWH,,battery,45,45,45,2021,8,,,,34.825267,-118.524989,79.6
+60233,BESS2,operable,OP,Batteries,BA,MWH,,battery,43,43,43,2021,12,,,,34.825267,-118.524989,79.6
+60233,PV2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,185.1,180,180,2016,11,,,,34.825267,-118.524989,79.6
+60255,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2016,6,,,,34.108618,-117.782246,27.8
+60255,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,6,,,,34.108618,-117.782246,27.8
+60279,ABSR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,19,19,2016,8,,,,34.694839,-118.28769,66.9
+60280,SUMSL,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,19,19,2016,7,,,,34.714703,-118.311006,68.6
+60281,CADRB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2017,9,,,,34.705549,-118.301417,67.8
+60310,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2017,2,,,,34.71647,-118.2821,68.3
+60311,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,11.4,11.4,11.4,2017,2,,,,34.71412,-118.2739,68
+60324,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,107.9,107.9,107.9,2019,1,,,,34.826697,-118.335211,76.4
+60386,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20.2,20,20,2016,9,,,,34.821453,-118.497406,78.8
+60426,RCWD,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.1,3.9,2.7,2016,6,,,,33.5226,-117.1815,50.3
+60466,WTHF,operable,OP,Conventional Hydroelectric,HY,WAT,,hydro,1,1,1,2024,9,,,,34.172625,-117.278033,51
+60474,BSHRB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2017,12,,,,34.678305,-118.302649,66
+60475,BSHRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2017,12,,,,34.681338,-118.314087,66.4
+60481,BSHRA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2017,12,,,,34.667817,-118.298089,65.2
+60485,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2016,12,,,,34.541,-117.061,76.9
+60491,SB3BS,operable,OP,Batteries,BA,MWH,,battery,1.5,1.5,1.5,2019,7,,,,35.171153,-118.001652,97.9
+60491,SB3SF,operable,OP,Solar Photovoltaic,PV,SUN,,solar,90,90,90,2019,7,,,,35.171153,-118.001652,97.9
+60509,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.3,2.3,2.3,2016,12,,,,33.2503,-117.0226,66.7
+60516,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2016,9,,,,33.2704,-117.0588,64.2
+60566,SES1,retired,RE,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2012,12,,,2021,33.35651,-117.113599,58.5
+60566,SES2,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2015,8,,,,33.35651,-117.113599,58.5
+60567,SES1,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2015,5,,,,33.562061,-117.543777,30
+60567,SES2,operable,OS,Batteries,BA,MWH,,battery,1,1,1,2015,10,,,,33.562061,-117.543777,30
+60568,SES,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2014,10,,,,32.95907,-117.191622,72.5
+60569,SES,operable,OP,Batteries,BA,MWH,,battery,7.5,7.5,7.5,2017,2,,,,32.8115,-117.050546,85.5
+60570,SES,operable,OA,Batteries,BA,MWH,,battery,30,30,30,2017,3,,,,33.124446,-117.114274,67.6
+60571,NCEP,operable,OS,Landfill Gas,IC,LFG,,biogas,1.6,1.4,1.5,2013,11,,,,32.877822,-117.197788,76.6
+60590,RS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,54,54,54,2016,12,,,,34.839012,-118.386843,78
+60591,RS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,54,54,54,2016,12,,,,34.839012,-118.386843,78
+60594,VYGR1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,131.1,131.1,131.1,2019,12,,,,35.046061,-118.28273,90.6
+60661,013A,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2016,12,,,,34.006125,-117.560934,31.2
+60661,013B,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2016,12,,,,34.006125,-117.560934,31.2
+60698,BESS1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2020,8,,,,33.806801,-117.985758,3.9
+60698,BESS2,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2020,8,,,,33.806801,-117.985758,3.9
+60698,GT1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,70.5,70.5,70.5,2020,7,,,,33.806801,-117.985758,3.9
+60698,GT2,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,70.5,70.5,70.5,2020,7,,,,33.806801,-117.985758,3.9
+60699,DESI1,retired,RE,Batteries,BA,MWH,,battery,2.4,2.4,2.4,2016,12,,,2024,33.799248,-117.873371,8.5
+60760,PE101,retired,RE,Batteries,BA,MWH,,battery,2,2,2,2016,12,,,2025,33.691,-117.833,11.1
+60790,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2017,6,2047,7,,34.038433,-117.565802,32.2
+60791,ANZA1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2017,9,,,,33.555267,-116.639647,80.1
+60791,ANZA2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.4,1.4,2020,12,,,,33.555267,-116.639647,80.1
+60791,BA1&2,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2022,1,,,,33.555267,-116.639647,80.1
+60791,BA3,operable,OP,Batteries,BA,MWH,,battery,2.4,2.4,2.4,2023,1,,,,33.555267,-116.639647,80.1
+60869,PB1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,9.5,9.5,9.5,2016,12,,,,34.511889,-117.922819,52.6
+60914,W5328,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,2.3,1.5,2016,12,,,,33.766067,-118.284733,15.7
+60960,CTG1,operable,OP,Other Waste Biomass,GT,OBG,NG,biogas,11,10,10,2017,4,,,,33.9254,-118.4298,26.8
+60960,CTG2,operable,OP,Other Waste Biomass,GT,OBG,NG,biogas,11,10,10,2017,4,,,,33.9254,-118.4298,26.8
+60960,STG1,operable,OP,Other Waste Biomass,GT,OBG,NG,biogas,11,2,2,2017,4,,,,33.9254,-118.4298,26.8
+60974,2BESS,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2017,10,,,,34.162327,-118.283684,32.3
+60978,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2016,12,,,,33.87912,-117.8887,11.2
+60979,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2016,12,,,,33.87912,-117.8887,11.2
+60984,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2017,2,,,,32.729444,-117.205083,84.7
+60995,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.3,3.7,3.6,2017,4,,,,33.018486,-116.860713,83.6
+61066,WTG1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,1.9,1.9,1.9,2017,12,,,,34.691,-118.221,65.9
+61107,VRF,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2017,6,,,,32.682506,-116.988781,94.7
+61154,AT058,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1.3,1.3,1.3,2016,9,,,,33.836439,-117.916893,7.9
+61167,91MC8,proposed,V,Solar Photovoltaic,PV,SUN,,solar,80,80,80,2026,7,,,,34.987952,-117.571611,88.9
+61167,BESS,proposed,V,Batteries,BA,MWH,,battery,50,50,50,2026,7,,,,34.987952,-117.571611,88.9
+61204,ALMTS,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2021,1,,,,33.770202,-118.099665,5.2
+61215,GBWXC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2018,8,,,,34.597,-117.931,58.4
+61216,GBWXD,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2018,8,,,,34.654976,-118.08215,62.4
+61249,W5531,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.9,2.9,2.9,2017,3,,,,33.766067,-118.288925,16
+61250,USPS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,7.4,7.4,7.4,2017,7,,,,33.977922,-118.2587,21
+61264,ANTX2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,105,105,105,2018,12,,,,34.744977,-118.309153,70.6
+61265,ADSR3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2019,9,,,,34.736859,-118.304071,70
+61319,W4885,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2015,10,,,,33.727977,-118.280032,15.6
+61339,GBWXB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2018,12,,,,34.688042,-117.989541,64.6
+61348,W5691,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.3,2.3,2.3,2017,7,,,,33.764227,-118.288925,16
+61349,W5694,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.2,2.2,2.2,2017,7,,,,33.764227,-118.284733,15.7
+61365,FBES,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2023,3,,,,33.384244,-117.235322,51.4
+61366,TGES,operable,OP,Batteries,BA,MWH,,battery,30,30,30,2021,6,,,,32.876198,-117.167791,77.8
+61419,OTP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2017,9,,,,34.615622,-117.936594,59.7
+61445,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2018,3,,,,34.832786,-118.563578,80.9
+61446,BA2,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2023,5,,,,34.834944,-118.551181,80.8
+61446,PV2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,45,45,45,2023,5,,,,34.834944,-118.551181,80.8
+61447,PV3,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2023,5,,,,34.834944,-118.551181,80.8
+61448,PV4,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2023,5,,,,34.827873,-118.568178,80.7
+61449,PV5,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,20,20,2023,5,,,,34.834944,-118.551181,80.8
+61582,VYGR2,operable,OP,Onshore Wind Turbine,WT,WND,,wind,128.7,128.7,128.7,2018,12,,,,35.073377,-118.268616,92.3
+61583,VYGR3,operable,OP,Onshore Wind Turbine,WT,WND,,wind,43.2,43.2,43.2,2018,12,,,,35.060768,-118.264734,91.5
+61584,VYGR4,operable,OP,Onshore Wind Turbine,WT,WND,,wind,21.6,21.6,21.6,2018,12,,,,35.077872,-118.2497,92.5
+61593,W5791,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,0.8,2017,11,,,,33.763012,-118.286558,15.8
+61594,W5792,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.9,2,1.3,2017,11,,,,33.762421,-118.288214,15.9
+61628,KILRO,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,0.9,2018,1,,,,32.936137,-117.234157,72.1
+61661,VISTA,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2018,6,,,,33.203977,-117.253852,57.9
+61718,APLEX,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.1,0.9,2018,8,,,,34.189857,-118.451355,39.3
+61721,WLA01,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2019,8,,,,33.669266,-117.646846,21.7
+61722,IRV01,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2018,5,,,,33.713489,-117.852086,9.6
+61722,IRV1W,operable,OP,Batteries,BA,MWH,,battery,4.5,4.5,4.5,2018,5,,,,33.713489,-117.852086,9.6
+61723,IRV06,operable,OP,Batteries,BA,MWH,,battery,2.5,2.5,2.5,2018,8,,,,33.665246,-117.768222,15.2
+61723,IRV2W,operable,OP,Batteries,BA,MWH,,battery,3.3,3.3,3.3,2018,2,,,,33.665246,-117.768222,15.2
+61754,1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,3.3,3.3,3.3,2018,6,,,,35.096709,-118.602184,98.7
+61754,2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,3.3,3.3,3.3,2018,6,,,,35.096709,-118.602184,98.7
+61824,RPU2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2018,6,,,,34.11193,-117.27326,49
+61834,SCSP1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.9,0.8,2016,8,,,,33.767061,-116.905874,63.5
+61834,SCSP2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,0.8,0.8,2017,6,,,,33.767061,-116.905874,63.5
+61843,10276,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2018,5,,,,32.586536,-117.004884,99.5
+62004,SPRWY,operable,OP,Solar Photovoltaic,PV,SUN,,solar,100,100,100,2019,8,,,,34.723748,-118.280345,68.8
+62016,UCRIV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,3.5,2,2017,12,,,,33.97036,-117.33099,41.8
+62028,CSULB,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.5,3.3,1.8,2017,12,,,,33.78104,-118.11357,6.2
+62056,LANC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2018,11,,,,34.743383,-117.972222,68.4
+62115,1A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,231,194,231,2020,2,,,,33.767229,-118.100194,5.2
+62115,1B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,231,194,231,2020,2,,,,33.767229,-118.100194,5.2
+62115,1S,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,216,215,216,2020,2,,,,33.767229,-118.100194,5.2
+62116,1A,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,231,205,227,2020,2,,,,33.645618,-117.979372,7.7
+62116,1B,operable,OP,Natural Gas Fired Combined Cycle,CT,NG,,natural_gas,231,205,227,2020,2,,,,33.645618,-117.979372,7.7
+62116,1S,operable,OP,Natural Gas Fired Combined Cycle,CA,NG,,natural_gas,237.2,220,236,2020,2,,,,33.645618,-117.979372,7.7
+62150,SOLAR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,4,4,2017,2,,,,34.148139,-117.570404,37.2
+62242,SBRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2018,12,,,,32.63266,-117.07775,94.4
+62286,W7188,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2018,12,,,,34.224041,-118.392921,39.2
+62287,W7190,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1,1,2018,12,,,,33.8482,-118.3055,18.1
+62288,VAL01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,111.2,111.2,111.2,2019,11,,,,34.90422,-118.384341,82.3
+62320,ANE1B,operable,OP,Solar Photovoltaic,PV,SUN,,solar,17,17,17,2022,11,,,,34.71611,-118.259161,68
+62378,VSCFW,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.61,1.61,2018,12,,,,34.277355,-118.429836,43.4
+62441,U1,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2020,2,,,,32.815256,-117.126079,82.6
+62458,RAT00,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2018,12,,,,34.08145,-118.15191,24
+62460,DESI2,operable,OP,Batteries,BA,MWH,,battery,1.4,1.4,1.4,2019,10,,,,33.7357,-117.915286,5.6
+62497,OCES2,operable,OA,Batteries,BA,MWH,,battery,9,9,9,2021,11,,,,33.715536,-117.854314,9.4
+62499,OCES3,operable,OA,Batteries,BA,MWH,,battery,6,6,6,2021,11,,,,33.714896,-117.85431,9.4
+62571,DSY01,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2017,3,,,,34.083387,-118.43378,33.3
+62573,ATT56,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2017,4,,,,33.684675,-117.836821,11.1
+62574,ATT93,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2017,7,,,,34.196324,-118.448225,39.5
+62611,HELIX,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2018,5,,,,32.753281,-117.035241,89.2
+62673,ANX3A,operable,OP,Solar Photovoltaic,PV,SUN,,solar,15,15,15,2021,6,,,,34.728902,-118.322051,69.7
+62674,ANX3B,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2021,6,,,,34.720162,-118.322532,69.1
+62698,KR059,operable,OP,Other Natural Gas,FC,NG,,natural_gas,2.2,2.2,2.2,2017,9,,,,33.85098,-117.84531,11.6
+62704,EQX09,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2017,10,,,,33.9212,-118.38453,24.4
+62704,EQX95,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2017,9,,,,33.9212,-118.38453,24.4
+62705,EQX08,operable,OP,Other Natural Gas,FC,NG,,natural_gas,2,2,2,2017,9,,,,33.92542,-118.39463,25
+62729,PAIN1,proposed,TS,Batteries,BA,MWH,,battery,10,10,10,2026,7,,,,34.41,-119.515,97.3
+62754,BA,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2021,6,,,,32.7338,-117.1933,84.9
+62801,ORN34,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2021,2,,,,34.407086,-119.511547,97
+62874,ACOR1,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2021,4,,,,34.196505,-118.931898,61
+62875,WILD1,operable,OP,Batteries,BA,MWH,,battery,3,3,3,2021,11,,,,33.807988,-116.489835,87.4
+62889,HEGJF,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2021,10,,,,33.714672,-117.853061,9.5
+62889,HJFII,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2021,10,,,,33.714672,-117.853061,9.5
+62987,GHSP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.3,0.8,2018,12,,,,32.816542,-116.999589,87.2
+63054,CALTR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2019,11,,,,35.141374,-117.965748,95.9
+63285,79G1,operable,OP,Natural Gas Fired Combustion Turbine,GT,NG,,natural_gas,33.5,32.2,35.3,2017,11,,,,33.778655,-118.23853,13.2
+63303,AISP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.1,0.7,2017,12,,,,33.878585,-117.99608,8.7
+63325,YORK1,operable,OP,Batteries,BA,MWH,,battery,3.5,3.5,3.5,2024,9,,,,34.00467,-118.068418,17.6
+63326,CAD1,operable,OP,Batteries,BA,MWH,,battery,3.5,3.5,3.5,2024,9,,,,34.00469,-118.068407,17.6
+63376,PPHS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.1,0.8,2015,11,,,,34.57654,-117.58281,61.9
+63385,CA135,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.5,4.5,4.5,2014,12,,,,34.433332,-118.510837,55
+63414,IOSII,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,3.7,3.3,2020,2,,,,34.09,-117.45,39.7
+63482,PW1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,64.5,64.5,64.5,2021,3,,,,35.080833,-118.361389,93.8
+63508,CSPV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,44,44,44,2025,4,,,,34.93031,-118.443211,84.9
+63510,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2020,2,,,,34.02188,-117.85051,20.7
+63510,ST1,operable,OP,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2020,2,,,,34.02188,-117.85051,20.7
+63516,CACTY,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2018,7,,,,35.157,-117.981,97
+63527,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2020,8,,,,34.05,-118.18,22.6
+63603,ILM01,operable,OP,Other Natural Gas,FC,NG,,natural_gas,3.5,3.5,3.5,2019,9,,,,32.87302,-117.19968,76.8
+63606,ATT27,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2019,11,,,,34.152191,-118.456078,37.5
+63609,ALRGN,operable,OP,Batteries,BA,MWH,,battery,1.5,1.5,1.5,2019,7,,,,33.67239,-117.85381,10.6
+63610,BAKER,operable,OP,Batteries,BA,MWH,,battery,1.2,1.2,1.2,2019,4,,,,33.656528,-117.68412,20
+63611,CSULB,operable,OP,Batteries,BA,MWH,,battery,2.5,2.5,2.5,2017,3,,,,33.78383,-118.10796,5.9
+63612,DATS0,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2017,4,,,,33.70731,-117.89108,7.6
+63613,DOWNY,operable,OP,Batteries,BA,MWH,,battery,2,2,2,2019,12,,,,33.919368,-118.128919,13.3
+63614,LAWRP,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2019,4,,,,33.63778,-117.71377,18.9
+63615,LBCON,operable,OP,Batteries,BA,MWH,,battery,1.5,1.5,1.5,2019,4,,,,33.765236,-118.189377,10.3
+63616,OCSD1,operable,OP,Batteries,BA,MWH,,battery,4.9,4.9,4.9,2019,8,,,,33.693129,-117.9409,5.8
+63617,SOCCD,operable,OP,Batteries,BA,MWH,,battery,1.3,1.3,1.3,2019,6,,,,33.676445,-117.777312,14.5
+63622,OES01,proposed,TS,Other Waste Biomass,IC,OBG,LFG,biogas,1.3,1.3,1.3,2026,11,,,,34.17325,-117.34641,47.9
+63622,OES02,proposed,TS,Other Waste Biomass,IC,OBG,LFG,biogas,1.3,1.3,1.3,2026,11,,,,34.17325,-117.34641,47.9
+63623,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.7,1.7,1.7,2020,8,,,,33.92,-118.24,17.4
+63685,LUNA,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2022,6,,,,34.68325,-118.3053,66.4
+63714,GEN05,operable,OP,Other Natural Gas,FC,NG,,natural_gas,2.5,2.5,2.5,2019,4,,,,33.21086,-117.299,55.6
+63716,KSR53,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1.6,1.6,1.6,2018,5,,,,33.7902,-118.29431,16.5
+63735,SLV01,operable,OA,Batteries,BA,MWH,,battery,11,11,11,2021,4,2041,4,,34.20774,-119.079813,68.8
+63758,KROLH,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2020,4,,,,33.922141,-117.939096,12.3
+63843,SAP2,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2022,6,,,,33.715016,-117.853984,9.4
+63843,SASP1,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2021,6,,,,33.715016,-117.853984,9.4
+63843,SASP3,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2022,8,,,,33.715016,-117.853984,9.4
+63859,RCBA,operable,OP,Batteries,BA,MWH,,battery,147,147,147,2024,3,,,,34.847,-118.395,78.6
+63859,RCTR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,192,192,192,2020,12,,,,34.847,-118.395,78.6
+63891,SATCY,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2021,4,,,,34.256691,-119.15726,74.3
+63941,OA1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,14.4,14.4,14.4,2021,4,,,,35.059166,-118.291944,91.6
+63986,10136,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.9,0.9,0.9,2017,11,,,,34.090318,-117.355604,44.2
+64005,MMR-1,operable,OP,Other Waste Biomass,FC,OBG,,biogas,2.8,2.2,2.2,2023,11,,,,33.780852,-118.222435,12.3
+64027,MB19,operable,OP,Other Waste Biomass,FC,OBG,NG,biogas,1.4,1.4,1.4,2021,6,,,,34.075594,-117.287339,47.1
+64049,NCRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2021,3,,,,33.190283,-117.255584,58.4
+64209,26SBA,proposed,U,Solar Photovoltaic,PV,SUN,,solar,500,500,500,2026,9,,,,35.017779,-118.068731,87.4
+64209,26SBB,proposed,P,Batteries,BA,MWH,,battery,500,500,500,2026,11,,,,35.017779,-118.068731,87.4
+64210,50LWA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,500,500,500,2025,12,,,,35.062965,-118.087803,90.6
+64210,50LWB,operable,OP,Batteries,BA,MWH,,battery,500,500,500,2025,12,,,,35.062965,-118.087803,90.6
+64215,45MGA,proposed,U,Solar Photovoltaic,PV,SUN,,solar,150,150,150,2026,12,,,,35.062965,-118.087803,90.6
+64215,45MGB,proposed,U,Batteries,BA,MWH,,battery,113,113,113,2026,12,,,,35.062965,-118.087803,90.6
+64264,298,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2020,12,,,,34.1265,-118.70404,47.3
+64270,COLT1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2021,9,2045,12,,34.03925,-117.36056,42.2
+64323,CHW,operable,OP,Onshore Wind Turbine,WT,WND,,wind,61.2,61.2,61.2,2021,3,,,,33.9077,-116.5797,82.8
+64396,EMSJN,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3.4,3.4,3.4,2021,7,,,,33.75998,-117.18766,47.3
+64397,EMSJN,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2021,7,,,,33.798547,-117.016588,57.2
+64398,EMSUN,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.5,1.5,2021,7,,,,33.696146,-117.218621,45.7
+64399,EMRES,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.2,4.2,4.2,2022,5,,,,33.802869,-117.023567,56.8
+64403,CSUCI,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3.7,3.7,3.7,2021,12,,,,34.162058,-119.043375,65.5
+64406,EMMOR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.4,2.4,2.4,2021,7,,,,33.868252,-117.214055,46.4
+64418,BB000,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5.5,5.5,5.5,2020,12,,,,34.015287,-118.192851,20.9
+64438,VALLE,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.4,1.4,2021,9,,,,33.212535,-117.177029,60.9
+64489,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,90,90,90,2023,8,,,,35.00656,-117.54484,90.5
+64489,GEN2,operable,OP,Batteries,BA,MWH,,battery,75,75,75,2023,8,,,,35.00656,-117.54484,90.5
+64518,CIW,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2020,2,,,,33.949722,-117.636427,25.4
+64579,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2014,9,,,,33.97034,-117.33101,41.8
+64601,ESS,operable,OP,Batteries,BA,MWH,,battery,0.4,0.5,0.5,2020,7,,,,32.833645,-117.131123,81.4
+64601,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.7,1.7,1.1,2020,7,,,,32.833645,-117.131123,81.4
+64611,1,operable,OP,Batteries,BA,MWH,,battery,8.3,8.3,8.3,2020,4,,,,34.733011,-118.138525,68
+64611,2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2020,4,,,,34.733011,-118.138525,68
+64612,KNES,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2022,2,,,,32.83347,-117.13443,81.3
+64614,KSES,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2022,2,,,,32.832886,-117.132292,81.4
+64624,BESS1,operable,OP,Batteries,BA,MWH,,battery,50,50,50,2021,12,,,,34.6365,-117.3724,71.1
+64624,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,100,100,100,2021,12,,,,34.6365,-117.3724,71.1
+64630,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,100,100,100,2022,10,,,,34.83,-118.32,76.4
+64630,RBBAT,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2022,10,,,,34.83,-118.32,76.4
+64632,99MT8,proposed,P,Solar Photovoltaic,PV,SUN,,solar,200,200,200,2028,12,,,,34.493659,-116.915013,80.9
+64632,99MTB,proposed,P,Batteries,BA,MWH,,battery,200,200,200,2028,12,,,,34.493659,-116.915013,80.9
+64712,ESSB1,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2021,9,,,,35.027264,-118.139236,88.3
+64713,ESSB2,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2021,11,,,,35.027264,-118.140078,88.3
+64751,267,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3.8,3.8,3.8,2021,10,,,,33.92624,-116.99442,59.6
+64836,CATAL,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2020,12,,,,33.749947,-118.278469,15.4
+64837,MARIN,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2020,12,,,,33.717993,-118.275617,15.4
+64846,PR000,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2021,4,,,,34.239244,-118.583575,46.9
+64864,CHAPB,operable,OP,Batteries,BA,MWH,,battery,52,52,52,2025,4,,,,34.870764,-118.3195,79.2
+64864,CHAPS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,102,102,102,2025,4,,,,34.870764,-118.3195,79.2
+64864,GEN01,operable,OP,Solar Photovoltaic,PV,SUN,,solar,72,72,72,2025,4,,,,34.870764,-118.3195,79.2
+64864,WS3BA,operable,OP,Batteries,BA,MWH,,battery,36,36,36,2025,4,,,,34.870764,-118.3195,79.2
+64877,BESS,operable,OP,Batteries,BA,MWH,,battery,11,11,11,2021,12,,,,34.946324,-118.126489,82.7
+64877,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,27.1,27.1,27.1,2021,12,,,,34.946324,-118.126489,82.7
+64878,BESS,operable,OP,Batteries,BA,MWH,,battery,144,144,144,2022,8,,,,34.961922,-118.124208,83.7
+64878,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,149.3,149.3,149.3,2022,8,,,,34.961922,-118.124208,83.7
+64879,BESS,operable,OP,Batteries,BA,MWH,,battery,120,120,120,2022,4,,,,34.941507,-118.129025,82.3
+64879,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,137.8,137.8,137.8,2021,12,,,,34.941507,-118.129025,82.3
+64928,BESS,operable,OP,Batteries,BA,MWH,,battery,33,33,33,2022,7,,,,35.01644,-118.1225,87.5
+64928,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,37.7,37.7,37.7,2022,3,,,,35.01644,-118.1225,87.5
+64929,BESS,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2022,7,,,,35.02769,-118.13284,88.3
+64929,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,44.6,44.6,44.6,2022,3,,,,35.02769,-118.13284,88.3
+64993,BB1BA,operable,OP,Batteries,BA,MWH,,battery,22,22,22,2022,12,,,,34.907041,-118.344077,81.9
+64993,BB1PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,70,70,70,2022,2,,,,34.907041,-118.344077,81.9
+64993,BB2BA,operable,OP,Batteries,BA,MWH,,battery,18,18,18,2022,12,,,,34.907041,-118.344077,81.9
+64993,BB2PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,58,58,58,2022,2,,,,34.907041,-118.344077,81.9
+65002,WERL,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2020,11,,,,33.980601,-117.375494,39.7
+65091,293,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.3,4.3,4.3,2022,3,,,,34.10535,-117.23477,50.7
+65105,15111,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4,4,4,2024,4,,,,35.1135,-118.569,99.2
+65182,CSLPA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.3,2.3,2.3,2022,10,,,,34.694314,-118.227759,66.2
+65191,USD00,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2016,12,,,,32.771701,-117.191589,82.7
+65193,CLT05,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2016,3,,,,34.139368,-118.121488,27.4
+65200,DTV02,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2016,10,,,,33.983377,-118.42517,28.6
+65205,ATT26,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2013,6,,,,33.874969,-118.289798,18.1
+65206,ATT58,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2016,10,,,,33.92429,-118.320597,21.3
+65211,CMC04,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2021,9,,,,34.137717,-118.36082,33.2
+65238,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.4,2.4,2.4,2019,2,,,,33.99848,-117.55289,31.3
+65251,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2019,3,,,,34.08041,-117.20138,51.6
+65252,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.4,2.4,2.4,2018,12,,,,33.88102,-117.30036,41.7
+65253,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.2,2.2,2.2,2018,12,,,,34.12937,-117.40554,43.3
+65255,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2018,12,,,,33.99347,-117.55391,31
+65256,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2018,12,,,,34.07752,-117.27257,47.9
+65330,BALB1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.4,2.4,2.4,2022,2,,,,34.22379,-118.49974,42.9
+65330,VSPRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.8,0.8,0.8,2022,4,,,,34.22379,-118.49974,42.9
+65331,NORMA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.4,2021,12,,,,33.84614,-118.30019,17.8
+65360,ATA02,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2016,3,,,,32.88758,-117.16682,77.2
+65361,CLT30,operable,OP,Other Natural Gas,FC,NG,,natural_gas,2.2,2.2,2.2,2019,12,,,,34.13818,-118.12841,27.4
+65365,17024,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2023,8,,,,34.299721,-118.833462,60.3
+65396,BW1,operable,OP,Batteries,BA,MWH,,battery,15,15,15,2025,10,,,,34.35758,-119.057285,73
+65397,SP1,operable,OP,Batteries,BA,MWH,,battery,30,30,30,2024,10,,,,34.35716,-119.05499,72.9
+65398,HMSD1,proposed,TS,Batteries,BA,MWH,,battery,14,14,14,2027,10,,,,34.48909,-118.6167,61.5
+65408,GOSSB,operable,OP,Batteries,BA,MWH,,battery,0.7,0.7,0.7,2021,12,,,,33.213138,-117.304166,55.3
+65408,GOSSP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.4,0.9,2021,12,,,,33.213138,-117.304166,55.3
+65447,19032,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2022,12,,,,34.165905,-119.156765,71.6
+65456,SEPAR,operable,OP,Batteries,BA,MWH,,battery,112.5,112.5,112.5,2024,8,,,,34.09211,-117.53402,36
+65457,CATH1,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2024,8,,,,33.7763,-118.20028,11
+65457,CATH2,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2024,8,,,,33.7763,-118.20028,11
+65527,17024,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2025,12,,,,34.25,-119.25,78.8
+65569,GSRBA,operable,OP,Batteries,BA,MWH,,battery,1.1,1.1,1.1,2021,7,,,,34.09623,-117.781867,27.1
+65569,GSRSP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.7,1.6,1.4,2021,7,,,,34.09623,-117.781867,27.1
+65591,AVEPB,operable,OP,Batteries,BA,MWH,,battery,126,126,126,2025,4,,,,34.878039,-118.347,80
+65614,OCCBA,operable,OP,Batteries,BA,MWH,,battery,2.1,2.1,2.1,2022,5,,,,33.672565,-117.91246,8
+65614,OCCSP,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3.1,3,2.7,2022,5,,,,33.672565,-117.91246,8
+65617,3998G,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2021,12,,,,34.267795,-116.815428,77.1
+65617,P3998,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.7,0.7,0.7,2021,12,,,,34.267795,-116.815428,77.1
+65635,HEDS1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2025,5,,,,33.8079,-116.494,87.2
+65652,NBRIA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.2,4.2,4.2,2021,12,,,,34.126094,-117.418451,42.6
+65655,HECHQ,proposed,P,Batteries,BA,MWH,,battery,80,80,80,2027,3,,,,33.58549,-117.25452,45
+65656,HEORG,operable,OP,Batteries,BA,MWH,,battery,20,20,20,2025,6,,,,33.68354,-117.32839,39.5
+65657,HESJG,operable,OP,Batteries,BA,MWH,,battery,65,65,65,2025,10,,,,33.92295,-116.87354,66.3
+65672,BESS,operable,OP,Batteries,BA,MWH,,battery,169,169,169,2023,10,,,,35.027031,-118.139528,88.3
+65673,BESS,operable,OP,Batteries,BA,MWH,,battery,47,47,47,2023,11,,,,34.958108,-118.107842,83.4
+65674,BESS,operable,OP,Batteries,BA,MWH,,battery,136,136,136,2023,11,,,,34.964033,-118.094144,83.8
+65674,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,154.4,154.4,154.4,2022,11,,,,34.964033,-118.094144,83.8
+65675,BESS,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2023,11,,,,34.943575,-118.087989,82.3
+65675,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,148.9,148.9,148.9,2022,12,,,,34.943575,-118.087989,82.3
+65676,BESS,operable,OP,Batteries,BA,MWH,,battery,47,47,47,2023,11,,,,34.965275,-118.0773,83.8
+65676,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,68,68,68,2022,12,,,,34.965275,-118.0773,83.8
+65677,BESS,operable,OP,Batteries,BA,MWH,,battery,18.8,18.8,18.8,2023,7,,,,35.012467,-118.119264,87.2
+65677,PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,41.2,41.2,41.2,2022,11,,,,35.012467,-118.119264,87.2
+65703,HEHUM,proposed,P,Batteries,BA,MWH,,battery,300,300,300,2029,9,,,,34.29116,-118.7518,56.4
+65733,HECAR,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2025,5,,,,33.8079,-116.494,87.2
+65770,SOLAR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.9,2.9,2.9,2021,9,,,,34.399199,-118.901987,67.7
+65794,VSPRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2022,7,,,,34.243444,-118.58517,47.2
+65889,BESS,proposed,V,Batteries,BA,MWH,,battery,300,300,300,2026,6,,,,32.933958,-117.037986,79.8
+65933,1,operable,OP,Batteries,BA,MWH,,battery,80,80,80,2023,5,,,,35.0477,-118.2628,90.5
+65970,1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2023,8,,,,34.571845,-117.576176,61.7
+65987,DP1,operable,OP,Batteries,BA,MWH,,battery,325,325,325,2023,7,,,,33.9311,-116.5719,83.5
+65988,DP2,operable,OP,Batteries,BA,MWH,,battery,75,75,75,2023,7,,,,33.9311,-116.5719,83.5
+66023,18009,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.4,1.4,2024,3,,,,32.7466,-116.9389,93.2
+66023,19043,operable,OP,Batteries,BA,MWH,,battery,1,1,1,2024,3,,,,32.7466,-116.9389,93.2
+66035,457,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2023,2,,,,34.038735,-117.38485,41
+66039,457,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2023,2,,,,34.073555,-117.281419,47.3
+66050,LAB,operable,OP,Batteries,BA,MWH,,battery,127,127,127,2022,9,,,,34.6864,-118.3045,66.6
+66142,KSR48,operable,OP,Other Natural Gas,FC,NG,,natural_gas,2.1,2.1,2.1,2019,12,,,,33.788034,-118.295496,16.5
+66143,SDC01,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1,1,1,2020,3,,,,32.805901,-117.167738,81.6
+66146,KSR40,operable,OP,Other Natural Gas,FC,NG,,natural_gas,4.5,4.5,4.5,2020,6,,,,34.099359,-118.29571,28.9
+66148,KSR55,operable,OP,Other Natural Gas,FC,NG,,natural_gas,3.1,3.1,3.1,2019,9,,,,34.173105,-118.590273,44.1
+66167,63235,operable,OP,Onshore Wind Turbine,WT,WND,,wind,27,27,27,2025,3,,,,33.943741,-116.661507,78.5
+66242,LSHS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2022,3,,,,33.668,-117.383,36.6
+66265,1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,32.70363,-117.04981,91.4
+66266,1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,32.825604,-117.183245,80
+66278,1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,32.81638,-117.08891,83.9
+66280,1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,33.357667,-117.111661,58.6
+66281,1,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,33.207233,-117.252822,57.8
+66281,2,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2024,3,,,,33.207233,-117.252822,57.8
+66285,COND1,operable,OP,Batteries,BA,MWH,,battery,200,200,200,2024,5,,,,34.020478,-117.332383,43.1
+66286,PERE1,operable,OP,Batteries,BA,MWH,,battery,200,200,200,2025,6,,,,32.692425,-117.136648,89.1
+66395,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2023,12,,,,33.719111,-118.272621,15.2
+66409,GWNT,proposed,P,Batteries,BA,MWH,,battery,135,135,135,2028,12,,,,34.28093,-118.90296,62.7
+66423,BESS1,operable,OP,Batteries,BA,MWH,,battery,68.8,68.8,68.8,2023,11,,,,33.806779,-117.988626,3.9
+66458,RCH00,operable,OP,Other Natural Gas,FC,NG,,natural_gas,1.1,1.1,1.1,2021,6,,,,34.03625,-117.206211,50.1
+66461,GEN1,operable,OP,Batteries,BA,MWH,,battery,116.6,100,100,2024,8,,,,33.92444,-116.98763,59.9
+66462,GEN1,operable,OP,Batteries,BA,MWH,,battery,88,80,80,2024,11,,,,34.41,-118.45,51.8
+66466,43580,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2021,12,,,,34.98809,-118.908812,99.5
+66472,CGEN1,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,2.7,2.5,2.5,2021,6,,,,34.151193,-117.23025,52.5
+66472,CGEN2,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,PG,natural_gas,2.7,2.5,2.5,2021,6,,,,34.151193,-117.23025,52.5
+66475,18263,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.5,1.5,1.5,2026,11,,,,34.05523,-117.377807,41.9
+66475,B8263,proposed,V,Batteries,BA,MWH,,battery,1.5,1.5,1.5,2026,11,,,,34.05523,-117.377807,41.9
+66476,18268,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.5,4.5,4.5,2024,4,,,,34.026711,-117.521139,33.8
+66494,NOVA1,operable,OP,Batteries,BA,MWH,,battery,230,230,230,2024,6,,,,33.739005,-117.1698,48.3
+66494,NOVA2,operable,OP,Batteries,BA,MWH,,battery,230,230,230,2024,7,,,,33.739005,-117.1698,48.3
+66494,NOVA3,operable,OP,Batteries,BA,MWH,,battery,50,50,50,2024,8,,,,33.739005,-117.1698,48.3
+66494,NOVA4,operable,OP,Batteries,BA,MWH,,battery,110,110,110,2024,9,,,,33.739005,-117.1698,48.3
+66494,NOVA5,operable,OP,Batteries,BA,MWH,,battery,60,60,60,2025,7,,,,33.739005,-117.1698,48.3
+66500,VC85,operable,OP,Batteries,BA,MWH,,battery,85,85,85,2021,12,,,,33.227236,-117.017744,67.8
+66502,VC54,operable,OP,Batteries,BA,MWH,,battery,54,54,54,2021,11,,,,33.227236,-117.017744,67.8
+66505,CV150,operable,OP,Batteries,BA,MWH,,battery,3,3,3,2024,10,,,,32.5945,-117.050694,97.5
+66505,CV151,operable,OP,Batteries,BA,MWH,,battery,3,3,3,2024,11,,,,32.5945,-117.050694,97.5
+66511,18262,proposed,V,Solar Photovoltaic,PV,SUN,,solar,2,2,2,2026,11,,,,34.012142,-117.38107,40.3
+66511,B8262,proposed,V,Batteries,BA,MWH,,battery,2,2,2,2026,11,,,,34.012142,-117.38107,40.3
+66532,BCE21,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,10,10,2023,8,,,,33.7841,-118.0509,3.1
+66532,BCE22,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2023,8,,,,33.7841,-118.0509,3.1
+66533,BCE11,operable,OP,Solar Photovoltaic,PV,SUN,,solar,10,10,10,2023,8,,,,33.7899,-118.0639,3.9
+66533,BCE12,operable,OP,Batteries,BA,MWH,,battery,10,10,10,2023,8,,,,33.7899,-118.0639,3.9
+66552,MH162,proposed,T,Batteries,BA,MWH,,battery,3,3,3,2026,12,,,,32.82412,-117.15128,81.2
+66598,BDMSS,operable,OP,Batteries,BA,MWH,,battery,75,75,75,2024,5,,,,34.609183,-117.454264,67.1
+66598,BLDMS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,150,150,150,2024,5,,,,34.609183,-117.454264,67.1
+66603,454,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.8,4.8,4.8,2024,8,,,,34.212521,-119.129688,71.5
+66617,1,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2024,8,,,,33.955872,-118.2321,18.9
+66620,GEN1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,48,48,48,2023,9,,,,35.00656,-117.54484,90.5
+66620,GEN2,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2023,8,,,,35.00656,-117.54484,90.5
+66622,VSPRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2022,12,,,,34.0878,-117.5872,33.5
+66666,TWES1,operable,OP,Batteries,BA,MWH,,battery,50,50,50,2024,7,,,,34.83427,-118.33898,77
+66666,TWES2,operable,OP,Batteries,BA,MWH,,battery,75,75,75,2024,8,,,,34.83427,-118.33898,77
+66667,ROSA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2023,5,,,,34.835677,-118.146832,75.2
+66699,LHC2,operable,OP,Batteries,BA,MWH,,battery,59.7,59.7,59.7,2025,11,,,,35.04351,-117.3489,96.8
+66699,LOC2,operable,OP,Solar Photovoltaic,PV,SUN,,solar,84.4,75,75,2023,7,,,,35.04351,-117.3489,96.8
+66726,IEESS,operable,OP,Batteries,BA,MWH,,battery,70,70,70,2024,10,,,,34.137674,-117.41597,43.2
+66772,ESPV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,56,56,56,2023,12,,,,34.807789,-118.316504,74.9
+66772,ESTRB,operable,OP,Batteries,BA,MWH,,battery,28,28,28,2023,12,,,,34.807789,-118.316504,74.9
+66773,RCWYB,operable,OP,Batteries,BA,MWH,,battery,80,80,80,2024,5,,,,34.842388,-118.286187,76.8
+66773,RCWYS,operable,OP,Solar Photovoltaic,PV,SUN,,solar,125,125,125,2024,5,,,,34.842388,-118.286187,76.8
+66787,ELVPS,proposed,L,Batteries,BA,MWH,,battery,70,70,70,2026,12,,,,33.764993,-118.223658,12.2
+66885,SPKBS,operable,OP,Batteries,BA,MWH,,battery,25,25,25,2024,12,,,,34.609137,-117.453663,67.1
+66885,SPKPV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,50,50,50,2024,12,,,,34.609137,-117.453663,67.1
+66946,LHESS,operable,OP,Batteries,BA,MWH,,battery,45,45,45,2024,7,,,,35.032461,-117.35673,95.9
+66948,VSPRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.3,1.3,2025,3,,,,33.85324,-118.29675,17.8
+66949,1,operable,OP,Batteries,BA,MWH,,battery,40,40,40,2024,9,,,,35.0477,-118.2628,90.5
+66950,1,operable,OP,Batteries,BA,MWH,,battery,59,59,59,2024,9,,,,35.0477,-118.2628,90.5
+66957,PE901,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2025,8,,,,33.83783,-118.2312,13.9
+66959,PE001,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2025,8,,,,33.82294,-118.2456,14.3
+67093,GEN 1,operable,OP,Batteries,BA,MWH,,battery,77,70.6,70.6,2020,8,,,,35.044166,-118.275556,90.4
+67105,CPP01,proposed,V,Solar Photovoltaic,PV,SUN,,solar,105.2,105.2,105.2,2026,7,,,,34.955231,-118.864169,96.2
+67118,1,proposed,TS,Batteries,BA,MWH,,battery,10,10,10,2026,1,,,,32.854918,-116.968448,86.5
+67257,BVEB1,proposed,P,Batteries,BA,MWH,,battery,5,5,5,2027,4,,,,34.25,-116.86,74.3
+67258,BVES1,proposed,P,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2027,6,,,,34.25,-116.81,76.9
+67283,6569,proposed,V,Solar Photovoltaic,PV,SUN,,solar,10,10,10,2026,9,,,,34.428209,-118.599257,57.5
+67283,6569B,proposed,V,Batteries,BA,MWH,,battery,2,2,2,2026,9,,,,34.428209,-118.599257,57.5
+67299,10101,operable,OP,Batteries,BA,MWH,,battery,100,100,100,2025,10,,,,32.94005,-117.031898,79.7
+67365,17180,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,0.9,2024,5,,,,35.0009,-118.8983,99.9
+67509,19064,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2023,3,,,,32.816578,-117.006302,87
+67510,LOC4,proposed,U,Solar Photovoltaic,PV,SUN,,solar,80,80,80,2026,7,,,,35.031908,-117.337897,96.3
+67579,ALMT2,operable,OP,Batteries,BA,MWH,,battery,82,82,82,2024,11,,,,33.770287,-118.099995,5.2
+67764,RBESS,operable,OP,Batteries,BA,MWH,,battery,117,117,117,2025,8,,,,34.842496,-118.378491,78.1
+67764,RS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,140,140,140,2025,8,,,,34.842496,-118.378491,78.1
+67878,BESS1,proposed,U,Batteries,BA,MWH,,battery,50,50,50,2026,6,,,,32.59507,-117.05861,97.2
+67894,51LVA,proposed,P,Solar Photovoltaic,PV,SUN,,solar,150,150,150,2030,5,,,,35.029153,-117.992561,88.1
+67894,51LVB,proposed,P,Batteries,BA,MWH,,battery,150,150,150,2030,5,,,,35.029153,-117.992561,88.1
+67994,COLBA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.2,0.9,2024,2,,,,33.81516,-118.141168,8.6
+68023,SBBS1,operable,OP,Batteries,BA,MWH,,battery,16.7,16.7,16.7,2025,11,,,,33.732761,-118.044508,2.4
+68023,SBPV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,12,11.5,10,2025,11,,,,33.732761,-118.044508,2.4
+68035,SYTOB,proposed,T,Batteries,BA,MWH,,battery,40,40,40,2027,11,,,,34.951078,-118.308289,84.4
+68035,SYTOR,proposed,T,Solar Photovoltaic,PV,SUN,,solar,40,40,40,2027,11,,,,34.951078,-118.308289,84.4
+68045,LOC3,proposed,V,Solar Photovoltaic,PV,SUN,,solar,125,125,125,2026,5,,,,35.037778,-117.347222,96.5
+68151,IE001,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2023,9,,,,34.050209,-117.460361,37.6
+68236,LA680,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2027,3,,,,33.8439,-118.22421,13.7
+68237,LA512,proposed,TS,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2026,8,,,,33.84038,-118.22867,13.9
+68238,LA113,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2026,8,,,,33.98049,-118.15815,17.8
+68240,SS3BT,proposed,V,Batteries,BA,MWH,,battery,23,23,23,2026,10,,,,34.84166,-118.4551,79.3
+68240,SS3PV,proposed,V,Solar Photovoltaic,PV,SUN,,solar,24,24,24,2026,10,,,,34.84166,-118.4551,79.3
+68241,SS4BT,proposed,V,Batteries,BA,MWH,,battery,23,23,23,2026,10,,,,34.84166,-118.4551,79.3
+68241,SS4PV,proposed,V,Solar Photovoltaic,PV,SUN,,solar,24,24,24,2026,10,,,,34.84166,-118.4551,79.3
+68272,18249,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2025,7,,,,34.2134,-119.139596,72
+68272,21387,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2025,7,,,,34.2134,-119.139596,72
+68395,WR2PV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,5,5,5,2023,11,,,,34.9846,-118.9085,99.3
+68409,VSPRC,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2023,7,,,,34.235,-118.579,46.5
+68486,44STA,proposed,P,Solar Photovoltaic,PV,SUN,,solar,55,55,55,2029,3,,,,34.506711,-116.890136,82.6
+68486,44STB,proposed,P,Batteries,BA,MWH,,battery,55,55,55,2029,3,,,,34.506711,-116.890136,82.6
+68509,VNT,proposed,V,Batteries,BA,MWH,,battery,50,50,50,2026,3,,,,32.79669,-116.96998,89.4
+68540,6245,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2026,3,,,,34.20337,-119.139418,71.7
+68541,7169,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.7,1.7,1.7,2026,10,,,,34.587916,-118.093135,57.8
+68542,7170B,proposed,V,Batteries,BA,MWH,,battery,0.3,0.3,0.3,2026,11,,,,34.558047,-118.118748,55.9
+68542,7170G,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2026,11,,,,34.558047,-118.118748,55.9
+68600,7236B,proposed,V,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2026,10,,,,34.126481,-118.698146,47.1
+68600,7236G,proposed,V,Solar Photovoltaic,PV,SUN,,solar,0.9,0.9,0.9,2026,10,,,,34.126481,-118.698146,47.1
+68661,64BES,proposed,V,Batteries,BA,MWH,,battery,75,75,75,2026,7,,,,34.987952,-117.571611,88.9
+68661,64NB8,proposed,V,Solar Photovoltaic,PV,SUN,,solar,120,120,120,2026,7,,,,34.987952,-117.571611,88.9
+68788,LA071,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2026,6,,,,33.981421,-118.136084,17.3
+68789,LA104,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2026,9,,,,33.842873,-118.224534,13.7
+68790,LA512,proposed,TS,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2026,9,,,,33.84038,-118.22867,13.9
+68791,LA601,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2025,10,,,,34.241957,-118.602898,47.8
+68792,LA680,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2027,3,,,,33.8439,-118.22421,13.7
+68793,LA710,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.3,1.3,1.3,2026,9,,,,33.983566,-118.134807,17.4
+68797,IN207,proposed,TS,Solar Photovoltaic,PV,SUN,,solar,1,1,1,2026,2,,,,34.074119,-117.529565,35.4
+68798,1MW,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.9,0.5,0.5,2016,5,,,,34.608,-118.109,59.3
+68798,20MW,operable,OP,Solar Photovoltaic,PV,SUN,,solar,20,19.5,13,2022,5,,,,34.608,-118.109,59.3
+68844,CPCC1,operable,OP,Onshore Wind Turbine,WT,WND,,wind,23.5,23.5,23.5,2024,11,,,,35.035989,-118.340011,90.6
+68846,S5,operable,OP,Solar Photovoltaic,PV,SUN,,solar,46,46,46,2025,11,,,,35.026182,-118.152915,88.3
+68846,S6,operable,OP,Solar Photovoltaic,PV,SUN,,solar,102,102,102,2025,11,,,,35.026182,-118.152915,88.3
+68887,PV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2,1.3,2024,12,,,,34.214543,-118.500571,42.4
+68923,ENTB,proposed,T,Batteries,BA,MWH,,battery,54.1,52,52,2027,12,,,,33.12181,-117.117445,67.5
+68932,OSBA,proposed,P,Batteries,BA,MWH,,battery,150,150,150,2027,1,,,,35.016197,-117.356961,94.9
+68932,OSPV,proposed,P,Solar Photovoltaic,PV,SUN,,solar,150,150,150,2027,1,,,,35.016197,-117.356961,94.9
+69024,GLNB1,proposed,L,Batteries,BA,MWH,,battery,25,25,25,2027,6,,,,34.12739,-118.147657,27
+69030,BESS1,proposed,U,Batteries,BA,MWH,,battery,50,50,50,2026,6,,,,32.796106,-116.972073,89.3
+69132,24477,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.7,1.7,1.7,2024,12,,,,34.032177,-117.608796,30
+69190,BATT,operable,OP,Batteries,BA,MWH,,battery,0.2,0.2,0.2,2023,12,,,,34.007486,-118.120047,18.6
+69190,SOLAR,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2023,12,,,,34.007486,-118.120047,18.6
+69191,BATT,operable,OP,Batteries,BA,MWH,,battery,0.2,0.2,0.2,2023,6,,,,33.861063,-118.233264,14.8
+69191,GEN,operable,OP,Natural Gas Internal Combustion Engine,IC,NG,,natural_gas,1.4,1.4,1.4,2023,6,,,,33.861063,-118.233264,14.8
+69211,PV1,proposed,P,Solar Photovoltaic,PV,SUN,,solar,1.2,1.2,1.2,2027,6,,,,33.731297,-118.279536,15.5
+69242,PV1,proposed,P,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2027,12,,,,34.220959,-118.476782,41.9
+69288,PSBA1,operable,OP,Batteries,BA,MWH,,battery,0.3,0.3,0.3,2023,1,,,,33.825324,-116.48472,87.8
+69288,PSPV1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.6,0.5,0.4,2021,4,,,,33.825324,-116.48472,87.8
+69370,CONEJ,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.8,1.8,1.8,2026,3,,,,34.20017,-118.9281,60.9
+69508,1,proposed,L,Batteries,BA,MWH,,battery,400,400,400,2027,6,,,,34.007751,-117.946156,17.9
+69509,1,proposed,T,Batteries,BA,MWH,,battery,400,400,400,2027,4,,,,34.11,-117.97,24.7
+69533,21938,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.1,1.1,1.1,2026,10,,,,32.654,-117.119,91.8
+69591,20525,proposed,TS,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2026,12,,,,34.235572,-118.581128,46.6
+69648,BSBA2,proposed,U,Batteries,BA,MWH,,battery,48,48,48,2026,11,,,,34.852326,-118.431206,79.6
+69648,RSBA,proposed,U,Batteries,BA,MWH,,battery,44,44,44,2026,11,,,,34.852326,-118.431206,79.6
+69711,6672,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2026,10,,,,32.822588,-117.135193,81.8
+69712,162B,operable,OP,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2025,10,,,,33.207588,-117.314741,55.1
+69712,16C,operable,OP,Solar Photovoltaic,PV,SUN,,solar,0.6,0.6,0.6,2025,10,,,,33.207588,-117.314741,55.1
+69734,10617,operable,OP,Solar Photovoltaic,PV,SUN,,solar,1.4,1.4,1.4,2025,6,,,,33.126734,-117.308076,59.3
+69737,10769,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.5,2.5,2.5,2025,4,,,,34.214404,-118.500562,42.4
+69749,U1,proposed,V,Landfill Gas,IC,LFG,NG,biogas,3,2.8,2.8,2027,2,,,,34.15638,-118.19273,29.7
+69749,U2,proposed,V,Landfill Gas,IC,LFG,NG,biogas,3,2.8,2.8,2027,2,,,,34.15638,-118.19273,29.7
+69749,U3,proposed,V,Landfill Gas,IC,LFG,NG,biogas,3,2.8,2.8,2027,2,,,,34.15638,-118.19273,29.7
+69749,U4,proposed,V,Landfill Gas,IC,LFG,NG,biogas,3,2.8,2.8,2027,2,,,,34.15638,-118.19273,29.7
+69806,GWBS1,proposed,P,Batteries,BA,MWH,,battery,21.6,21.62,21.62,2026,9,,,,34.833541,-118.546944,80.6
+69856,MCRS1,operable,OP,Solar Photovoltaic,PV,SUN,,solar,3,3,2.6,2024,11,,,,33.55265,-116.47598,89.4
+69858,GEN1,proposed,U,Batteries,BA,MWH,,battery,80,80,80,2026,7,,,,34.959,-118.8559,96.2
+69891,LA100,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.4,1.4,1.4,2026,9,,,,33.84516,-118.31637,18.6
+69956,S10BS,proposed,U,Batteries,BA,MWH,,battery,210,210,210,2026,11,,,,34.996,-118.114,86
+69956,S10PV,proposed,U,Solar Photovoltaic,PV,SUN,,solar,210,210,210,2026,11,,,,34.996,-118.114,86
+69956,S8,proposed,U,Solar Photovoltaic,PV,SUN,,solar,55,55,55,2026,11,,,,34.996,-118.114,86
+69956,S9,proposed,U,Solar Photovoltaic,PV,SUN,,solar,103,103,103,2026,11,,,,34.996,-118.114,86
+69964,BALBE,proposed,U,Batteries,BA,MWH,,battery,50,50,50,2026,9,,,,34.6029,-117.449,66.9
+70012,BA609,proposed,U,Batteries,BA,MWH,,battery,2.4,2.4,2.4,2026,10,,,,34.083141,-117.203502,51.6
+70012,IN609,proposed,U,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2026,9,,,,34.083141,-117.203502,51.6
+70037,TOTAL,operable,OP,Solar Photovoltaic,PV,SUN,,solar,4.8,4.8,4.2,2025,12,,,,33.949726,-118.373993,24.8
+70040,LMBA,proposed,V,Batteries,BA,MWH,,battery,1.4,1.4,1.4,2026,7,,,,33.88474,-118.00939,9
+70040,LMPV,proposed,V,Solar Photovoltaic,PV,SUN,,solar,2.6,2.6,2.6,2026,7,,,,33.88474,-118.00939,9
+70094,LA345,proposed,U,Solar Photovoltaic,PV,SUN,,solar,2.2,2.2,2.2,2026,6,,,,33.883541,-118.016414,9
+70095,IN015,proposed,U,Solar Photovoltaic,PV,SUN,,solar,1.6,1.6,1.6,2026,9,,,,33.850185,-117.232234,45.2
+70096,RCCBA,operable,OP,Batteries,BA,MWH,,battery,0.5,0.5,0.2,2025,12,,,,33.971659,-117.380658,39.2
+70096,RCCPV,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.1,2.1,1.6,2025,12,,,,33.971659,-117.380658,39.2
+70174,NBOPA,operable,OP,Solar Photovoltaic,PV,SUN,,solar,2.7,2.7,2.7,2023,4,,,,34.032202,-117.596907,30.6
+70178,CBLT,proposed,T,Solar Photovoltaic,PV,SUN,,solar,250,250,250,2027,8,,,,33.571,-118.17885,15.9
+70229,1141,proposed,V,Solar Photovoltaic,PV,SUN,,solar,3,3,3,2026,4,,,,34.091361,-117.516845,36.7
+70230,1433,proposed,V,Solar Photovoltaic,PV,SUN,,solar,3.2,3.2,3.2,2026,4,,,,34.08081,-117.534135,35.5
+70238,RDHS,proposed,L,Batteries,BA,MWH,,battery,300,300,300,2027,12,,,,34.0065,-117.5696,30.8
+70388,LANB,proposed,V,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2026,8,,,,34.78141,-118.166797,71.6
+70388,LANS,proposed,V,Solar Photovoltaic,PV,SUN,,solar,5.9,5.9,5.9,2026,8,,,,34.78141,-118.166797,71.6
+70389,PALB,proposed,V,Batteries,BA,MWH,,battery,0.5,0.5,0.5,2026,7,,,,34.596819,-118.070032,58.3
+70389,PALS,proposed,V,Solar Photovoltaic,PV,SUN,,solar,3.3,3.3,3.3,2026,7,,,,34.596819,-118.070032,58.3
+70429,1141,proposed,U,Solar Photovoltaic,PV,SUN,,solar,2.3,2.3,2.3,2026,5,,,,33.7648,-118.1884,10.2
+70449,RPV1,proposed,V,Solar Photovoltaic,PV,SUN,,solar,1.9,1.9,1.9,2026,4,,,,34.193109,-118.350004,36
+70449,TSBT1,proposed,V,Batteries,BA,MWH,,battery,2.6,2.6,2.6,2026,4,,,,34.193109,-118.350004,36

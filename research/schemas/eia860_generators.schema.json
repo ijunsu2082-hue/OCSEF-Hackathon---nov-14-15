@@ -1,0 +1,247 @@
+{
+  "dataset": "eia860_generators",
+  "primary_key": [
+    "plant_code",
+    "generator_id"
+  ],
+  "geometry_type": null,
+  "source": {
+    "name": "U.S. EIA Form EIA-860 Annual Electric Generator Report",
+    "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602025.zip",
+    "vintage": "2025 final (released 2026-09-10)"
+  },
+  "fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "EIA plant code; part of primary key.",
+      "unit": null,
+      "enum": null,
+      "min": 1,
+      "max": null
+    },
+    {
+      "name": "generator_id",
+      "type": "string",
+      "nullable": false,
+      "description": "EIA generator ID (string); part of primary key.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status_group",
+      "type": "string",
+      "nullable": false,
+      "description": "Which EIA-860 3_1 sheet the generator came from.",
+      "unit": null,
+      "enum": [
+        "operable",
+        "proposed",
+        "retired"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status_code",
+      "type": "string",
+      "nullable": false,
+      "description": "EIA status code (OP, SB, OS, OA, P, L, T, U, V, TS, OT, RE).",
+      "unit": null,
+      "enum": [
+        "OA",
+        "OP",
+        "OS",
+        "SB",
+        "L",
+        "OT",
+        "P",
+        "T",
+        "TS",
+        "U",
+        "V",
+        "RE"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "technology",
+      "type": "string",
+      "nullable": true,
+      "description": "EIA technology description.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "prime_mover",
+      "type": "string",
+      "nullable": true,
+      "description": "EIA prime mover code (e.g. CT, CA, PV, BA, WT, HY).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "energy_source_1",
+      "type": "string",
+      "nullable": true,
+      "description": "Primary EIA energy source code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "energy_source_2",
+      "type": "string",
+      "nullable": true,
+      "description": "Secondary EIA energy source code.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "source_category",
+      "type": "string",
+      "nullable": false,
+      "description": "energy_source_1 mapped to a coarse category.",
+      "unit": null,
+      "enum": [
+        "natural_gas",
+        "solar",
+        "battery",
+        "wind",
+        "hydro",
+        "biogas",
+        "other_gas",
+        "waste_heat",
+        "oil",
+        "nuclear",
+        "geothermal",
+        "coal",
+        "biomass",
+        "other"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": true,
+      "description": "Generator nameplate capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "summer_capacity_mw",
+      "type": "number",
+      "nullable": true,
+      "description": "Net summer capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "winter_capacity_mw",
+      "type": "number",
+      "nullable": true,
+      "description": "Net winter capacity.",
+      "unit": "MW",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "operating_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Year of commercial operation; for proposed units the current expected in-service year.",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "operating_month",
+      "type": "integer",
+      "nullable": true,
+      "description": "Month of commercial operation; for proposed units the current expected in-service month.",
+      "unit": "month",
+      "enum": null,
+      "min": 1,
+      "max": 12
+    },
+    {
+      "name": "planned_retirement_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Planned retirement year (operable units only).",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "planned_retirement_month",
+      "type": "integer",
+      "nullable": true,
+      "description": "Planned retirement month (operable units only).",
+      "unit": "month",
+      "enum": null,
+      "min": 1,
+      "max": 12
+    },
+    {
+      "name": "retirement_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "Actual retirement year (retired units only).",
+      "unit": "year",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Plant latitude (from Schedule 2), 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -90,
+      "max": 90
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Plant longitude (from Schedule 2), 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -180,
+      "max": 180
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance of the plant from the region center, 1 decimal.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100.0
+    }
+  ]
+}

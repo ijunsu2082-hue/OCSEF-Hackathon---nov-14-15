@@ -1,0 +1,240 @@
+{
+  "dataset": "hifld_substations",
+  "primary_key": [
+    "hifld_id"
+  ],
+  "geometry_type": "Point",
+  "source": {
+    "name": "HIFLD Open 'Electric Substations' (last public release, re-hosted on ArcGIS Online item ef04dc8231c9491e804a008e5faa7d3a)",
+    "url": "https://services6.arcgis.com/OO2s4OoyCZkYJ6oE/arcgis/rest/services/Substations/FeatureServer/0",
+    "vintage": "HIFLD Open Electric Substations, final public release before the 2022 move to HIFLD Secure (copy published 2022-02-14; max SOURCEDATE/VAL_DATE 2021-06-01)"
+  },
+  "fields": [
+    {
+      "name": "hifld_id",
+      "type": "integer",
+      "nullable": false,
+      "description": "HIFLD substation ID (source field ID). Primary key.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "nullable": true,
+      "description": "Substation name (source NAME). Many are synthetic 'UNKNOWNnnnnnn' or 'TAPnnnnnn' identifiers assigned by HIFLD.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "nullable": true,
+      "description": "City (source CITY).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "nullable": true,
+      "description": "Two-letter state abbreviation (source STATE).",
+      "unit": null,
+      "enum": [
+        "CA"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "county",
+      "type": "string",
+      "nullable": true,
+      "description": "County name (source COUNTY).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "zip",
+      "type": "string",
+      "nullable": true,
+      "description": "ZIP code as text (source ZIP).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "nullable": true,
+      "description": "Facility type (source TYPE), e.g. SUBSTATION, TAP, RISER.",
+      "unit": null,
+      "enum": [
+        "DEAD END",
+        "RISER",
+        "SUBSTATION",
+        "TAP"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "nullable": true,
+      "description": "Operating status (source STATUS).",
+      "unit": null,
+      "enum": [
+        "IN SERVICE"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "naics_desc",
+      "type": "string",
+      "nullable": true,
+      "description": "NAICS description (source NAICS_DESC).",
+      "unit": null,
+      "enum": [
+        "ELECTRIC BULK POWER TRANSMISSION AND CONTROL"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "lines",
+      "type": "integer",
+      "nullable": true,
+      "description": "Number of HIFLD transmission lines connected (source LINES).",
+      "unit": null,
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "max_volt_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "Maximum operating voltage (source MAX_VOLT); -999999 -> null. 53 records have MIN_VOLT > MAX_VOLT in the source (kept as-is); use max(max_volt_kv, min_volt_kv) for the highest voltage.",
+      "unit": "kV",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "min_volt_kv",
+      "type": "number",
+      "nullable": true,
+      "description": "Minimum operating voltage (source MIN_VOLT); -999999 -> null. 53 records have MIN_VOLT > MAX_VOLT in the source (kept as-is); use max(max_volt_kv, min_volt_kv) for the highest voltage.",
+      "unit": "kV",
+      "enum": null,
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "max_infer",
+      "type": "boolean",
+      "nullable": true,
+      "description": "True if max_volt_kv was inferred from connected lines rather than sourced (source MAX_INFER Y/N).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "min_infer",
+      "type": "boolean",
+      "nullable": true,
+      "description": "True if min_volt_kv was inferred (source MIN_INFER Y/N).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "nullable": true,
+      "description": "Source reference (source SOURCE), usually a URL or imagery citation.",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "sourcedate",
+      "type": "date",
+      "nullable": true,
+      "description": "Date of source data (source SOURCEDATE, UTC).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "val_method",
+      "type": "string",
+      "nullable": true,
+      "description": "Validation method (source VAL_METHOD).",
+      "unit": null,
+      "enum": [
+        "IMAGERY",
+        "IMAGERY/OTHER",
+        "OTHER",
+        "UNVERIFIED"
+      ],
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "val_date",
+      "type": "date",
+      "nullable": true,
+      "description": "Validation date (source VAL_DATE, UTC).",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Latitude of the point geometry, WGS84, 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -90,
+      "max": 90
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "nullable": false,
+      "description": "Longitude of the point geometry, WGS84, 6 decimals.",
+      "unit": "degrees",
+      "enum": null,
+      "min": -180,
+      "max": 180
+    },
+    {
+      "name": "distance_mi",
+      "type": "number",
+      "nullable": false,
+      "description": "Haversine distance (R=3958.8 mi) from Westminster High School (33.7538, -118.0111), 1 decimal.",
+      "unit": "mi",
+      "enum": null,
+      "min": 0,
+      "max": 100.0
+    }
+  ]
+}

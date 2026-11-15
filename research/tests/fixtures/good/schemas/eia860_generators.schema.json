@@ -1,0 +1,55 @@
+{
+  "dataset": "eia860_generators",
+  "primary_key": [
+    "plant_code",
+    "generator_id"
+  ],
+  "geometry_type": null,
+  "source": {
+    "name": "Fixture source",
+    "url": "https://example.invalid/fixture",
+    "vintage": "2025"
+  },
+  "fields": [
+    {
+      "name": "plant_code",
+      "type": "integer",
+      "nullable": false,
+      "description": "plant code",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "generator_id",
+      "type": "string",
+      "nullable": false,
+      "description": "generator id",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "nameplate_mw",
+      "type": "number",
+      "nullable": false,
+      "description": "nameplate mw",
+      "unit": "MW",
+      "enum": null,
+      "min": null,
+      "max": null
+    },
+    {
+      "name": "operating_year",
+      "type": "integer",
+      "nullable": true,
+      "description": "operating year",
+      "unit": null,
+      "enum": null,
+      "min": null,
+      "max": null
+    }
+  ]
+}
