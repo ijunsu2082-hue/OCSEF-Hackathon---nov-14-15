@@ -633,7 +633,7 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Dispatch returns `mode: "simulated"` |
 | `AUDIT_FROM_EMAIL` | `Mapergy Audits <audits@resend.dev>` |
 | `DEMO_INBOX_EMAIL` | Recipient field starts empty with a placeholder |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Datasets are read from `data/` and `public/layers/` instead of Supabase |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`) | Datasets are read from `data/` and `public/layers/` instead of Supabase |
 
 Secrets stay server-side and out of git.
 

@@ -3,9 +3,12 @@
  * supabase/migrations/). Every table is public-read for `anon`, so the anon
  * key is enough on both server and browser.
  *
- * Returns null when NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
- * is missing; callers then fall back to the local files in data/ and
- * public/layers/.
+ * The key is NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (sb_publishable_...), or the
+ * legacy NEXT_PUBLIC_SUPABASE_ANON_KEY; the owner portal (lib/owner/config.ts)
+ * accepts the same pair, so one env var serves both.
+ *
+ * Returns null when the URL or both keys are missing; callers then fall back to
+ * the local files in data/ and public/layers/.
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -16,7 +19,8 @@ export function getSupabase(): SupabaseClient | null {
   if (client !== undefined) return client;
   // Referenced literally so Next.js inlines them into the browser bundle.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   client =
     url && key
       ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
