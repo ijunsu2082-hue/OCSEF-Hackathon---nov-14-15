@@ -1,8 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { compactUSD, fmtNumber, fmtYears, fmtPercent } from "../format";
 import { gridChain } from "../grid";
-import { listFacilities, listFlows } from "../region";
-import { simulate } from "../simulation";
+import { assetsForSite, assetsForSiteFromSource, assetsSourceFromEnv } from "../gridAssets.server";
+import { listFacilities } from "../region";
+import { layerSourceLabel } from "../scan/sourceLabel";
 import type { BriefResponse, FacilityProperties, SimResult } from "../types";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
@@ -12,15 +13,50 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
  * Built from the same region data the UI reads, so the memo cannot disagree
  * with the screen.
  */
-function chainFor(properties: FacilityProperties, sim: SimResult) {
-  const sims: Record<string, SimResult> = {};
+function pointFor(properties: FacilityProperties): [number, number] | null {
   for (const facility of listFacilities()) {
-    sims[facility.properties.id] =
-      facility.properties.id === properties.id
-        ? sim
-        : simulate(facility.properties, { heatwave_active: sim.heatwave_active });
+    if (facility.properties.id === properties.id) {
+      const [lon, lat] = facility.geometry.coordinates;
+      return [lon, lat];
+    }
   }
-  return gridChain(properties, sim, { flows: listFlows(), sims });
+  return null;
+}
+
+function chainFor(properties: FacilityProperties, sim: SimResult) {
+  const point = pointFor(properties);
+  // The memo reads the same EIA-860 / OSM layers the screen does; if they are
+  // unreadable the chain reports the gap rather than a modelled stand-in.
+  return gridChain(properties, sim, { assets: point ? assetsForSite(point) : null });
+}
+
+interface ChainContext {
+  chain: ReturnType<typeof gridChain>;
+  /** Grid-layer provenance; null when the bundled default is in use (env unset). */
+  layerSource: string | null;
+}
+
+/**
+ * With MAPERGY_ASSETS_LOCATION (or legacy GRIDSENTINEL_ASSETS_LOCATION) set the chain reads that location's loaded
+ * ETL assets (falling back to bundled, with the reason) and the memo labels
+ * which it used. Unset, this is exactly chainFor().
+ */
+async function chainContext(properties: FacilityProperties, sim: SimResult): Promise<ChainContext> {
+  if (!assetsSourceFromEnv()) return { chain: chainFor(properties, sim), layerSource: null };
+  const point = pointFor(properties);
+  if (!point) {
+    return {
+      chain: gridChain(properties, sim, { assets: null }),
+      layerSource: layerSourceLabel({ source: "bundled", fallbackReasons: ["load center has no map point"] }),
+    };
+  }
+  const sourced = await assetsForSiteFromSource(point);
+  return {
+    chain: gridChain(properties, sim, { assets: sourced.assets }),
+    layerSource: layerSourceLabel({
+      source: sourced.source, revision: sourced.etl?.revision ?? null, fallbackReasons: sourced.fallback_reasons,
+    }),
+  };
 }
 
 function economics(properties: FacilityProperties, sim: SimResult) {
@@ -49,11 +85,13 @@ export function fallbackBrief(
   properties: FacilityProperties,
   sim: SimResult,
   tone: "technical" | "executive" = "technical",
+  context?: ChainContext,
 ): string {
   const u = properties.upgrade_potential;
   const e = economics(properties, sim);
   const age = properties.infrastructure.age_years;
-  const chain = chainFor(properties, sim);
+  const chain = context?.chain ?? chainFor(properties, sim);
+  const layerNote = context?.layerSource ? ` Grid layers: ${context.layerSource}.` : "";
   const binding =
     chain.find((phase) => phase.severity === "critical") ??
     chain.find((phase) => phase.severity === "high") ??
@@ -65,7 +103,7 @@ export function fallbackBrief(
 
   return [
     `To: ${properties.provider.utility_name} — Energy & Sustainability`,
-    `From: GridSentinel Audit Desk`,
+    `From: Mapergy Audit Desk`,
     `Re: ${properties.name} (${properties.type}, ${age} yr) — grid-risk and decarbonization screen`,
     ``,
     `RECOMMENDATION  ${u.recommended_intervention}. The bundle adds ${fmtNumber(
@@ -85,7 +123,7 @@ export function fallbackBrief(
       0,
     )} gCO2/kWh grid intensity; motor efficiency ${fmtPercent(
       motorEff * 100,
-    )} against an 0.85 benchmark. Grid chain: ${binding.name} binds first — ${bindingSignal.label.toLowerCase()}.`,
+    )} against an 0.85 benchmark. Grid chain: ${binding.name} binds first — ${bindingSignal.label.toLowerCase()}.${layerNote}`,
     `ECONOMICS       ${compactUSD(e.capex)} screening capex, ${compactUSD(
       e.savings,
     )} annual savings, ${fmtYears(e.payback)} simple payback, ${fmtNumber(
@@ -114,9 +152,10 @@ export async function generateBrief(
   sim: SimResult,
   tone: "technical" | "executive" = "technical",
 ): Promise<BriefResponse> {
+  const context = await chainContext(properties, sim);
   const fallback = (): BriefResponse => ({
     node_id: properties.id,
-    brief: fallbackBrief(properties, sim, tone),
+    brief: fallbackBrief(properties, sim, tone, context),
     source: "fallback",
     model: null,
     generated_at: new Date().toISOString(),
@@ -126,7 +165,7 @@ export async function generateBrief(
   if (!apiKey) return fallback();
 
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  const chain = chainFor(properties, sim);
+  const { chain, layerSource } = context;
 
   const payload = {
     load_center: {
@@ -151,6 +190,7 @@ export async function generateBrief(
       signals: phase.diagnostics.map((diag) => `${diag.label} (${diag.severity}): ${diag.detail}`),
       primary_pathway: phase.pathways[0]?.label ?? null,
     })),
+    ...(layerSource ? { grid_layers_source: layerSource } : {}),
     tone,
   };
 

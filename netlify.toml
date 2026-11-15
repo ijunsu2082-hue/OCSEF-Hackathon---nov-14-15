@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "build-out"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# The public site opens on Area Scan. The team's other app stays in the repo.
+[[redirects]]
+  from = "/"
+  to = "/scan"
+  status = 302
+  force = true

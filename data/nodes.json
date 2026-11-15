@@ -562,6 +562,13 @@
       "mva": 30
     },
     {
+      "id": "flow-oc-02-la-07",
+      "from": "node-oc-02",
+      "to": "node-la-07",
+      "label": "Fountain Valley–Harbor 69 kV tie (modeled)",
+      "mva": 45
+    },
+    {
       "id": "flow-la-08-la-02",
       "from": "node-la-08",
       "to": "node-la-02",

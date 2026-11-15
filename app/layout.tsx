@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GridSentinel — Infrastructure energy intelligence",
+  title: "Mapergy — Infrastructure energy intelligence",
   description:
     "Map every facility, score its energy risk, stress-test it, and turn the result into a funded upgrade plan.",
 };

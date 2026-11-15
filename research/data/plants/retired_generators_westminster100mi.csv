@@ -1,0 +1,422 @@
+Plant Code,Plant Name,Generator ID,Technology,Prime Mover,Energy Source 1,Nameplate Capacity (MW),Summer Capacity (MW),Operating Year,Status,Retirement Year,lat,lon,distance_mi
+309,Silver Gate,1,Petroleum Liquids,ST,DFO,40,40,1943,RE,1985,32.697222,-117.114722,89.5
+309,Silver Gate,2,Petroleum Liquids,ST,DFO,69,62,1948,RE,1985,32.697222,-117.114722,89.5
+309,Silver Gate,3,Petroleum Liquids,ST,DFO,69,62,1950,RE,1985,32.697222,-117.114722,89.5
+309,Silver Gate,4,Petroleum Liquids,ST,DFO,69,64,1952,RE,1985,32.697222,-117.114722,89.5
+315,AES Alamitos LLC,1,Natural Gas Steam Turbine,ST,NG,156,175,1956,RE,2019,33.7688,-118.1009,5.3
+315,AES Alamitos LLC,2,Natural Gas Steam Turbine,ST,NG,156,175,1957,RE,2019,33.7688,-118.1009,5.3
+315,AES Alamitos LLC,6,Natural Gas Steam Turbine,ST,NG,495,495,1966,RE,2019,33.7688,-118.1009,5.3
+315,AES Alamitos LLC,7,Natural Gas Fired Combustion Turbine,GT,NG,133,133,1969,RE,2003,33.7688,-118.1009,5.3
+335,AES Huntington Beach LLC,1,Natural Gas Steam Turbine,ST,NG,218,225.8,1958,RE,2019,33.6439,-117.9792,7.8
+335,AES Huntington Beach LLC,3,Natural Gas Steam Turbine,ST,NG,225,225,1961,RE,2012,33.6439,-117.9792,7.8
+335,AES Huntington Beach LLC,4,Natural Gas Steam Turbine,ST,NG,227,227,1961,RE,2012,33.6439,-117.9792,7.8
+335,AES Huntington Beach LLC,5,Natural Gas Fired Combustion Turbine,GT,NG,133,133,1969,RE,2002,33.6439,-117.9792,7.8
+341,Long Beach Generation,CT5,Natural Gas Fired Combined Cycle,CT,NG,63,63,1977,RE,2004,33.7641,-118.2248,12.3
+341,Long Beach Generation,CT6,Natural Gas Fired Combined Cycle,CT,NG,63,63,1977,RE,2004,33.7641,-118.2248,12.3
+341,Long Beach Generation,CT7,Natural Gas Fired Combined Cycle,CT,NG,63,63,1977,RE,2004,33.7641,-118.2248,12.3
+341,Long Beach Generation,ST8,Natural Gas Fired Combined Cycle,CA,NG,80,80,1976,RE,2004,33.7641,-118.2248,12.3
+341,Long Beach Generation,ST9,Natural Gas Fired Combined Cycle,CA,NG,66.4,63,1977,RE,2004,33.7641,-118.2248,12.3
+358,Mountainview Generating Station,1,Natural Gas Steam Turbine,ST,NG,65.3,60,1957,RE,2002,34.0818,-117.2418,49.6
+358,Mountainview Generating Station,2,Natural Gas Steam Turbine,ST,NG,65.3,60,1958,RE,2002,34.0818,-117.2418,49.6
+360,San Onofre Nuclear Generating Station,2,Nuclear,ST,NUC,1127,1070,1983,RE,2013,33.368794,-117.554916,37.4
+360,San Onofre Nuclear Generating Station,3,Nuclear,ST,NUC,1127,1080,1984,RE,2013,33.368794,-117.554916,37.4
+375,Magnolia,M2,Natural Gas Fired Combined Cycle,CA,NG,10,10,1984,RE,2002,34.178056,-118.315556,34.1
+375,Magnolia,M3,Natural Gas Steam Turbine,ST,NG,20,20,1949,RE,2002,34.178056,-118.315556,34.1
+375,Magnolia,M4,Natural Gas Steam Turbine,ST,NG,34.5,30,1953,RE,2002,34.178056,-118.315556,34.1
+375,Magnolia,M5,Natural Gas Fired Combustion Turbine,GT,NG,23.1,21.7,1969,RE,2003,34.178056,-118.315556,34.1
+377,Grayson,1,Natural Gas Fired Combined Cycle,CA,NG,20,19,1977,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,2,Natural Gas Fired Combined Cycle,CA,NG,20,19,1977,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,3,Natural Gas Steam Turbine,ST,NG,23,18,1953,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,4,Natural Gas Steam Turbine,ST,NG,50,40,1959,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,5,Natural Gas Steam Turbine,ST,NG,50,40,1964,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,6,Natural Gas Fired Combustion Turbine,GT,NG,22,15,1972,RE,2004,34.1556,-118.2782,31.7
+377,Grayson,7,Natural Gas Fired Combustion Turbine,GT,NG,31,20,1974,RE,2002,34.1556,-118.2782,31.7
+377,Grayson,8A,Natural Gas Fired Combined Cycle,CT,NG,25.4,26,1977,RE,2023,34.1556,-118.2782,31.7
+377,Grayson,8BC,Natural Gas Fired Combined Cycle,CT,NG,55.1,46,1977,RE,2023,34.1556,-118.2782,31.7
+399,Harbor,GT6,Natural Gas Fired Combustion Turbine,GT,NG,23.5,19,1972,RE,2002,33.7706,-118.2656,14.7
+399,Harbor,GT7,Natural Gas Fired Combustion Turbine,GT,NG,23.5,19,1972,RE,2002,33.7706,-118.2656,14.7
+400,Haynes,3,Natural Gas Steam Turbine,ST,NG,230,222,1964,RE,2004,33.764741,-118.09913,5.1
+400,Haynes,4,Natural Gas Steam Turbine,ST,NG,230,222,1965,RE,2003,33.764741,-118.09913,5.1
+400,Haynes,5,Natural Gas Steam Turbine,ST,NG,343,292,1966,RE,2013,33.764741,-118.09913,5.1
+400,Haynes,6,Natural Gas Steam Turbine,ST,NG,343,238,1967,RE,2013,33.764741,-118.09913,5.1
+404,Scattergood,3,Natural Gas Steam Turbine,ST,NG,496.8,445,1974,RE,2015,33.918151,-118.427648,26.5
+404,Scattergood,8,Natural Gas Fired Combined Cycle,CT,NG,230,218, ,CN, ,33.918151,-118.427648,26.5
+404,Scattergood,9,Natural Gas Fired Combined Cycle,CA,NG,116,110, ,CN, ,33.918151,-118.427648,26.5
+408,Valley (CA),1,Natural Gas Steam Turbine,ST,NG,100,95,1954,RE,1992,34.244991,-118.391327,40.3
+408,Valley (CA),2,Natural Gas Steam Turbine,ST,NG,100,99,1954,RE,1992,34.244991,-118.391327,40.3
+408,Valley (CA),3,Natural Gas Steam Turbine,ST,NG,172.8,163,1955,RE,2003,34.244991,-118.391327,40.3
+408,Valley (CA),4,Natural Gas Steam Turbine,ST,NG,172.8,160,1956,RE,2003,34.244991,-118.391327,40.3
+420,Broadway (CA),B1,Natural Gas Steam Turbine,ST,NG,46,45,1955,RE,2002,34.1254,-118.148,26.8
+420,Broadway (CA),B2,Natural Gas Steam Turbine,ST,NG,46,45,1957,RE,2002,34.1254,-118.148,26.8
+420,Broadway (CA),B3,Natural Gas Steam Turbine,ST,NG,75,71,1965,RE,2016,34.1254,-118.148,26.8
+6013,Olive,O3,Natural Gas Fired Combustion Turbine,GT,NG,24.4,23.5,1972,RE,2003,34.1764,-118.3147,34.0
+6013,Olive,O4,Natural Gas Fired Combustion Turbine,GT,NG,37.8,32,1978,RE,2003,34.1764,-118.3147,34.0
+6643,Greg Avenue,1,Conventional Hydroelectric,HY,WAT,1,1,1979,RE,2019,34.20795,-118.3516,36.9
+6704,Pebbly Beach Generating Station Hybrid,MT12,Petroleum Liquids,GT,PG,0.1,0.1, ,CN, ,33.333056,-118.310278,33.8
+6704,Pebbly Beach Generating Station Hybrid,MT13,Petroleum Liquids,GT,PG,0.1,0.1, ,CN, ,33.333056,-118.310278,33.8
+7148,San Gorgonio 1,1,Conventional Hydroelectric,HY,WAT,1.5,1.5,1923,RE,2001,34.030376,-116.857142,68.9
+7693,Anaheim GT,1,Natural Gas Fired Combustion Turbine,GT,NG,49.2,44.5,1991,RE,2019,33.853542,-117.856286,11.2
+7942,Diamond Valley Lake,1,Conventional Hydroelectric,HY,WAT,3.3, ,2001,RE,2009,33.6808,-117.0698,54.3
+7942,Diamond Valley Lake,5,Conventional Hydroelectric,HY,WAT,3.3, ,2001,RE,2009,33.6808,-117.0698,54.3
+7942,Diamond Valley Lake,9,Conventional Hydroelectric,HY,WAT,3.3, ,2001,RE,2009,33.6808,-117.0698,54.3
+10026,Encina Water Pollution Control,EG1,Natural Gas Internal Combustion Engine,IC,NG,0.5,0.5,1984,RE,2008,33.1165,-117.3215,59.3
+10026,Encina Water Pollution Control,EG2,Natural Gas Internal Combustion Engine,IC,NG,0.5,0.5,1984,RE,2008,33.1165,-117.3215,59.3
+10026,Encina Water Pollution Control,EG3,Other Waste Biomass,IC,OBG,0.5,0.5,1984,RE,2008,33.1165,-117.3215,59.3
+10048,Central Utilities Plant LAX,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,4,3.5,1985,RE,2013,33.943965,-118.40425,26.1
+10048,Central Utilities Plant LAX,GEN2,Natural Gas Fired Combustion Turbine,GT,NG,4,3.5,1985,RE,2013,33.943965,-118.40425,26.1
+10090,Commerce Refuse To Energy,GEN1,Municipal Solid Waste,ST,MSW,12,10,1986,RE,2018,33.9949,-118.1538,18.6
+10091,Total Energy Facilities,GEN2,Other Waste Biomass,CT,OBG,9.9,8,1986,RE,2002,33.7683,-118.2836,15.7
+10091,Total Energy Facilities,GEN3,Other Waste Biomass,CT,OBG,9.9,8,1986,RE,2000,33.7683,-118.2836,15.7
+10115,Grossmont Hospital,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,0.8,0.8,1983,RE,2016,32.77973,-117.006397,88.9
+10115,Grossmont Hospital,GEN2,Natural Gas Fired Combustion Turbine,GT,NG,0.8,0.8,1983,RE,2016,32.77973,-117.006397,88.9
+10175,Childrens Hospital,1631,Natural Gas Internal Combustion Engine,IC,NG,0.6,0.6,1993,RE,2003,32.7992,-117.1517,82.6
+10175,Childrens Hospital,1698,Natural Gas Internal Combustion Engine,IC,NG,0.3,0.3,1983,RE,2004,32.7992,-117.1517,82.6
+10175,Childrens Hospital,1699,Natural Gas Internal Combustion Engine,IC,NG,0.3,0.3,1983,RE,2003,32.7992,-117.1517,82.6
+10175,Childrens Hospital,1710,Natural Gas Internal Combustion Engine,IC,NG,0.3,0.3,1983,RE,2004,32.7992,-117.1517,82.6
+10191,Tehachapi Wind Resource I,PLAN,Onshore Wind Turbine,WT,WND,0.6,0.6, ,CN, ,35.060556,-118.389722,92.8
+10206,Loma Linda University Cogen,GEN3,Natural Gas Fired Combined Cycle,CA,NG,1.2,1.2,1980,RE,2014,34.050391,-117.248417,48.3
+10213,El Segundo Cogen,GEN3,Natural Gas Fired Combined Cycle,CA,NG,1.5,1,1975,RE,1986,33.9058,-118.4031,24.8
+10213,El Segundo Cogen,GEN4,Natural Gas Fired Combined Cycle,CA,NG,1.2,1,1991,RE,1996,33.9058,-118.4031,24.8
+10262,California Institute of Technology,GEN1,Natural Gas Fired Combined Cycle,CA,NG,1,1,1982,RE,2002,34.138467,-118.1256,27.4
+10262,California Institute of Technology,GEN2,Natural Gas Fired Combined Cycle,CT,NG,4.3,4.3,1989,RE,2002,34.138467,-118.1256,27.4
+10262,California Institute of Technology,GEN3,Natural Gas Fired Combined Cycle,CT,NG,2.5,2.5, ,CN, ,34.138467,-118.1256,27.4
+10262,California Institute of Technology,GEN4,Natural Gas Fired Combined Cycle,CA,NG,2.5,2.5, ,CN, ,34.138467,-118.1256,27.4
+10262,California Institute of Technology,GEN5,Natural Gas Fired Combined Cycle,CT,NG,1,1, ,CN, ,34.138467,-118.1256,27.4
+10262,California Institute of Technology,GEN8,Natural Gas Fired Combined Cycle,CT,NG,10.5,9, ,CN, ,34.138467,-118.1256,27.4
+10387,Sycamore Energy LLC,1,Landfill Gas,GT,LFG,0.9,0.7,1989,RE,2010,32.857709,-117.028847,84.0
+10387,Sycamore Energy LLC,2,Landfill Gas,GT,LFG,0.9,0.7,1989,RE,2010,32.857709,-117.028847,84.0
+10427,New-Indy Ontario Mill,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,34,34,1985,RE,2019,34.045361,-117.540193,33.7
+10444,"Lockhart Solar PV, LLC",GEN1,Solar Thermal without Energy Storage,ST,SUN,92,80,1989,RE,2021,35.0308,-117.3563,95.8
+10446,SEGS IX,GEN1,Natural Gas Steam Turbine,ST,NG,92,88,1990,RE,2024,35.033,-117.338,96.4
+10471,Spadra Landfill Gas to Energy,GEN1,Landfill Gas,ST,LFG,10.6,5,1990,RE,2015,34.0408,-117.8217,22.6
+10472,Puente Hills Energy Recovery,GEN2,Landfill Gas,GT,LFG,2.8,1.1,1984,RE,2013,34.0233,-118.0241,18.6
+10472,Puente Hills Energy Recovery,GEN3,Landfill Gas,IC,LFG,3.3,2.7,2006,RE,2016,34.0233,-118.0241,18.6
+10472,Puente Hills Energy Recovery,GEN4,Landfill Gas,IC,LFG,3.3,2.7,2006,RE,2016,34.0233,-118.0241,18.6
+10472,Puente Hills Energy Recovery,GEN5,Landfill Gas,IC,LFG,3.3,2.7,2006,RE,2016,34.0233,-118.0241,18.6
+10473,Palos Verdes Gas to Energy,GEN1,Landfill Gas,ST,LFG,13,2.5,1988,RE,2011,33.792778,-118.35,19.6
+10635,"Corona Energy Partners, Ltd",GEN1,Natural Gas Fired Combustion Turbine,GT,NG,47,40,1988,RE,2017,33.8827,-117.5565,27.6
+10677,CES Placerita Power Plant,UNT1,Natural Gas Fired Combined Cycle,CT,NG,60,46,1988,RE,2008,34.3801,-118.4999,51.5
+50061,San Diego State University,GEN1,Natural Gas Fired Combined Cycle,CT,NG,2.5,2.9,1986,RE,2002,32.778225,-117.070114,86.6
+50200,B Braun Medical,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,2.8,2.7,1982,RE,2025,33.688721,-117.834793,11.1
+50200,B Braun Medical,GEN2,Natural Gas Fired Combustion Turbine,GT,NG,3.3,3,1995,RE,2025,33.688721,-117.834793,11.1
+50216,Watson Cogeneration,GN97,Natural Gas Fired Combined Cycle,CT,NG,94.2,79.6, ,CN, ,33.816647,-118.244841,14.1
+50300,VESI Pomona,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,46,40,1985,RE,2019,34.059444,-117.774167,25.1
+50386,Windland,WING,Onshore Wind Turbine,WT,WND,15.3,15.3,1982,RE,2020,35.0522,-118.3581,91.9
+50485,Altech III,GEN1,Onshore Wind Turbine,WT,WND,21.7,21.7,1985,RE,2020,33.915023,-116.555064,84.3
+50485,Altech III,GEN2,Onshore Wind Turbine,WT,WND,3.4,3.4,1984,RE,2020,33.915023,-116.555064,84.3
+50530,Equilon Los Angeles Refining,GEN1,Other Gases,GT,OG,30,24.1,1982,RE,2025,33.791667,-118.234722,13.1
+50530,Equilon Los Angeles Refining,GEN2,Other Gases,GT,OG,30,25.4,1982,RE,2025,33.791667,-118.234722,13.1
+50530,Equilon Los Angeles Refining,GEN3,Other Gases,ST,OG,23,9.9,1991,RE,2025,33.791667,-118.234722,13.1
+50533,Painted Hills Wind Park,WGNS,Onshore Wind Turbine,WT,WND,19,19,1985,RE,2019,33.9369,-116.6183,80.9
+50535,Mesa Wind Power LLC,WGNS,Onshore Wind Turbine,WT,WND,29.9,29.9,1984,RE,2020,33.9461,-116.6769,77.7
+50553,Edom Hills Project 1 LLC,WGNS,Onshore Wind Turbine,WT,WND,11,6.5,1985,RE,2007,33.881667,-116.460278,89.5
+50674,Municipal Cogen Plant,GEN1,Natural Gas Internal Combustion Engine,IC,NG,0.7,0.6,1985,RE,2014,33.8247,-116.5106,86.3
+50674,Municipal Cogen Plant,GEN2,Natural Gas Internal Combustion Engine,IC,NG,0.7,0.6,1985,RE,2014,33.8247,-116.5106,86.3
+50963,Naval Hospital Medical Center,1TG,Natural Gas Fired Combustion Turbine,GT,NG,0.8,0.7,1986,RE,2003,32.7261,-117.1464,86.8
+50963,Naval Hospital Medical Center,2TG,Natural Gas Fired Combustion Turbine,GT,NG,0.8,0.7,1986,RE,2003,32.7261,-117.1464,86.8
+50963,Naval Hospital Medical Center,3TG,Natural Gas Fired Combustion Turbine,GT,NG,0.8,0.7,1986,RE,2003,32.7261,-117.1464,86.8
+52073,UCLA So Campus Cogen Project,GEN1,Natural Gas Fired Combined Cycle,CT,NG,14.5,12.5,1993,RE,2024,34.0692,-118.4439,33.0
+52073,UCLA So Campus Cogen Project,GEN2,Natural Gas Fired Combined Cycle,CT,NG,14.5,12.5,1993,RE,2025,34.0692,-118.4439,33.0
+52160,Victory Garden Phase IV LLC,WGNS,Onshore Wind Turbine,WT,WND,22,22,1990,RE,2020,35.076,-118.3664,93.6
+52161,Terra-Gen 251 Wind LLC,WGNS,Onshore Wind Turbine,WT,WND,18.4,18.4,1987,RE,2020,35.0853,-118.3547,94.1
+52162,85 A,WGNS,Onshore Wind Turbine,WT,WND,14.1,14.1,1985,RE,2019,35.095797,-118.324772,94.4
+52163,85 B,WTGN,Onshore Wind Turbine,WT,WND,21.2,21.2,1985,RE,2019,35.102577,-118.332533,95.0
+54015,MM West Covina,GEN3,Landfill Gas,GT,LFG,4.9,4.4,1999,RE,2018,34.033206,-117.906129,20.2
+54242,Alvarado Hydro Facility,AHF,Conventional Hydroelectric,HY,WAT,2.1,1.4,1985,RE,2011,32.7814,-117.0411,87.5
+54242,Alvarado Hydro Facility,SD28H,Conventional Hydroelectric,HY,WAT,1.4,1.4, ,IP, ,32.7814,-117.0411,87.5
+54296,Biola University Hybrid,EG1,Natural Gas Internal Combustion Engine,IC,NG,0.6,0.6,1990,RE,2020,33.906953,-118.013105,10.6
+54296,Biola University Hybrid,EG2,Natural Gas Internal Combustion Engine,IC,NG,0.6,0.6,1990,RE,2020,33.906953,-118.013105,10.6
+54298,Coram Energy LLC (ECT),SX1S,Onshore Wind Turbine,WT,WND,3.3,3.3,1985,RE,2005,35.0583,-118.3417,92.1
+54299,Coram Energy LLC,SX15,Onshore Wind Turbine,WT,WND,1.4,1.4,1985,RE,2005,35.075,-118.3417,93.2
+54327,Toyon Power Station,TOY1,Landfill Gas,IC,LFG,1.8,1.7,1986,RE,2004,34.146253,-118.30485,31.9
+54327,Toyon Power Station,TOY2,Landfill Gas,IC,LFG,1.8,1.7,1986,RE,2004,34.146253,-118.30485,31.9
+54327,Toyon Power Station,TOY3,Landfill Gas,IC,LFG,1.8,1.7,1986,RE,2017,34.146253,-118.30485,31.9
+54327,Toyon Power Station,TOY4,Landfill Gas,IC,LFG,1.8,1.7,1986,RE,2015,34.146253,-118.30485,31.9
+54327,Toyon Power Station,TOY5,Landfill Gas,IC,LFG,1.8,1.7,1986,RE,2017,34.146253,-118.30485,31.9
+54451,Los Angeles Refinery Wilmington,G1,Other Natural Gas,OT,NG,10,6.1,1984,RE,2021,33.7686,-118.2867,15.9
+54454,San Gorgonio Windplant WPP1993,GEN3,Onshore Wind Turbine,WT,WND,34.5,34.5,1994,RE,2011,33.918395,-116.573906,83.3
+54681,Difwind Farms Ltd I,EXIS,Onshore Wind Turbine,WT,WND,7.3,7.3,1986,RE,2020,33.898856,-116.57281,83.2
+54682,Difwind Farms Ltd II,EXIS,Onshore Wind Turbine,WT,WND,5.5,5.4,1986,RE,2020,33.893685,-116.567811,83.4
+54685,Difwind Farms Ltd V,EXIS,Onshore Wind Turbine,WT,WND,11.7,11.6,1987,RE,2020,33.887401,-116.578231,82.8
+54687,Difwind Farms Ltd VIII,EXIS,Onshore Wind Turbine,WT,WND,15,15,1987,RE,2015,35.0506,-118.1714,90.1
+55161,MM Lopez Energy,UNT2,Landfill Gas,IC,LFG,3,2.7,1998,RE,2016,34.2925,-118.389444,43.1
+55538,Escondido Energy Center,GEN1,Natural Gas Fired Combustion Turbine,GT,NG,44,33.6,2001,RE,2013,33.1261,-117.1172,67.4
+55602,North City - Landfill Gas Engines South,UNT1,Landfill Gas,IC,LFG,0.9,0.9,1999,RE,2022,32.8817,-117.1958,76.5
+55602,North City - Landfill Gas Engines South,UNT2,Landfill Gas,IC,LFG,0.9,0.9,1999,RE,2022,32.8817,-117.1958,76.5
+55602,North City - Landfill Gas Engines South,UNT3,Landfill Gas,IC,LFG,0.9,0.9,1999,RE,2022,32.8817,-117.1958,76.5
+55602,North City - Landfill Gas Engines South,UNT4,Landfill Gas,IC,LFG,0.9,0.9,1999,RE,2022,32.8817,-117.1958,76.5
+55719,Mountain View I & II,GEN2,Onshore Wind Turbine,WT,WND,22.2,22.2,2001,RE,2021,33.9211,-116.5642,83.8
+55719,Mountain View I & II,GENI,Onshore Wind Turbine,WT,WND,42.6,42.6,2001,RE,2021,33.9211,-116.5642,83.8
+56615,Rancho Penasquitos,G100,Conventional Hydroelectric,HY,WAT,4.6,3.6,2007,RE,2022,32.93695,-117.113669,76.6
+56676,Margarita Energy Center,CTG1,Natural Gas Fired Combustion Turbine,GT,NG,48.2,46.5, ,CN, ,33.549444,-117.627777,26.2
+56976,Solar Photovoltaic Project #01,S1A,Solar Photovoltaic,PV,SUN,0.5,0.5,2008,RE,2011,34.073206,-117.512842,36.1
+56976,Solar Photovoltaic Project #01,S1B,Solar Photovoltaic,PV,SUN,0.5,0.5,2008,RE,2011,34.073206,-117.512842,36.1
+56976,Solar Photovoltaic Project #01,S1C,Solar Photovoltaic,PV,SUN,0.5,0.5,2008,RE,2011,34.073206,-117.512842,36.1
+56976,Solar Photovoltaic Project #01,S1D,Solar Photovoltaic,PV,SUN,0.5,0.5,2008,RE,2011,34.073206,-117.512842,36.1
+56996,Solar Photovoltaic Project #02,S1A,Solar Photovoltaic,PV,SUN,0.5,0.5,2009,RE,2023,33.985244,-117.700826,23.9
+56996,Solar Photovoltaic Project #02,S1B,Solar Photovoltaic,PV,SUN,0.5,0.5,2009,RE,2023,33.985244,-117.700826,23.9
+57127,Solar Photovoltaic Project #24,SO24A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24G,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57127,Solar Photovoltaic Project #24,SO24H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.038333,-117.373055,41.5
+57163,Calabasas Gas to Energy Facility,GEN2,Landfill Gas,GT,LFG,4.6,3.3,2010,RE,2018,34.1511,-118.7236,49.2
+57217,Solar Photovoltaic Project #03,S003A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.094279,-117.400113,42.2
+57217,Solar Photovoltaic Project #03,S003B,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.094279,-117.400113,42.2
+57218,Solar Photovoltaic Project #04,S004A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.071111,-117.520277,35.7
+57218,Solar Photovoltaic Project #04,S004B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.071111,-117.520277,35.7
+57218,Solar Photovoltaic Project #04,S004C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.071111,-117.520277,35.7
+57219,Solar Photovoltaic Project #05,S005A,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086276,-117.230571,50.3
+57219,Solar Photovoltaic Project #05,S005B,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086276,-117.230571,50.3
+57219,Solar Photovoltaic Project #05,S005C,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086276,-117.230571,50.3
+57219,Solar Photovoltaic Project #05,S005D,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086276,-117.230571,50.3
+57219,Solar Photovoltaic Project #05,S005E,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086276,-117.230571,50.3
+57220,Solar Photovoltaic Project #06,S006A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041389,-117.573055,32.0
+57220,Solar Photovoltaic Project #06,S006B,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041389,-117.573055,32.0
+57220,Solar Photovoltaic Project #06,S006C,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041389,-117.573055,32.0
+57220,Solar Photovoltaic Project #06,S006D,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041389,-117.573055,32.0
+57221,Solar Photovoltaic Project #07,S007A,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086111,-117.2275,50.5
+57221,Solar Photovoltaic Project #07,S007B,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086111,-117.2275,50.5
+57221,Solar Photovoltaic Project #07,S007C,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086111,-117.2275,50.5
+57221,Solar Photovoltaic Project #07,S007D,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086111,-117.2275,50.5
+57221,Solar Photovoltaic Project #07,S007E,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.086111,-117.2275,50.5
+57222,Solar Photovoltaic Project #08,S008A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041944,-117.565,32.4
+57222,Solar Photovoltaic Project #08,S008B,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041944,-117.565,32.4
+57222,Solar Photovoltaic Project #08,S008C,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041944,-117.565,32.4
+57222,Solar Photovoltaic Project #08,S008D,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.041944,-117.565,32.4
+57222,Solar Photovoltaic Project #08,S008E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.041944,-117.565,32.4
+57223,Solar Photovoltaic Project #09,S009A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.042778,-117.571666,32.2
+57223,Solar Photovoltaic Project #09,S009B,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.042778,-117.571666,32.2
+57223,Solar Photovoltaic Project #09,S009C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.042778,-117.571666,32.2
+57224,Solar Photovoltaic Project #10,S010A,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.075,-117.516944,36.0
+57224,Solar Photovoltaic Project #10,S010B,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.075,-117.516944,36.0
+57224,Solar Photovoltaic Project #10,S010C,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.075,-117.516944,36.0
+57224,Solar Photovoltaic Project #10,S010D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075,-117.516944,36.0
+57225,Solar Photovoltaic Project #11,S011A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57225,Solar Photovoltaic Project #11,S011G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.075833,-117.241388,49.4
+57226,Solar Photovoltaic Project #12,S012A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.042222,-117.561666,32.6
+57226,Solar Photovoltaic Project #12,S012B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.042222,-117.561666,32.6
+57227,Solar Photovoltaic Project #13,S013A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57227,Solar Photovoltaic Project #13,S013G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.083499,-117.23557,50.0
+57228,Solar Photovoltaic Project #14,S014A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.068333,-117.507222,36.2
+57228,Solar Photovoltaic Project #14,S014B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.068333,-117.507222,36.2
+57228,Solar Photovoltaic Project #14,S014C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.068333,-117.507222,36.2
+57229,Solar Photovoltaic Project #15,S015A,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015B,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015C,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015D,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015E,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015F,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57229,Solar Photovoltaic Project #15,S015G,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.079167,-117.516666,36.2
+57230,Solar Photovoltaic Project #16,S016A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.085556,-117.233611,50.1
+57230,Solar Photovoltaic Project #16,S016B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.085556,-117.233611,50.1
+57230,Solar Photovoltaic Project #16,S016C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.085556,-117.233611,50.1
+57231,Solar Photovoltaic Project #17,S017A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.072778,-117.503333,36.5
+57231,Solar Photovoltaic Project #17,S017H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.072778,-117.503333,36.5
+57232,Solar Photovoltaic Project #18,S018A,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.083333,-117.516388,36.4
+57232,Solar Photovoltaic Project #18,S018B,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.083333,-117.516388,36.4
+57232,Solar Photovoltaic Project #18,S018C,Solar Photovoltaic,PV,SUN,0.5,0.5,2012,RE,2023,34.083333,-117.516388,36.4
+57232,Solar Photovoltaic Project #18,S018D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.083333,-117.516388,36.4
+57233,Solar Photovoltaic Project #19,S019A,Solar Photovoltaic,PV,SUN,1,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019G,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57233,Solar Photovoltaic Project #19,S019I,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086944,-117.516944,36.5
+57234,Solar Photovoltaic Project #20,S020A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57234,Solar Photovoltaic Project #20,S020G,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.089167,-117.203333,51.8
+57235,Solar Photovoltaic Project #21,S021A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075278,-117.553611,34.4
+57235,Solar Photovoltaic Project #21,S021B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075278,-117.553611,34.4
+57235,Solar Photovoltaic Project #21,S021C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075278,-117.553611,34.4
+57235,Solar Photovoltaic Project #21,S021D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075278,-117.553611,34.4
+57235,Solar Photovoltaic Project #21,S021E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.075278,-117.553611,34.4
+57236,Solar Photovoltaic Project #23,S023A,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.080833,-117.520277,36.1
+57236,Solar Photovoltaic Project #23,S023B,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.080833,-117.520277,36.1
+57236,Solar Photovoltaic Project #23,S023C,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.080833,-117.520277,36.1
+57236,Solar Photovoltaic Project #23,S023D,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.080833,-117.520277,36.1
+57236,Solar Photovoltaic Project #23,S023E,Solar Photovoltaic,PV,SUN,0.5,0.5,2013,RE,2023,34.080833,-117.520277,36.1
+57236,Solar Photovoltaic Project #23,S023F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.080833,-117.520277,36.1
+57237,Solar Photovoltaic Project #22,S022A,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.08,-117.2114,51.1
+57237,Solar Photovoltaic Project #22,S022B,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.08,-117.2114,51.1
+57237,Solar Photovoltaic Project #22,S022C,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.08,-117.2114,51.1
+57237,Solar Photovoltaic Project #22,S022D,Solar Photovoltaic,PV,SUN,0.5,0.5,2011,RE,2023,34.08,-117.2114,51.1
+57245,Solar Photovoltaic Project #26,S026A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026H,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026I,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,S026J,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,SO26K,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57245,Solar Photovoltaic Project #26,SO26L,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131214,-117.425324,42.5
+57246,Solar Photovoltaic Project #27,S027A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131111,-117.421666,42.7
+57246,Solar Photovoltaic Project #27,S027B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131111,-117.421666,42.7
+57246,Solar Photovoltaic Project #27,S027C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131111,-117.421666,42.7
+57246,Solar Photovoltaic Project #27,S027D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.131111,-117.421666,42.7
+57246,Solar Photovoltaic Project #27,S027E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.131111,-117.421666,42.7
+57246,Solar Photovoltaic Project #27,S027F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.131111,-117.421666,42.7
+57247,Solar Photovoltaic Project #28,S028A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.094167,-117.274166,48.4
+57247,Solar Photovoltaic Project #28,S028H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.094167,-117.274166,48.4
+57295,Alpine Solar,2,Solar Photovoltaic,PV,SUN,66,66, ,IP, ,34.7892,-118.5047,76.9
+57301,Dutch Wind Energy,DEC,Onshore Wind Turbine,WT,WND,8,8,1994,RE,2020,33.8942,-116.5603,83.8
+57307,Van Norman Bypass Solar Project,1,Solar Photovoltaic,PV,SUN,2,2, ,CN, ,34.291111,-118.481111,45.9
+57312,LATTC South Campus Solar,1,Solar Photovoltaic,PV,SUN,1.1,1.1, ,CN, ,34.033056,-118.269722,24.3
+57528,Solar Photovoltaic Project #25,S25A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25G,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57528,Solar Photovoltaic Project #25,S25I,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.130556,-117.421944,42.6
+57532,Solar Photovoltaic Project #30,S30A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.064722,-117.425833,39.8
+57532,Solar Photovoltaic Project #30,S30B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.064722,-117.425833,39.8
+57532,Solar Photovoltaic Project #30,S30C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.064722,-117.425833,39.8
+57533,Solar Photovoltaic Project #31,S31A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086667,-117.565833,34.4
+57533,Solar Photovoltaic Project #31,S31B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,34.086667,-117.565833,34.4
+57534,Solar Photovoltaic Project #32,S32A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.031667,-117.571944,31.7
+57534,Solar Photovoltaic Project #32,S32B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.031667,-117.571944,31.7
+57534,Solar Photovoltaic Project #32,S32C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.031667,-117.571944,31.7
+57535,Solar Photovoltaic Project #33,S33A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.0325,-117.569166,31.8
+57535,Solar Photovoltaic Project #33,S33B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.0325,-117.569166,31.8
+57540,Solar Photovoltaic Project #44,S44A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44H,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44I,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44J,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44K,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44L,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44M,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44N,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44O,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57540,Solar Photovoltaic Project #44,S44P,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2019,33.839167,-117.220833,45.8
+57541,Solar Photovoltaic Project #45,S45A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45C,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45D,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45E,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45F,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45G,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45H,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45I,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45J,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45K,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57541,Solar Photovoltaic Project #45,S45L,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.8689,-116.5575,83.8
+57543,Solar Photovoltaic Project #47,S47A,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.703546,-117.915352,6.5
+57543,Solar Photovoltaic Project #47,S47B,Solar Photovoltaic,PV,SUN,0.5,0.5, ,CN, ,33.703546,-117.915352,6.5
+57544,Cal State Univ San Bernardino FC01,FC01,Other Natural Gas,FC,NG,1.4,1.4,2013,RE,2023,34.185833,-117.324167,49.4
+57566,GE - Tehachapi,1.6PR,Onshore Wind Turbine,WT,WND,1.6,1.6,2011,RE,2013,35.155278,-118.369444,99.0
+57566,GE - Tehachapi,1.7SF,Onshore Wind Turbine,WT,WND,1.8,1.8,2014,RE,2019,35.155278,-118.369444,99.0
+57566,GE - Tehachapi,2.5P2,Onshore Wind Turbine,WT,WND,2.5,2.5,2015,RE,2020,35.155278,-118.369444,99.0
+57566,GE - Tehachapi,2.8P3,Onshore Wind Turbine,WT,WND,2.8,2.8,2018,RE,2020,35.155278,-118.369444,99.0
+57584,University of California San Diego Hybri,BS1,Batteries,BA,MWH,2.5,2.5,2015,RE,2025,32.8747,-117.2392,75.3
+57729,Lake Hodges Hydroelectric Facility,1,Hydroelectric Pumped Storage,PS,WAT,21,21,2012,RE,2024,33.058611,-117.119444,70.4
+57729,Lake Hodges Hydroelectric Facility,2,Hydroelectric Pumped Storage,PS,WAT,21,21,2012,RE,2024,33.058611,-117.119444,70.4
+57730,Lopez Canyon,1,Landfill Gas,GT,LFG,1.5,1.5,2002,RE,2015,34.292645,-118.389774,43.1
+57854,North Hollywood,1PT1,Conventional Hydroelectric,HY,WAT,1.8,1.8,1993,RE,2024,34.194444,-118.39028,37.4
+57854,North Hollywood,1PT2,Conventional Hydroelectric,HY,WAT,1.8,1.8,1993,RE,2024,34.194444,-118.39028,37.4
+57854,North Hollywood,1PT3,Conventional Hydroelectric,HY,WAT,1.8,1.8,1993,RE,2024,34.194444,-118.39028,37.4
+57854,North Hollywood,2T1,Conventional Hydroelectric,HY,WAT,1.2,1.2,1993,RE,2021,34.194444,-118.39028,37.4
+57854,North Hollywood,2T2,Conventional Hydroelectric,HY,WAT,1.2,1.2,1993,RE,2021,34.194444,-118.39028,37.4
+57854,North Hollywood,2T3,Conventional Hydroelectric,HY,WAT,0.5,0.5,1993,RE,2016,34.194444,-118.39028,37.4
+57854,North Hollywood,3T1,Conventional Hydroelectric,HY,WAT,0.5,0.5,1993,RE,2024,34.194444,-118.39028,37.4
+57854,North Hollywood,3T2,Conventional Hydroelectric,HY,WAT,0.2,0.2,1993,RE,2024,34.194444,-118.39028,37.4
+57900,Solar Photovoltaic Project #48,S48A,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48B,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48C,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48D,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48E,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48F,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48G,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48H,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48I,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57900,Solar Photovoltaic Project #48,S48J,Solar Photovoltaic,PV,SUN,0.5,0.5,2015,RE,2023,34.081111,-117.228056,50.3
+57923,Tierra Bonita Solar,1,Solar Photovoltaic,PV,SUN,22,22, ,CN, ,34.579434,-118.116461,57.4
+58056,"Irwindale Brew Yard, LLC",JEN2,Other Waste Biomass,IC,OBG,0.5,0.6,2007,RE,2021,34.121667,-117.938333,25.8
+58056,"Irwindale Brew Yard, LLC",PV,Solar Photovoltaic,PV,SUN,2.5,0.8,2015,RE,2025,34.121667,-117.938333,25.8
+58168,Energy Center,EC01,Natural Gas Internal Combustion Engine,IC,NG,1.5,1.5,2007,RE,2019,34.063056,-117.163889,53.1
+58253,CBS Television City,GEN2,Other Natural Gas,FC,NG,0.4,0.4,2013,RE,2023,34.075,-118.36,29.9
+58253,CBS Television City,GEN3,Other Natural Gas,FC,NG,0.4,0.4,2013,RE,2023,34.075,-118.36,29.9
+58253,CBS Television City,GEN4,Other Natural Gas,FC,NG,0.4,0.4,2013,RE,2023,34.075,-118.36,29.9
+58300,Honda Torrance,HON,Other Natural Gas,FC,NG,1.1,1,2012,RE,2023,33.838056,-118.315,18.4
+58422,CSU Northridge Plant,63,Other Natural Gas,FC,NG,0.3,0.3,2007,RE,2018,34.243333,-118.530556,45.0
+58422,CSU Northridge Plant,64,Other Natural Gas,FC,NG,0.3,0.3,2007,RE,2018,34.243333,-118.530556,45.0
+58422,CSU Northridge Plant,65,Other Natural Gas,FC,NG,0.3,0.3,2007,RE,2018,34.243333,-118.530556,45.0
+58422,CSU Northridge Plant,67,Other Natural Gas,FC,NG,0.3,0.3,2007,RE,2018,34.243333,-118.530556,45.0
+58422,CSU Northridge Plant,CP1,Natural Gas Fired Combustion Turbine,GT,NG,0.2,0.2,2001,RE,2018,34.243333,-118.530556,45.0
+59002,Carlsbad Energy Center,CEC11,Natural Gas Fired Combustion Turbine,GT,NG,105.5,105.5, ,CN, ,33.140507,-117.333916,57.6
+59261,Verizon-Torrance,VZ300,Other Natural Gas,FC,NG,1,1,2013,RE,2023,33.850556,-118.304167,18.1
+59456,P Plant,P-TG4,Natural Gas Fired Combustion Turbine,GT,NG,4.6,4,2007,RE,2024,32.894722,-117.198056,75.7
+59456,P Plant,P-TG5,Natural Gas Fired Combustion Turbine,GT,NG,4.6,4,2015,RE,2023,32.894722,-117.198056,75.7
+59457,Q Plant,Q-TG1,Natural Gas Fired Combustion Turbine,GT,NG,4.6,4,2013,RE,2023,32.904167,-117.201111,75.1
+59661,Tehachapi Energy Storage Project,TSP1,Batteries,BA,MWH,8,8,2016,RE,2022,35.123333,-118.38,96.9
+59799,Foothill Solar Project,W4528,Solar Photovoltaic,PV,SUN,1.1,1.1, ,CN, ,34.2738,-118.3454,40.7
+59800,Amazon San Bernardino,AMZ00,Other Natural Gas,FC,NG,1.1,1,2014,RE,2023,34.088408,-117.245839,49.6
+59804,Starbucks - Evolution Fresh,SBK00,Other Natural Gas,FC,NG,1.1,1,2014,RE,2024,34.093684,-117.551044,35.3
+60309,"Portal Ridge Solar A, LLC",GEN01,Solar Photovoltaic,PV,SUN,19,19, ,CN, ,34.71533,-118.25908,67.9
+60566,Pala Energy Storage Yard,SES1,Batteries,BA,MWH,0.5,0.5,2012,RE,2021,33.35651,-117.113599,58.5
+60699,DESI-1 Battery Energy Storage Facility,DESI1,Batteries,BA,MWH,2.4,2.4,2016,RE,2024,33.799248,-117.873371,8.5
+60760,PPA Grand,PE101,Batteries,BA,MWH,2,2,2016,RE,2025,33.691,-117.833,11.1
+60826,Neenach Solar Center,ECA03,Solar Photovoltaic,PV,SUN,1.5,1.5, ,CN, ,34.812791,-118.60117,80.6
+60972,San Jacinto Solar,SJAC,Solar Photovoltaic,PV,SUN,1.5,1.5, ,CN, ,33.8346,-117.1309,50.8
+60973,Lake Perris Solar,LKPR,Solar Photovoltaic,PV,SUN,1.5,1.5, ,CN, ,33.8361,-117.1297,50.9
+61390,"Pomerado Energy Storage, LLC",PMRDO,Batteries,BA,MWH,6,6, ,CN, ,32.94,-117.04,79.4
+62515,Hybrid Holdings 1 Capistrano,HH4MW,Batteries,BA,MWH,4,4, ,CN, ,33.511644,-117.661225,26.2
+63508,Camino Solar Hybrid,CSBA1,Batteries,BA,MWH,11,11, ,CN, ,34.93031,-118.443211,84.9
+63740,Amazon - Moreno Valley,ONT6,Solar Photovoltaic,PV,SUN,2.2,2.2, ,CN, ,33.872226,-117.238073,45.1
+64668,Bolthouse Solar LLC,KOV4A,Solar Photovoltaic,PV,SUN,3,3, ,CN, ,35.142252,-117.965609,96.0
+65789,Santa Ana Storage 3,SAP3,Batteries,BA,MWH,40,40, ,CN, ,33.7149,-117.853984,9.4
+66551,EnerSmart Imperial Beach BESS,IB192,Batteries,BA,MWH,3,3, ,CN, ,32.583468,-117.0968,96.6
+66551,EnerSmart Imperial Beach BESS,IB193,Batteries,BA,MWH,3,3, ,CN, ,32.583468,-117.0968,96.6
+66754,EnerSmart El Cajon BESS,EC01,Batteries,BA,MWH,3,3, ,CN, ,32.80417,-116.92547,90.8
+66755,EnerSmart Murray BESS,M01,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M02,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M03,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M04,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M05,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M06,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66755,EnerSmart Murray BESS,M07,Batteries,BA,MWH,3,3, ,CN, ,32.78998,-117.02282,87.7
+66953,CPA 3777 Workman,PE328,Solar Photovoltaic,PV,SUN,1.9,1.9, ,CN, ,34.0209,-118.04019,18.5
+67229,Trestles Grid LLC,HGLPT,Batteries,BA,MWH,150,150, ,CN, ,33.74232,-117.161139,48.8

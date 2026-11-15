@@ -293,6 +293,12 @@ class SchemaAndFiles(TempResearch):
         self.assertFalse(rep.ok)
         self.assertTrue(any("layers/mystery.geojson" in g for g in rep.global_errors), rep.format())
 
+    def test_app_owned_layers_are_not_unexpected(self):
+        for name in ("plants.geojson", "substations.geojson", "transmission.geojson"):
+            self.write("layers/" + name, self.read(HPP))
+        rep = self.report()
+        self.assertFalse(any("file.unexpected" in g for g in rep.global_errors), rep.format())
+
     def test_schema_field_missing_key_is_an_error(self):
         for key in ("description", "unit", "enum", "nullable", "min", "max"):
             with self.subTest(key=key):

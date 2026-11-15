@@ -96,7 +96,7 @@ export default function FacilityRail({
                   <span className="rail-name">{f.properties.name}</span>
                   <span className="rail-meta">
                     {f.properties.type} · {f.properties.infrastructure.age_years} yr ·{" "}
-                    {risk.bucket}
+                    {risk.bucket} · L {risk.exposure.toFixed(0)}
                   </span>
                 </span>
                 <span className="rail-right">

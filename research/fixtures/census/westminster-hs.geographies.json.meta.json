@@ -1,0 +1,13 @@
+{
+  "url": "https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x=-118.0111&y=33.7538&benchmark=Public_AR_Current&vintage=Current_Current&format=json",
+  "method": "GET",
+  "request_sha256": null,
+  "status": 200,
+  "bytes": 4757,
+  "sha256": "ebdf6b7bb14c7c3aacc774149dfca7fb808e1456e19cfd2c11df1a6c201ccc53",
+  "content_type": "application/json",
+  "etag": null,
+  "last_modified": null,
+  "captured_at": "2026-11-14T19:30:20.804Z",
+  "captured_by": "research/tools/capture.mjs"
+}

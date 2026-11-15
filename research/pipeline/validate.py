@@ -986,8 +986,15 @@ def validate_all(paths: Paths, datasets: Optional[List[str]] = None) -> Report:
     return report
 
 
+# Map layers the app already ships from research/scripts/ (build_eia_plants.py,
+# build_osm_grid.py). They predate this pipeline and have no schema here, so they
+# are not "unexpected"; publish.py never overwrites them without --replace-plants.
+APP_LAYERS = frozenset({"plants.geojson", "substations.geojson", "transmission.geojson"})
+
+
 def unclaimed_files(paths: Paths, datasets: List[str]) -> List[str]:
-    """clean/*.csv and layers/*.geojson that no schema's resolve_files() points at."""
+    """clean/*.csv and layers/*.geojson that no schema's resolve_files() points at,
+    minus the app-owned layers in APP_LAYERS."""
     claimed = set()
     for name in datasets:
         schema, _ = _load_schema(paths, name)
@@ -1001,7 +1008,9 @@ def unclaimed_files(paths: Paths, datasets: List[str]) -> List[str]:
     for folder, pattern in ((paths.clean, "*.csv"), (paths.layers, "*.geojson")):
         if folder.is_dir():
             found.extend(sorted(folder.glob(pattern)))
-    return [paths.rel(p) for p in found if p.resolve() not in claimed]
+    return [paths.rel(p) for p in found
+            if p.resolve() not in claimed
+            and not (p.parent.resolve() == paths.layers.resolve() and p.name in APP_LAYERS)]
 
 
 def main(paths: Paths, datasets: Optional[List[str]] = None, json_out: Optional[str] = None) -> int:

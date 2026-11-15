@@ -1,0 +1,18 @@
+{
+  "kind": "quote",
+  "issuer": { "name": "Sam Rivera", "organization": "Example Municipal Utility", "contact": "procurement@utility.example" },
+  "issued_at": "2026-10-10T12:00:00-07:00",
+  "scope": { "location_id": "location-29a410dca3e4c0191458bdbc", "assets": ["xfmr-sub-12-t1", "bess-yard-1"] },
+  "visibility": "public",
+  "effective": { "start": "2026-10-10T00:00:00-07:00", "end": "2027-01-10T00:00:00-08:00" },
+  "payload": {
+    "vendor": "Example Transformer Co.",
+    "reference": "Q-2026-0412",
+    "currency": "USD",
+    "valid_until": "2027-01-10T00:00:00-08:00",
+    "lines": [
+      { "line_id": "1", "item": "28 MVA 69/12.47 kV ONAN/ONAF power transformer", "asset_id": "xfmr-sub-12-t1", "quantity": 1, "unit_price": { "value": 2450000, "unit": "$" } },
+      { "line_id": "2", "item": "Installation and commissioning", "quantity": 1, "unit_price": { "value": 310000, "unit": "$" } }
+    ]
+  }
+}

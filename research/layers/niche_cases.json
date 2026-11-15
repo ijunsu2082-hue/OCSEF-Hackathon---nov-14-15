@@ -1,0 +1,2067 @@
+[
+ {
+  "id": "wire-that-breathes",
+  "title": "The Wire That Breathes",
+  "category": "Transmission",
+  "location": {
+   "name": "Westminster High School (weather point); applies to every overhead line in the radius",
+   "lat": 33.7538,
+   "lon": -118.0111,
+   "distance_mi": 0
+  },
+  "one_liner": "Power lines are rated as if every hour were a hot, windless afternoon, so most hours they could safely carry far more, and on the worst heat hours the fixed rating isn't safe enough.",
+  "problem": "Most overhead lines carry a fixed static rating that assumes about 40 C air, almost no wind and full sun all year. The real limit is how hot the wire gets, which depends on the weather. Clean energy waits years for grid room while existing wires sit under-used.",
+  "fix": "Rate each line hour by hour from real weather (dynamic line rating). It frees capacity on wires that already exist with no construction, and flags heat-wave hours when the fixed rating is too generous.",
+  "shock_line": "The wires aren't full. We just pretend every hour is a hot, still afternoon, and on the one afternoon that really is, the fixed number isn't even safe.",
+  "stats": [
+   {
+    "label": "Typical 2024 hour at Westminster HS: safe rating vs fixed rating",
+    "value": "~1.58x",
+    "kind": "modeled",
+    "source": "research/data/line_ratings/summary.json (IEEE 738 heat balance, ACSR Drake 75 C, Open-Meteo 2024 weather, wind halved)"
+   },
+   {
+    "label": "2024 hours where the safe rating beats the fixed rating (Westminster HS)",
+    "value": "100%",
+    "kind": "modeled",
+    "source": "research/data/line_ratings/summary.json"
+   },
+   {
+    "label": "Extra room from wind alone, summer 4-8 pm (beyond the temperature-only rating FERC Order 881 requires)",
+    "value": "~+20% median",
+    "kind": "modeled",
+    "source": "research/data/line_ratings/summary.json"
+   },
+   {
+    "label": "Downtown LA, 6 Sep 2024 1 pm (45.7 C in reanalysis): safe rating vs fixed rating",
+    "value": "~0.90x (fixed rating ~10% too high)",
+    "kind": "modeled",
+    "source": "research/data/line_ratings/line_rating_2024_la_basin_downtown.csv"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "output_draw",
+   "infra_age",
+   "upgrade_potential",
+   "energy_cycle"
+  ],
+  "chart": {
+   "kind": "line_rating",
+   "data_url": "/layers/line_rating_2024_westminster_hs.csv"
+  }
+ },
+ {
+  "id": "the-pilot-that-never-flew-stanton-12-miles-from-irvine",
+  "title": "The Pilot That Never Flew (Stanton, 12 miles from Irvine)",
+  "category": "Transmission",
+  "location": {
+   "name": "SCE EPIC 'Advanced Technology Dynamic Line Rating' pilot at Barre Substation, Stanton, Orange County (2015-2017). The line is not named in t",
+   "lat": 33.8089,
+   "lon": -117.9818,
+   "distance_mi": 4.2
+  },
+  "one_liner": "Twelve miles from this room, Edison tried to let a power line 'breathe' and the project died because trees blocked the radio signal. The federal deadline to do it with weather data instead is December 17, 2026, 33 days from now.",
+  "problem": "Southern California Edison planned a real dynamic line rating pilot that used Nexans/Valley Group CAT-1 tension monitors, with its radio antenna on the tower at Barre Substation in Stanton. The pilot was scheduled to run Dec 2015 to Dec 2016. It was cancelled before any construction because a line-of-sight survey found all three radio paths blocked by vegetation, and SCE concluded the technology was 'not practical' for its system. Ten years later the federal rules have changed. FERC Order 881 requires weather-adjusted (ambient-adjusted) ratings, and FERC gave CAISO until December 17, 2026 and SCE/SDG&E until October 15, 2027. That makes this a 'right now' story for a team pitching software-only line rating that needs no radios on towers. For scale, SCE's alternative is construction: West of Devers cost $740M to triple a corridor from 1,600 MW to 4,800 MW.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Twelve miles from this room, Edison tried to let a power line 'breathe' and the project died because trees blocked the radio signal. The federal deadline to do it with weather data instead is December 17, 2026, 33 days from now.",
+  "stats": [
+   {
+    "label": "SCE's DLR pilot planned to install CAT-1 tension monitors (load cells, ambient temperature sensor and net radiation sensors) to compute real-time line ratings. Schedule: authority to proceed Jan 2, 2015; pilot operation Dec 19, 2015 to Dec 19, 2016; close-out by Feb 16, 2017.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sce.com/sites/default/files/inline-files/EPIC_DynamicLineRatingFinalReport_0.pdf"
+   },
+   {
+    "label": "The project was cancelled before equipment was installed. Poles M3-P4, M3-P7 and M4-P2 were surveyed for radio line-of-sight to an antenna on the transmission tower at Barre substation, and all three paths were obstructed by vegetation.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sce.com/sites/default/files/inline-files/EPIC_DynamicLineRatingFinalReport_0.pdf"
+   },
+   {
+    "label": "SCE's stated problem: its practice is fixed line ratings 'pre-calculated based on assumed-fixed conditions throughout the year'. Its conclusion: DLR 'with the current operating procedure is not practical' because long lines need many radio repeaters.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sce.com/sites/default/files/inline-files/EPIC_DynamicLineRatingFinalReport_0.pdf"
+   },
+   {
+    "label": "On April 30, 2025, FERC granted CAISO an extension to implement Order 881 (ambient-adjusted line ratings) from June 15, 2025 to December 17, 2026. It also extended the deadline for CAISO participating transmission owners (SCE, SDG&E and others) to October 15, 2027.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/apr-30-2025-order-accepting-motion-for-extension-order-no-881-er22-2362.pdf"
+   },
+   {
+    "label": "CAISO's Sept 1, 2026 release deck lists 'FERC 881 Track 3: AAR in Market Applications & EMS' with the note that the effective date of the Order 881 tariff is 'under internal review'. As of that date, weather-adjusted ratings were not yet live in CAISO's market software.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/presentation-release-user-group-forum-sep-01-2026.pdf"
+   },
+   {
+    "label": "West of Devers Upgrade (SCE, completed May 2021): four 220 kV circuits on a 48-mile corridor between Devers (near Palm Springs), Vista (Grand Terrace) and San Bernardino substations. It raised capacity from 1,600 MW to 4,800 MW at a total cost of $740 million.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.tdworld.com/overhead-transmission/article/21166669/sce-completes-transmission-project-to-support-californias-clean-energy-goals"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-69-kv-choke-point-of-east-county-el-cajon-to-los-coches",
+  "title": "The 69-kV Choke Point of East County (El Cajon to Los Coches)",
+  "category": "Transmission",
+  "location": {
+   "name": "SDG&E El Cajon - Los Coches 69 kV branch (CAISO constraint '22208_EL CAJON_69.0_22408_LOSCOCHS_69.0_BR_1_1', contingency 'SD1 LCOCHS-GR-MIGU",
+   "lat": 32.7955,
+   "lon": -116.9723,
+   "distance_mi": 89.4
+  },
+  "one_liner": "A 69,000-volt line in El Cajon was officially 'full' in 686 of the 720 hours of this September, including the cool nights.",
+  "problem": "I downloaded CAISO's public day-ahead binding-constraint data (OASIS PRC_NOMOGRAM) for September and October 2026 and ranked every constraint. The most persistently binding constraint in Southern California is a small 69 kV SDG&E line between El Cajon and Los Coches (Lakeside) substations. It binds against the outage scenario of the Los Coches-Granite-Miguel 69 kV line. It was congested in 686 of 720 day-ahead hours in September 2026 and 609 of 744 hours in October 2026, at every hour of the day. SDG&E's CPUC-approved Granite Loop-In (2.5 miles of new underground 69 kV between Granite and Los Coches) targets reliability in exactly this area. It had an estimated completion of Q2/Q3 2026, but the constraint was still binding through October 2026. This is a live, data-backed example of a wire that is 'full' on paper almost every hour.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "A 69,000-volt line in El Cajon was officially 'full' in 686 of the 720 hours of this September, including the cool nights.",
+  "stats": [
+   {
+    "label": "In CAISO day-ahead market data for Sept 1-30, 2026 (720 hours), the El Cajon-Los Coches 69 kV branch had a non-zero shadow price in 686 hours: 681 under contingency 'SD1 LCOCHS-GR-MIGUEL 69' and 5 under 'SD1 MIGUEL-JMACHA_1 69'. The maximum shadow price was $331/MWh. It was the #2 constraint in all of CAISO by summed shadow price and #1 in Southern California. (Own analysis of the public OASIS download, pulled 2026-11-14.)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://oasis.caiso.com/oasisapi/SingleZip?resultformat=6&queryname=PRC_NOMOGRAM&version=1&market_run_id=DAM&startdatetime=20260901T07:00-0000&enddatetime=20261001T07:00-0000"
+   },
+   {
+    "label": "In October 2026 the same branch bound in 609 of 744 day-ahead hours, with a maximum shadow price of $852.6/MWh. (Own analysis of the OASIS download.)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://oasis.caiso.com/oasisapi/SingleZip?resultformat=6&queryname=PRC_NOMOGRAM&version=1&market_run_id=DAM&startdatetime=20261001T07:00-0000&enddatetime=20261101T07:00-0000"
+   },
+   {
+    "label": "Nearby SDG&E 69 kV branches in the South Bay showed extreme short spikes: San Ysidro-Otay Tap reached $4,688.9/MWh (8 hours in Oct 2026), and Otay-Otay Lake Tap reached $2,525/MWh (Sept 2026). (Own analysis of OASIS data.)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://oasis.caiso.com/oasisapi/SingleZip?resultformat=6&queryname=PRC_NOMOGRAM&version=1&market_run_id=DAM&startdatetime=20261001T07:00-0000&enddatetime=20261101T07:00-0000"
+   },
+   {
+    "label": "SDG&E Granite Loop-In (TL632-TL6985): about 2.5 miles of new underground 69 kV line connecting Granite Substation and Los Coches Substation in El Cajon. CPUC approved it in March 2025; construction started August 2025 with estimated completion Q2/Q3 2026. Cost is not published on the page.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sdge.com/node/30496"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "solar-noon-traffic-jam-kramer-junction-to-victorville",
+  "title": "Solar Noon Traffic Jam (Kramer Junction to Victorville)",
+  "category": "Transmission",
+  "location": {
+   "name": "SCE Kramer - Victor 230 kV line #2 (CAISO constraint '24701_KRAMER_230_24601_VICTOR_230_BR_2_1'), and CAISO-approved Lugo-Victor-Kramer 230 ",
+   "lat": 34.5049,
+   "lon": -117.3884,
+   "distance_mi": 62.9
+  },
+  "one_liner": "In the Mojave, the wire to Victorville jams only while the sun is up. Every congested hour this September and October was between 8 a.m. and 6 p.m., and the steel fix isn't due until 2033.",
+  "problem": "The Kramer-Victor corridor carries Mojave Desert power (Kramer Junction area, Highway 58/395) about 38 miles south to Victor substation near Victorville. In CAISO's day-ahead market data, the Kramer-Victor 230 kV #2 branch bound in 221 hours in September 2026 and 162 hours in October 2026. Every one of those hours fell between 8 a.m. and 6 p.m.: solar hours, when desert generation tries to squeeze through the wire. CAISO approved a fix in May 2023, the Lugo-Victor-Kramer 230 kV Upgrade. It includes reconductoring the Lugo-Victor lines with high-temperature low-sag (HTLS) conductor, expected Dec 2028, and rebuilding Kramer-Victor 115 kV lines to 230 kV, expected June 2033. Clean energy waits roughly 7 years for steel, while a software rating could start finding headroom in cooler or windier hours now. Be honest on stage: a hot summer noon is close to the worst case, so the biggest gains come on cooler or windy days.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In the Mojave, the wire to Victorville jams only while the sun is up. Every congested hour this September and October was between 8 a.m. and 6 p.m., and the steel fix isn't due until 2033.",
+  "stats": [
+   {
+    "label": "Kramer-Victor 230 kV #2 bound (Base Case) in 221 day-ahead hours across 26 days in Sept 2026 and 162 hours across 22 days in Oct 2026. All binding hours were hour-ending 9 through 18 (Pacific), i.e., 8 a.m. to 6 p.m. Max shadow price was $144.8/MWh (Sep) and $167.1/MWh (Oct). (Own analysis of the CAISO OASIS PRC_NOMOGRAM download, pulled 2026-11-14.)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://oasis.caiso.com/oasisapi/SingleZip?resultformat=6&queryname=PRC_NOMOGRAM&version=1&market_run_id=DAM&startdatetime=20260901T07:00-0000&enddatetime=20261001T07:00-0000"
+   },
+   {
+    "label": "CAISO's approved-project list: 'Lugo-Victor-Kramer Upgrade' approved by CAISO in May 2023. Parts: add 3rd Lugo 500/230 kV transformer (Dec-28); reconductor Lugo-Victor 230 kV No. 1-4 lines using HTLS (Dec-28); rebuild/build Kramer-Victor 115 kV lines to 230 kV (Jun-33). Dates are from the January 2024 tracking table.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/attachment-1_approvedprojects-transmissionplanningprocess-january2024.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "eleven-minutes-to-dark-path-44-at-san-onofre",
+  "title": "Eleven Minutes to Dark (Path 44 at San Onofre)",
+  "category": "Transmission",
+  "location": {
+   "name": "Path 44 (five 230 kV lines south of San Onofre) and the SONGS intertie separation scheme: September 8, 2011 Pacific Southwest blackout",
+   "lat": 33.3697,
+   "lon": -117.5543,
+   "distance_mi": 37.4
+  },
+  "one_liner": "In 2011, the amps on five wires next to San Onofre crept from 5,900 to 9,500 while nobody was watching, and 2.7 million people went dark in eleven minutes.",
+  "problem": "On a hot shoulder-season afternoon, September 8, 2011, a technician error tripped the Hassayampa-North Gila 500 kV line in Arizona at 3:27:39 p.m. Power rerouted north through Path 44, the five 230 kV lines at San Onofre, just 27 miles from Irvine. The amps climbed step by step (5,900, 6,700, 7,800) until they passed the 8,000-amp trigger of the San Onofre separation scheme, peaking near 9,500 amps. San Diego was cut off and collapsed, and both San Onofre nuclear units shut down. The cascade lasted about 11 minutes and left about 2.7 million customers without power, including all 1.4 million of SDG&E's. FERC and NERC blamed a lack of real-time awareness of system conditions, which is exactly the visibility a live line-rating dashboard provides. Accuracy note: the 8,000 A figure was a protection-scheme trip threshold, not a thermal sag rating.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In 2011, the amps on five wires next to San Onofre crept from 5,900 to 9,500 while nobody was watching, and 2.7 million people went dark in eleven minutes.",
+  "stats": [
+   {
+    "label": "Timeline: the Hassayampa-North Gila (H-NG) 500 kV line tripped at 15:27:39. The SONGS separation scheme operated at 15:38:21 and the island collapsed by 15:38:38, about 11 minutes total. H-NG had been at 78% of its normal rating beforehand, on 'a hot, shoulder season day'.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cdn.kpbs.org/news/documents/2012/05/01/05-01-12-factsheet-sequence-of-events.pdf"
+   },
+   {
+    "label": "After H-NG tripped, flow on Path 44 rose 84%. Loading went from 5,900 to 6,700 to about 7,800 amps against the 8,000 amps needed to trigger the SONGS separation scheme, then exceeded the trip point and reached as high as 9,500 amps.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cdn.kpbs.org/news/documents/2012/05/01/05-01-12-factsheet-sequence-of-events.pdf"
+   },
+   {
+    "label": "Load lost: SDG&E 4,293 MW (about 1.4 million customers); CFE Baja California 2,205 MW (about 1.1 million); IID 929 MW (about 146,000); APS 389 MW (about 70,000). SONGS nuclear units shut down.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cdn.kpbs.org/news/documents/2012/05/01/05-01-12-factsheet-sequence-of-events.pdf"
+   },
+   {
+    "label": "The FERC/NERC staff report (released May 1, 2012) says the system was not being operated in a secure N-1 state, a failure stemming primarily from weaknesses in operations planning and real-time situational awareness; about 2.7 million customers lost power.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ferc.gov/sites/default/files/2020-05/04-27-2012-ferc-nerc-report.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age"
+  ]
+ },
+ {
+  "id": "the-ghost-plug-at-san-onofre",
+  "title": "The Ghost Plug at San Onofre",
+  "category": "Generation",
+  "location": {
+   "name": "San Onofre Nuclear Generating Station (SONGS) Units 2 & 3 and its 230 kV switchyard, plus the planned Imperial Valley-North of SONGS 500 kV ",
+   "lat": 33.36889,
+   "lon": -117.555,
+   "distance_mi": 37.4
+  },
+  "one_liner": "Twenty-six miles from this room is a 2,246-megawatt plug that has been mostly unused since January 2012. The plan to reuse it costs $2.28 billion and won't finish until the 2030s.",
+  "problem": "San Onofre was Southern California's largest power plant: 2,246 MW from two reactors. It stopped generating on Jan 31, 2012, after its new steam generators wore out early, and was retired on June 7, 2013. The reactors are being torn down, but the switchyard where it plugged into the grid is one of the few things meant to stay. The state is now spending about $2.28 billion on a 145-mile, 500 kV line from Imperial Valley to a new substation about 10 miles north of SONGS. It will take over the old San Onofre-Santiago and San Onofre-Viejo 230 kV lines, so desert solar can use the corridor the nuclear plant left behind. That is due between 2032 and 2034, so this grid connection will have gone mostly unused for over 20 years.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Twenty-six miles from this room is a 2,246-megawatt plug that has been mostly unused since January 2012. The plan to reuse it costs $2.28 billion and won't finish until the 2030s.",
+  "stats": [
+   {
+    "label": "SONGS Units 2 and 3 had a combined maximum output of 2,246 MW. They stopped generating on Jan. 31, 2012 and were officially retired on June 7, 2013.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "In 2011 SONGS pulled an average of 2,256 million gallons of seawater per day for once-through cooling (EPA ICIS data). The figure was 0 by 2017.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "To replace SONGS's voltage support, SDG&E installed a 225 MVAR synchronous condenser at San Onofre (in service Oct. 16, 2018). Others went in at Talega (2x225 MVAR), San Luis Rey (2x225 MVAR) and Santiago (3x81 MVAR).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "CAISO's Imperial Valley-North of SONGS project includes a new 145-mile 500 kV line and a 500/230 kV substation about 10 miles north of the SONGS 230 kV substation. The existing San Onofre-Santiago #1 and #2 and San Onofre-Viejo 230 kV lines will be looped into it. Estimated cost is about $2,280 million, with a required in-service date no later than June 1, 2034.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://stakeholdercenter.caiso.com/InitiativeDocuments/ImperialValley-NorthofSONGSProjectApprovedProjectSponsorReport.pdf"
+   },
+   {
+    "label": "In August 2025 CAISO approved assigning the 500 kV line to SDG&E. Horizon West Transmission keeps the North of SONGS Substation.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/notices/update-to-imperial-valley-north-of-songs-500-kv-transmission-line-and-north-of-songs-substation-approved-project-sponsor"
+   },
+   {
+    "label": "SDG&E calls the line the Golden Pacific Powerlink. It targets construction in 2029 and service in 2032, subject to approvals.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://sdgetoday.com/news/san-diego-gas-electric-develop-new-electric-transmission-line-southern-california"
+   },
+   {
+    "label": "A companion project is a 30-mile North of SONGS-Serrano 500 kV line by SCE and Lotus, using existing rights of way into north-central Orange County. It is expected around 2034.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.tdworld.com/overhead-transmission/article/55042051/caiso-selects-sce-and-lotus-to-develop-500-kv-overhead-transmission-line-between-san-diego-and-orange-counties"
+   },
+   {
+    "label": "As of December 2025, SCE expected the containment domes to be demolished by the end of 2027 and decommissioning to finish in 2028. After that only the sea wall, the switchyard and the dry spent-fuel storage remain.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.kpbs.org/news/environment/2025/12/16/demolishing-of-domes-next-up-as-decommissioning-of-san-onofre-nears-end"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-battery-that-moved-into-a-power-plant-and-the-bay-that-n",
+  "title": "The Battery That Moved Into a Power Plant (and the Bay That Needs Its Pumps)",
+  "category": "Generation",
+  "location": {
+   "name": "AES Alamitos Generating Station / Alamitos Energy Center, Long Beach: legacy ocean-cooled Units 3, 4, 5 (retiring Dec 31, 2026), the 640 MW ",
+   "lat": 33.76917,
+   "lon": -118.10194,
+   "distance_mi": 5.3
+  },
+  "one_liner": "In 2024 the three old Alamitos units ran less than 0.4% of the year, and in 2025 the grid didn't call them once. On December 31 they shut down for good, and the 4-hour battery next door already uses the same grid connection.",
+  "problem": "Alamitos is a 1950s ocean-cooled gas plant on the Long Beach/Seal Beach line. Its three remaining steam units (1,141 MW) are scheduled to shut down permanently on Dec 31, 2026, about six weeks from now. In 2024 they ran at only 0.24% to 0.37% capacity factor, kept in a state emergency reserve that CAISO did not call even once in 2025. On the same site, AES already built a 640 MW air-cooled combined-cycle plant and a 100 MW / 400 MWh battery that reuses the site's grid connection. The odd twist: the plant's cooling pumps have also been flushing Alamitos Bay for more than 57 years, so Long Beach must build separate pumps to keep the bay healthy once the plant stops.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In 2024 the three old Alamitos units ran less than 0.4% of the year, and in 2025 the grid didn't call them once. On December 31 they shut down for good, and the 4-hour battery next door already uses the same grid connection.",
+  "stats": [
+   {
+    "label": "Alamitos Units 3, 4 and 5 (327 + 334 + 480 = 1,141 MW) have an OTC final compliance date of Dec. 31, 2026, and the owner plans to comply by that date.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Annual capacity factors were 0.37%, 0.24% and 0.25% for Units 3, 4 and 5 in 2024, and 0.35%, 0.23% and 0.42% in Jan-Sep 2025. CAISO did not instruct the reserve OTC units to start up for reliability in 2025.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "AES intends to permanently shut down and retire Alamitos Units 3, 4 and 5 and does not plan to retrofit them.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Alamitos Units 1, 2 and 6 (848 MW) retired Dec. 31, 2019.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "The SACCWIS procurement table lists 640 MW of combined-cycle gas at Alamitos and 100 MW of energy storage in Long Beach as operational.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "The Alamitos time schedule order expired Dec. 31, 2025. Maximum generation may be limited by outfall water-temperature rules, especially between May and October 2026.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "EIA says AES Alamitos plus Huntington Beach (1,368 MW combined) are expected to be the largest U.S. natural-gas retirement of 2026.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=67206"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-power-plant-that-spun-without-making-power",
+  "title": "The Power Plant That Spun Without Making Power",
+  "category": "Generation",
+  "location": {
+   "name": "AES Huntington Beach Generating Station: Unit 2 (last ocean-cooled unit in Orange County, retiring Dec 31, 2026), Units 3 & 4 (turned into s",
+   "lat": 33.645,
+   "lon": -117.97639,
+   "distance_mi": 7.8
+  },
+  "one_liner": "Nine miles from here, a 1958 power unit ran about 26 full-power hours in all of 2024. The last time this site saved the grid, it did it without making a single watt.",
+  "problem": "Nine miles from Irvine on Pacific Coast Highway sits the last ocean-cooled power unit in Orange County, Unit 2 (227 MW, first operated in 1958). In 2024 it ran at a 0.30% capacity factor, roughly 26 full-power hours in the whole year, and it retires on Dec 31, 2026. When San Onofre broke in 2012, CAISO had AES turn two retired units here into giant spinning 'synchronous condensers'. They produced no electricity, only the voltage support San Onofre used to provide, and could start in under an hour instead of about 12 hours for a boiler. A 644 MW air-cooled combined-cycle plant began commercial operation on the site in June 2020. It shows how one grid connection can serve as a power plant, then a voltage stabilizer, then a modern plant.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Nine miles from here, a 1958 power unit ran about 26 full-power hours in all of 2024. The last time this site saved the grid, it did it without making a single watt.",
+  "stats": [
+   {
+    "label": "Huntington Beach Unit 2 is 227 MW, with an OTC final compliance date of Dec. 31, 2026. AES plans to retire it by that date and does not plan to retrofit it.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Unit 2's annual capacity factor was 8.89% in 2023, 0.30% in 2024 and 0.40% in Jan-Sep 2025. 0.30% of 8,784 hours in 2024 is about 26 full-power-equivalent hours (derived).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Huntington Beach Units 3 and 4 (452 MW) retired as generators Nov. 1, 2012 and were converted to synchronous condensers in 2013. The 140 MVAR reliability-must-run contract expired Dec. 31, 2017.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "POWER magazine (March 2014): after SONGS left a ~2,200 MW shortfall, CAISO asked AES to convert Units 3 and 4. The condensers started up by the June 28, 2013 deadline and can start in under an hour, versus about 12 hours to fire a boiler.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.powermag.com/aes-uses-synchronous-condensers-for-grid-balancing/"
+   },
+   {
+    "label": "Huntington Beach Unit 1 (215 MW) retired Dec. 31, 2019.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "The plant's average seawater intake was 202.9 million gallons per day in 2010 (EPA ICIS data).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Huntington Beach's Title V air permit expires in 2027.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "1-327-megawatts-of-grid-socket-turned-courtroom",
+  "title": "1,327 Megawatts of Grid Socket Turned Courtroom",
+  "category": "Generation",
+  "location": {
+   "name": "AES Redondo Beach Generating Station (retired Dec 31, 2023), about 50-acre waterfront site at 1100 N. Harbor Dr., Redondo Beach",
+   "lat": 33.84997,
+   "lon": -118.394527,
+   "distance_mi": 23.0
+  },
+  "one_liner": "A gigawatt-scale grid connection on the beach went quiet on New Year's Eve 2023. Nearly three years later, the fight over the site is in court, not on the grid.",
+  "problem": "Redondo Beach's ocean-cooled gas plant (1,327 MW across Units 5-8) shut down for good on New Year's Eve 2023, after state reliability extensions kept it running past its original 2020 deadline. That left a waterfront site of about 50 acres that was built to push more than a gigawatt into the grid. Instead of new clean energy, the site has turned into a long legal fight. The owner proposed about 2,300 homes, offices, a hotel and a park, and the city fought it in court under California's 'builder's remedy' housing law. Any redevelopment also needs voter approval and must restore protected wetlands. The case shows the other path for a retired plant: its big grid connection can get tied up in land fights instead of being reused.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "A gigawatt-scale grid connection on the beach went quiet on New Year's Eve 2023. Nearly three years later, the fight over the site is in court, not on the grid.",
+  "stats": [
+   {
+    "label": "Redondo Beach Unit 7 (493 MW) retired Oct. 1, 2019. Units 5, 6 and 8 (834 MW) retired Dec. 31, 2023, for 1,327 MW in total.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "POWER magazine: AES shut down the 1,300 MW, four-unit plant on Dec. 31, 2023. It came online in 1954 and sold power to SCE. The future use of the roughly 50-acre site is undetermined. Developer Leo Pustilnikov bought it in 2020.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.powermag.com/aes-closes-california-natural-gas-fired-plant/"
+   },
+   {
+    "label": "Average seawater intake was 156.95 MGD in 2017, falling to 0 MGD in the latest year reported (EPA ICIS data).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-water-plant-that-unplugs-for-the-grid",
+  "title": "The Water Plant That Unplugs for the Grid",
+  "category": "Water-Energy",
+  "location": {
+   "name": "OCWD Groundwater Replenishment System (GWRS), Fountain Valley. On Aug 14-18 and Sept 4-5, 2020, during CAISO grid emergencies, it cut its lo",
+   "lat": 33.6926,
+   "lon": -117.9441,
+   "distance_mi": 5.7
+  },
+  "one_liner": "On the night California started rolling blackouts, the plant that recycles Orange County's sewage into drinking water dropped 12 megawatts in 30 minutes, and nobody's tap ran dry.",
+  "problem": "GWRS is the world's largest potable water recycling plant. It cleans Orange County sewage with microfiltration, reverse osmosis and UV/peroxide, then refills the groundwater basin that most of OC drinks from. It is also one of the largest single electric loads near Irvine, averaging about 17 MW. On August 14, 2020, California declared a Stage 3 emergency and started rotating blackouts. GWRS cut production to 15 MGD and dropped its draw to 5 MW, and it did the same again in the September heat wave. Recycled water also takes much less energy per acre-foot than imported or desalinated water. The point: water plants can act as flexible loads, and in a heatwave they can give power back to the grid.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "On the night California started rolling blackouts, the plant that recycles Orange County's sewage into drinking water dropped 12 megawatts in 30 minutes, and nobody's tap ran dry.",
+  "stats": [
+   {
+    "label": "During demand response events GWRS cut water production to 15 MGD, which dropped its electricity use from an average of 17 MW to 5 MW, a 12 MW cut.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ocwd.com/news-events/newsletter/2020/september-2020/ocwd-reduces-electricity-use-during-heatwaves/"
+   },
+   {
+    "label": "The cuts saved 150 MWh over Aug 14-18, 2020 and 50 MWh over Sept 4-5, 2020. CAISO issued a Stage 3 System Emergency on Aug 14 and a Stage 2 on Sept 5.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ocwd.com/news-events/newsletter/2020/september-2020/ocwd-reduces-electricity-use-during-heatwaves/"
+   },
+   {
+    "label": "The Enel X demand response contract pays OCWD up to $900,000 a year. OCWD must drop to 5 MW within 30 minutes of a call. A curtailment can last up to 6 hours and can be called up to 10 times a month.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ocwd.com/news-events/newsletter/2020/september-2020/ocwd-reduces-electricity-use-during-heatwaves/"
+   },
+   {
+    "label": "CAISO declared Stage 3 emergencies on Aug 14 and 15, 2020 and ordered rotating outages. The joint CAISO/CPUC/CEC root cause analysis blamed extreme heat, resource adequacy planning and market practices.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/preliminary-root-cause-analysis-rotating-outages-august-2020.pdf"
+   },
+   {
+    "label": "GWRS has run since January 2008 at 70 MGD. It was expanded to 100 MGD (112,000 AFY) in 2015, and the final 30 MGD expansion brought it to 130 MGD (about 145,000 AFY).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://documents.coastal.ca.gov/assets/upcoming-projects/environmental-coalition/2022_Powers%20Engineering%20Review%20of%20Poseidon%20HB%20GHG%20reduction%20strategy.pdf"
+   },
+   {
+    "label": "The final expansion was completed and dedicated in 2023. It lets GWRS recycle 100% of OC San's reclaimable wastewater and makes enough water for about 1 million people.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.bv.com/projects/groundwater-replenishment-system-final-expansion"
+   },
+   {
+    "label": "The Colorado River Aqueduct lifts water 1,617 ft through 5 pumping plants. It runs 242 miles from Lake Havasu to Lake Mathews in Riverside (about 24.5 mi from Irvine), was completed in 1939, and carries about 1.25 million AF a year. All 5 pumping plants are more than 130 miles from Irvine, so outside the radius.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://d1q0afiq12ywwq.cloudfront.net/media/ja5k5pcu/cra_fact-sheet-2021.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "a-tale-of-two-desal-plants-one-built-one-rejected",
+  "title": "A Tale of Two Desal Plants: One Built, One Rejected",
+  "category": "Water-Energy",
+  "location": {
+   "name": "Claude \"Bud\" Lewis Carlsbad Desalination Plant (built, online Dec 2015) and the proposed Poseidon Huntington Beach Desalination Plant (permi",
+   "lat": 33.13889,
+   "lon": -117.33528,
+   "distance_mi": 57.6
+  },
+  "one_liner": "Making ocean water drinkable takes about four times the electricity of recycling our own wastewater, which is a big reason the state said no to a desal plant nine miles from where we're standing.",
+  "problem": "Turning seawater into drinking water is the most electricity-hungry water source in the region. Carlsbad, the largest seawater desal plant in the Western Hemisphere, makes up to 50 MGD and uses roughly 3.6 kWh per cubic meter, about 4,400 kWh per acre-foot and about 4 times what OC's recycling plant uses. During the September 2022 heat wave it cut output 20% for three days to free up 9 MW for the grid. A near-identical 50 MGD plant was proposed in Huntington Beach, about 9 miles from Irvine, at a continuous 30.34 MW load. The Coastal Commission unanimously rejected it in 2022, partly over its energy use and because OC already has groundwater recycling. Show both on the map: one real node and one ghost node.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Making ocean water drinkable takes about four times the electricity of recycling our own wastewater, which is a big reason the state said no to a desal plant nine miles from where we're standing.",
+  "stats": [
+   {
+    "label": "Carlsbad can make 50 million gallons a day and opened Dec 14, 2015. It cost about $1 billion including pipelines and SDCWA upgrades.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://en.wikipedia.org/wiki/Claude_%22Bud%22_Lewis_Carlsbad_Desalination_Plant"
+   },
+   {
+    "label": "Over Labor Day weekend 2022, Carlsbad cut water production about 20% for three days and freed 9 MW. The plant is typically about 1% of SDG&E's peak demand. In the same heat wave, SDCWA ran its Lake Hodges pumped storage to generate 20 MW.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://timesofsandiego.com/business/2022/09/05/carlsbad-desal-plant-water-output-cut-20-to-conserve-power-amid-heat-wave/"
+   },
+   {
+    "label": "On May 12, 2022 the Coastal Commission unanimously denied Poseidon's $1.4 billion, 50 MGD Huntington Beach desal plant, which had been in the works for more than 20 years. Commissioners cited the cost of the water, the energy needed to run it, harm to marine life, hazards and the earthquake fault zone, and said OC was not in urgent need because of its groundwater basin and recycling.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.foxla.com/news/agency-unanimously-rejects-california-desalination-project"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-giant-battery-that-s-been-coming-soon-since-1995",
+  "title": "The Giant Battery That's Been 'Coming Soon' Since 1995",
+  "category": "Water-Energy",
+  "location": {
+   "name": "Lake Elsinore Advanced Pumped Storage (LEAPS), later renamed the Bluewater Renewable Energy Storage Project. A proposed 500 MW / 6,000 MWh p",
+   "lat": 33.635,
+   "lon": -117.355,
+   "distance_mi": 38.6
+  },
+  "one_liner": "Twenty-seven miles from here there's a 500-megawatt water battery that could get Orange County through a heatwave evening, and it has been 'proposed' since before most of us were born.",
+  "problem": "Pumped storage is a water battery. When solar power is cheap, you pump water uphill. At night or in a heatwave peak, you let it run back down through turbines. LEAPS would use Lake Elsinore as the bottom tank and a new dam in Decker Canyon as the top tank, giving 500 MW for up to 12 hours. That is about a quarter of the old San Onofre nuclear plant, enough to carry a heatwave evening. The idea dates to at least 1995. FERC dismissed the license in December 2021 and in 2023 refused even a new study permit, saying the developer had had years without progress. Lake Hodges in San Diego County shows the concept works at smaller scale: a 40 MW pumped storage plant running since 2012.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Twenty-seven miles from here there's a 500-megawatt water battery that could get Orange County through a heatwave evening, and it has been 'proposed' since before most of us were born.",
+  "stats": [
+   {
+    "label": "LEAPS would deliver 500 MW for up to 12 hours, with 6,000 MWh of storage.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://files.cpuc.ca.gov/Environment/info/aspen/nevadahydro/pea5/ch1_exec_summ.pdf"
+   },
+   {
+    "label": "The design: Lake Elsinore as the lower reservoir, a new upper reservoir at Decker Canyon in the Cleveland National Forest, a powerhouse near Grand Avenue, and about 32 miles of 500 kV transmission. The City compares the 500 MW to roughly 2,150 MW for the former San Onofre plant.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.lake-elsinore.org/668/Lake-Elsinore-Advanced-Pump-Storage-Proj"
+   },
+   {
+    "label": "FERC accepted the license application July 26, 2019 and dismissed it Dec 9, 2021 after Nevada Hydro did not provide requested information. On April 9, 2019 the Lake Elsinore City Council voted unanimously to oppose LEAPS subject to conditions.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.lake-elsinore.org/668/Lake-Elsinore-Advanced-Pump-Storage-Proj"
+   },
+   {
+    "label": "In a 2022 filing, a 1,000 MW 'Blue Water' variant was proposed at the same site, with about 1,500 ft average net head and a 6.3-mile 500 kV line to SCE's Valley-Serrano line. The original LEAPS was two 250 MW units generating about 1,300,000 MWh a year.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.renewableenergyworld.com/energy-business/policy-and-regulation/ferc-receives-two-preliminary-permit-applications-for-same-pumped-storage-location/"
+   },
+   {
+    "label": "On May 18, 2023, FERC denied Nevada Hydro's preliminary permit, saying the company 'has had many years to develop its project proposal without success.' Patch says the proposal dates to at least 1995. I found no 2024-2026 developments, so status as of Nov 2026 should be confirmed in FERC eLibrary.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://patch.com/california/lakeelsinore-wildomar/feds-again-dismiss-massive-hydroelectric-proposal-lake-elsinore"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-batteries-hiding-behind-irvine-s-water-pumps",
+  "title": "The Batteries Hiding Behind Irvine's Water Pumps",
+  "category": "Water-Energy",
+  "location": {
+   "name": "Irvine Ranch Water District behind-the-meter battery network: 7 MW / 34 MWh of Tesla Powerpacks at 11 IRWD facilities. The largest site is 2",
+   "lat": 33.66,
+   "lon": -117.837,
+   "distance_mi": 11.9
+  },
+  "one_liner": "Less than two miles from here, Irvine's water pumps already run on 34 megawatt-hours of Tesla batteries, and most people in this room have never seen them.",
+  "problem": "Irvine's water utility spends a lot of electricity pumping and treating water, mostly at the most expensive hours. Starting in 2016, about 370 Tesla Powerpacks were installed at 11 of its most energy-hungry facilities: recycling plants, a deep-aquifer treatment system, a groundwater desalter and six high-energy pumping stations. The batteries charge cheaply and run the pumps during peak hours, saving IRWD more than $500,000 a year. Under a 10-year SCE contract, the batteries can also take part of the load off the grid on request. It was part of SCE's response to the San Onofre nuclear closure. The water keeps flowing the whole time.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Less than two miles from here, Irvine's water pumps already run on 34 megawatt-hours of Tesla batteries, and most people in this room have never seen them.",
+  "stats": [
+   {
+    "label": "7 MW (34 MWh) of Tesla batteries, about 370 Powerpacks, at 11 IRWD facilities: three water treatment and recycling plants, a deep aquifer treatment system, a groundwater desalter facility and six high-energy pumping stations.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://utilitydive.com/news/tesla-ams-ink-34mwh-storage-deal-with-california-water-system/427202"
+   },
+   {
+    "label": "IRWD expects to save more than $500,000 a year. AMS designs, finances, installs and operates the systems under a 10-year power purchase agreement with SCE, as part of SCE's program that partly offsets the San Onofre closure (article dated Sept 29, 2016).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://utilitydive.com/news/tesla-ams-ink-34mwh-storage-deal-with-california-water-system/427202"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "ai-moves-into-la-s-factory-town-vernon-ai-data-center-cluste",
+  "title": "AI Moves Into LA's Factory Town (Vernon AI Data Center Cluster)",
+  "category": "Load",
+  "location": {
+   "name": "Prime Data Centers LAX01-01 (4701 S. Santa Fe Ave, Vernon), the AI data center leased to Lambda, plus Goodman Energy Park Data Center and it",
+   "lat": 34.0014,
+   "lon": -118.2303,
+   "distance_mi": 21.2
+  },
+  "one_liner": "One AI building in Vernon, about 30 miles from here, can draw 33 megawatts, roughly a fifth of what the entire city's utility hit at its 2019 peak. The next one wants 40 diesel generators as backup.",
+  "problem": "Vernon is a small industrial city just south of downtown LA, and it runs its own electric utility. In November 2024 Prime opened a three-story, 33 MW hyperscale data center there, fully leased to two AI companies. Lambda uses most of it, about 21 MW, for NVIDIA GPU clusters. About a mile away, Goodman is building a second data-center campus, and it has asked the California Energy Commission to approve 40 diesel generators (up to 99 MW of backup) for when Vernon's power goes out. That is power-plant-sized backup inside one city block. Vernon's whole utility peaked at about 180 MW in 2019, so these new AI loads are a large share of the city's grid.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "One AI building in Vernon, about 30 miles from here, can draw 33 megawatts, roughly a fifth of what the entire city's utility hit at its 2019 peak. The next one wants 40 diesel generators as backup.",
+  "stats": [
+   {
+    "label": "Prime LAX01-01 opened Nov 14, 2024 at 4701 S. Santa Fe, Vernon: 3 stories, 242,495 sq ft, 33 MW of critical IT power at full build-out, 100% leased by two AI companies.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://prnewswire.com/news-releases/prime-data-centers-announces-the-opening-of-its-hyperscale-data-center-in-vernon-california-302305195.html"
+   },
+   {
+    "label": "LAX01 cooling: air cooling up to 40 kW per rack, and a hybrid air/liquid setup up to 120 kW per rack.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://prnewswire.com/news-releases/prime-data-centers-announces-the-opening-of-its-hyperscale-data-center-in-vernon-california-302305195.html"
+   },
+   {
+    "label": "Vernon Backup Generating Facility (CEC docket 25-SPPE-01, owner GIC Vernon LLC, status 'under review'): up to 99 MW of diesel emergency backup from 40 generators (38 x 3 MW plus 2 x 1 MW) for the Goodman Energy Park Data Center at 3163 and 3049 E. Vernon Ave. It has its own project substation next to a new VPU switching station. Note: 38x3+2x1 = 116 MW, more than the stated 99 MW, and the CEC page does not explain the gap.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/powerplant/backup-generating-system/vernon-backup-generating-facility-vbgf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-truck-stop-that-couldn-t-wait-for-the-grid-prologis-maer",
+  "title": "The Truck Stop That Couldn't Wait for the Grid (Prologis/Maersk Denker Microgrid)",
+  "category": "Load",
+  "location": {
+   "name": "Prologis Denker Avenue heavy-duty EV truck charging hub operated by Performance Team (a Maersk company), off the Harbor (110) Freeway in LA'",
+   "lat": 33.8447,
+   "lon": -118.3036,
+   "distance_mi": 17.9
+  },
+  "one_liner": "Thirty miles from here, a fleet of zero-emission trucks charges off natural gas generators, because getting a grid connection could take up to 10 years.",
+  "problem": "In 2024 Prologis and Maersk opened one of North America's largest electric big-rig charging hubs near the Ports of LA and Long Beach. It can charge up to 96 trucks at once with up to 9 MW. Grid service from LADWP was not ready in time, so the 'zero-emission' trucks charge from a microgrid of 2.75 MW of natural gas linear generators and 18 MWh of batteries. Prologis called the gas a short-term measure while it works with LADWP on when grid power will arrive. ICCT researchers report that LADWP service upgrades can take 2 to 10 years, which does not fit fleet deadlines.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Thirty miles from here, a fleet of zero-emission trucks charges off natural gas generators, because getting a grid connection could take up to 10 years.",
+  "stats": [
+   {
+    "label": "Depot on Denker Avenue off the Harbor (110) Freeway near the San Pedro Bay ports. Charges up to 96 trucks at once, up to 9 MW. Microgrid: 2.75 MW of Mainspring linear generators plus 18 MWh of batteries, running on natural gas ('hydrogen ready'). Published May 23, 2024.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://electrek.co/2024/05/23/the-uss-largest-heavy-duty-electric-truck-microgrid-is-powered-by-natural-gas/"
+   },
+   {
+    "label": "Prologis told Electrek natural gas is short-term while it works with the LA Department of Water and Power on when grid power will be ready. No timeline for switching to hydrogen.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://electrek.co/2024/05/23/the-uss-largest-heavy-duty-electric-truck-microgrid-is-powered-by-natural-gas/"
+   },
+   {
+    "label": "ICCT authors (via The Driven, Jan 22, 2026): Prologis uses generator/battery microgrids to supply 6 of the 9 MW it needs because LADWP utility power 'would take too long'. LADWP service upgrade timelines range from 2 to 10 years.",
+    "value": "",
+    "kind": "measured",
+    "source": "http://thedriven.io/2026/01/22/southern-california-is-ground-zero-for-truck-electrification-but-can-the-grid-keep-up/"
+   },
+   {
+    "label": "LADWP forecasts 124,000 MWh in 2030 and 528,600 MWh in 2035 of medium/heavy-duty truck charging in its territory.",
+    "value": "",
+    "kind": "measured",
+    "source": "http://thedriven.io/2026/01/22/southern-california-is-ground-zero-for-truck-electrification-but-can-the-grid-keep-up/"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-inland-empire-s-truck-megachargers-san-bernardino-big-ri",
+  "title": "The Inland Empire's Truck Megachargers (San Bernardino Big-Rig Charging Hubs)",
+  "category": "Load",
+  "location": {
+   "name": "WattEV San Bernardino depot (1388 S. E St, next to I-215), expanded to 11.5 MW in Feb 2026, and the EV Realty San Bernardino hub (76 ports, ",
+   "lat": 34.0757,
+   "lon": -117.2943,
+   "distance_mi": 46.7
+  },
+  "one_liner": "Two truck stops in San Bernardino now pull about 20 megawatts, as much as a small town, and the Inland Empire already has more than 40 megawatts of truck charging planned.",
+  "problem": "San Bernardino sits where trucks from the ports meet I-10, I-15 and I-215, and it has become a hotspot for electric big-rig charging. WattEV opened a 24-truck depot here in April 2024, energized by SCE. In early 2026 it more than doubled the site to 11.5 MW, adding six 1.2 MW Megawatt Charging System plugs, so it can serve up to 200 trucks a day. Nearby, EV Realty opened a 76-port, 9 MW hub in April 2026, and Electrek says construction was accelerated because SCE grid capacity was available. Together, these two depots draw about as much as a small town, and they want that power at the same times trucks finish their shifts.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Two truck stops in San Bernardino now pull about 20 megawatts, as much as a small town, and the Inland Empire already has more than 40 megawatts of truck charging planned.",
+  "stats": [
+   {
+    "label": "WattEV San Bernardino opened April 15, 2024. It is a 4-acre site with 12 dual-cord 360 kW CCS chargers (24 trucks at once), next to I-10 and I-15 freight corridors. Southern California Edison 'energized the site'.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://media-kits.actexpo.com/wp-content/uploads/2024/04/WattEV-Grand-Opening-San-Bernardino-press-release-vf.pdf"
+   },
+   {
+    "label": "WattEV depot address: 1388 S E St., San Bernardino. Cost was not disclosed; LABJ estimates about $9M based on the similar Long Beach site.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://labusinessjournal.com/infrastructure/wattev-opens-up-a-new-station"
+   },
+   {
+    "label": "Feb 2026 expansion: total installed charging capacity 11.5 MW. Adds 30 x 250 kW CCS ports and 6 MCS ports at up to 1.2 MW each. Up to 200 battery-electric trucks per day; averages about 700 MWh per month.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.electrive.com/2026/02/09/wattev-expands-san-bernardino-depot-with-megawatt-charging/"
+   },
+   {
+    "label": "EV Realty San Bernardino hub (article Apr 9, 2026): 76 high-power ports, 9 MW, CCS up to 500 kW and MCS up to 1.2 MW (Kempower). Near the San Bernardino Intermodal Facility and I-10/I-215. Construction began Sept 2025 and was accelerated by 'available grid capacity from Southern California Edison'. Earlier coverage said 9.9 MW (discrepancy).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://electrek.co/2026/04/09/76-chargers-9-mw-a-huge-ev-truck-charging-hub-opens-where-us-freight-actually-runs/"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "ships-that-plug-in-port-of-los-angeles-alternative-maritime-",
+  "title": "Ships That Plug In (Port of Los Angeles Alternative Maritime Power)",
+  "category": "Load",
+  "location": {
+   "name": "Port of Los Angeles Alternative Maritime Power (AMP) shore power. It started at the West Basin Container Terminal, Berth 100 (China Shipping",
+   "lat": 33.7628,
+   "lon": -118.2628,
+   "distance_mi": 14.5
+  },
+  "one_liner": "When a cruise ship plugs in at San Pedro, it is like a town of about 10 megawatts docking at the pier, and the port has 80 sockets.",
+  "problem": "When a cargo or cruise ship docks, it still needs electricity for lights, cranes, refrigeration and air conditioning. In the past it burned diesel in its engines to make it. In June 2004 the Port of LA opened Berth 100 as the first container terminal in the world to plug ships into the city grid instead. By 2026 the port has 80 shore-power vaults, and 100% of its cruise and container berths have shore power. A single cruise ship plugged in draws 8 to 13 MW, like a small town docking at the pier. California's At-Berth rule now requires container, cruise and reefer ships (since 2023) and auto carriers (2025) to plug in or control emissions, which shifts big new loads onto the waterfront grid.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "When a cruise ship plugs in at San Pedro, it is like a town of about 10 megawatts docking at the pier, and the port has 80 sockets.",
+  "stats": [
+   {
+    "label": "June 21, 2004: Port of LA opened the West Basin Container Terminal at Berth 100, the first container terminal in the world to use AMP for container ships. Aug 9, 2004: NYK Atlas, the first container vessel built with AMP specs, arrived.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.portoflosangeles.org/environment/air-quality/alternative-maritime-power-(amp)"
+   },
+   {
+    "label": "As of 2026, Port of LA has 80 AMP vaults, more than any other port in the world, with 100% of cruise and container berths equipped with shoreside power.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.portoflosangeles.org/environment/air-quality/alternative-maritime-power-(amp)"
+   },
+   {
+    "label": "World Cruise Center AMP system can deliver up to 40 MW, 20 MW to each of two ships at once. Cruise ships demand 8-13 MW each (2011 report).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cruiseindustrynews.com/cruise-news/2011/03/3211-los-angeles-plugs-in-three-different-cruise-lines-to-shore-side-electrical-power"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-text-message-that-saved-2-000-mw",
+  "title": "The Text Message That Saved 2,000 MW",
+  "category": "Heat",
+  "location": {
+   "name": "CAISO all-time record peak and Energy Emergency Alert 3, September 6, 2022 (pinned at the Santa Ana Fire Station NOAA weather station, the c",
+   "lat": 33.7442,
+   "lon": -117.8667,
+   "distance_mi": 8.3
+  },
+  "one_liner": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
+  "problem": "On the 10-day Labor Day 2022 heat wave (Aug 31 to Sep 9), California's grid hit the highest demand in its history on Sept 6. CAISO declared an Energy Emergency Alert 3, the last step before rolling blackouts. About an hour after the peak, Cal OES sent the first-ever emergency text asking people to cut power, and demand fell by about 2,000 MW within minutes. Batteries, gas and imports covered the rest, and the state avoided rotating outages. The lesson for Mapergy: the margin between 'fine' and 'blackout' on a heat day was about the size of one text message.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "On September 6, 2022, California set its all-time power record, and one text message to our phones cut about 2,000 megawatts in minutes. That's like switching off half a million air conditioners at once.",
+  "stats": [
+   {
+    "label": "CAISO's official 2022 statistics list a new record peak demand of 52,061 MW on September 6, 2022 at 4:57 p.m.; previous year's peak was 43,982 MW",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/Documents/2022Statistics.pdf"
+   },
+   {
+    "label": "EIA and the CPUC Public Advocates Office report the peak as 51,426 MW at 4:55 p.m.; CAISO's own Today's Outlook 5-minute demand file shows the same 51,426 MW at 16:55. Two sourced numbers exist; use 52,061 MW when quoting CAISO's official record and note the 51,426 MW 5-minute value",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=54039"
+   },
+   {
+    "label": "The previous all-time CAISO record was 50,270 MW on July 24, 2006",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=54039"
+   },
+   {
+    "label": "CAISO issued an Energy Emergency Alert Stage 3 shortly after the peak; the previous EEA3 was in August 2020",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=54039"
+   },
+   {
+    "label": "Within five minutes of the Cal OES wireless emergency alert, demand fell more than 2,100 MW below CAISO's hour-ahead forecast and stayed below forecast until 9 p.m.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=54039"
+   },
+   {
+    "label": "Cal Advocates: about a 2,000 MW drop in the 20 to 30 minutes after the alert, 'the equivalent of shutting off over 500,000 air conditioners'; gas plants dispatched 25,822 MW and renewables 12,836 MW at the peak; battery output peaked at 3,059 MW at 18:30 on Sept 5; over 3,111 MW of new batteries were installed between July 2020 and April 2022",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.publicadvocates.cpuc.ca.gov/-/media/cal-advocates-website/files/press-room/reports-and-analyses/220922-caladvocates-sept-22-heat-wave-analysis---executive-summary.pdf"
+   },
+   {
+    "label": "2022 had 11 statewide Flex Alerts (Aug 17, Aug 31 and Sept 1 to 9)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/Documents/2022Statistics.pdf"
+   },
+   {
+    "label": "NOAA daily highs at the Santa Ana Fire Station (USC00047888, about 4.7 miles from Irvine): 108 F on Sept 4, 2022; 95 F on Sept 6; 102 F on Sept 7; 101 F on Sept 8",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=USC00047888&startDate=2022-09-04&endDate=2022-09-09&dataTypes=TMAX,TMIN&units=standard&includeStationName=true&format=csv"
+   },
+   {
+    "label": "As of CAISO's October 2024 CEO report, 'The ISO has not called a Flex Alert since 2022'. Whether any Flex Alert was called in 2025 or 2026 was not checked",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/ceo-report-oct-2024-no-changes-from-sep-26-2024-joint-general-session-version.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-sunset-blackout",
+  "title": "The Sunset Blackout",
+  "category": "Heat",
+  "location": {
+   "name": "CAISO rotating outages of August 14-15, 2020, Southern California Edison share (pinned at SCE headquarters in Rosemead as a symbolic marker ",
+   "lat": 34.053,
+   "lon": -118.0807,
+   "distance_mi": 21.1
+  },
+  "one_liner": "California's last rolling blackouts didn't hit at the hottest hour. They hit at 6:56 p.m., as the sun went down and solar faded, cutting 132,000 Edison customers for an hour.",
+  "problem": "During a West-wide heat storm in August 2020, CAISO ran short of reserves and ordered rolling blackouts, California's first since the 2001 energy crisis. The surprise is the timing: it was not the hottest hour of the day. The emergency came at about 6:38 p.m., right at the 'net demand peak', when the sun was setting, solar output was falling, and air conditioners were still running. SCE cut 400 MW to 132,000 customers for 63 minutes. That evening squeeze is the reason batteries and the 2022 emergency playbook exist.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "California's last rolling blackouts didn't hit at the hottest hour. They hit at 6:56 p.m., as the sun went down and solar faded, cutting 132,000 Edison customers for an hour.",
+  "stats": [
+   {
+    "label": "CAISO declared a Stage 3 Emergency at 6:38 p.m. on Aug 14, 2020 and started rotating outages for about an hour, affecting about 492,000 customers for 15 to 150 minutes; the net demand peak (demand minus solar and wind) was at 6:51 p.m.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/preliminary-root-cause-analysis-rotating-outages-august-2020.pdf"
+   },
+   {
+    "label": "Table 3.1 for Aug 14: SCE 132,000 customers, 400 MW, 63 minutes, 6:56 PM to 7:59 PM; PG&E 300,600 customers and 588 MW; SDG&E 59,000 customers and 84 MW; total 491,600 customers and 1,072 MW",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/preliminary-root-cause-analysis-rotating-outages-august-2020.pdf"
+   },
+   {
+    "label": "Second event: SCE 70,000 customers, 200 MW, 8 minutes (6:43 to 6:51 PM); total 321,000 customers and 698 MW. The report text says August 15, but Table 3.2's title says 'August 16' (apparent typo in the report)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/preliminary-root-cause-analysis-rotating-outages-august-2020.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "transformers-that-can-t-sleep",
+  "title": "Transformers That Can't Sleep",
+  "category": "Heat",
+  "location": {
+   "name": "LADWP September 2024 heat storm, San Fernando Valley distribution failures (pinned at the NOAA Woodland Hills Pierce College station, site o",
+   "lat": 34.1834,
+   "lon": -118.5798,
+   "distance_mi": 44.1
+  },
+  "one_liner": "LA's power chief said the transformers couldn't 'rest at night', and 109,827 customers lost power. Climate models say Irvine could go from about 4 hot nights a year to between 22 and 56 by mid-century.",
+  "problem": "In the September 2024 heat wave, the big grid was fine: CAISO needed no Flex Alerts. The failures were local. Neighborhood transformers, breakers and cables in Los Angeles cooked, and 109,827 LADWP customers lost power at some point. LADWP's CEO explained that transformers heat up all day and, when nights stay hot, never cool down before the next day's load. Transformer insulation ages much faster above its rated temperature. Climate projections for Irvine show many more warm nights, so this failure mode is moving toward Orange County.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "LA's power chief said the transformers couldn't 'rest at night', and 109,827 customers lost power. Climate models say Irvine could go from about 4 hot nights a year to between 22 and 56 by mid-century.",
+  "stats": [
+   {
+    "label": "109,827 LADWP customers lost power at some point during the nearly week-long heat wave; by noon Monday Sept 9, 2024, City of LA outages had dropped to 6,700 from more than 16,500",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cbsnews.com/losangeles/news/heat-wave-causes-power-outages-for-more-than-100000-ladwp-customers"
+   },
+   {
+    "label": "LADWP CEO Janisse Quinones: 'The equipment is constantly failing, so we're chasing failures' and transformers 'have not been able to restore or rest at night'; heat caused failures in transformers, circuit breakers and cables; LADWP load on Friday (Sept 6, 2024) was 6,300 MW, close to its all-time record",
+    "value": "",
+    "kind": "measured",
+    "source": "https://laist.com/news/climate-environment/thousands-without-power-this-weekend-as-ladwp-works-on-overheating-equipment"
+   },
+   {
+    "label": "LADWP all-time record peak: 6,502 MW at 4:15 p.m. on Aug 31, 2017, beating 6,396 MW from Sept 16, 2014",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.publicpower.org/periodical/article/ladwp-reports-customer-power-use-hits-new-high-2017-with-hot-weather"
+   },
+   {
+    "label": "CAISO said it got through the early September 2024 event with no Flex Alerts or Energy Emergency Alerts, but 'excessive heat did cause some localized distribution-level power and sub-transmission power interruptions'",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/ceo-report-oct-2024-no-changes-from-sep-26-2024-joint-general-session-version.pdf"
+   },
+   {
+    "label": "NOAA daily at Woodland Hills Pierce College: TMAX 116 F on Sept 5 and 6, 2024, with lows of 64 to 73 F. LAist's 'nighttime lows in the high 80s or 90s' is NOT supported by this station's lows (it may describe evening temperatures elsewhere), so don't quote it. Santa Ana Fire Station (OC) hit 113 F on Sept 6, 2024",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=USC00049785,USC00047888&startDate=2024-09-04&endDate=2024-09-10&dataTypes=TMAX,TMIN&units=standard&format=csv"
+   },
+   {
+    "label": "Woodland Hills (Pierce College) reached 121 F on Sept 6, 2020, LA County's highest official temperature, beating the 119 F station record from July 22, 2006 (the NOAA COOP daily file shows 120 F because of observation-time conventions)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://abc7.com/woodland-hills-la-county-heat-record-wave/6412268"
+   },
+   {
+    "label": "CAUTION: the widely repeated '106,000 LADWP customers' figure is from the July 2018 heat wave, not 2024",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.tdworld.com/electric-utility-operations/record-heat-wave-inflicts-widespread-outages-los-angeles"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-heat-wave-insurance-policy",
+  "title": "The Heat-Wave Insurance Policy",
+  "category": "Heat",
+  "location": {
+   "name": "Huntington Beach Generating Station Unit 2 (227 MW) plus Alamitos Generating Station Units 3, 4, 5 (1,141 MW): ocean-cooled gas units kept a",
+   "lat": 33.6452,
+   "lon": -117.9778,
+   "distance_mi": 7.7
+  },
+  "one_liner": "Nine miles from here sits a 227-megawatt gas unit that produced about 0.3% of its possible output in 2024. It's kept alive only for heat waves, and it's due to stop using ocean cooling on December 31, 2026.",
+  "problem": "Nine miles from Irvine, an old seawater-cooled gas unit at Huntington Beach is kept alive mainly as insurance for extreme heat. The state pushed back its retirement from the end of 2023 to Dec 31, 2026, about 47 days from today, on condition that it serves only in the emergency Strategic Reserve. In 2024 it produced about 0.3% of its possible yearly output, and in 2025 CAISO never called on the reserve units for reliability. A twist: Alamitos's output may be limited in summer 2026 by limits on how hot its cooling-water discharge can be, so heat can cut the plant meant to protect against heat.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Nine miles from here sits a 227-megawatt gas unit that produced about 0.3% of its possible output in 2024. It's kept alive only for heat waves, and it's due to stop using ocean cooling on December 31, 2026.",
+  "stats": [
+   {
+    "label": "In August 2023 the State Water Board extended the once-through-cooling compliance dates for Alamitos, Huntington Beach and Ormond Beach by three years, from Dec 31, 2023 to Dec 31, 2026, contingent on participating in the Strategic Reserve; Scattergood was extended to 2029",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/press_room/press_releases/2023/otc-press-release-8.17.2023.html"
+   },
+   {
+    "label": "Draft 2026 SACCWIS report (March 20, 2026), Table 2: Huntington Beach Unit 2 has 227 MW maximum output and Alamitos Units 3, 4, 5 have 1,141 MW, both due Dec 31, 2026 with 'Plans to comply by Dec. 31, 2026'",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "Annual capacity factor of Huntington Beach Unit 2: 8.89% (2023), 0.30% (2024), 0.40% (Jan-Sep 2025). Alamitos 3: 8.56%, 0.37%, 0.35%. Alamitos 4: 0.24% (2024). Alamitos 5: 0.25% (2024)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "The units entered Strategic Reserve service on Jan 1, 2024; CAISO told them to start up and stand by three times in summer 2024 (prolonged heat in early July and September 2024) and did not call them for reliability in 2025",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "Alamitos's Time Schedule Order expired Dec 31, 2025, so its maximum output 'may be reduced' to meet permit limits 'such as high outfall water temperature restrictions, especially between May and October 2026'",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "Huntington Beach is permitted to discharge 127 MGD (design flow 514 MGD); Units 1, 3 and 4 were retired by Dec 31, 2020; new combined-cycle units are listed at 644 MW at Huntington Beach and 640 MW at Alamitos",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "On the same Alamitos site, the AES Alamitos battery (100 MW / 400 MWh, Fluence) began operating in January 2021 under a 20-year SCE contract",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy-storage.news/aes-switches-on-400mwh-california-battery-project-alongside-modernised-natural-gas-plant"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-world-s-biggest-battery-seven-years-later",
+  "title": "The World's Biggest Battery, Seven Years Later",
+  "category": "Storage",
+  "location": {
+   "name": "SDG&E Escondido Energy Storage (30 MW / 120 MWh), 571 Enterprise St., Escondido: Aliso Canyon emergency build in 2017, container fire Sept 5",
+   "lat": 33.124446,
+   "lon": -117.1143,
+   "distance_mi": 67.6
+  },
+  "one_liner": "The battery California built in six months to survive a gas leak, once the biggest in the world, caught fire in 2024, and EIA's latest inventory still lists it as out of service.",
+  "problem": "After the 2015 Aliso Canyon gas leak, California rushed batteries into service, and AES built this 30 MW / 120 MWh system for SDG&E in about six months. When it opened in 2017 it was called the largest lithium-ion battery in the world. On September 5, 2024, one of its 24 containers caught fire. Nearby businesses and several schools were evacuated, and crews let the container burn out. Six days later, San Diego County supervisors voted 4-1 against a moratorium on new battery sites and adopted extra safety rules instead. In April 2026, AES withdrew its much larger 320 MW Seguro battery project in Escondido after neighbors and Palomar Medical Center opposed it. EIA's September 2026 inventory lists the Escondido battery as 'Out of service but expected to return.'",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "The battery California built in six months to survive a gas leak, once the biggest in the world, caught fire in 2024, and EIA's latest inventory still lists it as out of service.",
+  "stats": [
+   {
+    "label": "Built by AES Energy Storage for SDG&E at 30 MW / 120 MWh in about six months, as part of the expedited response to the Aliso Canyon gas leak.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.utilitydive.com/news/project-of-the-year-aes-escondido-energy-storage-project/511157/"
+   },
+   {
+    "label": "Fire started around noon Sept 5, 2024 at SDG&E's North East Yard, 571 Enterprise St. It was limited to 1 of 24 containers, with no injuries. Mandatory evacuation covered the area east of Alpine Way, south of Mission Ave, west of Enterprise St, and north of Auto Park Way. Several Escondido schools were evacuated.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.kpbs.org/news/public-safety/2024/09/05/fire-at-sdg-e-battery-storage-facility-in-escondido-prompts-evacuations"
+   },
+   {
+    "label": "On Sept 11, 2024, San Diego County supervisors voted 4-1 to reject a moratorium on new battery storage and approve extra fire-safety reporting requirements. The article also cites 45 fires at similar facilities since 2021.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://timesofsandiego.com/politics/2024/09/11/supervisors-say-no-to-moratorium-ok-new-safety-measures-for-battery-storage-sites/"
+   },
+   {
+    "label": "AES withdrew its 320 MW Seguro battery project in Escondido, reported April 9, 2026. Opponents cited its distance of about 1,600 ft from Palomar Medical Center Escondido and from homes.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.canarymedia.com/articles/batteries/aes-san-diego-area-battery-opposition"
+   },
+   {
+    "label": "EIA-860M (Sept 2026) lists 'Escondido Energy Storage' at 30 MW / 120 MWh, operating since March 2017, with status '(OA) Out of service but expected to return to service in next calendar year'.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/electricity/data/eia860m/xls/september_generator2026.xlsx"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-battery-orange-county-wouldn-t-let-in",
+  "title": "The Battery Orange County Wouldn't Let In",
+  "category": "Storage",
+  "location": {
+   "name": "Compass Energy Storage Project (250 MW / 1,000 MWh), Saddleback Church Rancho Capistrano land, San Juan Capistrano (CEC docket 24-OPT-02), a",
+   "lat": 33.53365,
+   "lon": -117.67744,
+   "distance_mi": 24.5
+  },
+  "one_liner": "Thirteen miles from this room, a 1,000-megawatt-hour battery spent nearly two years in state review, drew more than a thousand opposing comments, and was withdrawn on September 2, 2026.",
+  "problem": "ENGIE proposed a 250 MW / 1,000 MWh Tesla Megapack battery on about 13 acres next to I-5 in San Juan Capistrano, roughly 1,500 ft from Laguna Niguel homes. The city refused to start a rezoning study in 2022. The developer then used a 2022 state law (AB 205) that lets the California Energy Commission permit large batteries over local objections. San Juan Capistrano passed its own temporary battery ban in May 2024. Orange County adopted a moratorium on large batteries in unincorporated areas in January 2025, then a permanent ordinance in November 2025. ENGIE paused the project in December 2025 and withdrew it on September 2, 2026. That is two years of state review, more than a thousand opposing comments, and no battery.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Thirteen miles from this room, a 1,000-megawatt-hour battery spent nearly two years in state review, drew more than a thousand opposing comments, and was withdrawn on September 2, 2026.",
+  "stats": [
+   {
+    "label": "Project: up to 250 MW for 4 hours (1,000 MWh) of LFP batteries (Tesla Megapack 2XL proposed) on about 12.4 acres, APN 637-082-71. It would loop into SDG&E's Trabuco-Capistrano 138-kV line. Coordinates 33\u00b032'1.13\"N, 117\u00b040'38.8\"W.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://ceqanet.lci.ca.gov/2025050184"
+   },
+   {
+    "label": "ENGIE withdrew its CEC application on Sept 2, 2026 and the CEC closed the docket. Site is about 1,500 ft from Laguna Niguel homes. San Juan Capistrano denied starting a Rezone Study on Nov 1, 2022.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cityoflagunaniguel.org/1710/Proposed-Battery-Energy-Storage-System-P"
+   },
+   {
+    "label": "The CEC project page lists Compass Energy Storage Project status as 'Withdrawn', 250 MW / 1,000 MWh.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/powerplant/energy-storage-system/compass-energy-storage-project"
+   },
+   {
+    "label": "ENGIE asked the CEC to suspend review in late December 2025, citing site economics and alternative locations. The planned purchase of 41 acres from Saddleback Church was voided. Opposition group: BLESSIN.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://kfiam640.iheart.com/content/2025-12-23-engie-pauses-san-juan-capistrano-battery-project-for-new-sites"
+   },
+   {
+    "label": "On Jan 28, 2025, the OC Board of Supervisors adopted a 45-day urgency moratorium on large-scale battery facilities in all unincorporated areas. On March 11, 2025 it was extended 10 months 15 days, to expire Jan 26, 2026. The staff draft ordinance bans battery sites in very high fire hazard severity zones and proposes a 100 ft separation from homes.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://ocds.ocpublicworks.com/sites/ocpwocds/files/2025-08/Final%20Staff%20Report%20BESS%20Ordinance%20CA%2024-03%20-%20091025%20PC.pdf"
+   },
+   {
+    "label": "Nov 4, 2025: the OC Board of Supervisors unanimously adopted the battery ordinance, requiring Planning Commission approval, OCFA fire review, and expanded buffers from homes. Exact final setback distances were not stated in the release.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://bos5.oc.gov/pr-11.4.25-bos"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "energy_cycle",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-sunset-handoff-1950s-ocean-cooled-giants-retire-as-batte",
+  "title": "The Sunset Handoff: 1950s Ocean-Cooled Giants Retire as Batteries Take Over the Evening",
+  "category": "Storage",
+  "location": {
+   "name": "AES Alamitos battery buildings (Long Beach) next to Alamitos steam Units 3-5, plus AES Huntington Beach Unit 2; OTC retirement deadline Dec ",
+   "lat": 33.770202,
+   "lon": -118.0997,
+   "distance_mi": 5.2
+  },
+  "one_liner": "In 47 days, 1,368 MW of 1950s and 60s ocean-cooled steam units on our coast retire after running less than half a percent of the time, and on August 18 California's batteries put out almost as much power as every gas plant in the state combined.",
+  "problem": "Four steam units that draw seawater for cooling are scheduled to retire on December 31, 2026, 47 days after the hackathon: Alamitos 3, 4 and 5 (online 1961-1964) and Huntington Beach 2 (online 1958). Together they are 1,368 MW, and in 2024-2025 each ran only 0.2-0.4% of the time, kept mainly as an emergency reserve. Batteries are taking over their job. Next door at Alamitos sit 100 MW / 400 MWh of batteries (2021, housed in a building) and another 82 MW / 328 MWh (2024). Across CAISO, installed battery capacity reached 17,307 MW in September 2026. On August 18, 2026 at 8:10 pm, batteries pushed out 13,441 MW, about 34% of demand and almost as much as every gas plant combined (13,971 MW). Earlier that day they absorbed about 9,800 MW of midday solar.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In 47 days, 1,368 MW of 1950s and 60s ocean-cooled steam units on our coast retire after running less than half a percent of the time, and on August 18 California's batteries put out almost as much power as every gas plant in the state combined.",
+  "stats": [
+   {
+    "label": "The State Water Board's Aug 15, 2023 amendment set the once-through-cooling (OTC) compliance date for Alamitos Units 3, 4, 5 and Huntington Beach Unit 2 to Dec 31, 2026.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://water.waterboards.ca.gov/water_issues/programs/ocean/cwa316/docs/2026/otc-fs-eng.pdf"
+   },
+   {
+    "label": "Draft 2026 SACCWIS report (Mar 20, 2026): Alamitos 3/4/5 = 1,141 MW max output and HB 2 = 227 MW, both planning to comply by Dec 31, 2026. Capacity factors in 2024 / 2025 (Jan-Sep): Alamitos 3 0.37% / 0.35%, Alamitos 4 0.24% / 0.23%, Alamitos 5 0.25% / 0.42%, HB 2 0.30% / 0.40%. SACCWIS recommends no further extensions.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/saccwis-26dfrpt.pdf"
+   },
+   {
+    "label": "EIA: AES Alamitos and Huntington Beach, combined 1,368 MW, will be the largest natural gas retirement in 2026. The units were first scheduled to retire in 2020.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=67206"
+   },
+   {
+    "label": "EIA-860M operating years: Alamitos 3 Dec 1961 (310 MW), Alamitos 4 June 1962 (310 MW), Alamitos 5 Mar 1964 (495 MW), HB 2 Dec 1958 (218 MW), all with planned retirement 12/2026. Batteries at the site: 'AES ES Alamitos' 100 MW / 400 MWh (Jan 2021) and 'AES ES Alamitos 2' 82 MW / 328 MWh (Nov 2024).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/electricity/data/eia860m/xls/september_generator2026.xlsx"
+   },
+   {
+    "label": "AES announced on Jan 27, 2021 that the Alamitos battery (up to 400 MWh, Fluence Advancion) had started operations under a 20-year PPA with SCE.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://blog.fluenceenergy.com/aes-fluence-commission-alamitos-energy-storage-facility-long-beach-california"
+   },
+   {
+    "label": "CAISO 5-minute data: batteries hit 13,441 MW at 20:10 on Aug 18, 2026, with demand at 39,071 MW (about 34%) and natural gas at 13,971 MW. At 10:00 the same day they were charging at 9,822 MW. This is the highest value found scanning June 1 to Nov 13, 2026. A widely reported 12.99 GW 'record' on July 9, 2026 (12,994 MW at 20:20) was later exceeded.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/outlook/history/20260818/fuelsource.csv"
+   },
+   {
+    "label": "CAISO installed battery capacity was 17,307 MW as of 9/30/2026, counting resources at commercial operation and excluding pumped storage. All-time CAISO peak demand is 52,061 MW (Sept 6, 2022).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/key-statistics-sep-2026.pdf"
+   },
+   {
+    "label": "Heat-peak example: on July 15, 2026 (monthly peak demand 43,625 MW at 7:00 pm) batteries supplied 7,334 MW at 19:00, rising to 11,586 MW at 20:10.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/outlook/history/20260715/fuelsource.csv"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-wire-that-sagged-fairview-fire-hemet",
+  "title": "The Wire That Sagged: Fairview Fire, Hemet",
+  "category": "Wildfire",
+  "location": {
+   "name": "Fairview Fire, Sept 5, 2022. Ignited in the span between SCE poles 220028S and 220029S on the Sprague 12 kV distribution circuit, near Fairv",
+   "lat": 33.717062,
+   "lon": -116.893227,
+   "distance_mi": 64.3
+  },
+  "one_liner": "Two people died near Hemet because a power wire and a phone wire touched during California's hottest week on record. The gap that was supposed to be 5.7 feet was zero.",
+  "problem": "This is the real-world version of the team's demo. On Sept 5, 2022, during California's record heat wave, an SCE 12 kV conductor moved close enough to touch the Frontier phone/cable messenger line hanging below it. The two arced, and the sparks lit dry brush. Per the CPUC, CAL FIRE concluded the cause was 'contact and arcing' due to 'insufficient clearance'. Washington Post reporting on the unreleased CAL FIRE report described it as a sagging line. The fire burned 28,098 acres, killed two people and destroyed 36 structures. The CPUC fined SCE $2.2 million in March 2025.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Two people died near Hemet because a power wire and a phone wire touched during California's hottest week on record. The gap that was supposed to be 5.7 feet was zero.",
+  "stats": [
+   {
+    "label": "CPUC citation D.16-09-055 W.25-03-001, dated March 21, 2025: SCE cited for violations of GO 95 Rules 19, 37 and 38, with a $2,200,000 penalty",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/investigations-wildfires/citation--d1609055-w2503001-fairview-fire.pdf"
+   },
+   {
+    "label": "Ignition about 1537 hours on Sept 5, 2022, in a Tier 3 High Fire Threat District near Fairview Ave and Bautista Rd, Hemet, between two SCE poles on the Sprague 12kV Distribution Circuit",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/investigations-wildfires/citation--d1609055-w2503001-fairview-fire.pdf"
+   },
+   {
+    "label": "CAL FIRE report (as quoted by the CPUC): the phase 1B conductor and the Frontier messenger cable in the incident span had 'a clearance of zero inches since they contacted one another'. Fault data from Remote Automatic Recloser 0139 supports this.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/investigations-wildfires/citation--d1609055-w2503001-fairview-fire.pdf"
+   },
+   {
+    "label": "28,098 acres burned, 2 civilian deaths, 3 injuries, 36 structures destroyed (22 single-family homes), 8 damaged, about $38.85M in suppression cost (CPUC citation)",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/investigations-wildfires/citation--d1609055-w2503001-fairview-fire.pdf"
+   },
+   {
+    "label": "CAL FIRE incident page coordinates are 33.717062, -116.893227. The page lists the cause as 'under investigation' and was not updated after the finding.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.fire.ca.gov/incidents/2022/9/5/fairview-fire"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-ghost-line-eaton-fire-s-1971-tower",
+  "title": "The Ghost Line: Eaton Fire's 1971 Tower",
+  "category": "Wildfire",
+  "location": {
+   "name": "Eaton Fire, Jan 7, 2025, Altadena. It started at an idle SCE Mesa-Sylmar transmission tower (reported as M16T1 / 'Tower 208') above Eaton Ca",
+   "lat": 34.203483,
+   "lon": -118.069155,
+   "distance_mi": 31.2
+  },
+  "one_liner": "The deadliest fire near us in decades started at a power line that hadn't carried a single watt since 1971. It was left standing just in case.",
+  "problem": "SCE kept the Mesa-Sylmar transmission line standing for more than 50 years after it last carried power in 1971, in case it was needed later. A 2005 rule change meant only 'permanently abandoned' equipment had to be removed. On Jan 7, 2025, in extreme Santa Ana winds, a fire started at one of its towers above Altadena. In August 2026, LA County Fire and CAL FIRE concluded that an out-of-service SCE tower sparked the fire through two electrical arcing events. The fire killed 19 people and destroyed about 9,400 structures. SCE has acknowledged its equipment was likely associated with the ignition but disputes liability, partly on the grounds that the line was disconnected in 1971.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "The deadliest fire near us in decades started at a power line that hadn't carried a single watt since 1971. It was left standing just in case.",
+  "stats": [
+   {
+    "label": "CAL FIRE: 14,021 acres, 9,419 structures destroyed, 1,076 damaged, 19 confirmed civilian deaths. Started 01/07/2025 at 6:18 PM near Altadena Dr and Midwick Dr. Lat/lon 34.203483, -118.069155. Contained 01/31/2025.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.fire.ca.gov/incidents/2025/1/7/eaton-fire"
+   },
+   {
+    "label": "Aug 4, 2026: LA County Fire, with CAL FIRE, concluded after an 18-month investigation that an 'out-of-service' SCE tower caused the fire. Two electrical arcing events dropped burning material onto the grass below, which ignited within 12 seconds.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://abc7news.com/story/utilitys-idle-transmission-tower-caused-2025-eaton-fire-killed-19-los-angeles-california-officials-say/19625408/"
+   },
+   {
+    "label": "Edison says the line was 'taken out of service and disconnected from the grid in 1971'. It is using that fact as a defense against strict (inverse condemnation) liability. More than 10,000 plaintiffs are suing.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://amp.insurancejournal.com/news/west/2026/07/28/879355.htm"
+   },
+   {
+    "label": "SCE's voluntary Wildfire Recovery Compensation Program launched Oct 29, 2025. Claims are open through Nov 30, 2026, so the deadline is days away as of the hackathon.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.businesswire.com/news/home/20251029562659/en/Now-Available-Wildfire-Recovery-Compensation-Program-for-Eaton-Fire"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "orange-county-vs-the-wires-silverado-and-coastal-fires",
+  "title": "Orange County vs. the Wires: Silverado and Coastal Fires",
+  "category": "Wildfire",
+  "location": {
+   "name": "Silverado Fire (Oct 26, 2020), near Santiago Canyon Rd / SR-241 east of Irvine, where a telecom lashing wire is alleged to have contacted SC",
+   "lat": 33.73614,
+   "lon": -117.65719,
+   "distance_mi": 20.4
+  },
+  "one_liner": "A loose phone-company wire touched an Edison line 10 miles from this room. 70,000 Irvine residents fled, and two firefighters were burned over half their bodies.",
+  "problem": "Irvine's own two utility-linked fires started within about 13 miles of the city center. In the Silverado Fire, SCE told regulators that a lashing wire on a telecom line strung beneath its power line may have contacted the energized conductor. CAL FIRE later sued SCE and T-Mobile, alleging a 12,000-volt conductor came too close to a T-Mobile line. The fire burned 12,466 acres and forced roughly 70,000 Irvine residents to evacuate. Two OCFA hand-crew firefighters suffered burns over 65% and 50% of their bodies. Eighteen months later, the Coastal Fire destroyed 20 homes in Laguna Niguel. An OCFA/CAL FIRE investigation tied it to an Edison power line, and SCE had disclosed damage to a component joining two lines. Orange County sued SCE (and T-Mobile) over both fires in 2023.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "A loose phone-company wire touched an Edison line 10 miles from this room. 70,000 Irvine residents fled, and two firefighters were burned over half their bodies.",
+  "stats": [
+   {
+    "label": "CAL FIRE: Silverado Fire burned 12,466 acres. Started 10/26/2020 (listed as 7:54 AM; SCE's report said about 6:45 a.m.). Lat/lon 33.73614, -117.65719. 5 structures destroyed, 11 damaged. Contained 11/07/2020.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.fire.ca.gov/incidents/2020/10/26/silverado-fire"
+   },
+   {
+    "label": "SCE's preliminary report to the CPUC: 'a lashing wire attached to an underbuilt telecommunication line may have contacted' SCE's overhead primary conductor",
+    "value": "",
+    "kind": "measured",
+    "source": "https://enr.com/articles/50505-southern-california-edison-says-lashing-wire-may-have-sparked-county-fire"
+   },
+   {
+    "label": "CAL FIRE: Coastal Fire, 200 acres. Started May 11, 2022 at 2:51 PM at St. Tropez and Laguna Ridge Trail. Lat/lon 33.509464, -117.744398. About 13.0 mi from Irvine.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.fire.ca.gov/incidents/2022/5/11/coastal-fire"
+   },
+   {
+    "label": "Coastal Fire destroyed 20 homes and damaged 11. SCE reported 'circuit activity' near the ignition time.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://abc7.com/laguna-niguel-fire-brush-homes-destroyed-coastal/11840352/"
+   },
+   {
+    "label": "SCE said a component used to join two power lines near the Coastal Fire origin showed damage. SCE believes the condition existed before the fire, and whether it contributed is unknown.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.nbclosangeles.com/news/california-wildfires/coastal-fire-socal-edison-electrical-component-california-wildfires/2908635/"
+   },
+   {
+    "label": "The CAL FIRE historic perimeter dataset codes the Coastal Fire as CAUSE 11 'Electrical Power' but the Silverado Fire as 14 'Unknown'",
+    "value": "",
+    "kind": "measured",
+    "source": "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Historic_Fire_Perimeters/FeatureServer/0"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-kill-switch-9-days-in-the-dark-in-oc-s-canyons-psps-jan-",
+  "title": "The Kill Switch: 9 Days in the Dark in OC's Canyons (PSPS, Jan 2025)",
+  "category": "Wildfire",
+  "location": {
+   "name": "SCE Public Safety Power Shutoff event, Jan 2 to 17, 2025. Fifteen de-energized circuits touched Orange County, including the MODJESKA (Tier ",
+   "lat": 33.7125,
+   "lon": -117.6303,
+   "distance_mi": 22.1
+  },
+  "one_liner": "In January 2025, some Orange County canyon circuits were switched off for almost nine straight days. Burying those lines costs about $5 million a mile, and regulators approved less than a third of the miles Edison asked for.",
+  "problem": "When the wind is too strong for the overhead lines to be safe, SCE's main tool is to switch the power off. In the January 2025 Santa Ana event (the same week as the Eaton Fire), SCE de-energized 363,196 customers on 373 circuits across 8 counties, including Orange. In SCE's own data workbook, 15 circuits touching Orange County went dark, with 12,446 customers on those circuits. Some of those circuits span Riverside or San Bernardino counties too. Some, such as ATENTO, stayed off for about 211 hours (nearly 9 days) between de-energization and final restoration. The long-term fix is hardening. The CPUC's Sept 2025 rate decision funded only 177 of the 580 miles of undergrounding SCE requested. It shifted money to cheaper covered conductor: about $5.3M per mile to bury a line versus about $0.77M per mile to insulate one.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In January 2025, some Orange County canyon circuits were switched off for almost nine straight days. Burying those lines costs about $5 million a mile, and regulators approved less than a third of the miles Edison asked for.",
+  "stats": [
+   {
+    "label": "SCE PSPS post-event report: event ran Jan 2, 2025 12:30 p.m. to Jan 17, 2025 4:00 p.m. 712,769 customers notified, 363,196 de-energized, 373 of 619 in-scope distribution circuits de-energized, 72 damage/hazards found. Counties included Orange.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/reports/psps-post-event-reports/2025/20250104sce-psps-post-event-reportdeenergizedfinal.pdf"
+   },
+   {
+    "label": "SCE event data workbook, sheet T05: 15 de-energized circuits list Orange County (some shared with Riverside/San Bernardino), with 12,446 total customers on those circuits. I computed this sum from the workbook rows; it includes some non-OC customers on multi-county circuits.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/reports/psps-post-event-reports/2025/20250104sce-psps-event-data-workbookfinal.xlsx"
+   },
+   {
+    "label": "SCE opened a Community Resource Center in Foothill Ranch for Orange County customers from Jan 7, 2025 8:00 a.m. to Jan 16, 2025 5:00 p.m.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/reports/psps-post-event-reports/2025/20250104sce-psps-post-event-reportdeenergizedfinal.pdf"
+   },
+   {
+    "label": "CPUC SCE 2025 GRC decision (Sept 18, 2025): SCE requested $4.232B for 580 mi undergrounding plus 1,250 mi covered conductor. The CPUC authorized $2.213B: $941M for 177 mi targeted undergrounding and $1,272M for 1,653 mi covered conductor. That works out to about $5.3M/mi and $0.77M/mi (my division).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://webproda.cpuc.ca.gov/-/media/cpuc-website/divisions/energy-division/documents/general-rate-cases/sce/fact-sheet-sce-grc-091825.pdf"
+   },
+   {
+    "label": "Circuit names do not necessarily match neighborhoods. The workbook has no circuit geometry, so the Modjeska Canyon pin is an approximate placement and not the circuit's mapped location.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/consumer-support/psps/utility-company-psps-reports-post-event-and-post-season"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-leak-that-still-holds-la-hostage",
+  "title": "The Leak That Still Holds LA Hostage",
+  "category": "Gas",
+  "location": {
+   "name": "Aliso Canyon Natural Gas Storage Facility (well SS-25 blowout, Oct 2015 - Feb 2016) and the ongoing CPUC fight over closing it",
+   "lat": 34.315,
+   "lon": -118.56417,
+   "distance_mi": 50.1
+  },
+  "one_liner": "Ten years after a 1953 well 60 miles from here leaked about 100,000 tons of methane, Los Angeles still can't afford to turn that gas field off.",
+  "problem": "Aliso Canyon, in the hills above Porter Ranch, is California's largest underground gas storage field. On Oct 23, 2015, well SS-25 began leaking. The flow was brought under control on Feb 11, 2016 and the well was declared permanently sealed on Feb 18, 2016. CARB estimates about 99,650 +/- 9,300 metric tons of methane escaped, the largest methane leak in US history. Thousands of households were temporarily relocated. Ten years later the field is still open, because the LA Basin's gas system and gas power plants still rely on it on peak winter days. In Dec 2024 the CPUC kept it open at a 68.6 Bcf cap and set a demand level (4,121 MMcf/day) at which it could close. In 2025 CPUC staff recommended cutting the cap by 10 Bcf to 58.6 Bcf. SoCalGas is fighting that cut in Application A.26-01-009, and no final decision was found as of Nov 2026.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Ten years after a 1953 well 60 miles from here leaked about 100,000 tons of methane, Los Angeles still can't afford to turn that gas field off.",
+  "stats": [
+   {
+    "label": "CARB's central estimate of total methane emissions is 99,650 +/- 9,300 metric tons. The commonly quoted 109,000 metric tons is the upper end CARB uses for full mitigation, not the central estimate.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://ww2.arb.ca.gov/sites/default/files/2020-07/aliso_canyon_methane_emissions-arb_final.pdf"
+   },
+   {
+    "label": "The leak was reported Oct 23, 2015 and controlled Feb 11, 2016. CARB says it was about 20% of statewide methane emissions during the 16 weeks it was uncontrolled.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://ww2.arb.ca.gov/news/aliso-canyon-leak-emitted-109000-metric-tons-methane"
+   },
+   {
+    "label": "The CPUC fact sheet says the well leaked from Oct 23, 2015 through Feb 12, 2016. This is one day off from CARB's Feb 11 date. The permanent seal was announced Feb 18, 2016.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/documents/fact-sheets/ac-fact-sheet-121924.pdf"
+   },
+   {
+    "label": "Physical working capacity without regulatory caps is 86.2 Bcf, which would be 63% of SoCalGas's working storage. The cap was 41.2 Bcf in Nov 2021 and was raised to 68.6 Bcf effective Sept 1, 2023.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=60502"
+   },
+   {
+    "label": "On Dec 19, 2024 the CPUC (D.24-12-076, proceeding I.17-02-002) found Aliso is still needed. It set a peak-day gas demand target of 4,121 MMcf/day at which the field could close. The 2024 California Gas Report forecasts peak demand of 4,618 MMcf/day in 2024 and 4,197 MMcf/day in 2030. The decision also set up biennial assessments.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/documents/fact-sheets/ac-fact-sheet-121924.pdf"
+   },
+   {
+    "label": "Settlements: $119.5M with CARB, the AG, and the City and County of LA (2018). A 2023 CPUC settlement requires $71M from SoCalGas shareholders and bars recovery of more than $2B in incident costs from ratepayers. A 2021 civil settlement of up to $1.8B covers more than 35,000 plaintiffs.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/-/media/cpuc-website/divisions/safety-and-enforcement-division/documents/fact-sheets/ac-fact-sheet-121924.pdf"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-zombie-power-plants-down-the-street",
+  "title": "The Zombie Power Plants Down the Street",
+  "category": "Gas",
+  "location": {
+   "name": "AES Huntington Beach Generating Station Unit 2 and AES Alamitos Units 3, 4, 5: once-through-cooling gas steam units kept alive in the state'",
+   "lat": 33.645,
+   "lon": -117.97639,
+   "distance_mi": 7.8
+  },
+  "one_liner": "Nine miles from this room is a 1950s-era gas unit that ran 0.3% of the hours in 2024. We keep it alive just in case of the hottest day, and it's scheduled to die seven weeks from now.",
+  "problem": "Nine miles from Irvine, on the Huntington Beach coast, sits an old gas steam unit that has been on death row since 2020. Huntington Beach Unit 2 (227 MW) and the nearby Alamitos Units 3-5 in Long Beach (1,141 MW) cool themselves with ocean water. They were supposed to retire in 2020, then 2023. The state extended them to Dec 31, 2026, about seven weeks after this hackathon, so they could sit in reserve for extreme heat waves. They barely run: Huntington Beach Unit 2 had a 0.30% capacity factor in 2024 and 0.40% in Jan-Sep 2025. CAISO called the reserve units to start and stand by three times in summer 2024 and not at all in 2025. It is the clearest local example of 'worst-case' planning: over a gigawatt of fossil capacity paid to wait for the 105 F day.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Nine miles from this room is a 1950s-era gas unit that ran 0.3% of the hours in 2024. We keep it alive just in case of the hottest day, and it's scheduled to die seven weeks from now.",
+  "stats": [
+   {
+    "label": "Huntington Beach Unit 2 max output is 227 MW and Alamitos Units 3, 4, 5 total 1,141 MW (327 + 334 + 480 MW). Both have an OTC Policy final compliance date of Dec 31, 2026 and the owner 'plans to comply by Dec. 31, 2026'.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Annual capacity factors for Huntington Beach Unit 2: 2019 4.12%, 2020 5.69%, 2021 4.46%, 2022 5.64%, 2023 8.89%, 2024 0.30%, 2025 (Jan-Sep) 0.40%. Alamitos 3/4/5 in 2024: 0.37% / 0.24% / 0.25%. Source is the CEC Quarterly Fuel and Energy Report via the SACCWIS 2026 report, Table 3.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "These units entered the Strategic Reliability Reserve on Jan 1, 2024. CAISO told reserve OTC units to start up and stand by in three separate instances in summer 2024 and did not call them in 2025.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "On Aug 15, 2023 the State Water Board extended the Alamitos, Huntington Beach, and Ormond Beach deadlines from Dec 31, 2023 to Dec 31, 2026, contingent on reserve participation. It also extended LADWP Scattergood to Dec 31, 2029.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://water.waterboards.ca.gov/water_issues/programs/ocean/cwa316/docs/2026/otc-fs-eng.pdf"
+   },
+   {
+    "label": "EIA (Feb 23, 2026): Alamitos and Huntington Beach, a combined 1,368 MW, are the largest US natural gas retirements planned for 2026. Both were originally due to retire in 2020 and then 2023.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=67206"
+   },
+   {
+    "label": "The SACCWIS March 20, 2026 report does not recommend any further compliance-date extensions. New air-cooled combined-cycle plants already run on both sites: Huntington Beach 644 MW and Alamitos 640 MW.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "Alamitos's NPDES Time Schedule Order expired Dec 31, 2025, so its output may be reduced for outfall water temperature limits, especially May-Oct 2026.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-1949-pipe-nobody-ever-pressure-tested",
+  "title": "The 1949 Pipe Nobody Ever Pressure-Tested",
+  "category": "Gas",
+  "location": {
+   "name": "SDG&E Line 1600: a 16-inch, about 50-mile gas transmission line from the Rainbow area (Riverside/San Diego county line) to Mission Valley, b",
+   "lat": 33.12,
+   "lon": -117.08,
+   "distance_mi": 69.3
+  },
+  "one_liner": "A gas pipe laid in 1949, the year the first Polaroid camera went on sale, was carrying high-pressure gas to 150,000 San Diego County customers without ever having been strength-tested.",
+  "problem": "Line 1600 is a 16-inch gas transmission pipeline built in 1949 and never strength-tested when it went into service, because that was not required or industry practice before 1955. It runs about 50 miles south from near Rainbow to San Diego's Mission Valley, through Escondido and Poway, and is the primary or sole gas supply for about 150,000 customers. After the 2010 San Bruno explosion, California required old untested lines to be tested or replaced. SDG&E and SoCalGas proposed a new 36-inch, roughly 47-mile line (Line 3602); the CPUC unanimously rejected it in June 2018 (D.18-06-028). In January 2019 the CPUC approved a test-or-replace plan of about 37 miles of replacement and 13 miles of strength testing across 19 projects, scheduled for 2020-2024.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "A gas pipe laid in 1949, the year the first Polaroid camera went on sale, was carrying high-pressure gas to 150,000 San Diego County customers without ever having been strength-tested.",
+  "stats": [
+   {
+    "label": "Line 1600 is 50 miles of 16-inch transmission pipe built in 1949. It was not strength tested before service because testing was not mandated or the industry norm before 1955.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sdge.com/major-projects/major-projects-pipeline-safety-enhancement-plan"
+   },
+   {
+    "label": "The CPUC approved SDG&E's test-or-replace plan in January 2019: 19 projects, about 37 miles of replacement in more populated areas and about 13 miles of strength testing, scheduled 2020-2024. The page lists individual completions from Oct 2020 to June 2024, for example Rice Canyon strength test completed June 2024.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sdge.com/major-projects/major-projects-pipeline-safety-enhancement-plan"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-800-million-bet-on-hydrogen-that-doesn-t-exist-yet",
+  "title": "The $800 Million Bet on Hydrogen That Doesn't Exist Yet",
+  "category": "Gas",
+  "location": {
+   "name": "LADWP Scattergood Generating Station Units 1 and 2 (late-1950s ocean-cooled gas boilers) and the Green Hydrogen-Ready Modernization Project ",
+   "lat": 33.91861,
+   "lon": -118.42778,
+   "distance_mi": 26.5
+  },
+  "one_liner": "LA is spending about $800 million on a power plant built to burn hydrogen, while its own fact sheet says the project doesn't cover where that hydrogen will come from.",
+  "problem": "Next to LAX in Playa del Rey, Scattergood Units 1 and 2 (163 MW each) are gas steam units first commissioned in the late 1950s. They use ocean water for cooling and must stop by Dec 31, 2029. They ran rarely: Unit 1 had a 3.36% capacity factor in 2024 and 0.51% in Jan-Sep 2025. LADWP's replacement is an up-to-346 MW combined-cycle plant estimated at $800M, required to burn a blend of at least 30% green hydrogen from the start with a roadmap to 100% by 2035. LADWP's own fact sheet says the project does not cover where the hydrogen comes from. Critics question whether a rarely run, hydrogen-ready gas plant is the best way to protect the Westside grid compared with batteries and transmission, which an NREL study evaluated.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "LA is spending about $800 million on a power plant built to burn hydrogen, while its own fact sheet says the project doesn't cover where that hydrogen will come from.",
+  "stats": [
+   {
+    "label": "Scattergood Units 1 and 2 are 163 MW each (max output) with an OTC final compliance date of Dec 31, 2029. Capacity factors for Unit 1: 2019 3.62%, 2022 2.75%, 2024 3.36%, 2025 (Jan-Sep) 0.51%. Unit 2: 2024 5.66%, 2025 (Jan-Sep) 5.47%.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.waterboards.ca.gov/water_issues/programs/ocean/cwa316/saccwis/docs/2026/26saccwisrptf.pdf"
+   },
+   {
+    "label": "LADWP fact sheet: the project replaces conventional boilers commissioned in the late 1950s, provides up to 346 MW of firm capacity in a '1+1' combined cycle with an air-cooled condenser (no ocean water), can burn at least 30% green hydrogen from the outset with a roadmap to 100% by 2035, and is expected in service by December 2029. It does not address hydrogen production, storage, or transport.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ladwp.com/sites/default/files/2025-11/2025_FACT_SHEET_Scattergood-Hydrogen-Ready_Modernization_Project_05%20%28003%29.pdf"
+   },
+   {
+    "label": "The LA Board of Water and Power Commissioners certified the final EIR (reported Nov 10, 2025). Estimated cost is about $800M, with an in-service date of Dec 30, 2029.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.power-eng.com/hydrogen/regulators-approve-first-step-toward-hydrogen-transition-at-scattergood-gas-plant/"
+   },
+   {
+    "label": "The LA City Council unanimously approved an ordinance authorizing LADWP to pursue the contract in February 2023. NREL completed a supplemental study of non-combustion alternatives (batteries, fuel cells, transmission) in February 2025 and found no practical alternative in the timeframe, according to LADWP.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ladwp.com/sites/default/files/2025-11/2025_FACT_SHEET_Scattergood-Hydrogen-Ready_Modernization_Project_05%20%28003%29.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-campus-that-can-unplug-on-gas",
+  "title": "The Campus That Can Unplug, on Gas",
+  "category": "Distributed",
+  "location": {
+   "name": "UC Irvine campus microgrid and Central Plant (EIA plant ID 57122, 'UCI Facilities Management Central Plant', West Peltason Dr., Bldg 902). F",
+   "lat": 33.6481,
+   "lon": -117.8467,
+   "distance_mi": 11.9
+  },
+  "one_liner": "UC Irvine can cut itself off from Edison and power a city of 50,000 on its own, but about 85% of that power comes from burning natural gas, while the hospital two miles away runs with no gas at all.",
+  "problem": "UC Irvine runs its own 20 MW-class microgrid. At its center is a 19 MW natural-gas combined-cycle cogeneration plant (13.5 MW gas turbine plus 5.5 MW steam turbine) that has operated since July 2007, along with a large chilled-water thermal storage tank. On Feb 12, 2018 the campus 'islanded' from Southern California Edison and ran on its own power for about 1 hour 15 minutes. The paradox is that this resilient microgrid gets about 85% of the campus's electricity from burning natural gas, with only about 5% from solar and 10% from SCE. Two miles away, UCI's new hospital took the opposite path: it is all-electric with no gas combustion, about 10% rooftop solar, and diesel generators only for backup.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "UC Irvine can cut itself off from Edison and power a city of 50,000 on its own, but about 85% of that power comes from burning natural gas, while the hospital two miles away runs with no gas at all.",
+  "stats": [
+   {
+    "label": "EIA lists the plant at 33.6481, -117.8467: generator CTG1 is a 13.5 MW combined-cycle combustion turbine and STG1 is a 5.5 MW steam turbine (19 MW total), both natural gas, first operated July 2007. Reported annual net generation is 113.6 GWh (the year is not stated on the page).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.gridinfo.com/plant/uci-facilities-management-central-plant/57122"
+   },
+   {
+    "label": "Kiewit describes the project as an 18 MW cogeneration plant using a Solar Titan 130 gas turbine, plus two 3,000-ton York chillers that added 6,000 tons of chilled-water capacity.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.kiewit.com/?p=3600"
+   },
+   {
+    "label": "Microgrid Knowledge (July 2024) calls it UCI's 20 MW microgrid, serving close to 50,000 people, with a 60 kW electrolyzer and 25 battery-electric buses added since 2018.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.microgridknowledge.com/microgrids/campus/article/55126474/uc-irvine-campus-microgrid-powering-new-ev-buses-added-to-fleet"
+   },
+   {
+    "label": "UCI Health \u2013 Irvine opened Dec 10, 2025: 144 beds, 7 stories, 350,000 sq ft, at a total project cost of $1.3 billion. UCI calls it 'the nation's first all-electric-powered acute care hospital' (UCI's own claim).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ocbj.com/oc-homepage/uci-health-to-debut-first-all-electric-hospital/"
+   },
+   {
+    "label": "The UCI Health \u2013 Irvine hospital has a daily load of about 2 MW. Rooftop solar on its parking structures covers about 10%. It has four diesel backup generators and can run off-grid for up to 96 hours. It does not currently connect to the 20 MW campus microgrid; that is only a future idea.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://microgridknowledge.com/microgrids/critical-services/article/55337599/curing-healthcares-carbon-ailment-uc-irvine-fully-electrifies-new-hospital"
+   },
+   {
+    "label": "The UCI Health \u2013 Irvine central utilities plant uses no natural gas combustion and recovers heat from its chillers for space heating and hot water. It serves about 800,000 sq ft.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.ucihealth.org/news/2024/04/central-utility-plant-irvine"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "full-circuits-where-irvine-s-rooftops-can-t-plug-in",
+  "title": "Full Circuits: Where Irvine's Rooftops Can't Plug In",
+  "category": "Distributed",
+  "location": {
+   "name": "SCE 12 kV distribution circuit 'Dupont' (Cabrillo 66/12 kV substation, Johanna 220/66 system) in the Irvine Business Complex near John Wayne",
+   "lat": 33.6664,
+   "lon": -117.8576,
+   "distance_mi": 10.7
+  },
+  "one_liner": "Two miles from here, Edison's own map says a whole circuit called 'Dupont' can take zero more megawatts of solar. The roofs are ready; the wire is full.",
+  "problem": "Every California utility must publish a map showing how much new solar each street-level wire segment can accept before it overheats, pushes voltage out of limits, or confuses protection equipment. I queried SCE's live ICA data (June 2026 refresh) for a box around Irvine, Tustin, Costa Mesa and Newport. Of 138 circuits there, 9 show 0 MW of solar hosting capacity on every segment. One of them is 'Dupont', which runs through the Irvine Business Complex 2 miles from the city center. The limit there is steady-state voltage, and SCE flags it as 'potentially constrained.' On a full circuit, a new rooftop or parking-lot solar project can face upgrade costs or delays even though the sun and the roofs are there. This is the distribution-level twin of 'The Wire That Breathes.' Since April 15, 2023, NEM 3.0 has also cut what homeowners earn for exporting solar, which pushed new systems toward batteries.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Two miles from here, Edison's own map says a whole circuit called 'Dupont' can take zero more megawatts of solar. The roofs are ready; the wire is full.",
+  "stats": [
+   {
+    "label": "In SCE's ICA 'Circuit Segments' layer, every Dupont segment has ica_overall_pv = 0 and uniform_generation = 0. The circuit is 12 kV, from Cabrillo substation (66/12 kV) in the Johanna 220/66 system. The most limiting factor is 'Generation - Steady State Voltage', and SCE's note says it is 'a potentially constrained circuit' and that load was aggregated after failing the 15/15 rule. Load hosting capacity is about 1.35-4.24 per segment. The circuit extent is lon -117.868 to -117.847, lat 33.661 to 33.672.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://services5.arcgis.com/z6hI6KRjKHvhNO0r/arcgis/rest/services/ICA_Layer/FeatureServer/2/query?where=circuit_name%3D%27Dupont%27&outFields=*&returnGeometry=false&resultRecordCount=2&f=json"
+   },
+   {
+    "label": "Within the box lon -117.87 to -117.75, lat 33.62 to 33.74, 9 of 138 SCE circuits have max ica_overall_pv = 0: Dupont (Cabrillo), Churchill (Macarthur), Bingo (Johanna), Atlanta, Calgary, Scilacci and Torino (Las Lomas), Maraca (Borrego substation), and Anahurst (Edinger, 4 kV). Typical circuits in the box show about 2-19 of hosting capacity. This is my own aggregation of the live service, run Nov 14, 2026; values change with each monthly refresh.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://services5.arcgis.com/z6hI6KRjKHvhNO0r/arcgis/rest/services/ICA_Layer/FeatureServer/2"
+   },
+   {
+    "label": "Torino (Las Lomas substation, North Irvine/Tustin foothills, extent about 33.717-33.757 N, -117.772 to -117.739 W) shows 0 hosting capacity for both generation AND load on its 67 segments, with a thermal limit. Churchill (Macarthur substation, about 33.638-33.668 N) is limited by 'Generation - Protection'.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://services5.arcgis.com/z6hI6KRjKHvhNO0r/arcgis/rest/services/ICA_Layer/FeatureServer/2"
+   },
+   {
+    "label": "The CPUC lists the utility ICA data portals: SCE DRPEP (drpep.sce.com), SDG&E Enhanced ICA, and PG&E GRIP.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.cpuc.ca.gov/industries-and-topics/electrical-energy/infrastructure/distribution-planning/data-portals-and-integration-capacity-analysis"
+   },
+   {
+    "label": "NEM 3.0 (the Net Billing Tariff) took effect for new applications after April 15, 2023. The CPUC adopted it on Dec 15, 2022.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://eta-publications.lbl.gov/publications/one-year-tracking-impacts-nem-30"
+   },
+   {
+    "label": "Berkeley Lab found that battery attachment on new California residential solar jumped from about 10% to about 60% after NEM 3.0. In the same window, about 200,000 systems interconnected under the old NEM rules versus about 50,000 under NBT, because of a backlog of grandfathered applications.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.utilitydive.com/news/residential-solar-storage-california-after-nem-30-lbnl/716589/"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-air-base-that-runs-on-trash",
+  "title": "The Air Base That Runs on Trash",
+  "category": "Distributed",
+  "location": {
+   "name": "Marine Corps Air Station (MCAS) Miramar microgrid, fed by landfill gas from the City of San Diego's Miramar Landfill, with a CEC-funded 1.5 ",
+   "lat": 32.8684,
+   "lon": -117.1424,
+   "distance_mi": 79.1
+  },
+  "one_liner": "A Marine Corps air base near San Diego runs partly on methane from the city dump, and in the 2022 heat wave it sent enough power to the grid to help about 3,000 homes.",
+  "problem": "MCAS Miramar is a military base the size of a small city, about 14 miles north of San Diego. It runs a microgrid built around a 6.45 MW power plant (diesel and natural gas), a 2 MW emergency diesel generator, solar, and two 1.6 MW generators burning methane from the city landfill next door. Landfill gas and solar supply about 52% of the base's energy. However, poor gas quality makes the landfill generators trip without warning, so in island mode the controller allows only one 1.6 MW unit online. A 1.5 MW/3.3 MWh battery was added to cover those drops. It was commissioned in a base-wide blackstart and cut peak demand by an average of 962 kW per month. During the 2022 heat wave, the microgrid sent power to the grid to help about 3,000 homes.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "A Marine Corps air base near San Diego runs partly on methane from the city dump, and in the 2022 heat wave it sent enough power to the grid to help about 3,000 homes.",
+  "stats": [
+   {
+    "label": "The base's peak net load is 15 MW and median load is 4.2 MW. Landfill gas and PV provide about 52% of its energy. LFG outages are frequent but unpredictable due to poor gas quality, and in islanded mode the controller allows only one 1.6 MW LFG unit to run.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/sites/default/files/2026-05/CEC-500-2026-012.pdf"
+   },
+   {
+    "label": "Resources: a 6.45 MW power plant (two diesel and two natural-gas prime generators; diesel ramps to full load in about 10 s, gas in about 3 min), a 2 MW emergency diesel generator with paralleling, and two 1.6 MW landfill-gas turbine generators on a dedicated 12 kV line under a PPA.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/sites/default/files/2026-05/CEC-500-2026-012.pdf"
+   },
+   {
+    "label": "The BESS is three ELM MG500 units, 1,500 kW/3,300 kWh total. It was commissioned during a base-wide blackstart exercise (islanding shown Nov 16, 2024), has run for about a year, and has reduced demand charges by an average of 962 kW per month (CEC final report, May 2026).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/sites/default/files/2026-05/CEC-500-2026-012.pdf"
+   },
+   {
+    "label": "The microgrid can island the whole base (hundreds of buildings) for up to 21 days on on-site fuel. In summer 2022 it cut SDG&E demand by 5 MW a day for 10 days, and on Aug 17, 2022 it supplied power for about 3,000 homes from 4 to 9 p.m. during a Flex Alert.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.microgridknowledge.com/government-military/article/33001213/microgrid-islanding-air-station-miramar-increases-time-in-island-mode-to-as-much-as-21-days"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "460-turbines-out-7-in-the-mesa-wind-repower",
+  "title": "460 Turbines Out, 7 In: The Mesa Wind Repower",
+  "category": "Generation",
+  "location": {
+   "name": "Mesa Wind Repower Project, San Gorgonio Pass Wind Resource Area (BLM land, about 11 mi NW of Palm Springs, Whitewater, Riverside County)",
+   "lat": 33.9461,
+   "lon": -116.6769,
+   "distance_mi": 77.7
+  },
+  "one_liner": "Eleven miles from Palm Springs, 460 turbines from 1983, most of them broken, were replaced by 7 modern ones with the same 30 megawatts, and some 1984 turbines are still standing a few miles away.",
+  "problem": "Mesa Wind was a 30 MW wind farm built in 1983 in the San Gorgonio Pass. Its 460 small turbines stood on lattice towers 85 to 140 ft tall, and BLM said most of them no longer worked. In 2020 BLM approved replacing them with a handful of modern machines. USGS now maps 7 Vestas V117 4 MW turbines there, each about 150 m tall, and the plant entered service in 2024. The site keeps the same nameplate capacity on about 1.5% as many machines. Nearby, the USGS database still lists 77 turbines from 1984 to 1986 at the San Gorgonio Farms project, so the pass still holds both the oldest and newest wind hardware in the region.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Eleven miles from Palm Springs, 460 turbines from 1983, most of them broken, were replaced by 7 modern ones with the same 30 megawatts, and some 1984 turbines are still standing a few miles away.",
+  "stats": [
+   {
+    "label": "BLM: Brookfield proposed repowering the existing 30 MW Mesa Wind project, built in 1983, by removing 460 older turbines on 85 to 140 ft lattice towers, most of them no longer operational. The site is on public land about 11 miles NW of Palm Springs (press release dated May 20, 2020).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.blm.gov/press-release/blm-releases-mesa-wind-repower-project-public-comment"
+   },
+   {
+    "label": "BLM Palm Springs-South Coast Field Office approved the repower on Sept 30, 2020: remove about 460 turbines and install up to 9 new ones.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://blm.gov/press-release/blm-approves-mesa-wind-repower-project-near-palm-springs"
+   },
+   {
+    "label": "The USGS US Wind Turbine Database lists 'Mesa Wind Repowering' with 7 mapped Vestas V117-4.0 turbines (92 m hub height, 117 m rotor, 150.6 m total height), project year 2024, project capacity 30 MW, EIA ID 67247. The project-level record says p_tnum = 8, but only 7 turbine points are mapped. thewindpower.net also lists 7 V117 turbines totaling 28 MW.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://energy.usgs.gov/api/uswtdb/v1/turbines?p_name=eq.Mesa%20Wind%20Repowering"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "thrown-away-sunshine-80-of-it-is-a-wire-problem",
+  "title": "Thrown-Away Sunshine: 80% of It Is a Wire Problem",
+  "category": "Generation",
+  "location": {
+   "name": "CAISO wind and solar curtailment, 2024 to 2025. This is a system-wide event, not a single site. Show it as a map overlay or HUD panel. The c",
+   "lat": 33.6846,
+   "lon": -117.8265,
+   "distance_mi": 11.6
+  },
+  "one_liner": "In the first five months of 2025, 8 of every 10 megawatt-hours of solar and wind that California threw away were thrown away because the wires were full, not because the state had too much power.",
+  "problem": "California regularly tells solar and wind farms to throw away power they could have made. EIA says CAISO curtailed 3.4 million MWh in 2024, up 29% from 2023, and 93% of it was solar. CAISO's monthly figures for 2025 add up to about 3.77 million MWh, with March 2025 the worst month at 919,020 MWh. CAISO's own daily curtailment report (year to date through May 31, 2025) splits it by cause: about 80% was 'Local' curtailment, meaning transmission lines did not have enough capacity to deliver the energy, and only about 20% was system-wide oversupply. This ties directly to 'The Wire That Breathes': most wasted clean power is a wire-capacity problem.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "In the first five months of 2025, 8 of every 10 megawatt-hours of solar and wind that California threw away were thrown away because the wires were full, not because the state had too much power.",
+  "stats": [
+   {
+    "label": "EIA: in 2024 CAISO curtailed 3.4 million MWh of utility-scale wind and solar, up 29% from 2023. Solar was 93% of the curtailed energy, and curtailment was highest in spring. WEIM trading avoided more than 274,000 MWh (about 8%). CAISO battery capacity grew from 8.0 GW to 11.6 GW.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=65364"
+   },
+   {
+    "label": "CAISO daily curtailment report, YTD to 5/31/2025: LocalEconomic 2,189,006 MWh, LocalSelfSchCut 1,284 MWh, SystemEconomic 551,380 MWh, total 2,741,671 MWh. Local (congestion) is about 79.9%. CAISO defines congestion as 'transmission facilities do not have sufficient capacity to deliver the energy'. Note: this URL appears frozen at the 5/31/2025 edition.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/windsolarcurtailmentreport.pdf"
+   },
+   {
+    "label": "CAISO Key Statistics, Dec 2025, monthly wind+solar curtailment for 2025 in MWh: Jan 130,267; Feb 502,516; Mar 919,020; Apr 738,184; May 451,683; Jun 253,672; Jul 145,471; Aug 130,117; Sep 179,640; Oct 256,407; Nov 28,933; Dec 30,155. The sum is about 3,766,065 MWh (3.77 TWh). The sum is our calculation, and Jan through May matches the 2,741,671 YTD figure above.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/key-statistics-dec-2025.pdf"
+   },
+   {
+    "label": "The hourly table in the same CAISO report shows curtailment from about hour 6 to hour 20, heaviest midday and late afternoon. On 5/31/2025, for example, local solar curtailment hit 633 MW in hour 14 and 631 MW in hour 16.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/windsolarcurtailmentreport.pdf"
+   },
+   {
+    "label": "CAISO installed battery capacity was 15,809.80 MW as of 1/1/2026. Installed solar was 22,444 MW, wind 8,355 MW, and geothermal 1,508 MW. CAISO says 1 MW serves about 750 to 1,000 homes.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.caiso.com/documents/key-statistics-dec-2025.pdf"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "ghost-mirrors-of-kramer-junction",
+  "title": "Ghost Mirrors of Kramer Junction",
+  "category": "Generation",
+  "location": {
+   "name": "SEGS III-VII (Solar Energy Generating Systems) solar-thermal plant at Kramer Junction, decommissioned 2021-2022 and redeveloped as Resurgenc",
+   "lat": 35.0142,
+   "lon": -117.556,
+   "distance_mi": 90.9
+  },
+  "one_liner": "California's 1980s mirror-and-steam solar plant at Kramer Junction, which also burned natural gas, was torn down and replaced on the same land by 138 megawatts of solar panels and batteries.",
+  "problem": "In the 1980s the Mojave Desert hosted the SEGS complex, which used curved mirrors to boil water and could also burn natural gas. At Kramer Junction, five 30 MW SEGS units (150 MW total) fed Southern California Edison's grid. NextEra retired them in 2021 and finished decommissioning in Sept 2022. The county had already permitted the site in 2021 for solar panels plus batteries. Today USGS maps 90 MW AC (Resurgence Solar) plus 48 MW AC (Resurgence Solar II) of PV there, both online in 2023 with batteries. It is a real example of repowering an old site instead of building new.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "California's 1980s mirror-and-steam solar plant at Kramer Junction, which also burned natural gas, was torn down and replaced on the same land by 138 megawatts of solar panels and batteries.",
+  "stats": [
+   {
+    "label": "CEC staff memo (Sept 30, 2022): SEGS III-VII was five 30 MW solar-thermal and natural-gas-fired units generating up to 150 MW for SCE's grid. The CEC certified it in May 1988 and the facility went online in Feb 1989 (per the CEC). The site is about 500 acres one mile north of Kramer Junction.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/filebrowser/download/4431"
+   },
+   {
+    "label": "The CEC approved the decommissioning plan on June 9, 2021, and decommissioning was complete on Sept 29, 2022. San Bernardino County issued CUPs PROJ-2021-00019 and PROJ-2021-00079 on Sept 21, 2021 to redevelop the site for solar PV and a battery energy storage system.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.energy.ca.gov/filebrowser/download/4431"
+   },
+   {
+    "label": "EIA: SEGS 3 through 7 retired in July 2021. The SEGS complex (356 MW total, nine plants) began operating in 1984. EIA's summary lists units 3-7 at 36 MW each, but the CEC says 30 MW each, so use the CEC's 150 MW total.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.eia.gov/todayinenergy/detail.php?id=49616"
+   },
+   {
+    "label": "USGS US Large-Scale Solar PV Database: Resurgence Solar (EIA 64489), 90.0 MW AC / 108.9 MW DC, single-axis, with batteries, year 2023, at 35.0142, -117.556. Resurgence Solar II (EIA 66620), 48.0 MW AC, with batteries, year 2023. Combined PV is 138 MW AC on the former SEGS site. Note that USPVDB labels both 'greenfield' even though the site was previously developed.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://energy.usgs.gov/api/uspvdb/v1/projects?p_name=ilike.*Resurgence*"
+   }
+  ],
+  "team_bullets": [
+   "capacity",
+   "energy_cycle",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ },
+ {
+  "id": "the-renewable-highway-that-went-underground-in-chino-hills",
+  "title": "The Renewable Highway That Went Underground in Chino Hills",
+  "category": "Generation",
+  "location": {
+   "name": "Tehachapi Renewable Transmission Project (TRTP), Segment 8 500 kV underground section through Chino Hills and Chino",
+   "lat": 33.98,
+   "lon": -117.72,
+   "distance_mi": 22.9
+  },
+  "one_liner": "Twenty-one miles from Irvine, the line built to bring Tehachapi wind into Southern California had to have its towers torn down and be buried under Chino Hills.",
+  "problem": "SCE built TRTP, a 173-mile chain of new and upgraded 500 kV lines and substations, to carry up to 4,500 MW of mostly wind power from the Tehachapi area into the LA Basin. In Chino Hills, about 21 miles from Irvine, SCE had already put up overhead towers when residents fought them. In 2013 the CPUC ordered that stretch rebuilt underground. SCE demolished 16 poles and towers and installed North America's first 500 kV XLPE underground cable, roughly 3.5 to 3.7 miles long, commissioned in Oct 2016. The full line was energized in Dec 2016. Building new transmission is slow, disputed, and expensive, which is why getting more out of existing wires matters.",
+  "fix": "See research/GRID_STORIES.md (map node values and upgrade potential).",
+  "shock_line": "Twenty-one miles from Irvine, the line built to bring Tehachapi wind into Southern California had to have its towers torn down and be buried under Chino Hills.",
+  "stats": [
+   {
+    "label": "SCE: TRTP can carry 4,500 MW. It comprises about 250 miles of transmission facilities across about 173 miles in 11 segments, and was fully energized in Q4 / December 2016. SCE says it serves the equivalent of about 3 million homes. Undergrounding of Segment 8 in Chino Hills began construction in summer 2014.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.sce.com/about-sce/reliability/projects-in-progress/tehachapi-renewable-transmission-project"
+   },
+   {
+    "label": "T&D World (Dec 19, 2016): the underground segment is 'the first North American installation of 500-kV XLPE transmission line' and the world's first 500 kV line in duct structures along steep terrain. Cables were commissioned Oct 2016, and 16 double-circuit poles and towers plus 27 foundations of the partially built overhead line were demolished. The segment uses two transition stations of about 3 acres each and is about 3.7 miles long per the CPUC ruling.",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.tdworld.com/grid-innovations/distribution/article/20967561/sce-puts-500-kv-underground"
+   },
+   {
+    "label": "The CPUC granted Chino Hills' petition in 2013 and ordered SCE to replace the partially built 500 kV overhead line with underground facilities (CPUC addendum June 2013, about 3.5 miles).",
+    "value": "",
+    "kind": "measured",
+    "source": "https://www.tdworld.com/home/article/20969222/california-puc-approves-undergrounding-of-tehachapi-transmission-line-through-chino-hills"
+   }
+  ],
+  "team_bullets": [
+   "output_draw",
+   "capacity",
+   "infra_age",
+   "upgrade_potential"
+  ]
+ }
+]
