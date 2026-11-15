@@ -1,39 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { JSX } from "react";
 import { scanReportMarkdown } from "@/lib/scan";
 import { RISK_COLORS } from "@/lib/scan/colors";
 import type { DailyRating, LineRatingNow, NicheCase, RiskLevel, ScanResult } from "@/lib/scan";
-import type { PanelTab, ReportTarget } from "@/lib/scan/target";
-import { AreaCharts } from "./AreaCharts";
+import { GridChain } from "./GridChain";
 import { HeroLive } from "./HeroLive";
-import { GenEvents, RiskBreakdown, TopPlants } from "./Lists";
-import { LocalNews, groupLocalNews } from "./LocalNews";
-import ReportTab from "./ReportTab";
-import { Tabs, tabId, tabPanelId } from "./Tabs";
+import { CasesList, GenEvents, RiskBreakdown, TopPlants } from "./Lists";
 import { WhatsHere } from "./WhatsHere";
 import { fmtCoord, fmtNum, isNum } from "./format";
 
 export interface ScanPanelProps {
   result: ScanResult | null; // null = data still loading
+  pending?: boolean; // a new area is being scanned; result is the previous one
   live: LineRatingNow | null; // null while fetching
   liveLoading: boolean;
   heatwave: boolean;
   daily: DailyRating[] | null; // for result.rating_site.key
+  selectedCaseId: string | null;
+  onSelectCase: (c: NicheCase) => void; // W2 flies map to it + highlights
   onFocus: (lat: number, lon: number) => void; // fly map to a plant/point
-  tab: PanelTab;
-  onTab: (t: PanelTab) => void;
-  cases: NicheCase[]; // all stories (data.cases), not just the ones in the circle
-  reportTarget: ReportTarget;
-  onClearTarget: () => void;
-  onShowOnMap: (c: NicheCase) => void; // drop a plain pin on the map and fly there
-  onReportArea: () => void; // target = this area, switch to the report tab
 }
 
 const LEVEL_WORD: Record<RiskLevel, string> = { LOW: "Low", WATCH: "Watch", HIGH: "High", CRITICAL: "Critical" };
 
-function Header({ result }: { result: ScanResult }) {
+function Header({ result, pending }: { result: ScanResult; pending?: boolean }) {
   const { area, risk } = result;
   const r = area.radius_mi;
   return (
@@ -52,6 +44,11 @@ function Header({ result }: { result: ScanResult }) {
       <p className="mt-1 text-[13px] tabular-nums text-[#556070]">
         {fmtCoord(area.lat, area.lon)} · {fmtNum(r, isNum(r) && r % 1 !== 0 ? 1 : 0)} mi radius
       </p>
+      {pending && (
+        <p className="mt-1 text-[12px] leading-snug text-[#6b7583]" aria-live="polite">
+          Recomputing for the new size — showing the previous result.
+        </p>
+      )}
       {!result.inside_coverage && (
         <p className="mt-2 text-[13px] leading-snug text-[#556070]">
           This spot is outside the 100-mile study area around Westminster High School, so coverage is thinner here.
@@ -92,11 +89,10 @@ function CopyReport({ result, live }: { result: ScanResult; live: LineRatingNow 
 }
 
 export default function ScanPanel(p: ScanPanelProps): JSX.Element {
-  const { result, live, liveLoading, heatwave, daily, onFocus, tab, onTab, cases } = p;
-  const { reportTarget, onClearTarget, onShowOnMap, onReportArea } = p;
-  const news = useMemo(() => (result ? groupLocalNews(result, cases) : null), [result, cases]);
+  const { result, pending, live, liveLoading, daily, selectedCaseId, onSelectCase, onFocus, heatwave } =
+    p;
 
-  if (!result || !news) {
+  if (!result) {
     return (
       <div className="h-full overflow-y-auto bg-white text-[#1d2733]">
         <p className="px-6 py-6 text-[14px] text-[#556070]" aria-busy="true">
@@ -108,50 +104,21 @@ export default function ScanPanel(p: ScanPanelProps): JSX.Element {
 
   return (
     <div className="h-full overflow-y-auto bg-white text-[#1d2733]">
-      <Header result={result} />
-      <Tabs tab={tab} onTab={onTab} newsCount={news.within.length} />
+      <Header result={result} pending={pending} />
+      <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
+      <WhatsHere result={result} live={live} />
+      <RiskBreakdown factors={result.risk.factors} />
+      <GridChain lat={result.area.lat} lon={result.area.lon} heatwave={heatwave} />
+      <CasesList result={result} selectedCaseId={selectedCaseId} onSelectCase={onSelectCase} />
+      <TopPlants result={result} onFocus={onFocus} />
+      <GenEvents result={result} />
 
-      <div role="tabpanel" id={tabPanelId(tab)} aria-labelledby={tabId(tab)}>
-        {tab === "area" && (
-          <>
-            <HeroLive result={result} live={live} liveLoading={liveLoading} daily={daily} />
-            <AreaCharts result={result} />
-            <WhatsHere result={result} live={live} />
-            <RiskBreakdown factors={result.risk.factors} />
-            <TopPlants result={result} onFocus={onFocus} />
-            <GenEvents result={result} />
-
-            <footer className="border-t border-[#e6e9ee] px-6 py-6">
-              <div className="flex flex-wrap gap-2">
-                <CopyReport result={result} live={live} />
-                <button
-                  type="button"
-                  onClick={onReportArea}
-                  className="h-8 rounded-[6px] border border-[#e6e9ee] bg-white px-3 text-[14px] font-medium text-[#0284c7] transition-colors hover:bg-[#f6f8fa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0ea5e9]"
-                >
-                  Report a problem with this area
-                </button>
-              </div>
-              <p className="mt-3 text-[12px] leading-snug text-[#6b7583]">
-                Sources: EIA-860 2025, OpenStreetMap (ODbL), Open-Meteo. Line ratings modeled with IEEE 738.
-              </p>
-            </footer>
-          </>
-        )}
-
-        {tab === "news" && <LocalNews result={result} groups={news} onShowOnMap={onShowOnMap} />}
-
-        {tab === "report" && (
-          <ReportTab
-            result={result}
-            live={live}
-            heatwave={heatwave}
-            target={reportTarget}
-            onClearTarget={onClearTarget}
-            onFocus={onFocus}
-          />
-        )}
-      </div>
+      <footer className="border-t border-[#e6e9ee] px-6 py-6">
+        <CopyReport result={result} live={live} />
+        <p className="mt-3 text-[12px] leading-snug text-[#6b7583]">
+          Sources: EIA-860 2025, OpenStreetMap (ODbL), Open-Meteo. Line ratings modeled with IEEE 738.
+        </p>
+      </footer>
     </div>
   );
 }
