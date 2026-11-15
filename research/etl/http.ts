@@ -63,6 +63,9 @@ const MAX_RETRY_AFTER_MS = 60_000;
 /** Hosts that throttle anonymous callers by request rate. Others are unspaced. */
 const DEFAULT_HOST_MIN_INTERVAL_MS = "oasis.caiso.com=6000";
 
+/** Failure names that mean the request was cut off before a response arrived. */
+const RETRYABLE_ERROR_NAMES = new Set(["TimeoutError", "AbortError", "HeadersTimeoutError", "BodyTimeoutError"]);
+
 interface Validator {
   etag: string | null;
   lastModified: string | null;
@@ -291,15 +294,18 @@ function isRetryable(error: unknown): error is RetryableError {
 }
 
 /**
- * A transport failure worth retrying, judged by error type rather than message
- * text: a timeout, an abort raised by this layer's own timer, an undici network
- * `TypeError`, or a socket/DNS error code on `cause`.
+ * A transport failure worth retrying, judged by error name rather than message
+ * text: a timeout or abort (`TimeoutError`, `AbortError`, undici's
+ * `HeadersTimeoutError` / `BodyTimeoutError`), an undici network `TypeError`
+ * (DNS/socket failures surface as `TypeError: fetch failed`), or a socket/DNS
+ * error code on `cause`. Only failures from `fetch` and the body read reach this
+ * check, so our own errors (redirect refusal, the capture size limit) fail fast.
  */
-function isNetworkFailure(error: unknown, timedOut: boolean): boolean {
+function isNetworkFailure(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
   const { name, cause } = error as { name?: unknown; cause?: unknown };
-  if (name === "TimeoutError" || name === "TypeError") return true;
-  if (name === "AbortError") return timedOut;
+  if (typeof name === "string" && RETRYABLE_ERROR_NAMES.has(name)) return true;
+  if (name === "TypeError") return true;
   const code = typeof cause === "object" && cause !== null ? (cause as { code?: unknown }).code : undefined;
   return typeof code === "string" && (NETWORK_CODES.has(code) || code.startsWith("UND_ERR_"));
 }
@@ -331,16 +337,12 @@ async function fetchOnce(url: URL, key: string, options: HttpOptions): Promise<H
   const accept = options.accept ?? "application/json";
   const policy = options.redirect ?? "error";
   const controller = new AbortController();
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const transport = async <T>(work: () => Promise<T>): Promise<T> => {
     try {
       return await work();
     } catch (error) {
-      if (!isNetworkFailure(error, timedOut)) throw error;
+      if (!isNetworkFailure(error)) throw error;
       const message = error instanceof Error && error.message ? error.message : "Network failure";
       throw new RetryableError(message, null);
     }
