@@ -73,15 +73,173 @@ export const STAGE_GATE: Readonly<Record<StageId, GateId | null>> = {
   decommissioning: "M9",
 };
 
-/** Non-procedure precondition ids. Each names the doc text it encodes. */
-export const RULE_IDS: Readonly<Record<string, { description: string; sourceDoc: string }>> = {
+const WF_DOC = "docs/INFRASTRUCTURE-WORKFLOWS.md";
+
+/** `<doc>#<anchor of heading>`; the verify script checks the heading exists. */
+const sec = (doc: string, heading: string) => `${doc}#${headingAnchor(heading)}`;
+
+/**
+ * Non-procedure ids used by the catalog. Each names the doc text it encodes;
+ * `quote` is a verbatim substring of the file part of `sourceDoc` (checked by
+ * scripts/verify-owner-procedures.ts).
+ * - gate: a precondition satisfied by another gate passing.
+ * - rule: a precondition fact recorded outside the procedure catalog.
+ * - trigger: the condition that makes a `conditional` step count toward its gate.
+ * - branch: the domain condition under which a per-branch conditional precondition applies.
+ *
+ * `evaluationRequired`: the doc makes the trigger determination itself a gate
+ * input, so an unevaluated trigger is listed as a missing input at the step's
+ * gate. Otherwise an unevaluated trigger is treated as not active.
+ */
+export interface RuleDef {
+  kind: "gate" | "rule" | "trigger" | "branch";
+  description: string;
+  sourceDoc: string;
+  quote: string;
+  evaluationRequired?: { basis: string; sourceDoc: string };
+}
+
+export const RULE_IDS: Readonly<Record<string, RuleDef>> = {
   "gate.M5": {
+    kind: "gate",
     description: "M5 authorization/readiness recorded (construction trigger: 'M5 authorization/readiness and contracted package').",
-    sourceDoc: "docs/INFRASTRUCTURE-WORKFLOWS.md#8-construction",
+    sourceDoc: sec(WF_DOC, "8. Construction"),
+    quote: "M5 authorization/readiness and contracted package",
+  },
+  "rule.vendor_submittals_approved": {
+    kind: "rule",
+    description: "Approved-for-use vendor data and substitutions recorded for the released scope (PROC-05 submittal register dispositions).",
+    sourceDoc: sec(DEV_DOC, "DEV-19 — Release construction work package from design baseline"),
+    quote: "Procurement confirms approved-for-use vendor data and substitutions",
+  },
+  "rule.instrument_conditions_recorded": {
+    kind: "rule",
+    description: "Required instruments recorded with their conditions and dates (PER-04 obligation records) before work authorization.",
+    sourceDoc: sec(WF_DOC, "5B. Permits, licenses, and agreements"),
+    quote: "required instruments are recorded with conditions and dates before configured work authorization",
+  },
+  "trigger.emergency": {
+    kind: "trigger",
+    description: "Intake is an emergency (urgency category 'emergency'): response coordination and stabilization (DEV-02) run before permanent feasibility.",
+    sourceDoc: sec(WF_DOC, "1. Intake and emergency intake"),
+    quote: "Emergency cases may advance to response coordination while normal required details remain incomplete",
+    evaluationRequired: { basis: "M0 when accepted, owner assigned, urgency and next action/date set", sourceDoc: sec(WF_DOC, "1. Intake and emergency intake") },
+  },
+  "trigger.unmatched_asset": {
+    kind: "trigger",
+    description: "Intake references an asset that cannot be matched, asset records conflict, or the service boundary crosses several systems.",
+    sourceDoc: sec(DEV_DOC, "DEV-14 — Discover and reconcile asset configuration"),
+    quote: "Use when intake references an asset that cannot be matched, asset records conflict",
   },
   "trigger.assurance_configured": {
+    kind: "trigger",
     description: "Owner-configured risk, novelty, consequence, uncertainty, or decision-gate trigger for independent assurance.",
-    sourceDoc: `${DEV_DOC}#dev-16--commission-independent-assurance-and-challenge`,
+    sourceDoc: sec(DEV_DOC, "DEV-16 — Commission independent assurance and challenge"),
+    quote: "Use at owner-configured risk, novelty, consequence, uncertainty, or decision gate",
+  },
+  "trigger.utility_conflict": {
+    kind: "trigger",
+    description: "Proposed works may encounter or affect existing utility, network, drainage, access or third-party assets.",
+    sourceDoc: sec(DEV_DOC, "DEV-17 — Coordinate utility conflicts and relocation interfaces"),
+    quote: "proposed works may encounter or affect existing utility, network, drainage, access or third-party assets",
+  },
+  "trigger.early_release": {
+    kind: "trigger",
+    description: "Owner seeks a bounded long-lead early procurement release before the normal maturity gate.",
+    sourceDoc: sec(DEV_DOC, "DEV-12 — Long-lead early-release gate"),
+    quote: "This is a configurable owner gate, not a presumption that early release is authorized",
+  },
+  "trigger.material_change": {
+    kind: "trigger",
+    description: "A potential material change is logged (scope/site/route/phase/design, cost or schedule variance, owner/operator/partner, funding shift, new condition, pause/transfer/termination/retirement).",
+    sourceDoc: sec(AUTH_DOC, "CHG-01 — Change intake, impact screening, authorization, and record reuse"),
+    quote: "Treat material change as a linked workflow across the capital plan",
+  },
+  "trigger.recovery_transfer_release": {
+    kind: "trigger",
+    description: "Downstream recovery/transfer/release is needed after a change, withdrawal, loss of funding, partner failure, ownership transfer, or project stop.",
+    sourceDoc: sec(AUTH_DOC, "CHG-02 — Award/subrecipient recovery, permit transfer/surrender, agreement release"),
+    quote: "after a change, withdrawal, loss of funding, partner failure, ownership transfer, or project stop",
+  },
+  "trigger.construction_change": {
+    kind: "trigger",
+    description: "A construction change, delay, or outage/interface request is recorded (CONST-05; contract change via PROC-06).",
+    sourceDoc: sec(DEL_DOC, "CONST-05 — Change, delay, outage/interface"),
+    quote: "Discovery, weather, access loss, incident, substitution, delay or overrun opens issue",
+  },
+  "trigger.work_suspension": {
+    kind: "trigger",
+    description: "Seasonal shutdown, extended suspension, phased build, or abandoned work front.",
+    sourceDoc: sec(DEL_DOC, "CONST-07 — Long-duration work preservation and restart (row 8)"),
+    quote: "For seasonal shutdown, extended suspension, phased build or abandoned work fronts",
+  },
+  "trigger.phased_turnover": {
+    kind: "trigger",
+    description: "Service begins by system, location, or stage (phased turnover).",
+    sourceDoc: sec(DEL_DOC, "TURN-06 — Phased turnover and custody reconciliation (row 9)"),
+    quote: "When service begins by system, location, or stage, create boundary register",
+  },
+  "trigger.custodian_change": {
+    kind: "trigger",
+    description: "Asset owner, operator, maintainer or service provider changes.",
+    sourceDoc: sec(DEL_DOC, "OPS-07 — Owner, operator or service-provider change (row 10)"),
+    quote: "Open transition case when asset owner, operator, maintainer or provider changes",
+  },
+  "trigger.incident": {
+    kind: "trigger",
+    description: "An operational incident/event is recorded that needs recovery and a return-to-routine decision.",
+    sourceDoc: sec(WF_DOC, "10. Operations and renewal"),
+    quote: "incident spins linked case",
+  },
+  "trigger.instrument_review": {
+    kind: "trigger",
+    description: "Renewal, transfer, modification, operator change or retirement requires reconciling the obligation register against current instruments.",
+    sourceDoc: sec(DEL_DOC, "OPS-09 — Obligation applicability and permit/license transfer (row 10)"),
+    quote: "Before renewal, transfer, modification, operator change or retirement, reconcile register",
+  },
+  "branch.grant_recovery": {
+    kind: "branch",
+    description: "CHG-02 grant award and subrecipient recovery branch (an award exists).",
+    sourceDoc: sec(AUTH_DOC, "Grant award and subrecipient recovery"),
+    quote: "Grants lead freezes the relevant award-term version",
+  },
+  "branch.permit_transfer": {
+    kind: "branch",
+    description: "CHG-02 permit/license transfer, amendment, suspension, surrender branch (an instrument exists).",
+    sourceDoc: sec(AUTH_DOC, "Permit/license transfer, amendment, suspension, surrender"),
+    quote: "Verify current instrument and amendments",
+  },
+  "branch.agreement_release": {
+    kind: "branch",
+    description: "CHG-02 agreement stewardship, release, and post-term duties branch (an executed agreement exists).",
+    sourceDoc: sec(AUTH_DOC, "Agreement stewardship, release, and post-term duties"),
+    quote: "compare current executed version and amendments against proposed change",
+  },
+};
+
+/** Trigger rule ids (kind "trigger"), sorted. */
+export const TRIGGER_IDS: readonly string[] = Object.keys(RULE_IDS).filter((k) => RULE_IDS[k].kind === "trigger").sort();
+
+/**
+ * Steps whose gate is named by doc text rather than their stage default.
+ * `quote` is a verbatim substring of `sourceDoc`'s file.
+ */
+export const GATE_OVERRIDES: Readonly<Record<string, { gate: GateId; sourceDoc: string; quote: string; reason: string }>> = {
+  "DEV-02": {
+    gate: "M1", sourceDoc: sec(WF_DOC, "2. Feasibility and alternatives"), quote: "Accepted need or emergency stabilization follow-up",
+    reason: "Stabilization follow-up starts permanent feasibility; M0 (intake accepted) does not wait for the response branch to close.",
+  },
+  "DEV-14": {
+    gate: "M4", sourceDoc: sec(DEV_DOC, "DEV-14 — Discover and reconcile asset configuration"), quote: "does not stop urgent response, but blocks design claims that rely on the unknown",
+    reason: "Unreconciled configuration blocks design claims (M4 design ready), not intake acceptance.",
+  },
+  "DEV-19": {
+    gate: "M5", sourceDoc: sec(DEV_DOC, "DEV-19 — Release construction work package from design baseline"), quote: "Provide a controlled handoff from design/procurement readiness to field execution",
+    reason: "Release to field execution is the M5 package-ready-for-construction handoff, after award (PROC-04).",
+  },
+  "CHG-02": {
+    gate: "M9", sourceDoc: sec(AUTH_DOC, "Permit/license transfer, amendment, suspension, surrender"), quote: "keep item in non-determination status and block closure",
+    reason: "Grants stage has no milestone (WORKFLOWS 5A); CHG-02 blocks closure, which is M9.",
   },
 };
 
@@ -107,7 +265,8 @@ interface Def {
   stage: StageId;
   doc: string;
   heading: string;
-  role: string;
+  /** null -> doc names no role for the section; replaced by an explicit "not specified" string. */
+  role: string | null;
   inputs: string[];
   preconditions: string[];
   outputs: string[];
@@ -115,16 +274,22 @@ interface Def {
   /** null -> doc is silent; replaced by an explicit "not specified" string. */
   recovery: string | null;
   blocksGateOn?: string[];
+  /** Absent = "required". Basis for every non-default value is commented at the entry. */
+  gating?: ProcedureStep["gating"];
+  trigger?: string;
+  conditionalPreconditions?: ProcedureStep["conditionalPreconditions"];
+  followUpAcceptance?: string[];
 }
 
 function build(d: Def): ProcedureStep {
   const title = d.heading.replace(/^[A-Z]{2,5}-\d{2}\s+—\s+/, "").replace(/\s+\(row \d+\)$/, "");
-  const gate = STAGE_GATE[d.stage];
+  const override = GATE_OVERRIDES[d.code]?.gate;
+  const gate = override ?? STAGE_GATE[d.stage];
   const step: ProcedureStep = {
     code: d.code,
     stage: d.stage,
     title,
-    role: d.role,
+    role: d.role ?? notSpecified(d.doc, d.heading),
     inputs: d.inputs,
     preconditions: d.preconditions,
     outputs: d.outputs,
@@ -135,8 +300,19 @@ function build(d: Def): ProcedureStep {
     sourceDoc: `${d.doc}#${headingAnchor(d.heading)}`,
   };
   if (gate) step.gate = gate;
+  if (override) step.gateOverride = override;
   if (d.blocksGateOn && d.blocksGateOn.length) step.blocksGateOn = d.blocksGateOn;
+  if (d.gating && d.gating !== "required") step.gating = d.gating;
+  if (d.trigger) step.trigger = d.trigger;
+  if (d.conditionalPreconditions?.length) step.conditionalPreconditions = d.conditionalPreconditions.map((c) => ({ when: c.when, preconditions: [...c.preconditions] }));
+  if (d.followUpAcceptance?.length) step.followUpAcceptance = [...d.followUpAcceptance];
   return step;
+}
+
+/** A step's effective gating mode. Steps with no gate never gate anything. */
+export function gatingOf(step: ProcedureStep): "required" | "conditional" | "non_gating" {
+  if (!step.gate) return "non_gating";
+  return step.gating ?? "required";
 }
 
 const DEFS: Def[] = [
